@@ -102,3 +102,26 @@ void Socket::write( const std::string & str )
 {
   writeall( fd_, str );
 }
+
+Socket::Socket( const Socket & other )
+  : fd_( dup( other.fd_ ) ),
+    local_addr_( other.local_addr_ ),
+    peer_addr_( other.peer_addr_ )
+{
+  if ( fd_ < 0 ) {
+    throw Exception( "dup" );
+  }
+}
+
+Socket & Socket::operator=( const Socket & other )
+{
+  fd_ = dup( other.fd_ );
+  local_addr_ = other.local_addr_;
+  peer_addr_ = other.peer_addr_;
+  
+  if ( fd_ < 0 ) {
+    throw Exception( "dup" );
+  }
+
+  return *this;
+}

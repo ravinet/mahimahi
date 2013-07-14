@@ -12,13 +12,17 @@ private:
   int fd_;
 
   /* private constants */
-  const int listen_backlog_ = 1;
+  static const int listen_backlog_ = 16;
 
   Address local_addr_, peer_addr_;
 
 public:
   Socket(); /* default constructor */
   ~Socket();
+
+  /* copy constructor and assignment operator */
+  Socket( const Socket & other );
+  Socket & operator=( const Socket & other );
 
   Socket( const int s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
