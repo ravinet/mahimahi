@@ -3,13 +3,23 @@
 #include <netdb.h>
 #include <assert.h>
 #include <string.h>
+#include <sstream>
+#include <arpa/inet.h>
 
 #include "address.hh"
 #include "exception.hh"
 
-Address::Address( const struct sockaddr_in *s_addr )
-  : addr_( *s_addr )
+using namespace std;
+
+Address::Address( const struct sockaddr_in &s_addr )
+  : addr_( s_addr )
 {
+}
+
+Address::Address()
+  : addr_()
+{
+  memset( &addr_, 0, sizeof( addr_ ) );
 }
 
 Address::Address( const std::string hostname, const std::string service )
@@ -17,7 +27,7 @@ Address::Address( const std::string hostname, const std::string service )
 {
   /* give hints to resolver */
   struct addrinfo hints;
-  memset( &hints, 0, sizeof( struct addrinfo ) );
+  memset( &hints, 0, sizeof( hints ) );
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
 
@@ -40,4 +50,21 @@ Address::Address( const std::string hostname, const std::string service )
 
   /* assign to our private member variable */
   addr_ = *reinterpret_cast<sockaddr_in *>( res->ai_addr );
+}
+
+string Address::str( void ) const
+{
+  ostringstream ret;
+  ret << hostname() << ":" << port();
+  return ret.str();
+}
+
+uint16_t Address::port( void ) const
+{
+  return ntohs( addr_.sin_port );
+}
+
+string Address::hostname( void ) const
+{
+  return inet_ntoa( addr_.sin_addr );
 }

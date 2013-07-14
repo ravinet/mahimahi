@@ -11,8 +11,9 @@ private:
   struct sockaddr_in addr_;
 
 public:
-  Address( const struct sockaddr_in *s_addr );
+  Address( const struct sockaddr_in &s_addr );
   Address( const std::string hostname, const std::string service );
+  Address();
 
   std::string hostname( void ) const;
   uint16_t port( void ) const;
