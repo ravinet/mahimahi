@@ -35,6 +35,12 @@ Socket::~Socket()
 
 void Socket::bind( const Address & addr )
 {
+  /* allow quicker reuse of local address */
+  int true_value = true;
+  if ( setsockopt( fd_, SOL_SOCKET, SO_REUSEADDR, &true_value, sizeof( true_value ) ) < 0 ) {
+    throw Exception( "setsockopt" );
+  }
+
   /* make local address to listen on */
   local_addr_ = addr;
  

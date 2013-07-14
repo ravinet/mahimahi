@@ -7,7 +7,6 @@
 
 #include "address.hh"
 #include "exception.hh"
-#include "ezio.hh"
 
 using namespace std;
 
@@ -56,7 +55,7 @@ Address::Address( const std::string hostname, const std::string service )
 
 string Address::str( void ) const
 {
-  return hostname() + ":" + num2str( port() );
+  return hostname() + ":" + to_string( port() );
 }
 
 uint16_t Address::port( void ) const

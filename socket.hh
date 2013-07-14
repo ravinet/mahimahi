@@ -32,6 +32,8 @@ public:
 
   std::string read( void );
   void write( const std::string & str );
+
+  int raw_fd( void ) const { return fd_; }
 };
 
 #endif
