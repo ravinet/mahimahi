@@ -26,6 +26,7 @@ public:
 
   void bind( const Address & addr );
   void listen( void );
+  void connect( const Address & addr );
   Socket accept( void );
 
   const Address & local_addr( void ) const { return local_addr_; }

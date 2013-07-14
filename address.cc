@@ -50,6 +50,8 @@ Address::Address( const std::string hostname, const std::string service )
 
   /* assign to our private member variable */
   addr_ = *reinterpret_cast<sockaddr_in *>( res->ai_addr );
+
+  freeaddrinfo( res );
 }
 
 string Address::str( void ) const

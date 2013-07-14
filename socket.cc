@@ -93,3 +93,14 @@ string Socket::read( void )
     return string( buffer, bytes_read );
   }
 }
+
+void Socket::connect( const Address & addr )
+{
+  peer_addr_ = addr;
+
+  if ( ::connect( fd_,
+		  reinterpret_cast<const struct sockaddr *>( &peer_addr_.raw_sockaddr() ),
+		  sizeof( peer_addr_.raw_sockaddr() ) ) < 0 ) {
+    throw Exception( "connect" );
+  }
+}
