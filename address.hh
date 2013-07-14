@@ -1,7 +1,6 @@
 #ifndef ADDRESS_HH
 #define ADDRESS_HH
 
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <string>
 

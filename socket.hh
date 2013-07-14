@@ -22,8 +22,6 @@ public:
 
   Socket( const int s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
-  int fd( void ) { return fd_; } /* XXX */
-
   void bind( const Address & addr );
   void listen( void );
   void connect( const Address & addr );
@@ -33,6 +31,7 @@ public:
   const Address & peer_addr( void ) const { return peer_addr_; }
 
   std::string read( void );
+  void write( const std::string & str );
 };
 
 #endif
