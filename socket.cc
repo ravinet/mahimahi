@@ -8,6 +8,8 @@
 
 using namespace std;
 
+static const size_t read_chunk_size = 1;
+
 Socket::Socket()
   : fd_( socket( AF_INET, SOCK_STREAM, 0 ) ),
     local_addr_(),
@@ -73,4 +75,21 @@ Socket Socket::accept( void )
   }
   
   return Socket( new_fd, local_addr_, Address( new_connection_addr ) );
+}
+
+string Socket::read( void )
+{
+  char buffer[ read_chunk_size ];
+
+  ssize_t bytes_read = ::read( fd_, &buffer, read_chunk_size );
+
+  if ( bytes_read == 0 ) {
+    /* end of file = client has closed their side of connection */
+    return string();
+  } else if ( bytes_read < 0 ) {
+    throw Exception( "read" );
+  } else {
+    /* successful read */
+    return string( buffer, bytes_read );
+  }
 }
