@@ -1,16 +1,22 @@
-// Prints Hello, world!
+// Unshares network namespace and executes bash shell
 // By Ravi Netravali <ravinet@mit.edu>
-// Compile with: g++ -std=c++0x -g -O2 -Wall -Wextra -Weffc++ -Werror -pedantic -o hello hello.cc
+// Compile with: g++ -std=c++0x -g -O2 -Wall -Wextra -Weffc++ -Werror -pedantic -o unsharenet unsharenet.cc
 
+#include <sched.h>
 #include <iostream>
 #include <cstdlib>
-#include "config.h"
 
 using namespace std;
 
-int main( void )
+int main ( void )
 {
-    cout << "Welcome to " << PACKAGE_STRING << endl << endl; 
-    cout << "Hello, world!" << endl;
+    if ( unshare( CLONE_NEWNET ) == -1 )
+    {
+        cout << "Error in unsharing" << endl;
+    }
+    else
+    {
+        cout << "Success in unsharing" << endl;
+    }
     return EXIT_SUCCESS;
 }
