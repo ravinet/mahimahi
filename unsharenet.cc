@@ -1,3 +1,5 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 // Unshares network namespace and executes bash shell
 // By Ravi Netravali <ravinet@mit.edu>
 
