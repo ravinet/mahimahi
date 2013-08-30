@@ -29,7 +29,10 @@ int main ( void )
     {
         cout << "Success in unsharing" << endl;
         // executes bash shell
-        execv("/bin/bash", argv);
+        if ( execv( "/bin/bash", argv ) == -1 ) {
+            perror( "execv" );
+            return EXIT_FAILURE;
+        }
     }
     return EXIT_SUCCESS;
 }
