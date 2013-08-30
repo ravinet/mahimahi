@@ -1,6 +1,5 @@
 // Unshares network namespace and executes bash shell
 // By Ravi Netravali <ravinet@mit.edu>
-// Compile with: g++ -std=c++0x -g -O2 -Wall -Wextra -Weffc++ -Werror -pedantic -o unsharenet unsharenet.cc
 
 #include <sched.h>
 #include <iostream>
