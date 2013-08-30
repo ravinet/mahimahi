@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
+#include <string.h>
 
 using namespace std;
 
@@ -21,7 +22,8 @@ int main ( void )
     // unshares network namespace (prints whether success or failure)
     if ( unshare( CLONE_NEWNET ) == -1 )
     {
-        cout << "Error in unsharing" << endl;
+        perror( "unshare( CLONE_NEWNET )" );
+        return EXIT_FAILURE;
     }
     else
     {
