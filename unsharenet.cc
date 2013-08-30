@@ -20,13 +20,10 @@ int main ( void )
     argv[1] = 0;
 
     // unshares network namespace (prints whether success or failure)
-    if ( unshare( CLONE_NEWNET ) == -1 )
-    {
+    if ( unshare( CLONE_NEWNET ) == -1 ) {
         perror( "unshare( CLONE_NEWNET )" );
         return EXIT_FAILURE;
-    }
-    else
-    {
+    } else {
         cout << "Success in unsharing" << endl;
         // executes bash shell
         if ( execv( "/bin/bash", argv ) == -1 ) {
