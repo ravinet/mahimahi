@@ -1,11 +1,13 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 // Unshares network namespace and executes bash shell
 // By Ravi Netravali <ravinet@mit.edu>
-// Compile with: g++ -std=c++0x -g -O2 -Wall -Wextra -Weffc++ -Werror -pedantic -o unsharenet unsharenet.cc
 
 #include <sched.h>
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
+#include <string.h>
 
 using namespace std;
 
@@ -18,15 +20,16 @@ int main ( void )
     argv[1] = 0;
 
     // unshares network namespace (prints whether success or failure)
-    if ( unshare( CLONE_NEWNET ) == -1 )
-    {
-        cout << "Error in unsharing" << endl;
-    }
-    else
-    {
+    if ( unshare( CLONE_NEWNET ) == -1 ) {
+        perror( "unshare( CLONE_NEWNET )" );
+        return EXIT_FAILURE;
+    } else {
         cout << "Success in unsharing" << endl;
         // executes bash shell
-        execv("/bin/bash", argv);
+        if ( execv( "/bin/bash", argv ) == -1 ) {
+            perror( "execv" );
+            return EXIT_FAILURE;
+        }
     }
     return EXIT_SUCCESS;
 }
