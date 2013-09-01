@@ -1,51 +1,60 @@
+/* -*-mode:c++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+
 #include <sys/wait.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string>
 #include <assert.h>
 #include <iostream>
 
 using namespace std;
 
-int bash_exec(void *) {
-  printf("In child, execing bash\n");
-  char* argv[2];
-  argv[0] = const_cast<char*>("bash"); /* generally program name, or "-bash" for login shell */
-  argv[1] = nullptr; /* terminate argv */
-  if ( execvp("bash", argv) < 0 ) {
-    perror( "execvp" );
-    return EXIT_FAILURE;
+void bash_exec( void ) {
+  /* Unshare network namespace */
+  if ( unshare( CLONE_NEWNET ) == -1 ) {
+    perror( "unshare( CLONE_NEWNET )" );
+    exit( EXIT_FAILURE );
   }
-  assert( false ); /* If execvp() successful, we never get here */
-  return EXIT_FAILURE;
+
+  /* Run bash */
+  char* argv[ 2 ] = { const_cast<char *>( "bash" ), /* can use "-bash" for login shell */
+                      nullptr };
+
+  if ( execvp( "bash", argv ) < 0 ) {
+    perror( "execvp" );
+    exit( EXIT_FAILURE );
+  }
+
+  assert( false ); /* We never get here */
 }
 
-int main() {
-  /* Allocate stack for child */
-  char* stack = new char [ 65536 ];
-  /* will throw an exception if fails -- no need to check return value */
-  char* stack_top = stack + 65536;  /* Stack grows downward */
-
-  /* Clone child */
-  pid_t pid = clone(bash_exec, stack_top, CLONE_NEWNET | SIGCHLD, nullptr);
-  if (pid == -1) {
-    perror("clone");
-    exit(EXIT_FAILURE);
+int main( void ) {
+  /* Fork child */
+  pid_t pid = fork();
+  if ( pid == -1 ) {
+    perror( "fork" );
+    exit( EXIT_FAILURE );
+  } else if ( pid == 0 ) { /* child */
+    bash_exec(); /* doesn't return */
   }
-  printf("clone() returned %ld\n", (long) pid);
 
-  /* Wait for child */
+  /* parent */
+  cerr << "fork() returned " << pid << endl;
+
+  /* Wait for child to exit */
   int status;
-  if (wait(&status) == -1) {
-    perror("wait");
-    exit(EXIT_FAILURE);
+  if ( waitpid( pid, &status, 0 ) == -1) {
+    perror( "waitpid" );
+    exit( EXIT_FAILURE );
   }
 
-  printf("child has terminated\n");
+  /* Report status */
+  if ( WIFEXITED( status ) ) {
+    cerr << "child exited with status " << WEXITSTATUS( status ) << "." << endl;
+    exit( WEXITSTATUS( status ) );
+  } else if ( WIFSIGNALED( status ) ) {
+    cerr << "child was terminated by signal " << WTERMSIG( status ) << "." << endl;
+    exit( EXIT_FAILURE );
+  }
 
-  delete[] stack; /* should free memory we allocated earlier */
-
-  exit(EXIT_SUCCESS);
+  cerr << "child state changed for unknown reason." << endl;
+  exit( EXIT_FAILURE );
 }
