@@ -5,3 +5,6 @@ hello_SOURCES = hello.cc
 
 bin_PROGRAMS += unsharenet
 unsharenet_SOURCES = unsharenet.cc
+
+bin_PROGRAMS += forktest
+forktest_SOURCES = forktest.cc
