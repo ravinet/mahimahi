@@ -22,23 +22,23 @@ int create_tap( std::string name )
 {
     struct ifreq ifr;
     int fd, err;
-    
+
     if ( ( fd = open( "/dev/net/tun", O_RDWR ) ) < 0 ) {
         perror( "open" );
         return fd;
     }
-    
+
     // fills enough of memory area pointed to by ifr
     memset( &ifr, 0, sizeof( ifr ) );
 
     // specifies to create tap device
-    ifr.ifr_flags = IFF_TAP; 
-    
+    ifr.ifr_flags = IFF_TAP;
+
 
     // uses specified name for tap device
     strncpy( ifr.ifr_name, name.c_str(), IFNAMSIZ );
-    
-    // create interface 
+
+    // create interface
     if ( ( err = ioctl( fd, TUNSETIFF, ( void * ) &ifr ) ) < 0 ){
         close( fd );
         perror( "ioctl" );
@@ -51,10 +51,10 @@ int main ( void )
 {
     // create first tap device named ingress
     int tap0_fd = create_tap( "ingress" );
-    
+
     // create second tap device named egress
     int tap1_fd = create_tap( "egress" );
-    
+
     // set up poll for tap devices
     struct pollfd pollfds[ 2 ];
     pollfds[ 0 ].fd = tap0_fd;
@@ -69,7 +69,7 @@ int main ( void )
             perror( "poll" );
             return EXIT_FAILURE;
         }
-       
+
         // read from ingress which triggered POLLIN
         int amount_read0;
         if ( pollfds[ 0 ].revents & POLLIN ) {
@@ -82,7 +82,7 @@ int main ( void )
             if ( amount_read0 == 0 ) {
 	        cout << "nothing to read (EOF)" << endl;
 	    }
-            
+
 	    // write what is read from ingress to egress after sleeping 1 second
             sleep(1);
             int written0;
@@ -105,7 +105,7 @@ int main ( void )
             if ( amount_read1 == 0 ) {
                 cout << "nothing to read (EOF)" << endl;
             }
-            
+
             // write what is read from egress to ingress after sleeping 1 second
             sleep(1);
             int written1;
@@ -115,5 +115,5 @@ int main ( void )
                 return EXIT_FAILURE;
             }
         }
-    }                     
-} 
+    }
+}
