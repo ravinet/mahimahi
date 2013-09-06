@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
+#include "ezio.hh"
 
 using namespace std;
 
@@ -71,49 +72,19 @@ int main ( void )
         }
 
         // read from ingress which triggered POLLIN
-        int amount_read0;
         if ( pollfds[ 0 ].revents & POLLIN ) {
-            char buf[ 16384 ];
-            amount_read0  = read( pollfds[ 0 ].fd, buf, 16384 );
-            if ( amount_read0 < 0 ) {
-	        perror( "read" );
-                return EXIT_FAILURE;
-            }
-            if ( amount_read0 == 0 ) {
-	        cout << "nothing to read (EOF)" << endl;
-	    }
-
-	    // write what is read from ingress to egress after sleeping 1 second
+            string buffer = readall( pollfds[ 0 ].fd );
+            // write what is read from ingress to egress after sleeping 1 second
             sleep(1);
-            int written0;
-            written0 = write( pollfds[ 1 ].fd, buf, amount_read0 );
-            if( written0 < 0 ) {
-                perror( "write" );
-                return EXIT_FAILURE;
-	    }
+            writeall( pollfds[ 1 ].fd, buffer);
         }
 
         // read from egress which triggered POLLIN
-        int amount_read1;
         if ( pollfds[ 1 ].revents & POLLIN ) {
-            char buf1[ 16384 ];
-            amount_read1  = read( pollfds[ 1 ].fd, buf1, 16384 );
-            if ( amount_read1 < 0 ) {
-                perror( "read" );
-                return EXIT_FAILURE;
-            }
-            if ( amount_read1 == 0 ) {
-                cout << "nothing to read (EOF)" << endl;
-            }
-
+            string buffer1 = readall( pollfds[ 1 ].fd );
             // write what is read from egress to ingress after sleeping 1 second
             sleep(1);
-            int written1;
-            written1 = write( pollfds[ 0 ].fd, buf1, amount_read1 );
-            if( written1 < 0 ) {
-                perror( "write" );
-                return EXIT_FAILURE;
-            }
+            writeall( pollfds[ 0 ].fd, buffer1);
         }
     }
 }
