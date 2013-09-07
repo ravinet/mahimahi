@@ -16,6 +16,9 @@
 #include <poll.h>
 #include <unistd.h>
 #include "ezio.hh"
+#include <time.h>
+#include <queue>
+#include "packet.hh"
 
 using namespace std;
 
@@ -64,27 +67,55 @@ int main ( void )
     pollfds[ 1 ].fd = tap1_fd;
     pollfds[ 1 ].events = POLLIN;
 
+    // amount to delay each packet before forwarding
+    int delay = 2;
+
+    // queue of packets not yet forwarded
+    queue<Packet> ingress_packets;
+    queue<Packet> egress_packets;
+
     // poll on both tap devices
     while ( 1 ) {
         if( poll( pollfds, 2, -1 ) == -1 ) {
             perror( "poll" );
             return EXIT_FAILURE;
         }
-
         // read from ingress which triggered POLLIN
         if ( pollfds[ 0 ].revents & POLLIN ) {
             string buffer = readall( pollfds[ 0 ].fd );
-            // write what is read from ingress to egress after sleeping 1 second
-            sleep(1);
-            writeall( pollfds[ 1 ].fd, buffer);
+            Packet newest;
+            newest.contents = buffer;
+
+            // set the timestamp value to time it should be forwarded
+            newest.timestamp = time(NULL) + delay;
+            ingress_packets.push(newest);
+            cout << "ingress: " << ingress_packets.size() << endl;
         }
 
         // read from egress which triggered POLLIN
         if ( pollfds[ 1 ].revents & POLLIN ) {
-            string buffer1 = readall( pollfds[ 1 ].fd );
-            // write what is read from egress to ingress after sleeping 1 second
-            sleep(1);
-            writeall( pollfds[ 0 ].fd, buffer1);
+            string buffer = readall( pollfds[ 1 ].fd );
+            Packet newest;
+            newest.contents = buffer;
+
+            // set the timestamp value to time it should be forwarded
+            newest.timestamp = time(NULL) + delay;
+            egress_packets.push(newest);
+            cout << "egress: " << egress_packets.size() << endl;
+        }
+
+        // if front ingress packet timestamp matches or is before current time, forward to egress
+        if ( ingress_packets.front().get_timestamp() <= time(NULL) && ingress_packets.front().get_timestamp() != 0) {
+            writeall( pollfds[ 1 ].fd, ingress_packets.front().get_content());
+            cout << "off by: " << time(NULL) - ingress_packets.front().get_timestamp() << endl;
+            ingress_packets.pop();
+        }
+
+         // if front egress packet timestamp matches or is before current time, forward to ingress
+        if ( egress_packets.front().get_timestamp() <= time(NULL) && egress_packets.front().get_timestamp() != 0) {
+            writeall( pollfds[ 0 ].fd, egress_packets.front().get_content());
+            cout << "off by: " << time(NULL) - egress_packets.front().get_timestamp() << endl;
+            egress_packets.pop();
         }
     }
 }
