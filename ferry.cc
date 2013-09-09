@@ -19,6 +19,7 @@
 #include <time.h>
 #include <queue>
 #include "packet.hh"
+#include "timestamp.hh"
 
 using namespace std;
 
@@ -68,15 +69,29 @@ int main ( void )
     pollfds[ 1 ].events = POLLIN;
 
     // amount to delay each packet before forwarding
-    int delay = 2;
-
+    uint64_t delay = 2;
     // queue of packets not yet forwarded
     queue<Packet> ingress_packets;
     queue<Packet> egress_packets;
 
     // poll on both tap devices
+    int wait_time = -1;
     while ( 1 ) {
-        if( poll( pollfds, 2, -1 ) == -1 ) {
+        // set poll timeout based on next packet to be sent from either ingress or egress queue
+        if (!ingress_packets.empty() && !egress_packets.empty() ) {
+            uint64_t ingress_wait = ingress_packets.front().get_timestamp() - timestamp();
+            uint64_t egress_wait = egress_packets.front().get_timestamp() - timestamp();
+            wait_time = std::min(ingress_wait, egress_wait);
+        }
+        else if (!ingress_packets.empty() && egress_packets.empty() ) {
+            int ingress_wait = ingress_packets.front().get_timestamp() - timestamp();
+            wait_time = ingress_wait;
+        }
+        else if (ingress_packets.empty() && !egress_packets.empty() ) {
+            int egress_wait = egress_packets.front().get_timestamp() - timestamp();
+            wait_time = egress_wait;
+        }
+        if( poll( pollfds, 2, wait_time ) == -1 ) {
             perror( "poll" );
             return EXIT_FAILURE;
         }
@@ -87,7 +102,8 @@ int main ( void )
             newest.contents = buffer;
 
             // set the timestamp value to time it should be forwarded
-            newest.timestamp = time(NULL) + delay;
+            newest.timestamp = timestamp() + delay;
+            //newest.timestamp = timestamp() + delay;
             ingress_packets.push(newest);
             cout << "ingress: " << ingress_packets.size() << endl;
         }
@@ -99,22 +115,21 @@ int main ( void )
             newest.contents = buffer;
 
             // set the timestamp value to time it should be forwarded
-            newest.timestamp = time(NULL) + delay;
+            newest.timestamp = timestamp() + delay;
+            //newest.timestamp = timestamp() + delay;
             egress_packets.push(newest);
             cout << "egress: " << egress_packets.size() << endl;
         }
 
         // if front ingress packet timestamp matches or is before current time, forward to egress
-        if ( ingress_packets.front().get_timestamp() <= time(NULL) && ingress_packets.front().get_timestamp() != 0) {
+        if ( ingress_packets.front().get_timestamp() <= timestamp()  && ingress_packets.front().get_timestamp() != 0) {
             writeall( pollfds[ 1 ].fd, ingress_packets.front().get_content());
-            cout << "off by: " << time(NULL) - ingress_packets.front().get_timestamp() << endl;
             ingress_packets.pop();
         }
 
          // if front egress packet timestamp matches or is before current time, forward to ingress
-        if ( egress_packets.front().get_timestamp() <= time(NULL) && egress_packets.front().get_timestamp() != 0) {
+        if ( egress_packets.front().get_timestamp() <= timestamp() && egress_packets.front().get_timestamp() != 0) {
             writeall( pollfds[ 0 ].fd, egress_packets.front().get_content());
-            cout << "off by: " << time(NULL) - egress_packets.front().get_timestamp() << endl;
             egress_packets.pop();
         }
     }
