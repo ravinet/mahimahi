@@ -21,7 +21,7 @@ TapDevice::TapDevice( std::string name )
   : fd_()
 {
     struct ifreq ifr;
-    int err;
+    int err, sockfd;
 
     if ( ( fd_ = open( "/dev/net/tun", O_RDWR ) ) < 0 ) {
         throw Exception( "open" );
@@ -38,15 +38,26 @@ TapDevice::TapDevice( std::string name )
     strncpy( ifr.ifr_name, name.c_str(), IFNAMSIZ );
 
     // create interface
-    if ( ( err = ioctl( fd_, TUNSETIFF, ( void * ) &ifr ) ) < 0 ){
+    if ( ( err = ioctl( fd_, TUNSETIFF, ( void * ) &ifr ) ) < 0 ) {
         close( fd_ );
         throw Exception( "ioctl" );
     }
+
+    // add flag to bring interface up
+    ifr.ifr_flags += IFF_UP;
+
+    sockfd = socket( AF_INET, SOCK_DGRAM, 0 );
+
+    if ( ( err = ioctl( sockfd, SIOCSIFFLAGS, ( void * ) &ifr ) ) < 0 ) {
+        close( sockfd );
+        throw Exception( "ioctl" );
+    }
+    close( sockfd );
 }
 
 TapDevice::~TapDevice()
 {
-    if ( close(fd_) < 0 ) {
+    if ( close( fd_ ) < 0 ) {
 	throw Exception( "close" );
     }
 }
