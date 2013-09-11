@@ -79,20 +79,16 @@ int main ( void )
             egress_queue.push(rcvd);
         }
 
-        // if front ingress packet timestamp matches or is before current time, forward to egress
-        if ( !ingress_queue.empty() ) {
-            if ( ingress_queue.front().get_timestamp() <= timestamp()  && ingress_queue.front().get_timestamp() != 0) {
-                egress_tap.write(ingress_queue.front().get_content());
-                ingress_queue.pop();
-            }
+        // if packet in ingress queue and front ingress packet timestamp matches or is before current time, forward to egress
+        if ( !ingress_queue.empty() && ingress_queue.front().get_timestamp() <= timestamp() ) {
+            egress_tap.write(ingress_queue.front().get_content());
+            ingress_queue.pop();
         }
 
-        // if front egress packet timestamp matches or is before current time, forward to ingress
-        if ( !egress_queue.empty() ) {
-            if ( egress_queue.front().get_timestamp() <= timestamp() && egress_queue.front().get_timestamp() != 0) {
-                ingress_tap.write(egress_queue.front().get_content());
-                egress_queue.pop();
-            }
+        // if packet in egress queue and front egress packet timestamp matches or is before current time, forward to ingress
+        if ( !egress_queue.empty() && egress_queue.front().get_timestamp() <= timestamp() ) {
+            ingress_tap.write(egress_queue.front().get_content());
+            egress_queue.pop();
         }
     }
 }
