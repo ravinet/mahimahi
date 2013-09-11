@@ -10,5 +10,5 @@ bin_PROGRAMS += forktest
 forktest_SOURCES = forktest.cc
 
 bin_PROGRAMS += ferry
-ferry_SOURCES = ferry.cc ezio.cc
+ferry_SOURCES = ferry.cc ezio.cc tapdevice.cc
 ferry_LDADD = -lrt
