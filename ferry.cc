@@ -26,37 +26,37 @@ void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t dela
     FerryQueue ingress_queue( delay_ms ), egress_queue( delay_ms );
 
     while ( true ) {
-       int wait_time = min( ingress_queue.wait_time(),
-                            egress_queue.wait_time() );
+        int wait_time = min( ingress_queue.wait_time(),
+                             egress_queue.wait_time() );
 
-       if( poll( pollfds, 2, wait_time ) == -1 ) {
-           throw Exception( "poll" );
-       }
+        if( poll( pollfds, 2, wait_time ) == -1 ) {
+            throw Exception( "poll" );
+        }
 
-       if ( (pollfds[ 0 ].revents & POLLERR) || (pollfds[ 1 ].revents & POLLERR) ) {
-           throw Exception( "poll" );
-       }
+        if ( (pollfds[ 0 ].revents & POLLERR) || (pollfds[ 1 ].revents & POLLERR) ) {
+            throw Exception( "poll" );
+        }
 
-       if ( pollfds[ 0 ].revents & POLLIN ) { /* data on ingress */
-           ingress_queue.read_packet( ingress_tap.read() );
-       }
+        if ( pollfds[ 0 ].revents & POLLIN ) { /* data on ingress */
+            ingress_queue.read_packet( ingress_tap.read() );
+        }
 
-       if ( pollfds[ 1 ].revents & POLLIN ) { /* data on egress */
-           egress_queue.read_packet( egress_tap.read() );
-       }
+        if ( pollfds[ 1 ].revents & POLLIN ) { /* data on egress */
+            egress_queue.read_packet( egress_tap.read() );
+        }
 
-       ingress_queue.write_packets( egress_tap );
-       egress_queue.write_packets( ingress_tap );
+        ingress_queue.write_packets( egress_tap );
+        egress_queue.write_packets( ingress_tap );
     }
 }
 
 int main ( void )
 {
-    // create two tap devices: ingress and egress
-    TapDevice ingress_tap( "ingress" );
-    TapDevice egress_tap( "egress" );
-
     try {
+        // create two tap devices: ingress and egress
+        TapDevice ingress_tap( "ingress" );
+        TapDevice egress_tap( "egress" );
+
         ferry( ingress_tap, egress_tap, 2500 );
     } catch ( const Exception & e ) {
         e.die();
