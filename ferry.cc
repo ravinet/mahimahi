@@ -42,14 +42,18 @@ void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t dela
 
        now = timestamp();
 
+       if ( (pollfds[ 0 ].revents & POLLERR) || (pollfds[ 1 ].revents & POLLERR) ) {
+           throw Exception( "poll" );
+       }
+
        // read from ingress, which triggered POLLIN
        if ( pollfds[ 0 ].revents & POLLIN ) {
-           ingress_queue.emplace( timestamp() + delay_ms, ingress_tap.read() );
+           ingress_queue.emplace( now + delay_ms, ingress_tap.read() );
        }
 
        // read from egress, which triggered POLLIN
        if ( pollfds[ 1 ].revents & POLLIN ) {
-           egress_queue.emplace( timestamp() + delay_ms, egress_tap.read() );
+           egress_queue.emplace( now + delay_ms, egress_tap.read() );
        }
 
        // if packet in ingress queue and front ingress packet timestamp matches or is before current time, forward to egress
