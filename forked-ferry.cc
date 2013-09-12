@@ -4,6 +4,8 @@
 #include <poll.h>
 #include <queue>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "ezio.hh"
 #include "timestamp.hh"
@@ -13,40 +15,54 @@
 
 using namespace std;
 
-void ferry( TapDevice & src_tap, TapDevice & dest_tap, const uint64_t delay_ms )
+void ferry( TapDevice & tap, FileDescriptor & sibling_fd, const uint64_t delay_ms )
 {
     // set up poll for tap devices
-    struct pollfd pollfds[ 1 ];
-    pollfds[ 0 ].fd = src_tap.fd();
+    struct pollfd pollfds[ 2 ];
+    pollfds[ 0 ].fd = tap.fd().num();
     pollfds[ 0 ].events = POLLIN;
 
-    FerryQueue packet_queue( delay_ms );
+    pollfds[ 1 ].fd = sibling_fd.num();
+    pollfds[ 1 ].events = POLLIN;
+
+    FerryQueue delay_queue( delay_ms );
 
     while ( true ) {
-        int wait_time = packet_queue.wait_time();
+        int wait_time = delay_queue.wait_time();
         
-        if( poll( pollfds, 1, wait_time ) == -1 ) {
+        if( poll( pollfds, 2, wait_time ) == -1 ) {
             throw Exception( "poll" );
         }
 
-        if ( pollfds[ 0 ].revents & POLLERR ) { /* check for error */
+        if ( (pollfds[ 0 ].revents | pollfds[ 1 ].revents) & POLLERR ) { /* check for error */
             throw Exception( "poll" );
         }
 
-        if ( pollfds[ 0 ].revents & POLLIN ) { /* data on src */
-            packet_queue.read_packet( src_tap.read() );
+        if ( pollfds[ 0 ].revents & POLLIN ) {
+            /* packet FROM tap device goes to back of delay queue */
+            delay_queue.read_packet( tap.fd().read() );
         }
 
-        packet_queue.write_packets( dest_tap );
+        if ( pollfds[ 1 ].revents & POLLIN ) {
+            /* packet FROM sibling goes to tap device */
+            tap.fd().write( sibling_fd.read() );
+        }
+
+        /* packets FROM tail of delay queue go to sibling */
+        delay_queue.write_packets( sibling_fd );
     }
 }
 
 int main( void )
 {
     try {
-        // create two tap devices: ingress and egress
-        TapDevice ingress_tap( "ingress" );
-        TapDevice egress_tap( "egress" );
+        /* make pair of connected sockets */
+        int pipes[ 2 ];
+        if ( socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) < 0 ) {
+            throw Exception( "socketpair" );
+        }
+        FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
+            ingress_socket( pipes[ 1 ], "socketpair" );
 
         /* Fork */
         pid_t child_pid = fork();
@@ -55,9 +71,12 @@ int main( void )
         }
 
         if ( child_pid == 0 ) { /* child */
-            ferry( ingress_tap, egress_tap, 2500 );
+            /* unshare here???????? */
+            TapDevice ingress_tap( "ingress" );
+            ferry( ingress_tap, egress_socket, 2500 );
         } else { /* parent */
-            ferry( egress_tap, ingress_tap, 2500 );
+            TapDevice egress_tap( "egress" );
+            ferry( egress_tap, ingress_socket, 2500 );
         }
     } catch ( const Exception & e ) {
         e.die();

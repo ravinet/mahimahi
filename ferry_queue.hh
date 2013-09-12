@@ -21,7 +21,7 @@ public:
 
     void read_packet( const std::string & contents );
 
-    void write_packets( TapDevice & output );
+    void write_packets( const FileDescriptor & fd );
 
     int wait_time( void ) const;
 };

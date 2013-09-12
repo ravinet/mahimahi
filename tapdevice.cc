@@ -22,7 +22,7 @@ TapDevice::TapDevice( const std::string & name )
     strncpy( ifr.ifr_name, name.c_str(), IFNAMSIZ ); /* interface name */
 
     // create interface
-    if ( ioctl( fd(), TUNSETIFF, static_cast<void *>( &ifr ) ) < 0 ) {
+    if ( ioctl( fd().num(), TUNSETIFF, static_cast<void *>( &ifr ) ) < 0 ) {
         throw Exception( "ioctl" );
     }
 
@@ -31,17 +31,8 @@ TapDevice::TapDevice( const std::string & name )
 
     FileDescriptor sockfd( socket( AF_INET, SOCK_DGRAM, 0 ), "socket" );
 
-    if ( ioctl( sockfd.fd(), SIOCSIFFLAGS, static_cast<void *>( &ifr ) ) < 0 ) {
+    if ( ioctl( sockfd.num(), SIOCSIFFLAGS, static_cast<void *>( &ifr ) ) < 0 ) {
         throw Exception( "ioctl" );
     }
 }
 
-void TapDevice::write( const string & buffer ) const
-{
-    writeall( fd(), buffer );
-}
-
-string TapDevice::read( void ) const
-{
-    return readall( fd() );
-}

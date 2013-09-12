@@ -17,10 +17,10 @@ void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t dela
 {
     // set up poll for tap devices
     struct pollfd pollfds[ 2 ];
-    pollfds[ 0 ].fd = ingress_tap.fd();
+    pollfds[ 0 ].fd = ingress_tap.fd().num();
     pollfds[ 0 ].events = POLLIN;
 
-    pollfds[ 1 ].fd = egress_tap.fd();
+    pollfds[ 1 ].fd = egress_tap.fd().num();
     pollfds[ 1 ].events = POLLIN;
 
     FerryQueue ingress_queue( delay_ms ), egress_queue( delay_ms );
@@ -38,15 +38,15 @@ void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t dela
         }
 
         if ( pollfds[ 0 ].revents & POLLIN ) { /* data on ingress */
-            ingress_queue.read_packet( ingress_tap.read() );
+            ingress_queue.read_packet( ingress_tap.fd().read() );
         }
 
         if ( pollfds[ 1 ].revents & POLLIN ) { /* data on egress */
-            egress_queue.read_packet( egress_tap.read() );
+            egress_queue.read_packet( egress_tap.fd().read() );
         }
 
-        ingress_queue.write_packets( egress_tap );
-        egress_queue.write_packets( ingress_tap );
+        ingress_queue.write_packets( egress_tap.fd() );
+        egress_queue.write_packets( ingress_tap.fd() );
     }
 }
 

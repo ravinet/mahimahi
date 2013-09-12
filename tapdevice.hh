@@ -14,10 +14,7 @@ private:
 public:
     TapDevice( const std::string & name );
 
-    const int & fd( void ) const { return fd_.fd(); }
-
-    void write( const std::string & buffer ) const;
-    std::string read( void ) const;
+    const FileDescriptor & fd( void ) const { return fd_; }
 };
 
 #endif /* TAPDEVICE_HH */

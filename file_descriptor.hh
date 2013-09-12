@@ -4,6 +4,7 @@
 #define FILE_DESCRIPTOR_HH
 
 #include "exception.hh"
+#include "ezio.hh"
 
 class FileDescriptor
 {
@@ -26,9 +27,19 @@ public:
         }
     }
 
-    const int & fd( void ) const { return fd_; }
+    const int & num( void ) const { return fd_; }
 
     FileDescriptor( const FileDescriptor & other ) = delete;
+
+    void write( const std::string & buffer ) const
+    {
+        writeall( num(), buffer );
+    }
+
+    std::string read( void ) const
+    {
+        return readall( num() );
+    }
 };
 
 #endif /* FILE_DESCRIPTOR_HH */
