@@ -3,11 +3,12 @@
 
 #include <poll.h>
 #include <queue>
+#include <iostream>
 
 #include "ezio.hh"
-#include "packet.hh"
 #include "timestamp.hh"
 #include "tapdevice.hh"
+#include "exception.hh"
 
 using namespace std;
 
@@ -29,53 +30,45 @@ int main ( void )
     uint64_t delay_ms = 2000;
     
     // queue of packets not yet forwarded
-    queue<Packet> ingress_queue;
-    queue<Packet> egress_queue;
+    queue< pair<uint64_t, string> > ingress_queue;
+    queue< pair<uint64_t, string> > egress_queue;
 
     // poll on both tap devices
-    while ( 1 ) {
+    while ( true ) {
+       uint64_t now = timestamp();
+
        // set poll wait time for each queue to time before head packet must be sent
-       uint64_t ingress_wait = ingress_queue.empty() ? UINT64_MAX : ingress_queue.front().get_timestamp() - timestamp();
-       uint64_t egress_wait = egress_queue.empty() ? UINT64_MAX : egress_queue.front().get_timestamp() - timestamp();
-       int wait_time = static_cast<int>(std::min(ingress_wait, egress_wait));
-        if( poll( pollfds, 2, wait_time ) == -1 ) {
-            perror( "poll" );
-            return EXIT_FAILURE;
-        }
-        // read from ingress which triggered POLLIN
-        if ( pollfds[ 0 ].revents & POLLIN ) {
-            //string buffer = readall( pollfds[ 0 ].fd );
-            string buffer = ingress_tap.read();
-            Packet rcvd;
-            rcvd.contents = buffer;
+       uint64_t ingress_wait = ingress_queue.empty() ? UINT16_MAX : ingress_queue.front().first - now;
+       uint64_t egress_wait = egress_queue.empty() ? UINT16_MAX : egress_queue.front().first - now;
 
-            // set the timestamp value to time it should be forwarded
-            rcvd.timestamp = timestamp() + delay_ms;
-            ingress_queue.push(rcvd);
-        }
+       int wait_time = static_cast<int>(min(ingress_wait, egress_wait));
 
-        // read from egress which triggered POLLIN
-        if ( pollfds[ 1 ].revents & POLLIN ) {
-            //string buffer = readall( pollfds[ 1 ].fd );
-            string buffer = egress_tap.read();
-            Packet rcvd;
-            rcvd.contents = buffer;
+       if( poll( pollfds, 2, wait_time ) == -1 ) {
+           throw Exception( "poll" );
+       }
 
-            // set the timestamp value to time it should be forwarded
-            rcvd.timestamp = timestamp() + delay_ms;
-            egress_queue.push(rcvd);
-        }
+       now = timestamp();
 
-        // if packet in ingress queue and front ingress packet timestamp matches or is before current time, forward to egress
-        if ( !ingress_queue.empty() && ingress_queue.front().get_timestamp() <= timestamp() ) {
-            egress_tap.write(ingress_queue.front().get_content());
-            ingress_queue.pop();
-        }
+       // read from ingress, which triggered POLLIN
+       if ( pollfds[ 0 ].revents & POLLIN ) {
+           ingress_queue.emplace( timestamp() + delay_ms, ingress_tap.read() );
+       }
 
-        // if packet in egress queue and front egress packet timestamp matches or is before current time, forward to ingress
-        if ( !egress_queue.empty() && egress_queue.front().get_timestamp() <= timestamp() ) {
-            ingress_tap.write(egress_queue.front().get_content());
-            egress_queue.pop();
-        }
+       // read from egress, which triggered POLLIN
+       if ( pollfds[ 1 ].revents & POLLIN ) {
+           egress_queue.emplace( timestamp() + delay_ms, egress_tap.read() );
+       }
+
+       // if packet in ingress queue and front ingress packet timestamp matches or is before current time, forward to egress
+       if ( !ingress_queue.empty() && ingress_queue.front().first <= now ) {
+           egress_tap.write( ingress_queue.front().second );
+           ingress_queue.pop();
+       }
+
+       // if packet in egress queue and front egress packet timestamp matches or is before current time, forward to ingress
+       if ( !egress_queue.empty() && egress_queue.front().first <= now ) {
+           ingress_tap.write( egress_queue.front().second );
+           egress_queue.pop();
+       }
     }
 }
