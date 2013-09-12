@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 
 class Exception
 {

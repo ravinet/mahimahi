@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 
 using namespace std;
 

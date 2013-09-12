@@ -9,6 +9,7 @@
 #include "timestamp.hh"
 #include "tapdevice.hh"
 #include "exception.hh"
+#include "ferry_queue.hh"
 
 using namespace std;
 
@@ -22,51 +23,30 @@ void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t dela
     pollfds[ 1 ].fd = egress_tap.fd();
     pollfds[ 1 ].events = POLLIN;
 
-    // queue of packets not yet forwarded
-    queue< pair<uint64_t, string> > ingress_queue;
-    queue< pair<uint64_t, string> > egress_queue;
+    FerryQueue ingress_queue( delay_ms ), egress_queue( delay_ms );
 
-    // poll on both tap devices
     while ( true ) {
-       uint64_t now = timestamp();
-
-       // set poll wait time for each queue to time before head packet must be sent
-       uint64_t ingress_wait = ingress_queue.empty() ? UINT16_MAX : ingress_queue.front().first - now;
-       uint64_t egress_wait = egress_queue.empty() ? UINT16_MAX : egress_queue.front().first - now;
-
-       int wait_time = static_cast<int>(min(ingress_wait, egress_wait));
+       int wait_time = min( ingress_queue.wait_time(),
+                            egress_queue.wait_time() );
 
        if( poll( pollfds, 2, wait_time ) == -1 ) {
            throw Exception( "poll" );
        }
 
-       now = timestamp();
-
        if ( (pollfds[ 0 ].revents & POLLERR) || (pollfds[ 1 ].revents & POLLERR) ) {
            throw Exception( "poll" );
        }
 
-       // read from ingress, which triggered POLLIN
-       if ( pollfds[ 0 ].revents & POLLIN ) {
-           ingress_queue.emplace( now + delay_ms, ingress_tap.read() );
+       if ( pollfds[ 0 ].revents & POLLIN ) { /* data on ingress */
+           ingress_queue.read_packet( ingress_tap.read() );
        }
 
-       // read from egress, which triggered POLLIN
-       if ( pollfds[ 1 ].revents & POLLIN ) {
-           egress_queue.emplace( now + delay_ms, egress_tap.read() );
+       if ( pollfds[ 1 ].revents & POLLIN ) { /* data on egress */
+           egress_queue.read_packet( egress_tap.read() );
        }
 
-       // if packet in ingress queue and front ingress packet timestamp matches or is before current time, forward to egress
-       if ( !ingress_queue.empty() && ingress_queue.front().first <= now ) {
-           egress_tap.write( ingress_queue.front().second );
-           ingress_queue.pop();
-       }
-
-       // if packet in egress queue and front egress packet timestamp matches or is before current time, forward to ingress
-       if ( !egress_queue.empty() && egress_queue.front().first <= now ) {
-           ingress_tap.write( egress_queue.front().second );
-           egress_queue.pop();
-       }
+       ingress_queue.write_packets( egress_tap );
+       egress_queue.write_packets( ingress_tap );
     }
 }
 

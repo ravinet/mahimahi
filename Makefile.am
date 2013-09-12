@@ -10,5 +10,6 @@ bin_PROGRAMS += forktest
 forktest_SOURCES = forktest.cc
 
 bin_PROGRAMS += ferry
-ferry_SOURCES = ferry.cc ezio.cc tapdevice.cc
+ferry_SOURCES = exception.hh ezio.cc ezio.hh ferry.cc ferry_queue.cc ferry_queue.hh \
+	file_descriptor.hh tapdevice.cc tapdevice.hh timestamp.cc timestamp.hh
 ferry_LDADD = -lrt

@@ -2,7 +2,7 @@
 
 #include <sys/wait.h>
 #include <unistd.h>
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 using namespace std;
