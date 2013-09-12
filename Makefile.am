@@ -13,3 +13,9 @@ bin_PROGRAMS += ferry
 ferry_SOURCES = exception.hh ezio.cc ezio.hh ferry.cc ferry_queue.cc ferry_queue.hh \
 	file_descriptor.hh tapdevice.cc tapdevice.hh timestamp.cc timestamp.hh
 ferry_LDADD = -lrt
+
+bin_PROGRAMS += forked-ferry
+forked_ferry_SOURCES = exception.hh ezio.cc ezio.hh forked-ferry.cc \
+	ferry_queue.cc ferry_queue.hh \
+	file_descriptor.hh tapdevice.cc tapdevice.hh timestamp.cc timestamp.hh
+forked_ferry_LDADD = -lrt
