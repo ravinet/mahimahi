@@ -27,6 +27,8 @@ public:
     }
 
     const int & fd( void ) const { return fd_; }
+
+    FileDescriptor( const FileDescriptor & other ) = delete;
 };
 
 #endif /* FILE_DESCRIPTOR_HH */
