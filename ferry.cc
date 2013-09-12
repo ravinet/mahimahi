@@ -1,23 +1,10 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 // to run arping to send packet to ingress to/from machine with ip address addr  --> arping -I ingress addr
 
-#include <iostream>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <linux/if.h>
-#include <linux/if_tun.h>
-#include <string>
-#include <cstdlib>
-#include <sys/ioctl.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <poll.h>
-#include <unistd.h>
-#include "ezio.hh"
-#include <time.h>
 #include <queue>
+
+#include "ezio.hh"
 #include "packet.hh"
 #include "timestamp.hh"
 #include "tapdevice.hh"
