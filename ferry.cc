@@ -1,4 +1,3 @@
-// to bring interface for tap device up --> sudo ip link set egress up
 // to run arping to send packet to ingress to/from machine with ip address addr  --> arping -I ingress addr
 
 #include <iostream>
