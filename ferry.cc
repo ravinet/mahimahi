@@ -12,12 +12,8 @@
 
 using namespace std;
 
-int main ( void )
+void ferry( TapDevice & ingress_tap, TapDevice & egress_tap, const uint64_t delay_ms )
 {
-    // create two tap devices: ingress and egress
-    TapDevice ingress_tap( "ingress" );
-    TapDevice egress_tap( "egress" );
-
     // set up poll for tap devices
     struct pollfd pollfds[ 2 ];
     pollfds[ 0 ].fd = ingress_tap.fd();
@@ -26,9 +22,6 @@ int main ( void )
     pollfds[ 1 ].fd = egress_tap.fd();
     pollfds[ 1 ].events = POLLIN;
 
-    // amount to delay each packet before forwarding
-    uint64_t delay_ms = 2000;
-    
     // queue of packets not yet forwarded
     queue< pair<uint64_t, string> > ingress_queue;
     queue< pair<uint64_t, string> > egress_queue;
@@ -71,4 +64,19 @@ int main ( void )
            egress_queue.pop();
        }
     }
+}
+
+int main ( void )
+{
+    // create two tap devices: ingress and egress
+    TapDevice ingress_tap( "ingress" );
+    TapDevice egress_tap( "egress" );
+
+    try {
+        ferry( ingress_tap, egress_tap, 2500 );
+    } catch ( const Exception & e ) {
+        e.die();
+    }
+
+    return EXIT_SUCCESS;
 }
