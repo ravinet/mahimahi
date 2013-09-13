@@ -7,19 +7,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "ezio.hh"
-#include "timestamp.hh"
 #include "tapdevice.hh"
 #include "exception.hh"
 #include "ferry_queue.hh"
 
 using namespace std;
 
-void ferry( TapDevice & tap, FileDescriptor & sibling_fd, const uint64_t delay_ms )
+void ferry( const FileDescriptor & tap, const FileDescriptor & sibling_fd, const uint64_t delay_ms )
 {
     // set up poll for tap devices
     struct pollfd pollfds[ 2 ];
-    pollfds[ 0 ].fd = tap.fd().num();
+    pollfds[ 0 ].fd = tap.num();
     pollfds[ 0 ].events = POLLIN;
 
     pollfds[ 1 ].fd = sibling_fd.num();
@@ -40,12 +38,12 @@ void ferry( TapDevice & tap, FileDescriptor & sibling_fd, const uint64_t delay_m
 
         if ( pollfds[ 0 ].revents & POLLIN ) {
             /* packet FROM tap device goes to back of delay queue */
-            delay_queue.read_packet( tap.fd().read() );
+            delay_queue.read_packet( tap.read() );
         }
 
         if ( pollfds[ 1 ].revents & POLLIN ) {
             /* packet FROM sibling goes to tap device */
-            tap.fd().write( sibling_fd.read() );
+            tap.write( sibling_fd.read() );
         }
 
         /* packets FROM tail of delay queue go to sibling */
@@ -73,10 +71,10 @@ int main( void )
         if ( child_pid == 0 ) { /* child */
             /* unshare here???????? */
             TapDevice ingress_tap( "ingress" );
-            ferry( ingress_tap, egress_socket, 2500 );
+            ferry( ingress_tap.fd(), egress_socket, 2500 );
         } else { /* parent */
             TapDevice egress_tap( "egress" );
-            ferry( egress_tap, ingress_socket, 2500 );
+            ferry( egress_tap.fd(), ingress_socket, 2500 );
         }
     } catch ( const Exception & e ) {
         e.die();

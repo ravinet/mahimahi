@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <string>
 
-#include "tapdevice.hh"
+#include "file_descriptor.hh"
 
 class FerryQueue
 {
