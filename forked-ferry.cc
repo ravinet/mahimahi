@@ -28,7 +28,7 @@ void ferry( const FileDescriptor & tap, const FileDescriptor & sibling_fd, const
     while ( true ) {
         int wait_time = delay_queue.wait_time();
         
-        if( poll( pollfds, 2, wait_time ) == -1 ) {
+        if ( poll( pollfds, 2, wait_time ) == -1 ) {
             throw Exception( "poll" );
         }
 
