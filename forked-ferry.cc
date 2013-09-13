@@ -69,6 +69,11 @@ int main( void )
         }
 
         if ( child_pid == 0 ) { /* child */
+            /* Unshare network namespace */
+	    if ( unshare( CLONE_NEWNET ) == -1 ) {
+		throw Exception( "unshare" );
+            }
+
             TapDevice ingress_tap( "ingress" );
             /* Fork again */
 	    pid_t grandchild_pid = fork();
