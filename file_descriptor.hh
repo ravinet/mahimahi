@@ -29,7 +29,9 @@ public:
 
     const int & num( void ) const { return fd_; }
 
+    /* forbid copying FileDescriptor objects or assigning them */
     FileDescriptor( const FileDescriptor & other ) = delete;
+    const FileDescriptor & operator=( const FileDescriptor & other ) = delete;
 
     void write( const std::string & buffer ) const
     {
