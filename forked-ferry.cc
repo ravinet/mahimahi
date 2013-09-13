@@ -69,9 +69,20 @@ int main( void )
         }
 
         if ( child_pid == 0 ) { /* child */
-            /* unshare here???????? */
             TapDevice ingress_tap( "ingress" );
-            ferry( ingress_tap.fd(), egress_socket, 2500 );
+            /* Fork again */
+	    pid_t grandchild_pid = fork();
+	    if ( grandchild_pid < 0 ) {
+                throw Exception( "fork" );
+            }
+            if ( grandchild_pid == 0 ) { /* grandchild */
+                char* argv[ 2 ] = { const_cast<char *>( "bash" ), nullptr };
+                if ( execvp ( "bash", argv ) < 0 ) {
+                    throw Exception( "execvp" );
+                }
+            } else { /* child */
+	        ferry( ingress_tap.fd(), egress_socket, 2500 );
+            }
         } else { /* parent */
             TapDevice egress_tap( "egress" );
             ferry( egress_tap.fd(), ingress_socket, 2500 );
