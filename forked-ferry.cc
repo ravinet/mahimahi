@@ -70,14 +70,14 @@ int main( void )
 
         if ( child_pid == 0 ) { /* child */
             /* Unshare network namespace */
-	    if ( unshare( CLONE_NEWNET ) == -1 ) {
-		throw Exception( "unshare" );
+            if ( unshare( CLONE_NEWNET ) == -1 ) {
+                throw Exception( "unshare" );
             }
 
             TapDevice ingress_tap( "ingress" );
             /* Fork again */
-	    pid_t grandchild_pid = fork();
-	    if ( grandchild_pid < 0 ) {
+            pid_t grandchild_pid = fork();
+            if ( grandchild_pid < 0 ) {
                 throw Exception( "fork" );
             }
             if ( grandchild_pid == 0 ) { /* grandchild */
@@ -86,7 +86,7 @@ int main( void )
                     throw Exception( "execvp" );
                 }
             } else { /* child */
-	        ferry( ingress_tap.fd(), egress_socket, 2500 );
+                ferry( ingress_tap.fd(), egress_socket, 2500 );
             }
         } else { /* parent */
             TapDevice egress_tap( "egress" );
