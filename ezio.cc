@@ -23,14 +23,11 @@ void writeall( const int fd, const string & buf )
   }
 }
 
-/* read available bytes */
-static const size_t read_chunk_size = 4096;
-
-std::string readall( const int fd )
+std::string readall( const int fd, const size_t limit )
 {
-  char buffer[ read_chunk_size ];
+  static char buffer[ ezio::read_chunk_size ];
 
-  ssize_t bytes_read = read( fd, &buffer, read_chunk_size );
+  ssize_t bytes_read = read( fd, &buffer, min( ezio::read_chunk_size, limit ) );
 
   if ( bytes_read == 0 ) {
     /* end of file = client has closed their side of connection */

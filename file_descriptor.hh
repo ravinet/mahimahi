@@ -42,6 +42,11 @@ public:
     {
         return readall( num() );
     }
+
+    std::string read( const size_t limit ) const
+    {
+        return readall( num(), limit );
+    }
 };
 
 #endif /* FILE_DESCRIPTOR_HH */
