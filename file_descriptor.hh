@@ -3,6 +3,9 @@
 #ifndef FILE_DESCRIPTOR_HH
 #define FILE_DESCRIPTOR_HH
 
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "exception.hh"
 #include "ezio.hh"
 
@@ -17,6 +20,12 @@ public:
     {
         if ( fd_ < 0 ) {
             throw Exception( syscall_name );
+        }
+
+        /* set close-on-exec flag so our file descriptors
+           aren't passed on to unrelated children (like a shell) */
+        if ( fcntl( fd_, F_SETFD, FD_CLOEXEC ) < 0 ) {
+            throw Exception( "fcntl FD_CLOEXEC" );
         }
     }
 
