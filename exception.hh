@@ -3,7 +3,6 @@
 
 #include <string>
 #include <iostream>
-#include <unistd.h>
 #include <cstring>
 
 class Exception
@@ -20,11 +19,9 @@ public:
     : attempt_( s_attempt ), error_( strerror( errno ) )
   {}
 
-  void die( void ) const
+  void perror( void ) const
   {
-    std::cerr << "Exception: " << attempt_ << ": " << error_ << std::endl;
-    std::cerr << "Exiting on error.\n";
-    exit( EXIT_FAILURE );
+    std::cerr << attempt_ << ": " << error_ << std::endl;
   }
 };
 
