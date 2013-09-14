@@ -44,7 +44,7 @@ int main( void )
             ingress_socket( pipes[ 1 ], "socketpair" );
 
         /* Fork */
-        ChildProcess container_process( [&](){
+        ChildProcess container_process( [&]()->int{
                 /* Unshare network namespace */
                 if ( unshare( CLONE_NEWNET ) == -1 ) {
                     throw Exception( "unshare" );
@@ -53,7 +53,7 @@ int main( void )
                 TapDevice ingress_tap( "ingress" );
 
                 /* Fork again */
-                ChildProcess bash_process( [](){
+                ChildProcess bash_process( []()->int{
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
                             throw Exception( "execl" );
