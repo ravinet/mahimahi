@@ -59,7 +59,8 @@ int main ( void )
 
         ferry( ingress_tap, egress_tap, 2500 );
     } catch ( const Exception & e ) {
-        e.die();
+        e.perror();
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

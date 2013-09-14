@@ -67,7 +67,10 @@ int main( void )
         TapDevice egress_tap( "egress" );
         return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
-        e.die();
+        e.perror();
+        return EXIT_FAILURE;
+    } catch ( const ChildProcess::Exit & e ) {
+        return e.status();
     }
 
     return EXIT_SUCCESS;
