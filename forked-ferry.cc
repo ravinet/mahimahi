@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <csignal>
+#include <pwd.h>
+#include <paths.h>
 
 #include "tapdevice.hh"
 #include "exception.hh"
@@ -16,6 +18,22 @@
 #include "terminal_saver.hh"
 
 using namespace std;
+
+/* get name of the user's shell */
+string shell_path( void )
+{
+    struct passwd *pw = getpwuid( getuid() );
+    if ( pw == nullptr ) {
+        throw Exception( "getpwuid" );
+    }
+
+    string shell_path( pw->pw_shell );
+    if ( shell_path.empty() ) { /* empty shell means Bourne shell */
+      shell_path = _PATH_BSHELL;
+    }
+
+    return shell_path;
+}
 
 int handle_signal( const signalfd_siginfo & sig,
                    ChildProcess & child_process )
@@ -145,9 +163,9 @@ int main( void )
 
                 /* Fork again */
                 ChildProcess bash_process( [](){
-                        char* argv[ 2 ] = { const_cast<char *>( "bash" ), nullptr };
-                        if ( execvp( "bash", argv ) < 0 ) {
-                            throw Exception( "execvp" );
+                        const string shell = shell_path();
+                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
+                            throw Exception( "execl" );
                         }
                         return EXIT_FAILURE;
                     } );
