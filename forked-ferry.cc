@@ -13,6 +13,7 @@
 #include "ferry_queue.hh"
 #include "child_process.hh"
 #include "signalfd.hh"
+#include "terminal_saver.hh"
 
 using namespace std;
 
@@ -121,6 +122,9 @@ int ferry( const FileDescriptor & tap,
 
 int main( void )
 {
+    TerminalSaver saved_state; /* terminal will be restored when object
+                                  destroyed, even if shell exits uncleanly */
+
     try {
         /* make pair of connected sockets */
         int pipes[ 2 ];
