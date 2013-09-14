@@ -1,58 +1,39 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 // to run arping to send packet to ingress to/from machine with ip address addr  --> arping -I ingress addr
 
-#include <poll.h>
-#include <queue>
-#include <iostream>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <pwd.h>
+#include <paths.h>
 
 #include "tapdevice.hh"
 #include "exception.hh"
-#include "ferry_queue.hh"
+#include "ferry.hh"
+#include "child_process.hh"
+#include "terminal_saver.hh"
 
 using namespace std;
 
-void ferry( const FileDescriptor & tap, const FileDescriptor & sibling_fd, const uint64_t delay_ms )
+/* get name of the user's shell */
+string shell_path( void )
 {
-    // set up poll for tap devices
-    struct pollfd pollfds[ 2 ];
-    pollfds[ 0 ].fd = tap.num();
-    pollfds[ 0 ].events = POLLIN;
-
-    pollfds[ 1 ].fd = sibling_fd.num();
-    pollfds[ 1 ].events = POLLIN;
-
-    FerryQueue delay_queue( delay_ms );
-
-    while ( true ) {
-        int wait_time = delay_queue.wait_time();
-        
-        if ( poll( pollfds, 2, wait_time ) == -1 ) {
-            throw Exception( "poll" );
-        }
-
-        if ( (pollfds[ 0 ].revents | pollfds[ 1 ].revents) & POLLERR ) { /* check for error */
-            throw Exception( "poll" );
-        }
-
-        if ( pollfds[ 0 ].revents & POLLIN ) {
-            /* packet FROM tap device goes to back of delay queue */
-            delay_queue.read_packet( tap.read() );
-        }
-
-        if ( pollfds[ 1 ].revents & POLLIN ) {
-            /* packet FROM sibling goes to tap device */
-            tap.write( sibling_fd.read() );
-        }
-
-        /* packets FROM tail of delay queue go to sibling */
-        delay_queue.write_packets( sibling_fd );
+    struct passwd *pw = getpwuid( getuid() );
+    if ( pw == nullptr ) {
+        throw Exception( "getpwuid" );
     }
+
+    string shell_path( pw->pw_shell );
+    if ( shell_path.empty() ) { /* empty shell means Bourne shell */
+      shell_path = _PATH_BSHELL;
+    }
+
+    return shell_path;
 }
 
 int main( void )
 {
+    TerminalSaver saved_state; /* terminal will be restored when object
+                                  destroyed, even if shell exits uncleanly */
+
     try {
         /* make pair of connected sockets */
         int pipes[ 2 ];
@@ -63,35 +44,28 @@ int main( void )
             ingress_socket( pipes[ 1 ], "socketpair" );
 
         /* Fork */
-        pid_t child_pid = fork();
-        if ( child_pid < 0 ) {
-            throw Exception( "fork" );
-        }
-
-        if ( child_pid == 0 ) { /* child */
-            /* Unshare network namespace */
-	    if ( unshare( CLONE_NEWNET ) == -1 ) {
-		throw Exception( "unshare" );
-            }
-
-            TapDevice ingress_tap( "ingress" );
-            /* Fork again */
-	    pid_t grandchild_pid = fork();
-	    if ( grandchild_pid < 0 ) {
-                throw Exception( "fork" );
-            }
-            if ( grandchild_pid == 0 ) { /* grandchild */
-                char* argv[ 2 ] = { const_cast<char *>( "bash" ), nullptr };
-                if ( execvp ( "bash", argv ) < 0 ) {
-                    throw Exception( "execvp" );
+        ChildProcess container_process( [&](){
+                /* Unshare network namespace */
+                if ( unshare( CLONE_NEWNET ) == -1 ) {
+                    throw Exception( "unshare" );
                 }
-            } else { /* child */
-	        ferry( ingress_tap.fd(), egress_socket, 2500 );
-            }
-        } else { /* parent */
-            TapDevice egress_tap( "egress" );
-            ferry( egress_tap.fd(), ingress_socket, 2500 );
-        }
+
+                TapDevice ingress_tap( "ingress" );
+
+                /* Fork again */
+                ChildProcess bash_process( [](){
+                        const string shell = shell_path();
+                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
+                            throw Exception( "execl" );
+                        }
+                        return EXIT_FAILURE;
+                    } );
+
+                return ferry( ingress_tap.fd(), egress_socket, bash_process, 2500 );
+            } );
+
+        TapDevice egress_tap( "egress" );
+        return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
         e.die();
     }
