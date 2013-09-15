@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <pwd.h>
 #include <paths.h>
+#include <fstream>
 
 #include "tapdevice.hh"
 #include "exception.hh"
@@ -31,6 +32,14 @@ string shell_path( void )
 int main( void )
 {
     try {
+        ifstream input;
+        input.open("/proc/sys/net/ipv4/ip_forward");
+        string line;
+        getline( input, line );
+	if ( line != "1" ) {
+            throw Exception( "ip forwarding disabled" );
+        }
+
         /* make pair of connected sockets */
         int pipes[ 2 ];
         if ( socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) < 0 ) {
