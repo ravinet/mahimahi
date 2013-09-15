@@ -7,7 +7,7 @@
 
 namespace ezio
 {
-  const size_t read_chunk_size = 1048576;
+    const size_t read_chunk_size = 1048576;
 }
 
 std::string readall( const int fd, const size_t limit = ezio::read_chunk_size );

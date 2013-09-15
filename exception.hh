@@ -10,21 +10,21 @@
 class Exception
 {
 private:
-  std::string attempt_, error_;
+    std::string attempt_, error_;
 
 public:
-  Exception( const std::string s_attempt, const std::string s_error )
-    : attempt_( s_attempt ), error_( s_error )
-  {}
+    Exception( const std::string s_attempt, const std::string s_error )
+        : attempt_( s_attempt ), error_( s_error )
+    {}
 
-  Exception( const std::string s_attempt )
-    : attempt_( s_attempt ), error_( strerror( errno ) )
-  {}
+    Exception( const std::string s_attempt )
+        : attempt_( s_attempt ), error_( strerror( errno ) )
+    {}
 
-  void perror( void ) const
-  {
-    std::cerr << attempt_ << ": " << error_ << std::endl;
-  }
+    void perror( void ) const
+    {
+        std::cerr << attempt_ << ": " << error_ << std::endl;
+    }
 };
 
 #endif
