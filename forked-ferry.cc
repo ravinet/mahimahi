@@ -57,6 +57,11 @@ int main( void )
 
                 TapDevice ingress_tap( "ingress" );
 
+                /* add default route through ingress */
+		if ( system( "route add -net 0.0.0.0 netmask 0.0.0.0 dev ingress" ) < 0 ) {
+                    throw Exception( " system " );
+		}
+
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
                         const string shell = shell_path();
