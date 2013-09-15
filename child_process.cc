@@ -23,10 +23,10 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure )
 
     if ( pid_ == 0 ) { /* child */
         try {
-            throw Exit( child_procedure() );
+            _exit( child_procedure() );
         } catch ( const Exception & e ) {
             e.perror();
-            throw Exit( EXIT_FAILURE );
+            _exit( EXIT_FAILURE );
         }
     }
 }

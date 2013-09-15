@@ -85,8 +85,6 @@ int main( void )
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
-    } catch ( const ChildProcess::Exit & e ) {
-        return e.status();
     }
 
     return EXIT_SUCCESS;

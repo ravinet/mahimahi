@@ -11,17 +11,6 @@
 
 class ChildProcess
 {
-public:
-    class Exit
-    {
-    private:
-        int status_;
-
-    public:
-        Exit( const int s_status ) : status_( s_status ) {}
-        int status( void ) const { return status_; }
-    };
-
 private:
     pid_t pid_;
     bool running_, terminated_;
