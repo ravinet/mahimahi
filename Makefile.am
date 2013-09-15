@@ -19,5 +19,5 @@ forked_ferry_SOURCES = exception.hh ezio.cc ezio.hh forked-ferry.cc \
 	ferry_queue.cc ferry_queue.hh \
 	file_descriptor.hh tapdevice.cc tapdevice.hh timestamp.cc timestamp.hh \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc \
-	terminal_saver.hh ferry.hh ferry.cc
+	ferry.hh ferry.cc
 forked_ferry_LDADD = -lrt
