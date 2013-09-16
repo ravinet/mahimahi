@@ -55,12 +55,15 @@ int main( void )
                     throw Exception( "unshare" );
                 }
 
-                TapDevice ingress_tap( "ingress" );
+                TapDevice ingress_tap( "ingress", "10.0.0.2" );
 
-                /* add default route through ingress */
-		if ( system( "route add -net 0.0.0.0 netmask 0.0.0.0 dev ingress" ) < 0 ) {
+                /* add default route to egress through ingress*/
+		if ( system( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" ) < 0 ) {
                     throw Exception( " system " );
 		}
+		if ( system( "route add -net default gw 10.0.0.1" ) < 0 ) {
+		    throw Exception( "system" );
+                }
 
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
@@ -74,7 +77,16 @@ int main( void )
                 return ferry( ingress_tap.fd(), egress_socket, bash_process, 2500 );
             } );
 
-        TapDevice egress_tap( "egress" );
+        TapDevice egress_tap( "egress", "10.0.0.1" );
+
+	/* add route from egress to  ingress */
+	if ( system( "route add -net 10.0.0.0 netmask 255.0.0.0 dev egress" ) < 0 ) {
+            throw Exception( "system" );
+        }
+        /* set up NAT between egress and eth0 */
+	if ( system( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" ) < 0 ) {
+	    throw Exception( "system" );
+        }
         return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
         e.perror();
