@@ -88,11 +88,8 @@ void ChildProcess::signal( const int sig )
 ChildProcess::~ChildProcess()
 {
     while ( !terminated_ ) {
-        /* if it's stopped, make it resume */
-        if ( !running_ ) {
-            resume();
-        }
-
+        resume();
+        signal( SIGHUP );
         wait();
     }
 }
