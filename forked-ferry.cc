@@ -36,7 +36,7 @@ int main( void )
         input.open("/proc/sys/net/ipv4/ip_forward");
         string line;
         getline( input, line );
-	if ( line != "1" ) {
+        if ( line != "1" ) {
             throw Exception( "ip forwarding disabled" );
         }
 
@@ -58,11 +58,8 @@ int main( void )
                 TapDevice ingress_tap( "ingress", "10.0.0.2" );
 
                 /* add default route to egress through ingress*/
-		if ( system( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" ) < 0 ) {
+                if ( system( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" ) < 0 ) {
                     throw Exception( " system " );
-		}
-		if ( system( "route add -net default gw 10.0.0.1" ) < 0 ) {
-		    throw Exception( "system" );
                 }
 
                 /* Fork again */
@@ -79,13 +76,9 @@ int main( void )
 
         TapDevice egress_tap( "egress", "10.0.0.1" );
 
-	/* add route from egress to  ingress */
-	if ( system( "route add -net 10.0.0.0 netmask 255.0.0.0 dev egress" ) < 0 ) {
-            throw Exception( "system" );
-        }
         /* set up NAT between egress and eth0 */
-	if ( system( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" ) < 0 ) {
-	    throw Exception( "system" );
+        if ( system( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" ) < 0 ) {
+            throw Exception( "system" );
         }
         return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
