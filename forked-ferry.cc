@@ -58,6 +58,9 @@ int main( void )
 
                 TapDevice ingress_tap( "ingress", "10.0.0.2" );
 
+                /* bring up localhost */
+                run( "ip link set dev lo up" );
+
                 /* add default route to egress through ingress*/
                 run( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" );
 
