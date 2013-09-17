@@ -11,6 +11,7 @@
 #include "ferry.hh"
 #include "child_process.hh"
 #include "system_runner.hh"
+#include "nat.hh"
 
 using namespace std;
 
@@ -78,7 +79,7 @@ int main( void )
         TapDevice egress_tap( "egress", "10.0.0.1", "10.0.0.2" );
 
         /* set up NAT between egress and eth0 */
-        run( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" );
+        NAT nat_rule;
 
         return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
