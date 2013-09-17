@@ -57,12 +57,12 @@ int main( void )
                     throw Exception( "unshare" );
                 }
 
-                TapDevice ingress_tap( "ingress", "10.0.0.2", "10.0.0.1" );
+                TapDevice ingress_tap( "ingress", "172.30.100.101", "172.30.100.100" );
 
                 /* bring up localhost */
                 run( "ip link set dev lo up" );
 
-                run( "route add -net default gw 10.0.0.1" );
+                run( "route add -net default gw 172.30.100.100" );
 
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
@@ -76,7 +76,7 @@ int main( void )
                 return ferry( ingress_tap.fd(), egress_socket, bash_process, 2500 );
             } );
 
-        TapDevice egress_tap( "egress", "10.0.0.1", "10.0.0.2" );
+        TapDevice egress_tap( "egress", "172.30.100.100", "172.30.100.101" );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
