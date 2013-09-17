@@ -56,7 +56,7 @@ int main( void )
                     throw Exception( "unshare" );
                 }
 
-                TapDevice ingress_tap( "ingress", "10.0.0.2" );
+                TapDevice ingress_tap( "ingress", "10.0.0.2", "10.0.0.1" );
 
                 /* bring up localhost */
                 run( "ip link set dev lo up" );
@@ -75,7 +75,7 @@ int main( void )
                 return ferry( ingress_tap.fd(), egress_socket, bash_process, 2500 );
             } );
 
-        TapDevice egress_tap( "egress", "10.0.0.1" );
+        TapDevice egress_tap( "egress", "10.0.0.1", "10.0.0.2" );
 
         /* set up NAT between egress and eth0 */
         run( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" );

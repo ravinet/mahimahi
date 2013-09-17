@@ -12,7 +12,7 @@ class TapDevice
 private:
     FileDescriptor fd_;
 public:
-    TapDevice( const std::string & name, const std::string & addr );
+    TapDevice( const std::string & name, const std::string & addr, const std::string & dstaddr );
 
     const FileDescriptor & fd( void ) const { return fd_; }
 };

@@ -54,8 +54,8 @@ int main ( void )
 {
     try {
         // create two tap devices: ingress and egress
-        TapDevice ingress_tap( "ingress", "10.0.0.2" );
-        TapDevice egress_tap( "egress", "10.0.0.1" );
+        TapDevice ingress_tap( "ingress", "10.0.0.2", "10.0.0.1" );
+        TapDevice egress_tap( "egress", "10.0.0.1", "10.0.0.2" );
 
         ferry( ingress_tap, egress_tap, 2500 );
     } catch ( const Exception & e ) {
