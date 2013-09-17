@@ -17,8 +17,6 @@ TapDevice::TapDevice( const std::string & name, const std::string & ipaddr )
     : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )
 {
     struct ifreq ifr;
-    struct sockaddr_in sin;
-
     memset( &ifr, 0, sizeof( ifr ) ); /* does not have default initializer */
 
     ifr.ifr_flags = IFF_TAP; /* make tap device */
@@ -39,12 +37,15 @@ TapDevice::TapDevice( const std::string & name, const std::string & ipaddr )
     }
 
     /* assign given IP address to interface */
-    FileDescriptor sockfd_ip( socket(AF_INET, SOCK_DGRAM, 0), "socket" );
-    sin.sin_family = AF_INET;
-    inet_aton(ipaddr.c_str(), &sin.sin_addr);
-    memcpy(&ifr.ifr_addr, &sin, sizeof(struct sockaddr));
+    struct sockaddr_in sin;
+    memset( &sin, 0, sizeof( sin ) ); /* does not have default initializer */
 
-    if ( ioctl( sockfd_ip.num(), SIOCSIFADDR, static_cast<void *>( &ifr ) ) < 0 ) {
+    sin.sin_family = AF_INET;
+
+    inet_aton( ipaddr.c_str(), &sin.sin_addr );
+    memcpy( &ifr.ifr_addr, &sin, sizeof( struct sockaddr ) );
+
+    if ( ioctl( sockfd.num(), SIOCSIFADDR, static_cast<void *>( &ifr ) ) < 0 ) {
         throw Exception( "ioctl" );
     }
 }
