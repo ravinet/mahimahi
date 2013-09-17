@@ -61,8 +61,7 @@ int main( void )
                 /* bring up localhost */
                 run( "ip link set dev lo up" );
 
-                /* add default route to egress through ingress*/
-                run( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" );
+                run( "route add -net default gw 10.0.0.1" );
 
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
