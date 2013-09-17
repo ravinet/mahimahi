@@ -10,6 +10,7 @@
 #include "exception.hh"
 #include "ferry.hh"
 #include "child_process.hh"
+#include "system_runner.hh"
 
 using namespace std;
 
@@ -58,9 +59,7 @@ int main( void )
                 TapDevice ingress_tap( "ingress", "10.0.0.2" );
 
                 /* add default route to egress through ingress*/
-                if ( system( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" ) < 0 ) {
-                    throw Exception( " system " );
-                }
+                run( "ip addr add 10.0.0.2 peer 10.0.0.1/32 dev ingress" );
 
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
@@ -77,9 +76,8 @@ int main( void )
         TapDevice egress_tap( "egress", "10.0.0.1" );
 
         /* set up NAT between egress and eth0 */
-        if ( system( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" ) < 0 ) {
-            throw Exception( "system" );
-        }
+        run( "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" );
+
         return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
     } catch ( const Exception & e ) {
         e.perror();
