@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef TAPDEVICE_HH
-#define TAPDEVICE_HH
+#ifndef TUNDEVICE_HH
+#define TUNDEVICE_HH
 
 #include <string>
 
@@ -17,4 +17,4 @@ public:
     const FileDescriptor & fd( void ) const { return fd_; }
 };
 
-#endif /* TAPDEVICE_HH */
+#endif /* TUNDEVICE_HH */
