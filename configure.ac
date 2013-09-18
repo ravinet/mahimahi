@@ -4,7 +4,7 @@
 AC_PREREQ([2.68])
 AC_INIT([mahimahi], [0.1], [ravinet@mit.edu])
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_SRCDIR([hello.cc])
+AC_CONFIG_SRCDIR([delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
