@@ -5,6 +5,7 @@
 #include <pwd.h>
 #include <paths.h>
 #include <fstream>
+#include <stdlib.h>
 
 #include "tapdevice.hh"
 #include "exception.hh"
@@ -31,9 +32,13 @@ string shell_path( void )
     return shell_path;
 }
 
-int main( void )
+int main( int argc, char *argv[] )
 {
     try {
+	if ( argc != 2) {
+	    throw Exception( "please enter only the one-way delay in ms" );
+	}
+	const uint64_t delay_ms = atoi( argv[1] );
         ifstream input;
         input.open("/proc/sys/net/ipv4/ip_forward");
         string line;
@@ -73,7 +78,7 @@ int main( void )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tap.fd(), egress_socket, bash_process, 2500 );
+                return ferry( ingress_tap.fd(), egress_socket, bash_process, delay_ms );
             } );
 
         TapDevice egress_tap( "egress", "172.30.100.100", "172.30.100.101" );
@@ -81,7 +86,7 @@ int main( void )
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tap.fd(), ingress_socket, container_process, 2500 );
+        return ferry( egress_tap.fd(), ingress_socket, container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
