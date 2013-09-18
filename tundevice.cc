@@ -8,13 +8,13 @@
 #include <arpa/inet.h>
 #include <functional>
 
-#include "tapdevice.hh"
+#include "tundevice.hh"
 #include "exception.hh"
 #include "ezio.hh"
 
 using namespace std;
 
-TapDevice::TapDevice( const string & name,
+TunDevice::TunDevice( const string & name,
                       const string & addr,
                       const string & dstaddr )
     : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )

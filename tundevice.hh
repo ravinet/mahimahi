@@ -7,12 +7,12 @@
 
 #include "file_descriptor.hh"
 
-class TapDevice
+class TunDevice
 {
 private:
     FileDescriptor fd_;
 public:
-    TapDevice( const std::string & name, const std::string & addr, const std::string & dstaddr );
+    TunDevice( const std::string & name, const std::string & addr, const std::string & dstaddr );
 
     const FileDescriptor & fd( void ) const { return fd_; }
 };

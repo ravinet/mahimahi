@@ -13,7 +13,7 @@
 #include "file_descriptor.hh"
 #include "child_process.hh"
 
-int ferry( const FileDescriptor & tap,
+int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
            ChildProcess & child_process,
            const uint64_t delay_ms );

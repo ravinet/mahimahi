@@ -47,7 +47,7 @@ int handle_signal( const signalfd_siginfo & sig,
     return -1;
 }
 
-int ferry( const FileDescriptor & tap,
+int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
            ChildProcess & child_process,
            const uint64_t delay_ms )
@@ -60,7 +60,7 @@ int ferry( const FileDescriptor & tap,
 
     // set up poll
     struct pollfd pollfds[ 3 ];
-    pollfds[ 0 ].fd = tap.num();
+    pollfds[ 0 ].fd = tun.num();
     pollfds[ 0 ].events = POLLIN;
 
     pollfds[ 1 ].fd = sibling_fd.num();
@@ -86,13 +86,13 @@ int ferry( const FileDescriptor & tap,
         }
 
         if ( pollfds[ 0 ].revents & POLLIN ) {
-            /* packet FROM tap device goes to back of delay queue */
-            delay_queue.read_packet( tap.read() );
+            /* packet FROM tun device goes to back of delay queue */
+            delay_queue.read_packet( tun.read() );
         }
 
         if ( pollfds[ 1 ].revents & POLLIN ) {
-            /* packet FROM sibling goes to tap device */
-            tap.write( sibling_fd.read() );
+            /* packet FROM sibling goes to tun device */
+            tun.write( sibling_fd.read() );
         }
 
         if ( pollfds[ 2 ].revents & POLLIN ) {

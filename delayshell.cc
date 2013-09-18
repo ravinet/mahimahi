@@ -7,7 +7,7 @@
 #include <fstream>
 #include <stdlib.h>
 
-#include "tapdevice.hh"
+#include "tundevice.hh"
 #include "exception.hh"
 #include "ferry.hh"
 #include "child_process.hh"
@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )
                     throw Exception( "unshare" );
                 }
 
-                TapDevice ingress_tap( "ingress", "172.30.100.101", "172.30.100.100" );
+                TunDevice ingress_tun( "ingress", "172.30.100.101", "172.30.100.100" );
 
                 /* bring up localhost */
                 run( "ip link set dev lo up" );
@@ -78,15 +78,15 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tap.fd(), egress_socket, bash_process, delay_ms );
+                return ferry( ingress_tun.fd(), egress_socket, bash_process, delay_ms );
             } );
 
-        TapDevice egress_tap( "egress", "172.30.100.100", "172.30.100.101" );
+        TunDevice egress_tun( "egress", "172.30.100.100", "172.30.100.101" );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tap.fd(), ingress_socket, container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
