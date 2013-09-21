@@ -1,3 +1,5 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 #ifndef SOCKET_HH
 #define SOCKET_HH
 
@@ -5,11 +7,12 @@
 #include <string>
 
 #include "address.hh"
+#include "file_descriptor.hh"
 
 class Socket
 {
 private:
-  int fd_;
+  FileDescriptor fd_;
 
   /* private constants */
   static const int listen_backlog_ = 16;
@@ -22,9 +25,8 @@ public:
 
   /* copy constructor and assignment operator */
   Socket( const Socket & other );
+  Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr );
   Socket & operator=( const Socket & other );
-
-  Socket( const int s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
   void bind( const Address & addr );
   void listen( void );
@@ -37,7 +39,7 @@ public:
   std::string read( void );
   void write( const std::string & str );
 
-  int raw_fd( void ) const { return fd_; }
+  int raw_fd( void ) const { return fd_.num(); }
 };
 
 #endif

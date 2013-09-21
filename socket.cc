@@ -1,3 +1,5 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 #include <sys/socket.h>
 #include <string.h>
 #include <netinet/in.h>
@@ -10,16 +12,16 @@
 using namespace std;
 
 Socket::Socket()
-  : fd_( socket( AF_INET, SOCK_STREAM, 0 ) ),
+  : fd_( socket( AF_INET, SOCK_STREAM, 0 ), "socket" ),
     local_addr_(),
     peer_addr_()
 {
-  if ( fd_ < 0 ) {
+  if ( fd_.num() < 0 ) {
     throw Exception( "socket" );
   }
 }
 
-Socket::Socket( const int s_fd, const Address & s_local_addr, const Address & s_peer_addr )
+Socket::Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr )
   : fd_( s_fd ),
     local_addr_( s_local_addr ),
     peer_addr_( s_peer_addr )
@@ -28,16 +30,14 @@ Socket::Socket( const int s_fd, const Address & s_local_addr, const Address & s_
 
 Socket::~Socket()
 {
-  if ( close( fd_ ) < 0 ) {
-    throw Exception( "close" );
-  }
+  fd_.~FileDescriptor();
 }
 
 void Socket::bind( const Address & addr )
 {
   /* allow quicker reuse of local address */
   int true_value = true;
-  if ( setsockopt( fd_, SOL_SOCKET, SO_REUSEADDR, &true_value, sizeof( true_value ) ) < 0 ) {
+  if ( setsockopt( fd_.num(), SOL_SOCKET, SO_REUSEADDR, &true_value, sizeof( true_value ) ) < 0 ) {
     throw Exception( "setsockopt" );
   }
 
@@ -45,7 +45,7 @@ void Socket::bind( const Address & addr )
   local_addr_ = addr;
  
   /* bind the socket to listen_addr */
-  if ( ::bind( fd_,
+  if ( ::bind( fd_.num(),
 	       reinterpret_cast<const sockaddr *>( &local_addr_.raw_sockaddr() ),
 	       sizeof( local_addr_.raw_sockaddr() ) ) < 0 ) {
     throw Exception( "bind" );
@@ -54,7 +54,7 @@ void Socket::bind( const Address & addr )
 
 void Socket::listen( void )
 {
-  if ( ::listen( fd_, listen_backlog_ ) < 0 ) {
+  if ( ::listen( fd_.num(), listen_backlog_ ) < 0 ) {
     throw Exception( "listen" );
   }
 }
@@ -66,7 +66,7 @@ Socket Socket::accept( void )
   socklen_t new_connection_addr_size = sizeof( new_connection_addr );
 
   /* wait for client connection */
-  int new_fd = ::accept( fd_,
+  int new_fd = ::accept( fd_.num(),
 			 reinterpret_cast<sockaddr *>( &new_connection_addr ),
 			 &new_connection_addr_size );
 
@@ -79,19 +79,19 @@ Socket Socket::accept( void )
     throw Exception( "sockaddr size mismatch" );
   }
   
-  return Socket( new_fd, local_addr_, Address( new_connection_addr ) );
+  return Socket( FileDescriptor( new_fd, "accept" ), local_addr_, Address( new_connection_addr ) );
 }
 
 string Socket::read( void )
 {
-  return readall( fd_ );
+  return fd_.read();
 }
 
 void Socket::connect( const Address & addr )
 {
   peer_addr_ = addr;
 
-  if ( ::connect( fd_,
+  if ( ::connect( fd_.num(),
 		  reinterpret_cast<const struct sockaddr *>( &peer_addr_.raw_sockaddr() ),
 		  sizeof( peer_addr_.raw_sockaddr() ) ) < 0 ) {
     throw Exception( "connect" );
@@ -100,28 +100,26 @@ void Socket::connect( const Address & addr )
 
 void Socket::write( const std::string & str )
 {
-  writeall( fd_, str );
+  fd_.write( str );
 }
 
 Socket::Socket( const Socket & other )
-  : fd_( dup( other.fd_ ) ),
+  : fd_( other.fd_ ),
     local_addr_( other.local_addr_ ),
     peer_addr_( other.peer_addr_ )
 {
-  if ( fd_ < 0 ) {
+  if ( fd_.num() < 0 ) {
     throw Exception( "dup" );
   }
 }
 
 Socket & Socket::operator=( const Socket & other )
 {
-  fd_ = dup( other.fd_ );
+  fd_ = other.fd_;
   local_addr_ = other.local_addr_;
   peer_addr_ = other.peer_addr_;
-  
-  if ( fd_ < 0 ) {
-    throw Exception( "dup" );
+  if ( fd_.num() < 0 ) {
+       throw Exception( "dup" );
   }
-
   return *this;
 }
