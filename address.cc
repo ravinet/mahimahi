@@ -1,3 +1,5 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -18,7 +20,10 @@ Address::Address( const struct sockaddr_in &s_addr )
 Address::Address()
   : addr_()
 {
-  memset( &addr_, 0, sizeof( addr_ ) );
+    /* makes struct for random ip address and port 0 */
+    addr_.sin_family = AF_INET;
+    addr_.sin_port = htons( 0 );
+    addr_.sin_addr.s_addr = htonl( INADDR_ANY );    
 }
 
 Address::Address( const std::string hostname, const std::string service )
