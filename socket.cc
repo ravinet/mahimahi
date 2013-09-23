@@ -17,19 +17,14 @@ Socket::Socket()
     peer_addr_()
 {
   if ( fd_.num() < 0 ) {
+    cout << "fails" << endl;
     throw Exception( "socket" );
   }
 }
-/*
-Socket::Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr )
-  : fd_( s_fd ),
-    local_addr_( s_local_addr ),
-    peer_addr_( s_peer_addr )
-{
-}
-*/
+
 Socket::~Socket()
 {
+  cout << "deconstructor called" << endl;
   fd_.~FileDescriptor();
 }
 
@@ -64,7 +59,7 @@ void Socket::listen( void )
   }
 }
 
-string Socket::read( void )
+string Socket::read( void ) const
 {
   return fd_.read();
 }
@@ -80,7 +75,7 @@ void Socket::connect( const Address & addr )
   }
 }
 
-void Socket::write( const std::string & str )
+void Socket::write( const std::string & str ) const
 {
   fd_.write( str );
 }

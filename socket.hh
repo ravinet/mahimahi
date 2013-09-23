@@ -23,9 +23,6 @@ public:
   Socket(); /* default constructor */
   ~Socket();
 
-  /* copy constructor and assignment operator */
-  //Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr );
-
   int bind( const Address & addr );
   void listen( void );
   void connect( const Address & addr );
@@ -34,8 +31,8 @@ public:
   const Address & local_addr( void ) const { return local_addr_; }
   const Address & peer_addr( void ) const { return peer_addr_; }
 
-  std::string read( void );
-  void write( const std::string & str );
+  std::string read( void ) const;
+  void write( const std::string & str ) const;
 
   int raw_fd( void ) const { return fd_.num(); }
 };

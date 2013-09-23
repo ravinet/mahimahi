@@ -10,5 +10,6 @@ delayshell_SOURCES = exception.hh ezio.cc ezio.hh delayshell.cc \
 delayshell_LDADD = -lrt
 bin_PROGRAMS += dnsoutsideproxy
 dnsoutsideproxy_SOURCES = address.hh address.cc socket.cc socket.hh ezio.cc \
-		ezio.hh dnsoutsideproxy.cc
+		ezio.hh dnsoutsideproxy.cc timestamp.cc exception.hh file_descriptor.hh /
+		timestamp.hh
 dnsoutsideproxy_LDADD = -lrt
