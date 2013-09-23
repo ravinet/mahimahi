@@ -24,11 +24,9 @@ public:
   ~Socket();
 
   /* copy constructor and assignment operator */
-  Socket( const Socket & other );
-  Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr );
-  Socket & operator=( const Socket & other );
+  //Socket( const FileDescriptor & s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
-  void bind( const Address & addr );
+  int bind( const Address & addr );
   void listen( void );
   void connect( const Address & addr );
   Socket accept( void );

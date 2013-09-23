@@ -39,14 +39,8 @@ public:
     const int & num( void ) const { return fd_; }
 
     /* forbid copying FileDescriptor objects or assigning them */
-    FileDescriptor( const FileDescriptor & other )
-       : fd_(other.fd_) {}
-
-    const FileDescriptor & operator=( const FileDescriptor & other )
-    {
-       fd_ = other.fd_;
-       return *this;
-    }
+    FileDescriptor( const FileDescriptor & other ) = delete;
+    const FileDescriptor & operator=( const FileDescriptor & other ) = delete;
 
     void write( const std::string & buffer ) const
     {
