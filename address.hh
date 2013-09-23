@@ -15,6 +15,9 @@ public:
   Address( const struct sockaddr_in &s_addr );
   Address( const std::string hostname, const std::string service );
   Address();
+  Address( int port );
+  Address( const char* ip_addr, int port );
+
 
   std::string hostname( void ) const;
   uint16_t port( void ) const;

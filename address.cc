@@ -20,11 +20,29 @@ Address::Address( const struct sockaddr_in &s_addr )
 Address::Address()
   : addr_()
 {
+  memset( &addr_, 0, sizeof( addr_ ) );
+}
+
+/* constructor for random ip address and port 0 */
+Address::Address( int port )
+  : addr_()
+{
     /* makes struct for random ip address and port 0 */
     addr_.sin_family = AF_INET;
-    addr_.sin_port = htons( 0 );
-    addr_.sin_addr.s_addr = htonl( INADDR_ANY );    
+    addr_.sin_port = htons( port );
+    addr_.sin_addr.s_addr = htonl( INADDR_ANY );
 }
+
+/* constructor that takes port and ip address (if binding to specific one */
+Address::Address( const char* ip_addr, int port )
+  : addr_()
+{
+    /* makes struct for random ip address and port 0 */
+    addr_.sin_family = AF_INET;
+    addr_.sin_port = htons( port );
+    inet_pton(AF_INET, ip_addr, &(addr_.sin_addr));
+}
+
 
 Address::Address( const std::string hostname, const std::string service )
   : addr_()
