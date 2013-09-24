@@ -12,7 +12,7 @@
 using namespace std;
 
 Socket::Socket()
-  : fd_( socket( AF_INET, SOCK_STREAM, 0 ), "socket" ),
+  : fd_( socket( AF_INET, SOCK_DGRAM, 0 ), "socket" ),
     local_addr_(),
     peer_addr_()
 {
