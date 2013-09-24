@@ -37,7 +37,7 @@ int main( void )
     try {
     Socket listener_socket;
     //cout << listener_socket.raw_fd();
-    Address listen_address( 0 );
+    Address listen_address();
     //int port = listener_socket.bind( listen_address );
     //listener_socket.bind( listen_address );
     //cout << port << endl;

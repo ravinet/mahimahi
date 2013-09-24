@@ -16,47 +16,31 @@ Socket::Socket()
     local_addr_(),
     peer_addr_()
 {
-  if ( fd_.num() < 0 ) {
-    cout << "fails" << endl;
-    throw Exception( "socket" );
-  }
 }
 
-Socket::~Socket()
+void Socket::bind( const Address & addr )
 {
-  cout << "deconstructor called" << endl;
-  fd_.~FileDescriptor();
-}
-
-int Socket::bind( const Address & addr )
-{
-  /* allow quicker reuse of local address */
-  int true_value = true;
-  if ( setsockopt( fd_.num(), SOL_SOCKET, SO_REUSEADDR, &true_value, sizeof( true_value ) ) < 0 ) {
-    throw Exception( "setsockopt" );
-  }
-
   /* make local address to listen on */
   local_addr_ = addr;
  
   /* bind the socket to listen_addr */
   if ( ::bind( fd_.num(),
-	       reinterpret_cast<const sockaddr *>( &local_addr_.raw_sockaddr() ),
-	       sizeof( local_addr_.raw_sockaddr() ) ) < 0 ) {
+               reinterpret_cast<const sockaddr *>( &local_addr_.raw_sockaddr() ),
+               sizeof( local_addr_.raw_sockaddr() ) ) < 0 ) {
     throw Exception( "bind" );
   }
-  /* return port */
-  socklen_t length = sizeof( local_addr_.raw_sockaddr() );
-  int sock_name;
-  sock_name = getsockname( fd_.num(), ( struct sockaddr* )&local_addr_.raw_sockaddr(), &length );
-  return( sock_name );
-}
 
-void Socket::listen( void )
-{
-  if ( ::listen( fd_.num(), listen_backlog_ ) < 0 ) {
-    throw Exception( "listen" );
+  /* set local_addr to the address we actually were bound to */
+  struct sockaddr_in new_local_addr;
+  socklen_t new_local_addr_len = sizeof( new_local_addr );
+
+  if ( ::getsockname( fd_.num(),
+                      reinterpret_cast<sockaddr *>( &new_local_addr ),
+                      &new_local_addr_len ) < 0 ) {
+      throw Exception( "getsockname" );
   }
+
+  local_addr_ = Address( new_local_addr );
 }
 
 string Socket::read( void ) const

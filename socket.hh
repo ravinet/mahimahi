@@ -14,17 +14,12 @@ class Socket
 private:
   FileDescriptor fd_;
 
-  /* private constants */
-  static const int listen_backlog_ = 16;
-
   Address local_addr_, peer_addr_;
 
 public:
   Socket(); /* default constructor */
-  ~Socket();
 
-  int bind( const Address & addr );
-  void listen( void );
+  void bind( const Address & addr );
   void connect( const Address & addr );
   Socket accept( void );
 
