@@ -32,7 +32,7 @@ public:
 
   int raw_fd( void ) const { return fd_.num(); }
 
-  std::pair <std::string, Address> recv( void ) const;
+  std::pair <Address, std::string> recv( void ) const;
 };
 
 #endif

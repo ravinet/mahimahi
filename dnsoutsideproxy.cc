@@ -3,6 +3,7 @@
 #include <thread>
 #include <string>
 #include <iostream>
+#include <utility>
 
 #include "address.hh"
 #include "socket.hh"
@@ -10,7 +11,7 @@
 
 using namespace std;
 
-void service_request( const Socket & server_socket, const std::string request )
+void service_request( const Socket & server_socket, const std::string request, const Address source )
 {
     /* time thread was created (socket to 127.0.0.1:53 created) */
     uint64_t time_start = timestamp();
@@ -46,8 +47,12 @@ int main( void )
         cout << "hostname: " << listener_hostname << endl;
 
         while ( true ) {  /* service a request */
-            string the_request = listener_socket.read(); /*  will block until we have a request */
-            thread newthread( [&listener_socket] ( const string request ) -> void { service_request( listener_socket, request ); }, the_request );
+            pair <string, Address> recv_info = listener_socket.recv();
+            Address source_addr = recv_info.first;
+            string the_request = recv_info.second;
+
+            //string the_request = listener_socket.read(); /*  will block until we have a request */
+            thread newthread( [&listener_socket] ( const string request, const Address source_addr ) -> void { service_request( listener_socket, request, source ); }, the_request, source_addr );
             newthread.detach();
         }
     }
