@@ -13,26 +13,27 @@
 class Socket
 {
 private:
-  FileDescriptor fd_;
+    FileDescriptor fd_;
 
-  Address local_addr_, peer_addr_;
+    Address local_addr_, peer_addr_;
 
 public:
-  Socket(); /* default constructor */
+    Socket(); /* default constructor */
 
-  void bind( const Address & addr );
-  void connect( const Address & addr );
-  Socket accept( void );
+    void bind( const Address & addr );
+    void connect( const Address & addr );
+    Socket accept( void );
 
-  const Address & local_addr( void ) const { return local_addr_; }
-  const Address & peer_addr( void ) const { return peer_addr_; }
+    const Address & local_addr( void ) const { return local_addr_; }
+    const Address & peer_addr( void ) const { return peer_addr_; }
 
-  std::string read( void ) const;
-  void write( const std::string & str ) const;
+    std::string read( void ) const;
+    void write( const std::string & str ) const;
 
-  int raw_fd( void ) const { return fd_.num(); }
+    int raw_fd( void ) const { return fd_.num(); }
 
-  std::pair <Address, std::string> recv( void ) const;
+    std::pair< Address, std::string > recvfrom( void ) const;
+    void sendto( const Address & destination, const std::string & payload ) const;
 };
 
 #endif

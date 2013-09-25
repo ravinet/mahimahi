@@ -1,5 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <poll.h>
+
 #include <thread>
 #include <string>
 #include <iostream>
@@ -11,25 +13,36 @@
 
 using namespace std;
 
-void service_request( const Socket & server_socket, const std::string request, const Address source )
+void service_request( const Socket & server_socket, const pair< Address, std::string > request )
 {
-    /* time thread was created (socket to 127.0.0.1:53 created) */
-    uint64_t time_start = timestamp();
-    /* kill thread after 60 seconds */
-    while ( timestamp() - time_start < 1000 ) {
+    /* open socket to 127.0.0.1:53 */
+    Socket outgoing_socket;
+    outgoing_socket.bind( Address( "localhost", "domain" ) );
 
-        /* open socket to 127.0.0.1:53 */
-        Socket outgoing_socket;
-        Address outgoing_address( "127.0.0.1", "53" );
+    /* send request to local dns server */
+    outgoing_socket.write( request.second );
 
-        outgoing_socket.bind( outgoing_address );
-        /* send request to local dns server */
-        outgoing_socket.write( request );
-        /* read on outgoing_socket until response...then write to server_socket */
-        string the_response = outgoing_socket.read();
-        server_socket.write( the_response );
+    /* wait up to 10 seconds for a reply */
+    struct pollfd pollfds;
+    pollfds.fd = outgoing_socket.raw_fd();
+    pollfds.events = POLLIN;
+
+    if ( poll( &pollfds, 1, 10000 ) < 0 ) {
+        throw Exception( "poll" );
     }
-    exit( EXIT_SUCCESS );
+
+    if ( pollfds.revents & POLLIN ) {
+        /* read response, then send back to client */
+        server_socket.sendto( request.first, outgoing_socket.read() );
+    } else if ( pollfds.revents & POLLERR ) {
+        cerr << "POLLERR" << endl;
+    } else {
+        cerr << "Timeout." << endl;
+    }
+
+    cerr.flush();
+
+    return;
 }
 
 int main( void )
@@ -37,26 +50,19 @@ int main( void )
     /* make listener socket for dns requests */
     try {
         Socket listener_socket;
-        /* 0.0.0.0 is same as INADDR_ANY (accepts connection to any local IP address) */
-        Address listen_address("0.0.0.0", "0");
-        listener_socket.bind( listen_address );
+        /* bind to any IP address and kernel-allocated port */
+        listener_socket.bind( Address() );
 
-        uint16_t listener_port = listener_socket.local_addr().port();
-        string listener_hostname = listener_socket.local_addr().hostname();        
-        cout << "port: " << listener_port<< endl;
-        cout << "hostname: " << listener_hostname << endl;
+        cout << "hostname: " << listener_socket.local_addr().hostname() << endl;
+        cout << "port: " << listener_socket.local_addr().port() << endl;
 
         while ( true ) {  /* service a request */
-            pair <string, Address> recv_info = listener_socket.recv();
-            Address source_addr = recv_info.first;
-            string the_request = recv_info.second;
-
-            //string the_request = listener_socket.read(); /*  will block until we have a request */
-            thread newthread( [&listener_socket] ( const string request, const Address source_addr ) -> void { service_request( listener_socket, request, source ); }, the_request, source_addr );
+            thread newthread( [&listener_socket] ( const pair< Address, string > request ) -> void {
+                    service_request( listener_socket, request ); },
+                listener_socket.recvfrom() );
             newthread.detach();
         }
-    }
-    catch ( const Exception & e ) {
+    } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
     }

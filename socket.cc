@@ -66,25 +66,41 @@ void Socket::write( const std::string & str ) const
     fd_.write( str );
 }
 
-pair <Address, string> Socket::recv( void ) const
+pair< Address, string > Socket::recvfrom( void ) const
 {
+    static const ssize_t RECEIVE_MTU = 2048;
+
     /* receive source address and payload */
     struct sockaddr_in packet_remote_addr;
-    char buf[ 2048 ];
+    char buf[ RECEIVE_MTU ];
+
     socklen_t fromlen = sizeof( packet_remote_addr );
-    ssize_t recv_len = recvfrom( fd_.num(), buf, sizeof( buf ), 0, ( struct sockaddr* )&packet_remote_addr, &fromlen );
+
+    ssize_t recv_len = ::recvfrom( fd_.num(),
+                                   buf,
+                                   sizeof( buf ),
+                                   MSG_TRUNC,
+                                   reinterpret_cast< struct sockaddr * >( &packet_remote_addr ),
+                                   &fromlen );
+
     if ( recv_len < 0 ) {
         throw Exception( "recvfrom" );
+    } else if ( recv_len > RECEIVE_MTU ) {
+        throw Exception( "oversized datagram" );
     }
 
-    /* take hostname and port number for source */
-    string source_hostname( inet_ntoa( packet_remote_addr.sin_addr ) );
-    string source_port = to_string( packet_remote_addr.sin_port );
+    return make_pair( Address( packet_remote_addr ),
+                      string( buf, recv_len ) );
+}
 
-    /* create Address object for source and string for payload */
-    Address source_addr( source_hostname, source_port );
-    string message = string( buf, recv_len );
-
-    std::pair <Address, string> source_info = make_pair ( source_addr, message );
-    return ( source_info );
+void Socket::sendto( const Address & destination, const std::string & payload ) const
+{
+    if ( ::sendto( fd_.num(),
+                   payload.data(),
+                   payload.size(),
+                   0,
+                   reinterpret_cast<const sockaddr *>( &destination.raw_sockaddr() ),
+                   sizeof( destination.raw_sockaddr() ) ) < 0 ) {
+        throw Exception( "sendto" );
+    }
 }
