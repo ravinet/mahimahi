@@ -15,43 +15,51 @@ using namespace std;
 
 void service_request( const Socket & server_socket, const pair< Address, std::string > request )
 {
-    /* open socket to 127.0.0.1:53 */
-    Socket outgoing_socket;
-    outgoing_socket.bind( Address( "localhost", "domain" ) );
+    try {
+        /* open socket to 127.0.0.1:53 */
+        Socket outgoing_socket;
+        outgoing_socket.connect( Address( "localhost", "domain" ) );
 
-    /* send request to local dns server */
-    outgoing_socket.write( request.second );
+        /* send request to local dns server */
+        outgoing_socket.write( request.second );
 
-    /* wait up to 10 seconds for a reply */
-    struct pollfd pollfds;
-    pollfds.fd = outgoing_socket.raw_fd();
-    pollfds.events = POLLIN;
+        /* wait up to 10 seconds for a reply */
+        struct pollfd pollfds;
+        pollfds.fd = outgoing_socket.raw_fd();
+        pollfds.events = POLLIN;
 
-    if ( poll( &pollfds, 1, 10000 ) < 0 ) {
-        throw Exception( "poll" );
-    }
+        if ( poll( &pollfds, 1, 10000 ) < 0 ) {
+            throw Exception( "poll" );
+        }
 
-    if ( pollfds.revents & POLLIN ) {
-        /* read response, then send back to client */
-        server_socket.sendto( request.first, outgoing_socket.read() );
-    } else if ( pollfds.revents & POLLERR ) {
-        cerr << "POLLERR" << endl;
-    } else {
-        cerr << "Timeout." << endl;
-    }
+        if ( pollfds.revents & POLLIN ) {
+            /* read response, then send back to client */
+            server_socket.sendto( request.first, outgoing_socket.read() );
+        }
+    } catch ( const Exception & e ) {
+        cerr.flush();
+        e.perror();
+        return;
+    }        
 
     cerr.flush();
-
     return;
 }
 
-int main( void )
+int main( int argc, char *argv[] )
 {
+    if ( argc != 2 ) {
+        cerr << "Usage: " << argv[ 0 ] << " IP_ADDRESS_TO_BIND" << endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string ip_address_to_bind( argv[ 1 ] );
+
     /* make listener socket for dns requests */
     try {
         Socket listener_socket;
         /* bind to any IP address and kernel-allocated port */
-        listener_socket.bind( Address() );
+        listener_socket.bind( Address( ip_address_to_bind, "0" ) );
 
         cout << "hostname: " << listener_socket.local_addr().hostname() << endl;
         cout << "port: " << listener_socket.local_addr().port() << endl;
