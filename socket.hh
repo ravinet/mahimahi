@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <utility>
 
 #include "address.hh"
 #include "file_descriptor.hh"
@@ -30,6 +31,8 @@ public:
   void write( const std::string & str ) const;
 
   int raw_fd( void ) const { return fd_.num(); }
+
+  std::pair <std::string, Address> recv( void ) const;
 };
 
 #endif

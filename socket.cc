@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <utility>
+#include <arpa/inet.h>
 
 #include "socket.hh"
 #include "exception.hh"
@@ -62,4 +64,27 @@ void Socket::connect( const Address & addr )
 void Socket::write( const std::string & str ) const
 {
   fd_.write( str );
+}
+
+pair <string, Address> Socket::recv( void ) const
+{
+  /* receive source address and payload */
+  struct sockaddr_in packet_remote_addr;
+  char buf[ 2048 ];
+  socklen_t fromlen = sizeof( packet_remote_addr );
+  ssize_t recv_len = recvfrom( fd_.num(), buf, sizeof( buf ), 0, ( struct sockaddr* )&packet_remote_addr, &fromlen );
+  if ( recv_len < 0 ) {
+    throw Exception( "recvfrom" );
+  }
+
+  /* take hostname and port number for source */
+  string source_hostname( inet_ntoa( packet_remote_addr.sin_addr ) );
+  string source_port = to_string( packet_remote_addr.sin_port );
+
+  /* create Address object for source and string for payload */
+  Address source_addr( source_hostname, source_port );
+  string message = string( buf, recv_len );
+
+  std::pair <string, Address> source_info = make_pair ( message, source_addr );
+  return ( source_info );
 }
