@@ -2,10 +2,46 @@
 
 #include <poll.h>
 #include <csignal>
+#include <utility>
+#include <iostream>
+#include <string>
+#include <thread>
 
 #include "ferry.hh"
 #include "ferry_queue.hh"
 #include "signalfd.hh"
+
+void service_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
+{
+    try {
+        Socket outgoing_socket;
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ) ) );
+
+        /* send request to local dns server */
+        outgoing_socket.write( request.second );
+
+        /* wait up to 10 seconds for a reply */
+        struct pollfd pollfds;
+        pollfds.fd = outgoing_socket.raw_fd();
+        pollfds.events = POLLIN;
+
+        if ( poll( &pollfds, 1, 60000 ) < 0 ) {
+            throw Exception( "poll" );
+        }
+
+        if ( pollfds.revents & POLLIN ) {
+            /* read response, then send back to client */
+            server_socket.sendto( request.first, outgoing_socket.read() );
+        }
+    } catch ( const Exception & e ) {
+        std::cerr.flush();
+        e.perror();
+        return;
+    }
+
+    std::cerr.flush();
+    return;
+}
 
 int handle_signal( const signalfd_siginfo & sig,
                    ChildProcess & child_process )
@@ -49,6 +85,8 @@ int handle_signal( const signalfd_siginfo & sig,
 
 int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
+           const Socket & listen_socket,
+           const Address connect_addr,
            ChildProcess & child_process,
            const uint64_t delay_ms )
 {
@@ -59,7 +97,7 @@ int ferry( const FileDescriptor & tun,
     SignalFD signal_fd( signals_to_listen_for );
 
     // set up poll
-    struct pollfd pollfds[ 3 ];
+    struct pollfd pollfds[ 4 ];
     pollfds[ 0 ].fd = tun.num();
     pollfds[ 0 ].events = POLLIN;
 
@@ -69,18 +107,22 @@ int ferry( const FileDescriptor & tun,
     pollfds[ 2 ].fd = signal_fd.fd().num();
     pollfds[ 2 ].events = POLLIN;
 
+    pollfds[ 3 ].fd = listen_socket.raw_fd();
+    pollfds[ 3 ].events = POLLIN;
+
     FerryQueue delay_queue( delay_ms );
 
     while ( true ) {
         int wait_time = delay_queue.wait_time();
         
-        if ( poll( pollfds, 3, wait_time ) == -1 ) {
+        if ( poll( pollfds, 4, wait_time ) == -1 ) {
             throw Exception( "poll" );
         }
 
         if ( (pollfds[ 0 ].revents
               | pollfds[ 1 ].revents
-              | pollfds[ 2 ].revents )
+              | pollfds[ 2 ].revents
+              | pollfds[ 3 ].revents )
              & (POLLERR | POLLHUP | POLLNVAL) ) { /* check for error */
             throw Exception( "poll" );
         }
@@ -103,6 +145,14 @@ int ferry( const FileDescriptor & tun,
             if ( return_value >= 0 ) {
                 return return_value;
             }
+        }
+
+        if ( pollfds[ 3 ].revents & POLLIN ) {
+            /* got dns request */
+            std::thread newthread( [&listen_socket, &connect_addr] ( const std::pair< Address, std::string > request ) -> void {
+                    service_request( listen_socket, request, connect_addr ); },
+                listen_socket.recvfrom() );
+            newthread.detach();
         }
 
         /* packets FROM tail of delay queue go to sibling */

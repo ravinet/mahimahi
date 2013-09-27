@@ -12,9 +12,13 @@
 
 #include "file_descriptor.hh"
 #include "child_process.hh"
+#include "socket.hh"
+#include "address.hh"
 
 int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
+           const Socket & listen_socket,
+           const Address connect_addr,
            ChildProcess & child_process,
            const uint64_t delay_ms );
 
