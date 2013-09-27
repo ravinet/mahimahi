@@ -13,6 +13,8 @@
 #include "child_process.hh"
 #include "system_runner.hh"
 #include "nat.hh"
+#include "socket.hh"
+#include "address.hh"
 
 using namespace std;
 
@@ -36,7 +38,8 @@ int main( int argc, char *argv[] )
 {
     try {
 	if ( argc != 2) {
-	    throw Exception( "please enter only the one-way delay in ms" );
+            cerr << "Please enter only the one-way delay in milliseconds" << endl;
+            return EXIT_FAILURE;
 	}
 	const uint64_t delay_ms = atoi( argv[1] );
         ifstream input;
@@ -44,7 +47,8 @@ int main( int argc, char *argv[] )
         string line;
         getline( input, line );
         if ( line != "1" ) {
-            throw Exception( "ip forwarding disabled" );
+            cerr << "Run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" << endl;
+            return EXIT_FAILURE;
         }
 
         /* make pair of connected sockets */
@@ -54,6 +58,16 @@ int main( int argc, char *argv[] )
         }
         FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
             ingress_socket( pipes[ 1 ], "socketpair" );
+
+        /* create outside listener socket for dns requests */
+        Socket listener_socket_outside;
+        listener_socket_outside.bind( Address( "0.0.0.0", "0" ) );
+
+        /* store port outside listener socket bound to so inside socket can connect to it */
+        string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
+
+        /* address of outside dns server */
+        Address connect_addr_outside( "localhost", "domain" );
 
         /* Fork */
         ChildProcess container_process( [&]()->int{
@@ -69,6 +83,13 @@ int main( int argc, char *argv[] )
 
                 run( "route add -net default gw 172.30.100.100" );
 
+                /* create inside listener socket for dns requests */
+                Socket listener_socket_inside;
+                listener_socket_inside.bind( Address( "localhost", "domain" ) );
+
+                /* outside address to send dns requests to */
+                Address connect_addr_inside( "172.30.100.100", listener_outside_port );
+
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
                         const string shell = shell_path();
@@ -78,7 +99,7 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, bash_process, delay_ms );
+                return ferry( ingress_tun.fd(), egress_socket, listener_socket_inside, connect_addr_inside, bash_process, delay_ms );
             } );
 
         TunDevice egress_tun( "egress", "172.30.100.100", "172.30.100.101" );
@@ -86,7 +107,7 @@ int main( int argc, char *argv[] )
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tun.fd(), ingress_socket, container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, listener_socket_outside, connect_addr_outside, container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
