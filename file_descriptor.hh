@@ -31,6 +31,10 @@ public:
 
     ~FileDescriptor()
     {
+        if ( fd_ < 0 ) { /* has already been moved away */
+            return;
+        }
+
         if ( close( fd_ ) < 0 ) {
             throw Exception( "close" );
         }
@@ -41,6 +45,13 @@ public:
     /* forbid copying FileDescriptor objects or assigning them */
     FileDescriptor( const FileDescriptor & other ) = delete;
     const FileDescriptor & operator=( const FileDescriptor & other ) = delete;
+
+    /* allow moving FileDescriptor objects */
+    FileDescriptor( FileDescriptor && other )
+        : fd_( other.fd_ )
+    {
+        other.fd_ = -1; /* disable the other FileDescriptor */
+    }
 
     void write( const std::string & buffer ) const
     {
