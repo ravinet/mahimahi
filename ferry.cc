@@ -149,7 +149,7 @@ int ferry( const FileDescriptor & tun,
 
         if ( pollfds[ 3 ].revents & POLLIN ) {
             /* got dns request */
-            std::thread newthread( [&listen_socket, &connect_addr] ( const std::pair< Address, std::string > request ) -> void {
+            std::thread newthread( [&listen_socket, &connect_addr] ( const std::pair< Address, std::string > request ) {
                     service_request( listen_socket, request, connect_addr ); },
                 listen_socket.recvfrom() );
             newthread.detach();

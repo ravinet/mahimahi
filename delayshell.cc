@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
         Address connect_addr_outside( "localhost", "domain" );
 
         /* Fork */
-        ChildProcess container_process( [&]()->int{
+        ChildProcess container_process( [&]() {
                 /* Unshare network namespace */
                 if ( unshare( CLONE_NEWNET ) == -1 ) {
                     throw Exception( "unshare" );
@@ -97,7 +97,7 @@ int main( int argc, char *argv[] )
                 Address connect_addr_inside( egress_addr, listener_outside_port );
 
                 /* Fork again */
-                ChildProcess bash_process( []()->int{
+                ChildProcess bash_process( []() {
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
                             throw Exception( "execl" );
