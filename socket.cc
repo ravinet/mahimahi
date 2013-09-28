@@ -20,6 +20,13 @@ Socket::Socket()
 {
 }
 
+Socket::Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr )
+  : fd_( move( s_fd ) ),
+    local_addr_( s_local_addr ),
+    peer_addr_( s_peer_addr )
+{
+}
+
 void Socket::bind( const Address & addr )
 {
     /* make local address to listen on */
@@ -43,6 +50,32 @@ void Socket::bind( const Address & addr )
     }
 
     local_addr_ = Address( new_local_addr );
+}
+
+void Socket::listen( void )
+{
+  if ( ::listen( fd_.num(), listen_backlog_ ) < 0 ) {
+    throw Exception( "listen" );
+  }
+}
+
+Socket Socket::accept( void )
+{
+  /* make new socket address for connection */
+  struct sockaddr_in new_connection_addr;
+  socklen_t new_connection_addr_size = sizeof( new_connection_addr );
+
+  /* wait for client connection */
+  FileDescriptor new_fd( ::accept( fd_.num(),
+                         reinterpret_cast<sockaddr *>( &new_connection_addr ),
+                         &new_connection_addr_size ), "accept" );
+
+  // verify length is what we expected 
+  if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
+    throw Exception( "sockaddr size mismatch" );
+  }
+  
+  return Socket( new_fd, local_addr_, Address( new_connection_addr ) );
 }
 
 string Socket::read( void ) const
