@@ -59,9 +59,15 @@ int main( int argc, char *argv[] )
         FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
             ingress_socket( pipes[ 1 ], "socketpair" );
 
+        /* set egress and ingress ip addresses */
+        string egress_addr = "172.30.100.100";
+        string ingress_addr = "172.30.100.101";
+
+        TunDevice egress_tun( "egress", egress_addr, ingress_addr );
+
         /* create outside listener socket for dns requests */
         Socket listener_socket_outside;
-        listener_socket_outside.bind( Address( "0.0.0.0", "0" ) );
+        listener_socket_outside.bind( Address( egress_addr, "0" ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
@@ -76,19 +82,19 @@ int main( int argc, char *argv[] )
                     throw Exception( "unshare" );
                 }
 
-                TunDevice ingress_tun( "ingress", "172.30.100.101", "172.30.100.100" );
+                TunDevice ingress_tun( "ingress", ingress_addr, egress_addr );
 
                 /* bring up localhost */
                 run( "ip link set dev lo up" );
 
-                run( "route add -net default gw 172.30.100.100" );
+                run( "route add -net default gw " + egress_addr );
 
                 /* create inside listener socket for dns requests */
                 Socket listener_socket_inside;
                 listener_socket_inside.bind( Address( "localhost", "domain" ) );
 
                 /* outside address to send dns requests to */
-                Address connect_addr_inside( "172.30.100.100", listener_outside_port );
+                Address connect_addr_inside( egress_addr, listener_outside_port );
 
                 /* Fork again */
                 ChildProcess bash_process( []()->int{
@@ -101,8 +107,6 @@ int main( int argc, char *argv[] )
 
                 return ferry( ingress_tun.fd(), egress_socket, listener_socket_inside, connect_addr_inside, bash_process, delay_ms );
             } );
-
-        TunDevice egress_tun( "egress", "172.30.100.100", "172.30.100.101" );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
