@@ -21,7 +21,7 @@ Socket::Socket()
 }
 
 Socket::Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr )
-  : fd_( s_fd ),
+  : fd_( move( s_fd ) ),
     local_addr_( s_local_addr ),
     peer_addr_( s_peer_addr )
 {
