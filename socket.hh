@@ -17,6 +17,8 @@ private:
 
     Address local_addr_, peer_addr_;
 
+    const int listen_backlog_ = 16;
+
 public:
     Socket(); /* default constructor */
 
@@ -24,6 +26,7 @@ public:
 
     void bind( const Address & addr );
     void connect( const Address & addr );
+    void listen( void );
     Socket accept( void );
 
     const Address & local_addr( void ) const { return local_addr_; }
