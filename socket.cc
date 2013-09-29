@@ -75,7 +75,7 @@ Socket Socket::accept( void )
     throw Exception( "sockaddr size mismatch" );
   }
   
-  return Socket( new_fd, local_addr_, Address( new_connection_addr ) );
+  return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
 }
 
 string Socket::read( void ) const
