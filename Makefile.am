@@ -15,4 +15,10 @@ dnsoutsideproxytcp_SOURCES = exception.hh ezio.cc ezio.hh \
         child_process.hh child_process.cc signalfd.hh signalfd.cc \
         socket.cc socket.hh address.cc address.hh
 dnsoutsideproxytcp_LDADD = -lrt
-
+bin_PROGRAMS += dnsinsideproxytcp
+dnsinsideproxytcp_SOURCES = exception.hh ezio.cc ezio.hh \
+        ferry_queue.cc ferry_queue.hh dnsinsideproxytcp.cc\
+        file_descriptor.hh tundevice.cc tundevice.hh timestamp.cc timestamp.hh \
+        child_process.hh child_process.cc signalfd.hh signalfd.cc \
+        socket.cc socket.hh address.cc address.hh
+dnsinsideproxytcp_LDADD = -lrt
