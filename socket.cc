@@ -14,7 +14,7 @@
 using namespace std;
 
 Socket::Socket()
-    : fd_( socket( AF_INET, SOCK_DGRAM, 0 ), "socket" ),
+    : fd_( socket( AF_INET, SOCK_STREAM, 0 ), "socket" ),
       local_addr_(),
       peer_addr_()
 {
@@ -75,7 +75,7 @@ Socket Socket::accept( void )
     throw Exception( "sockaddr size mismatch" );
   }
   
-  return Socket( new_fd, local_addr_, Address( new_connection_addr ) );
+  return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
 }
 
 string Socket::read( void ) const
