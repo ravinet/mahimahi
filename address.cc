@@ -30,7 +30,7 @@ Address::Address( const std::string hostname, const std::string service )
   struct addrinfo hints;
   memset( &hints, 0, sizeof( hints ) );
   hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_socktype = SOCK_STREAM;
 
   /* prepare for the answer */
   struct addrinfo *res;
