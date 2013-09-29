@@ -70,10 +70,6 @@ Socket Socket::accept( void )
                          reinterpret_cast<sockaddr *>( &new_connection_addr ),
                          &new_connection_addr_size ), "accept" );
 
-  if ( new_fd.num() < 0 ) {
-    throw Exception( "accept" );
-  }
-
   // verify length is what we expected 
   if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
     throw Exception( "sockaddr size mismatch" );
