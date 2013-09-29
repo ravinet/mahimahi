@@ -46,7 +46,7 @@ Address::Address( const std::string hostname, const std::string service )
   
   /* should match our request */
   assert( res->ai_family == AF_INET );
-  assert( res->ai_socktype == SOCK_DGRAM );
+  assert( res->ai_socktype == SOCK_STREAM );
   assert( res->ai_addrlen == sizeof( addr_ ) );
 
   /* assign to our private member variable */
