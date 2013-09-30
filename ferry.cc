@@ -11,18 +11,18 @@
 #include "ferry_queue.hh"
 #include "signalfd.hh"
 
-void service_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
+void service_udp_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
 {
     try {
-        Socket::protocol prot = Socket::UDP;
-        Socket outgoing_socket( prot );
-        Address::protocol prot_addr = Address::UDP;
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), prot_addr ) );
+        Socket::protocol sock_udp = Socket::UDP;
+        Socket outgoing_socket( sock_udp );
+        Address::protocol addr_udp = Address::UDP;
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), addr_udp ) );
 
         /* send request to local dns server */
         outgoing_socket.write( request.second );
 
-        /* wait up to 10 seconds for a reply */
+        /* wait up to 60 seconds for a reply */
         struct pollfd pollfds;
         pollfds.fd = outgoing_socket.raw_fd();
         pollfds.events = POLLIN;
@@ -45,13 +45,13 @@ void service_request( const Socket & server_socket, const std::pair< Address, st
     return;
 }
 
-void service_request_tcp( const Socket & server_socket, const Address & connectaddr)
+void service_tcp_request( const Socket & server_socket, const Address & connectaddr)
 {
     try {
-        Socket::protocol tcp = Socket::TCP;
-        Address::protocol tcp_addr = Address::TCP;
-        Socket outgoing_socket( tcp );
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), tcp_addr ) );
+        Socket::protocol sock_tcp = Socket::TCP;
+        Address::protocol addr_tcp = Address::TCP;
+        Socket outgoing_socket( sock_tcp );
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), addr_tcp ) );
 
         struct pollfd pollfds[ 2 ];
         pollfds[ 0 ].fd = outgoing_socket.raw_fd();
@@ -147,8 +147,8 @@ int handle_signal( const signalfd_siginfo & sig,
 
 int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
-           const Socket & listen_socket,
-           const Address connect_addr,
+           const Socket & listen_socket_udp,
+           const Address connect_addr_udp,
            const Socket & listen_socket_tcp,
            const Address connect_addr_tcp,
            ChildProcess & child_process,
@@ -170,7 +170,7 @@ int ferry( const FileDescriptor & tun,
     pollfds[ 2 ].fd = signal_fd.fd().num();
     pollfds[ 2 ].events = POLLIN;
 
-    pollfds[ 3 ].fd = listen_socket.raw_fd();
+    pollfds[ 3 ].fd = listen_socket_udp.raw_fd();
     pollfds[ 3 ].events = POLLIN;
 
     pollfds[ 4 ].fd = listen_socket_tcp.raw_fd();
@@ -213,15 +213,16 @@ int ferry( const FileDescriptor & tun,
 
         if ( pollfds[ 3 ].revents & POLLIN ) {
             /* got dns request */
-            std::thread newthread( [&listen_socket, &connect_addr] ( const std::pair< Address, std::string > request ) {
-                    service_request( listen_socket, request, connect_addr ); },
-                listen_socket.recvfrom() );
+            std::thread newthread( [&listen_socket_udp, &connect_addr_udp] ( const std::pair< Address, std::string > request ) {
+                    service_udp_request( listen_socket_udp, request, connect_addr_udp ); },
+                listen_socket_udp.recvfrom() );
             newthread.detach();
         }
+        
         if ( pollfds[ 4 ].revents & POLLIN ) {
             /* got TCP dns request */
             std::thread newthread( [&connect_addr_tcp] (const Socket & service_socket ) {
-                              service_request_tcp( service_socket, connect_addr_tcp ); },
+                              service_tcp_request( service_socket, connect_addr_tcp ); },
                               listen_socket_tcp.accept());
             newthread.detach();
         }
@@ -230,4 +231,3 @@ int ferry( const FileDescriptor & tun,
         delay_queue.write_packets( sibling_fd );
     }
 }
-

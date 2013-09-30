@@ -22,9 +22,8 @@ private:
     const int listen_backlog_ = 16;
 
 public:
-    Socket() = delete; /* default constructor */
+    Socket() = delete; /* delete default constructor */
     enum protocol { UDP, TCP };
-    //Socket();
     Socket( protocol p );
 
     Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr );

@@ -13,7 +13,7 @@
 
 using namespace std;
 int Address::get_val( Address::protocol p ) {
-    switch(p){
+    switch( p ){
         case UDP:
             return SOCK_DGRAM;
         case TCP:
@@ -41,7 +41,7 @@ Address::Address( const std::string hostname, const std::string service, Address
   struct addrinfo hints;
   memset( &hints, 0, sizeof( hints ) );
   hints.ai_family = AF_INET;
-  hints.ai_socktype = get_val(p);
+  hints.ai_socktype = get_val( p );
 
   /* prepare for the answer */
   struct addrinfo *res;
@@ -57,7 +57,7 @@ Address::Address( const std::string hostname, const std::string service, Address
   
   /* should match our request */
   assert( res->ai_family == AF_INET );
-  assert( res->ai_socktype == get_val(p) );
+  assert( res->ai_socktype == get_val( p ) );
   assert( res->ai_addrlen == sizeof( addr_ ) );
 
   /* assign to our private member variable */
