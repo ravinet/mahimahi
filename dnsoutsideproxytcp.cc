@@ -77,11 +77,10 @@ int main( int argc, char *argv[] )
         /* listen on listener socket */
         listener_socket.listen();
 
-        Socket listen_connect = listener_socket.accept();
-
         while ( true ) {  /* service requests from this source  */
-            thread newthread( [&listen_connect] () -> void {
-                    service_request( listen_connect ); } );
+            thread newthread( [] (const Socket & service_socket) -> void {
+                              service_request( service_socket ) ; },
+                              listener_socket.accept());
             newthread.detach();
         }
     } catch ( const Exception & e ) {
