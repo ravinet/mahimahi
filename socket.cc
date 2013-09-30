@@ -70,7 +70,7 @@ void Socket::listen( void )
   }
 }
 
-Socket Socket::accept( void )
+Socket Socket::accept( void ) const
 {
   /* make new socket address for connection */
   struct sockaddr_in new_connection_addr;

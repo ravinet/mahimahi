@@ -66,14 +66,16 @@ int main( int argc, char *argv[] )
         TunDevice egress_tun( "egress", egress_addr, ingress_addr );
 
         /* create outside listener socket for dns requests */
-        Socket listener_socket_outside;
-        listener_socket_outside.bind( Address( egress_addr, "0" ) );
+        Socket::protocol prot = Socket::UDP;
+        Socket listener_socket_outside( prot );
+        Address::protocol prot_addr = Address::UDP;
+        listener_socket_outside.bind( Address( egress_addr, "0", prot_addr ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
 
         /* address of outside dns server */
-        Address connect_addr_outside( "localhost", "domain" );
+        Address connect_addr_outside( "localhost", "domain", prot_addr );
 
         /* Fork */
         ChildProcess container_process( [&]() {
@@ -90,11 +92,11 @@ int main( int argc, char *argv[] )
                 run( "route add -net default gw " + egress_addr );
 
                 /* create inside listener socket for dns requests */
-                Socket listener_socket_inside;
-                listener_socket_inside.bind( Address( "localhost", "domain" ) );
+                Socket listener_socket_inside( prot );
+                listener_socket_inside.bind( Address( "localhost", "domain", prot_addr ) );
 
                 /* outside address to send dns requests to */
-                Address connect_addr_inside( egress_addr, listener_outside_port );
+                Address connect_addr_inside( egress_addr, listener_outside_port, prot_addr );
 
                 /* Fork again */
                 ChildProcess bash_process( []() {

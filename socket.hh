@@ -32,7 +32,7 @@ public:
     void bind( const Address & addr );
     void connect( const Address & addr );
     void listen( void );
-    Socket accept( void );
+    Socket accept( void ) const;
 
     const Address & local_addr( void ) const { return local_addr_; }
     const Address & peer_addr( void ) const { return peer_addr_; }

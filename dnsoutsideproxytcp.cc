@@ -17,8 +17,10 @@ void service_request( const Socket & server_socket )
 {
     try {
         /* open socket to 127.0.0.1:53 */
-        Socket outgoing_socket;
-        outgoing_socket.connect( Address( "localhost", "domain" ) );
+        Socket::protocol prot = Socket::TCP;
+        Address::protocol prot_addr = Address::TCP;
+        Socket outgoing_socket( prot );
+        outgoing_socket.connect( Address( "localhost", "domain", prot_addr ) );
 
         struct pollfd pollfds[ 2 ];
         pollfds[ 0 ].fd = outgoing_socket.raw_fd();
@@ -83,9 +85,11 @@ int main( int argc, char *argv[] )
 
     /* make listener socket for dns requests */
     try {
-        Socket listener_socket;
+        Socket::protocol prot = Socket::TCP;
+        Socket listener_socket( prot );
+        Address::protocol prot_addr = Address::TCP;
         /* bind to egress ip and kernel-allocated port */
-        listener_socket.bind( Address( ip_address_to_bind, "0" ) );
+        listener_socket.bind( Address( ip_address_to_bind, "0", prot_addr ) );
 
         cout << "hostname: " << listener_socket.local_addr().hostname() << endl;
         cout << "port: " << listener_socket.local_addr().port() << endl;

@@ -14,8 +14,10 @@
 void service_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
 {
     try {
-        Socket outgoing_socket;
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ) ) );
+        Socket::protocol prot = Socket::UDP;
+        Socket outgoing_socket( prot );
+        Address::protocol prot_addr = Address::UDP;
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), prot_addr ) );
 
         /* send request to local dns server */
         outgoing_socket.write( request.second );
