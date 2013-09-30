@@ -45,6 +45,66 @@ void service_request( const Socket & server_socket, const std::pair< Address, st
     return;
 }
 
+void service_request_tcp( const Socket & server_socket, const Address & connectaddr)
+{
+    try {
+        Socket::protocol tcp = Socket::TCP;
+        Address::protocol tcp_addr = Address::TCP;
+        Socket outgoing_socket( tcp );
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), tcp_addr ) );
+
+        struct pollfd pollfds[ 2 ];
+        pollfds[ 0 ].fd = outgoing_socket.raw_fd();
+        pollfds[ 0 ].events = POLLIN;
+
+        pollfds[ 1 ].fd = server_socket.raw_fd();
+        pollfds[ 1 ].events = POLLIN;
+
+        /* process requests until either socket is idle for 20 seconds or until EOF */
+        bool outgoing_eof = false;
+        bool server_eof   = false;
+        while( true ) {
+            if ( outgoing_eof || server_eof ) {
+                break;
+            }
+            pollfds[ 0 ].events = outgoing_eof ? 0 : POLLIN;
+            pollfds[ 1 ].events = server_eof   ? 0 : POLLIN;
+
+             if ( poll( pollfds, 2, 6000 ) < 0 ) {
+                throw Exception( "poll" );
+            }
+            if ( pollfds[ 1 ].revents & POLLIN ) {
+                /* read request, then send to local dns server */
+                std::string buffer = server_socket.read();
+                if ( buffer.empty() ) {
+                     server_eof = true;
+                }
+                outgoing_socket.write( buffer );
+            }
+            if ( poll( &pollfds[ 0 ], 1, 6000 ) < 0 ) {
+                throw Exception( "poll" );
+            }
+           /* if response comes from local dns server, write back to source of request */
+           if ( pollfds[ 0 ].revents & POLLIN ) {
+                /* read response, then send back to client */
+                std::string buffer = outgoing_socket.read();
+                if ( buffer.empty() ) {
+                     outgoing_eof = true;
+                }
+                server_socket.write( buffer );
+            }
+        }
+
+    } catch ( const Exception & e ) {
+        std::cerr.flush();
+        e.perror();
+        return;
+    }
+
+    std::cerr.flush();
+    return;
+}
+
 int handle_signal( const signalfd_siginfo & sig,
                    ChildProcess & child_process )
 {
@@ -89,6 +149,8 @@ int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
            const Socket & listen_socket,
            const Address connect_addr,
+           const Socket & listen_socket_tcp,
+           const Address connect_addr_tcp,
            ChildProcess & child_process,
            const uint64_t delay_ms )
 {
@@ -97,9 +159,8 @@ int ferry( const FileDescriptor & tun,
     signals_to_listen_for.block(); /* don't let them interrupt us */
 
     SignalFD signal_fd( signals_to_listen_for );
-
     // set up poll
-    struct pollfd pollfds[ 4 ];
+    struct pollfd pollfds[ 5 ];
     pollfds[ 0 ].fd = tun.num();
     pollfds[ 0 ].events = POLLIN;
 
@@ -112,23 +173,24 @@ int ferry( const FileDescriptor & tun,
     pollfds[ 3 ].fd = listen_socket.raw_fd();
     pollfds[ 3 ].events = POLLIN;
 
+    pollfds[ 4 ].fd = listen_socket_tcp.raw_fd();
+    pollfds[ 4 ].events = POLLIN;
+
     FerryQueue delay_queue( delay_ms );
 
     while ( true ) {
         int wait_time = delay_queue.wait_time();
-        
-        if ( poll( pollfds, 4, wait_time ) == -1 ) {
+        if ( poll( pollfds, 5, wait_time ) == -1 ) {
             throw Exception( "poll" );
         }
-
         if ( (pollfds[ 0 ].revents
               | pollfds[ 1 ].revents
               | pollfds[ 2 ].revents
-              | pollfds[ 3 ].revents )
+              | pollfds[ 3 ].revents
+              | pollfds[ 4 ].revents )
              & (POLLERR | POLLHUP | POLLNVAL) ) { /* check for error */
             throw Exception( "poll" );
         }
-
         if ( pollfds[ 0 ].revents & POLLIN ) {
             /* packet FROM tun device goes to back of delay queue */
             delay_queue.read_packet( tun.read() );
@@ -154,6 +216,13 @@ int ferry( const FileDescriptor & tun,
             std::thread newthread( [&listen_socket, &connect_addr] ( const std::pair< Address, std::string > request ) {
                     service_request( listen_socket, request, connect_addr ); },
                 listen_socket.recvfrom() );
+            newthread.detach();
+        }
+        if ( pollfds[ 4 ].revents & POLLIN ) {
+            /* got TCP dns request */
+            std::thread newthread( [&connect_addr_tcp] (const Socket & service_socket ) {
+                              service_request_tcp( service_socket, connect_addr_tcp ); },
+                              listen_socket_tcp.accept());
             newthread.detach();
         }
 

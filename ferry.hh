@@ -19,6 +19,8 @@ int ferry( const FileDescriptor & tun,
            const FileDescriptor & sibling_fd,
            const Socket & listen_socket,
            const Address connect_addr,
+           const Socket & listen_socket_tcp,
+           const Address connect_addr_tcp,
            ChildProcess & child_process,
            const uint64_t delay_ms );
 
