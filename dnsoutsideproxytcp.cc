@@ -37,7 +37,7 @@ void service_request( const Socket & server_socket )
             pollfds[ 0 ].events = outgoing_eof ? 0 : POLLIN;
             pollfds[ 1 ].events = server_eof   ? 0 : POLLIN;
 
-             if ( poll( &pollfds[ 1 ], 1, 20000 ) < 0 ) {
+             if ( poll( pollfds, 2, 20000 ) < 0 ) {
                 throw Exception( "poll" );
             }
             if ( pollfds[ 1 ].revents & POLLIN ) {
