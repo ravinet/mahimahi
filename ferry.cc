@@ -14,10 +14,8 @@
 void service_udp_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
 {
     try {
-        Socket::protocol sock_udp = Socket::UDP;
-        Socket outgoing_socket( sock_udp );
-        Address::protocol addr_udp = Address::UDP;
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), addr_udp ) );
+        Socket outgoing_socket( SocketType::UDP );
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), SocketType::UDP ) );
 
         /* send request to local dns server */
         outgoing_socket.write( request.second );
@@ -48,10 +46,8 @@ void service_udp_request( const Socket & server_socket, const std::pair< Address
 void service_tcp_request( const Socket & server_socket, const Address & connectaddr)
 {
     try {
-        Socket::protocol sock_tcp = Socket::TCP;
-        Address::protocol addr_tcp = Address::TCP;
-        Socket outgoing_socket( sock_tcp );
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), addr_tcp ) );
+        Socket outgoing_socket( SocketType::TCP );
+        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), SocketType::TCP ) );
 
         struct pollfd pollfds[ 2 ];
         pollfds[ 0 ].fd = outgoing_socket.raw_fd();

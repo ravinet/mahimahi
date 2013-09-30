@@ -11,6 +11,7 @@
 
 #include "address.hh"
 #include "file_descriptor.hh"
+#include "socket_type.hh"
 
 class Socket
 {
@@ -22,9 +23,7 @@ private:
     const int listen_backlog_ = 16;
 
 public:
-    Socket() = delete; /* delete default constructor */
-    enum protocol { UDP, TCP };
-    Socket( protocol p );
+    Socket( const SocketType & socket_type );
 
     Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
@@ -43,9 +42,6 @@ public:
 
     std::pair< Address, std::string > recvfrom( void ) const;
     void sendto( const Address & destination, const std::string & payload ) const;
-
-private:
-    int get_val( protocol p );
 };
 
 #endif

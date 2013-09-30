@@ -12,16 +12,6 @@
 #include "socket.hh"
 
 using namespace std;
-int Address::get_val( Address::protocol p ) {
-    switch( p ){
-        case UDP:
-            return SOCK_DGRAM;
-        case TCP:
-            return  SOCK_STREAM;
-        default:
-            return EXIT_FAILURE;
-    }
-}
 
 Address::Address( const struct sockaddr_in &s_addr )
   : addr_( s_addr )
@@ -34,14 +24,14 @@ Address::Address()
   memset( &addr_, 0, sizeof( addr_ ) );
 }
 
-Address::Address( const std::string hostname, const std::string service, Address::protocol p )
+Address::Address( const std::string & hostname, const std::string & service, const SocketType & socket_type )
   : addr_()
 {
   /* give hints to resolver */
   struct addrinfo hints;
   memset( &hints, 0, sizeof( hints ) );
   hints.ai_family = AF_INET;
-  hints.ai_socktype = get_val( p );
+  hints.ai_socktype = socket_type;
 
   /* prepare for the answer */
   struct addrinfo *res;
@@ -57,7 +47,7 @@ Address::Address( const std::string hostname, const std::string service, Address
   
   /* should match our request */
   assert( res->ai_family == AF_INET );
-  assert( res->ai_socktype == get_val( p ) );
+  assert( res->ai_socktype == socket_type );
   assert( res->ai_addrlen == sizeof( addr_ ) );
 
   /* assign to our private member variable */

@@ -38,7 +38,7 @@ int main( int argc, char *argv[] )
 {
     try {
 	if ( argc != 2) {
-            cerr << "Please enter only the one-way delay in milliseconds" << endl;
+            cerr << "Usage: delayshell one-way-delay" << endl;
             return EXIT_FAILURE;
 	}
 	const uint64_t delay_ms = atoi( argv[1] );
@@ -63,33 +63,27 @@ int main( int argc, char *argv[] )
         string egress_addr = "172.30.100.100";
         string ingress_addr = "172.30.100.101";
 
-        /* Set protocol and address enumerators */
-        Socket::protocol sock_udp = Socket::UDP;
-        Socket::protocol sock_tcp = Socket::TCP;
-        Address::protocol addr_udp = Address::UDP;
-        Address::protocol addr_tcp = Address::TCP;
-
         TunDevice egress_tun( "egress", egress_addr, ingress_addr );
 
         /* create outside listener socket for UDP dns requests */
-        Socket listener_socket_outside( sock_udp );
-        listener_socket_outside.bind( Address( egress_addr, "0", addr_udp ) );
+        Socket listener_socket_outside( SocketType::UDP );
+        listener_socket_outside.bind( Address( egress_addr, "0", SocketType::UDP ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
 
         /* address of outside dns server for UDP requests */
-        Address connect_addr_outside( "localhost", "domain", addr_udp );
+        Address connect_addr_outside( "localhost", "domain", SocketType::UDP );
 
         /* create outside listener socket for TCP dns requests */
-        Socket listener_socket_outside_tcp( sock_tcp );
-        listener_socket_outside_tcp.bind( Address( egress_addr, "0", addr_tcp ) );
+        Socket listener_socket_outside_tcp( SocketType::TCP );
+        listener_socket_outside_tcp.bind( Address( egress_addr, "0", SocketType::TCP ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port_tcp = to_string( listener_socket_outside_tcp.local_addr().port() );
 
         /* address of outside dns server for TCP requests */
-        Address connect_addr_outside_tcp( "localhost", "domain", addr_tcp );
+        Address connect_addr_outside_tcp( "localhost", "domain", SocketType::TCP );
 
         listener_socket_outside_tcp.listen();
 
@@ -108,19 +102,19 @@ int main( int argc, char *argv[] )
                 run( "route add -net default gw " + egress_addr );
 
                 /* create inside listener socket for UDP dns requests */
-                Socket listener_socket_inside( sock_udp );
-                listener_socket_inside.bind( Address( "localhost", "domain", addr_udp ) );
+                Socket listener_socket_inside( SocketType::UDP );
+                listener_socket_inside.bind( Address( "localhost", "domain", SocketType::UDP ) );
 
                 /* outside address to send UDP dns requests to */
-                Address connect_addr_inside( egress_addr, listener_outside_port, addr_udp );
+                Address connect_addr_inside( egress_addr, listener_outside_port, SocketType::UDP );
 
                 /* create inside listener socket for TCP dns requests */
-                Socket listener_socket_inside_tcp( sock_tcp );
-                listener_socket_inside_tcp.bind( Address( "localhost", "domain", addr_tcp ) );
+                Socket listener_socket_inside_tcp( SocketType::TCP );
+                listener_socket_inside_tcp.bind( Address( "localhost", "domain", SocketType::TCP ) );
                 listener_socket_inside_tcp.listen();
 
                 /* outside address to send TCP dns requests to */
-                Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp, addr_tcp );
+                Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp, SocketType::TCP );
 
                 /* Fork again */
                 ChildProcess bash_process( []() {
