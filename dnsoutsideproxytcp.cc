@@ -27,14 +27,26 @@ void service_request( const Socket & server_socket )
         pollfds[ 1 ].fd = server_socket.raw_fd();
         pollfds[ 1 ].events = POLLIN;
 
-        /* process requests until either socket is idle for 20 seconds */
+        /* process requests until either socket is idle for 20 seconds or until EOF */
+        bool outgoing_eof = false;
+        bool server_eof   = false;
         while( true ) {
-             if ( poll( &pollfds[ 1 ], 1, 20000 ) < 0 ) {
+            if ( outgoing_eof || server_eof ) {
+                break;
+            }
+            pollfds[ 0 ].events = outgoing_eof ? 0 : POLLIN;
+            pollfds[ 1 ].events = server_eof   ? 0 : POLLIN;
+
+             if ( poll( pollfds, 2, 20000 ) < 0 ) {
                 throw Exception( "poll" );
             }
             if ( pollfds[ 1 ].revents & POLLIN ) {
                 /* read request, then send to local dns server */
-                outgoing_socket.write( server_socket.read() );
+                string buffer = server_socket.read();
+                if ( buffer.empty() ) {
+                     server_eof = true;
+                }
+                outgoing_socket.write( buffer );
             }
             if ( poll( &pollfds[ 0 ], 1, 20000 ) < 0 ) {
                 throw Exception( "poll" );
@@ -42,7 +54,11 @@ void service_request( const Socket & server_socket )
            /* if response comes from local dns server, write back to source of request */
            if ( pollfds[ 0 ].revents & POLLIN ) {
                 /* read response, then send back to client */
-                server_socket.write( outgoing_socket.read() );
+                string buffer = outgoing_socket.read();
+                if ( buffer.empty() ) {
+                     outgoing_eof = true;
+                }
+                server_socket.write( buffer );
             }
         }
     
@@ -77,11 +93,10 @@ int main( int argc, char *argv[] )
         /* listen on listener socket */
         listener_socket.listen();
 
-        Socket listen_connect = listener_socket.accept();
-
         while ( true ) {  /* service requests from this source  */
-            thread newthread( [&listen_connect] () -> void {
-                    service_request( listen_connect ); } );
+            thread newthread( [] (const Socket & service_socket) -> void {
+                              service_request( service_socket ) ; },
+                              listener_socket.accept());
             newthread.detach();
         }
     } catch ( const Exception & e ) {
