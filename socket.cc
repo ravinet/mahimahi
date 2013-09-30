@@ -13,8 +13,19 @@
 
 using namespace std;
 
-Socket::Socket()
-    : fd_( socket( AF_INET, SOCK_STREAM, 0 ), "socket" ),
+int Socket::get_val( Socket::protocol p ) {
+    switch(p){
+        case UDP:
+            return SOCK_DGRAM;
+        case TCP:
+            return  SOCK_STREAM;
+        default:
+            return EXIT_FAILURE;
+    }
+}
+
+Socket::Socket( Socket::protocol p )
+    : fd_( socket( AF_INET, get_val(p), 0 ), "socket"),
       local_addr_(),
       peer_addr_()
 {

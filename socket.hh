@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <string>
 #include <utility>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "address.hh"
 #include "file_descriptor.hh"
@@ -20,7 +22,10 @@ private:
     const int listen_backlog_ = 16;
 
 public:
-    Socket(); /* default constructor */
+    Socket() = delete; /* default constructor */
+    enum protocol { UDP, TCP };
+    //Socket();
+    Socket( protocol p );
 
     Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
@@ -39,6 +44,9 @@ public:
 
     std::pair< Address, std::string > recvfrom( void ) const;
     void sendto( const Address & destination, const std::string & payload ) const;
+
+private:
+    int get_val( protocol p );
 };
 
 #endif
