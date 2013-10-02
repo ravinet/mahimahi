@@ -6,6 +6,9 @@
 #include <paths.h>
 #include <fstream>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <grp.h>
 
 #include "tundevice.hh"
 #include "exception.hh"
@@ -18,6 +21,38 @@
 
 using namespace std;
 
+void drop_privileges( void ) {
+    gid_t real_gid = getgid( ), eff_gid = getegid( );
+    uid_t real_uid = getuid( ), eff_uid = geteuid( );
+
+    /* eliminate ancillary groups */
+    if ( eff_uid == 0 ) { /* if root */
+        setgroups( 1, &real_gid );
+    }
+
+    /* change real group id if necessary */
+    if ( real_gid != eff_gid ) {
+        if ( setregid( real_gid, real_gid ) == -1 ) {
+            abort( );
+        }
+    }
+
+    /* change real user id if necessary */
+    if ( real_uid != eff_uid ) {
+        if ( setreuid( real_uid, real_uid ) == -1 ) {
+            abort( );
+        }
+    }
+
+    /* verify that the changes were successful. if not, abort */
+    if ( real_gid != eff_gid && ( setegid( eff_gid ) != -1 || getegid( ) != real_gid ) ) {
+        abort( );
+    }
+
+    if ( real_uid != eff_uid && ( seteuid( eff_uid ) != -1 || geteuid( ) != real_uid ) ) {
+        abort( );
+    }
+}
 /* get name of the user's shell */
 string shell_path( void )
 {
@@ -116,7 +151,8 @@ int main( int argc, char *argv[] )
                 /* outside address to send TCP dns requests to */
                 Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp, SocketType::TCP );
 
-                /* Fork again */
+                /* Fork again after dropping root priveleges*/
+                //drop_privileges();
                 ChildProcess bash_process( []() {
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
