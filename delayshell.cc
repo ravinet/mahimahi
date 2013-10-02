@@ -38,7 +38,10 @@ string shell_path( void )
 int main( int argc, char *argv[] )
 {
     try {
-	if ( argc != 2) {
+        if ( geteuid( ) != 0 ) {
+           cerr << "delayshell: You don't have permission. Please run as root." << endl;
+        }
+        if ( argc != 2) {
             cerr << "Usage: delayshell one-way-delay" << endl;
             return EXIT_FAILURE;
 	}
