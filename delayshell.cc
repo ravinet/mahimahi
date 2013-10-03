@@ -6,6 +6,8 @@
 #include <paths.h>
 #include <fstream>
 #include <grp.h>
+#include <sys/ioctl.h>
+#include <linux/if.h>
 
 #include "tundevice.hh"
 #include "exception.hh"
@@ -16,6 +18,7 @@
 #include "socket.hh"
 #include "address.hh"
 #include "drop_privileges.hh"
+#include "file_descriptor.hh"
 
 using namespace std;
 
@@ -101,7 +104,15 @@ int main( int argc, char *argv[] )
                 TunDevice ingress_tun( "ingress", ingress_addr, egress_addr );
 
                 /* bring up localhost */
-                run( "ip link set dev lo up" );
+                FileDescriptor sockfd( socket( AF_INET, SOCK_DGRAM, 0 ), "socket" );
+                struct ifreq ifr;
+                memset( &ifr, 0, sizeof(ifr) );
+                string interface_name = "lo";
+                strncpy( ifr.ifr_name, interface_name.c_str(), IFNAMSIZ );
+                ifr.ifr_flags = IFF_UP;
+                if( ioctl( sockfd.num(), SIOCSIFFLAGS, &ifr ) < 0 ) {
+                    throw Exception( "ioctl" );
+                }
 
                 run( "route add -net default gw " + egress_addr );
 
