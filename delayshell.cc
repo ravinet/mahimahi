@@ -7,7 +7,6 @@
 #include <fstream>
 #include <grp.h>
 #include <sys/ioctl.h>
-#include <linux/if.h>
 
 #include "tundevice.hh"
 #include "exception.hh"
@@ -19,6 +18,7 @@
 #include "address.hh"
 #include "drop_privileges.hh"
 #include "file_descriptor.hh"
+#include "route.hh"
 
 using namespace std;
 
@@ -114,7 +114,8 @@ int main( int argc, char *argv[] )
                     throw Exception( "ioctl" );
                 }
 
-                run( "route add -net default gw " + egress_addr );
+                /* Set route the pedantic way */
+                Route( move( sockfd ), egress_addr );
 
                 /* create inside listener socket for UDP dns requests */
                 Socket listener_socket_inside( SocketType::UDP );
