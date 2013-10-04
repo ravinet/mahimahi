@@ -1,8 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-// to run arping to send packet to ingress to/from machine with ip address addr  --> arping -I ingress addr
 
 #include <sys/socket.h>
-#include <fstream>
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
@@ -22,22 +20,9 @@ using namespace std;
 int main( int argc, char *argv[] )
 {
     try {
-        if ( geteuid( ) != 0 ) {
-            cerr << "delayshell: You don't have permission. Please run as root." << endl;
-        }
-        if ( argc != 2) {
-            cerr << "Usage: delayshell one-way-delay" << endl;
-            return EXIT_FAILURE;
-        }
-        const uint64_t delay_ms = atoi( argv[1] );
-        ifstream input;
-        input.open("/proc/sys/net/ipv4/ip_forward");
-        string line;
-        getline( input, line );
-        if ( line != "1" ) {
-            cerr << "Run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" << endl;
-            return EXIT_FAILURE;
-        }
+        check_requirements( argc, argv );
+
+        const uint64_t delay_ms = myatoi( argv[ 1 ] );
 
         /* make pair of connected sockets */
         int pipes[ 2 ];
@@ -85,15 +70,11 @@ int main( int argc, char *argv[] )
                 TunDevice ingress_tun( "ingress", ingress_addr, egress_addr );
 
                 /* bring up localhost */
-                FileDescriptor sockfd( socket( AF_INET, SOCK_DGRAM, 0 ), "socket" );
-                struct ifreq ifr;
-                memset( &ifr, 0, sizeof(ifr) );
-                string interface_name = "lo";
-                strncpy( ifr.ifr_name, interface_name.c_str(), IFNAMSIZ );
-                ifr.ifr_flags = IFF_UP;
-                if( ioctl( sockfd.num(), SIOCSIFFLAGS, &ifr ) < 0 ) {
-                    throw Exception( "ioctl" );
-                }
+                Socket ioctl_socket( SocketType::UDP );
+                TunDevice::interface_ioctl( ioctl_socket.raw_fd(), SIOCSIFFLAGS, "lo",
+                                            [] ( struct ifreq &ifr,
+                                                 struct sockaddr_in & )
+                                            { ifr.ifr_flags = IFF_UP; } );
 
                 run( "route add -net default gw " + egress_addr );
 
@@ -114,6 +95,7 @@ int main( int argc, char *argv[] )
 
                 /* Fork again after dropping root priveleges*/
                 drop_privileges();
+                
                 ChildProcess bash_process( []() {
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {

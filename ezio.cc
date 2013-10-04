@@ -41,3 +41,18 @@ std::string readall( const int fd, const size_t limit )
         return string( buffer, bytes_read );
     }
 }
+
+long int myatoi( const string & str )
+{
+  char *end;
+
+  errno = 0;
+  long int ret = strtol( str.c_str(), &end, 10 );
+
+  if ( ( errno != 0 )
+       || ( end != str.c_str() + str.size() ) ) {
+    throw Exception( "strtol", str.c_str() );
+  }
+
+  return ret;
+}
