@@ -65,12 +65,13 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
             if ( outgoing_eof || server_eof ) {
                 break;
             }
-            pollfds[ 0 ].events = outgoing_eof ? 0 : POLLIN;
-            pollfds[ 1 ].events = server_eof   ? 0 : POLLIN;
+            pollfds[ 0 ].events = POLLIN;
+            pollfds[ 1 ].events = POLLIN;
 
-             if ( poll( pollfds, 2, 6000 ) < 0 ) {
+            if ( poll( pollfds, 2, 60000 ) < 0 ) {
                 throw Exception( "poll" );
             }
+
             if ( pollfds[ 1 ].revents & POLLIN ) {
                 /* read request, then send to local dns server */
                 string buffer = server_socket.read();
@@ -79,11 +80,9 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
                 }
                 outgoing_socket.write( buffer );
             }
-            if ( poll( &pollfds[ 0 ], 1, 6000 ) < 0 ) {
-                throw Exception( "poll" );
-            }
-           /* if response comes from local dns server, write back to source of request */
-           if ( pollfds[ 0 ].revents & POLLIN ) {
+
+            /* if response comes from local dns server, write back to source of request */
+            if ( pollfds[ 0 ].revents & POLLIN ) {
                 /* read response, then send back to client */
                 string buffer = outgoing_socket.read();
                 if ( buffer.empty() ) {
