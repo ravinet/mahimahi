@@ -11,11 +11,13 @@
 #include "ferry_queue.hh"
 #include "signalfd.hh"
 
-void service_udp_request( const Socket & server_socket, const std::pair< Address, std::string > request, const Address & connectaddr )
+using namespace std;
+
+void service_udp_request( const Socket & server_socket, const pair< Address, string > request, const Address & connectaddr )
 {
     try {
         Socket outgoing_socket( SocketType::UDP );
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), SocketType::UDP ) );
+        outgoing_socket.connect( Address( connectaddr.hostname(), to_string( connectaddr.port() ), SocketType::UDP ) );
 
         /* send request to local dns server */
         outgoing_socket.write( request.second );
@@ -34,12 +36,12 @@ void service_udp_request( const Socket & server_socket, const std::pair< Address
             server_socket.sendto( request.first, outgoing_socket.read() );
         }
     } catch ( const Exception & e ) {
-        std::cerr.flush();
+        cerr.flush();
         e.perror();
         return;
     }
 
-    std::cerr.flush();
+    cerr.flush();
     return;
 }
 
@@ -47,7 +49,7 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
 {
     try {
         Socket outgoing_socket( SocketType::TCP );
-        outgoing_socket.connect( Address( connectaddr.hostname(), std::to_string( connectaddr.port() ), SocketType::TCP ) );
+        outgoing_socket.connect( Address( connectaddr.hostname(), to_string( connectaddr.port() ), SocketType::TCP ) );
 
         struct pollfd pollfds[ 2 ];
         pollfds[ 0 ].fd = outgoing_socket.raw_fd();
@@ -71,7 +73,7 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
             }
             if ( pollfds[ 1 ].revents & POLLIN ) {
                 /* read request, then send to local dns server */
-                std::string buffer = server_socket.read();
+                string buffer = server_socket.read();
                 if ( buffer.empty() ) {
                      server_eof = true;
                 }
@@ -83,7 +85,7 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
            /* if response comes from local dns server, write back to source of request */
            if ( pollfds[ 0 ].revents & POLLIN ) {
                 /* read response, then send back to client */
-                std::string buffer = outgoing_socket.read();
+                string buffer = outgoing_socket.read();
                 if ( buffer.empty() ) {
                      outgoing_eof = true;
                 }
@@ -92,12 +94,12 @@ void service_tcp_request( const Socket & server_socket, const Address & connecta
         }
 
     } catch ( const Exception & e ) {
-        std::cerr.flush();
+        cerr.flush();
         e.perror();
         return;
     }
 
-    std::cerr.flush();
+    cerr.flush();
     return;
 }
 
@@ -209,7 +211,7 @@ int ferry( const FileDescriptor & tun,
 
         if ( pollfds[ 3 ].revents & POLLIN ) {
             /* got dns request */
-            std::thread newthread( [&listen_socket_udp, &connect_addr_udp] ( const std::pair< Address, std::string > request ) {
+            thread newthread( [&listen_socket_udp, &connect_addr_udp] ( const pair< Address, string > request ) {
                     service_udp_request( listen_socket_udp, request, connect_addr_udp ); },
                 listen_socket_udp.recvfrom() );
             newthread.detach();
@@ -217,7 +219,7 @@ int ferry( const FileDescriptor & tun,
         
         if ( pollfds[ 4 ].revents & POLLIN ) {
             /* got TCP dns request */
-            std::thread newthread( [&connect_addr_tcp] (const Socket & service_socket ) {
+            thread newthread( [&connect_addr_tcp] (const Socket & service_socket ) {
                               service_tcp_request( service_socket, connect_addr_tcp ); },
                               listen_socket_tcp.accept());
             newthread.detach();
