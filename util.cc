@@ -1,7 +1,29 @@
-#ifndef DROP_PRIVILEGES_HH
-#define DROP_PRIVILEGES_HH
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <paths.h>
+#include <grp.h>
 
-/* Borrowed from "Secure Programming Cookbook for C and C++: Recipes for Cryptography, Authentication, Input Validation & More" - John Viega and Matt Messier */
+#include "util.hh"
+#include "exception.hh"
+
+using namespace std;
+
+/* Get the user's shell */
+string shell_path( void )
+{
+    struct passwd *pw = getpwuid( getuid() );
+    if ( pw == nullptr ) {
+        throw Exception( "getpwuid" );
+    }
+
+    string shell_path( pw->pw_shell );
+    if ( shell_path.empty() ) { /* empty shell means Bourne shell */
+      shell_path = _PATH_BSHELL;
+    }
+
+    return shell_path;
+}
 
 void drop_privileges( void ) {
     gid_t real_gid = getgid( ), eff_gid = getegid( );
@@ -35,5 +57,3 @@ void drop_privileges( void ) {
         abort( );
     }
 }
-
-#endif /* DROP_PRIVILEGES_HH */

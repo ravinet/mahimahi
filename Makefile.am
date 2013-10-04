@@ -7,7 +7,7 @@ delayshell_SOURCES = exception.hh ezio.cc ezio.hh delayshell.cc \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc \
 	socket.cc socket.hh address.cc address.hh \
 	ferry.hh ferry.cc system_runner.hh nat.hh \
-	socket_type.hh drop_privileges.hh
+	socket_type.hh util.hh util.cc
 delayshell_LDADD = -lrt
 install-exec-hook:
 	chown root $(bindir)/delayshell

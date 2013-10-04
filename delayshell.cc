@@ -2,10 +2,7 @@
 // to run arping to send packet to ingress to/from machine with ip address addr  --> arping -I ingress addr
 
 #include <sys/socket.h>
-#include <pwd.h>
-#include <paths.h>
 #include <fstream>
-#include <grp.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
@@ -17,38 +14,22 @@
 #include "nat.hh"
 #include "socket.hh"
 #include "address.hh"
-#include "drop_privileges.hh"
+#include "util.hh"
 #include "file_descriptor.hh"
 
 using namespace std;
-
-/* get name of the user's shell */
-string shell_path( void )
-{
-    struct passwd *pw = getpwuid( getuid() );
-    if ( pw == nullptr ) {
-        throw Exception( "getpwuid" );
-    }
-
-    string shell_path( pw->pw_shell );
-    if ( shell_path.empty() ) { /* empty shell means Bourne shell */
-      shell_path = _PATH_BSHELL;
-    }
-
-    return shell_path;
-}
 
 int main( int argc, char *argv[] )
 {
     try {
         if ( geteuid( ) != 0 ) {
-           cerr << "delayshell: You don't have permission. Please run as root." << endl;
+            cerr << "delayshell: You don't have permission. Please run as root." << endl;
         }
         if ( argc != 2) {
             cerr << "Usage: delayshell one-way-delay" << endl;
             return EXIT_FAILURE;
-	}
-	const uint64_t delay_ms = atoi( argv[1] );
+        }
+        const uint64_t delay_ms = atoi( argv[1] );
         ifstream input;
         input.open("/proc/sys/net/ipv4/ip_forward");
         string line;
