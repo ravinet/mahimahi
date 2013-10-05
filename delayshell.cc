@@ -9,6 +9,7 @@
 #include "ferry.hh"
 #include "nat.hh"
 #include "util.hh"
+#include "get_address.hh"
 
 #include "config.h"
 
@@ -35,13 +36,17 @@ int main( int argc, char *argv[] )
             ingress_socket( pipes[ 1 ], "socketpair" );
 
         /* set egress and ingress ip addresses */
-        string egress_addr = "172.30.100.100";
-        string ingress_addr = "172.30.100.101";
+        Interfaces interfaces;
 
-        TunDevice egress_tun( "egress", egress_addr, ingress_addr );
+        auto egress_octet = interfaces.first_unassigned_address( 1 );
+        auto ingress_octet = interfaces.first_unassigned_address( egress_octet.second + 1 );
+
+        Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
+
+        TunDevice egress_tun( "delayshell-" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
 
         /* create DNS proxy */
-        unique_ptr<DNSProxy> dns_outside( new DNSProxy( Address( egress_addr, 0 ), nameserver, nameserver ) );
+        unique_ptr<DNSProxy> dns_outside( new DNSProxy( Address( egress_addr.ip(), 0 ), nameserver, nameserver ) );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
@@ -53,7 +58,7 @@ int main( int argc, char *argv[] )
                     throw Exception( "unshare" );
                 }
 
-                TunDevice ingress_tun( "ingress", ingress_addr, egress_addr );
+                TunDevice ingress_tun( "ingress", ingress_addr.ip(), egress_addr.ip() );
 
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );

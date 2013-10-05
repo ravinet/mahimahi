@@ -13,9 +13,19 @@
 
 using namespace std;
 
-Address::Address( const struct sockaddr_in &s_addr )
-  : addr_( s_addr )
+Address::Address( const sockaddr_in & s_addr )
+    : addr_( s_addr )
 {
+}
+
+Address::Address( const sockaddr & s_addr )
+    : addr_()
+{
+    if ( s_addr.sa_family != AF_INET ) {
+        throw Exception( "Address()", "sockaddr is not of family AF_INET" );
+    }
+
+    addr_ = *reinterpret_cast<const sockaddr_in *>( &s_addr );
 }
 
 Address::Address()
@@ -37,18 +47,22 @@ Address::Address( const std::string & ip, const uint16_t port )
     addr_.sin_port = htons( port );
 }
 
+Address Address::cgnat( const uint8_t last_octet )
+{
+    return Address( "100.64.0." + to_string( last_octet ), 0 );
+}
 
 Address::Address( const std::string & hostname, const std::string & service, const SocketType & socket_type )
   : addr_()
 {
   /* give hints to resolver */
-  struct addrinfo hints;
+  addrinfo hints;
   zero( hints );
   hints.ai_family = AF_INET;
   hints.ai_socktype = socket_type;
 
   /* prepare for the answer */
-  struct addrinfo *res;
+  addrinfo *res;
 
   /* look up the name or names */
   int gai_ret = getaddrinfo( hostname.c_str(), service.c_str(), &hints, &res );
