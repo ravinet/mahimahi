@@ -101,8 +101,14 @@ int main( int argc, char *argv[] )
                 drop_privileges();
 
                 ChildProcess bash_process( [&user_environment]() {
+                        /* restore environment and tweak bash prompt */
+                        environ = user_environment;
+                        if ( setenv( "PROMPT_COMMAND", "PS1=\"[delay] $PS1\" PROMPT_COMMAND=", false ) < 0 ) {
+                            throw Exception( "setenv" );
+                        }
+
                         const string shell = shell_path();
-                        if ( execle( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ), user_environment ) < 0 ) {
+                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
                             throw Exception( "execl" );
                         }
                         return EXIT_FAILURE;
