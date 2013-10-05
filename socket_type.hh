@@ -5,7 +5,7 @@
 
 enum SocketType {
   UDP = SOCK_DGRAM,
-    TCP = SOCK_STREAM
-    };
+  TCP = SOCK_STREAM
+};
 
 #endif /* SOCKET_TYPE_HH */
