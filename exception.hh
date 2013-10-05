@@ -23,7 +23,7 @@ public:
 
     void perror( void ) const
     {
-        std::cerr << attempt_ << ": " << error_ << std::endl;
+        std::cerr << attempt_ << ": " << error_ << std::endl << std::flush;
     }
 
     const std::string & attempt( void ) const { return attempt_; }

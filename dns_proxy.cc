@@ -44,12 +44,10 @@ void DNSProxy::handle_udp( void )
                     udp_listener_.sendto( request.first, dns_server.read() );
                 }
             } catch ( const Exception & e ) {
-                cerr.flush();
                 e.perror();
                 return;
             }
 
-            cerr.flush();
             return;
         }, request );
 
@@ -92,12 +90,10 @@ void DNSProxy::handle_tcp( void )
                     }
                 }
             } catch ( const Exception & e ) {
-                cerr.flush();
                 e.perror();
                 return;
             }
 
-            cerr.flush();
             return;
         }, tcp_listener_.accept() );
 
