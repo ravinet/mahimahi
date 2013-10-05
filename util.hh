@@ -5,8 +5,11 @@
 
 #include <string>
 
+#include "address.hh"
+
 std::string shell_path( void );
 void drop_privileges( void );
 void check_requirements( const int argc, const char * const argv[] );
+Address first_nameserver( void );
 
 #endif /* UTIL_HH */

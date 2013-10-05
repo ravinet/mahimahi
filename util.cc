@@ -7,6 +7,7 @@
 #include <grp.h>
 #include <cstdlib>
 #include <fstream>
+#include <resolv.h>
 
 #include "util.hh"
 #include "exception.hh"
@@ -96,4 +97,14 @@ void check_requirements( const int argc, const char * const argv[] )
     if ( line != "1" ) {
         throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }
+}
+
+Address first_nameserver( void )
+{
+    /* find the first nameserver */
+    if ( res_init() < 0 ) {
+        throw Exception( "res_init" );
+    }
+
+    return _res.nsaddr;
 }

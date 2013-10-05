@@ -28,6 +28,7 @@ int main( int argc, char *argv[] )
 
         const string delay = argv[ 1 ];
         const uint64_t delay_ms = myatoi( delay );
+        const Address nameserver = first_nameserver();
 
         /* make pair of connected sockets */
         int pipes[ 2 ];
@@ -50,18 +51,12 @@ int main( int argc, char *argv[] )
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
 
-        /* address of outside dns server for UDP requests */
-        Address connect_addr_outside( "localhost", "domain", SocketType::UDP );
-
         /* create outside listener socket for TCP dns requests */
         Socket listener_socket_outside_tcp( SocketType::TCP );
         listener_socket_outside_tcp.bind( Address( egress_addr, "0", SocketType::TCP ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
         string listener_outside_port_tcp = to_string( listener_socket_outside_tcp.local_addr().port() );
-
-        /* address of outside dns server for TCP requests */
-        Address connect_addr_outside_tcp( "localhost", "domain", SocketType::TCP );
 
         listener_socket_outside_tcp.listen();
 
@@ -85,14 +80,14 @@ int main( int argc, char *argv[] )
 
                 /* create inside listener socket for UDP dns requests */
                 Socket listener_socket_inside( SocketType::UDP );
-                listener_socket_inside.bind( Address( "localhost", "domain", SocketType::UDP ) );
+                listener_socket_inside.bind( nameserver );
 
                 /* outside address to send UDP dns requests to */
                 Address connect_addr_inside( egress_addr, listener_outside_port, SocketType::UDP );
 
                 /* create inside listener socket for TCP dns requests */
                 Socket listener_socket_inside_tcp( SocketType::TCP );
-                listener_socket_inside_tcp.bind( Address( "localhost", "domain", SocketType::TCP ) );
+                listener_socket_inside_tcp.bind( nameserver );
                 listener_socket_inside_tcp.listen();
 
                 /* outside address to send TCP dns requests to */
@@ -125,7 +120,7 @@ int main( int argc, char *argv[] )
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tun.fd(), ingress_socket, listener_socket_outside, connect_addr_outside, listener_socket_outside_tcp, connect_addr_outside_tcp, container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, listener_socket_outside, nameserver, listener_socket_outside_tcp, nameserver, container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
