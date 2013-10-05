@@ -20,42 +20,33 @@ TunDevice::TunDevice( const string & name,
                       const string & dstaddr )
     : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )
 {
-    auto ioctl_helper = [&]( const int fd,
-                             const int request,
-                             std::function<void( struct ifreq &ifr,
-                                                 struct sockaddr_in &sin )> ifr_adjustment )
-    {
-        interface_ioctl( fd, request, name, ifr_adjustment );
-    };
-
-    ioctl_helper( fd_.num(), TUNSETIFF, [&] ( struct ifreq &ifr,
-                                              struct sockaddr_in & )
-                  { ifr.ifr_flags = IFF_TUN; } );
+    interface_ioctl( fd_.num(), TUNSETIFF, name,
+                     [] ( struct ifreq &ifr,
+                          struct sockaddr_in & ) { ifr.ifr_flags = IFF_TUN; } );
 
     Socket sockfd( SocketType::UDP );
 
     /* bring interface up */
-    ioctl_helper( sockfd.raw_fd(), SIOCSIFFLAGS, [&] ( struct ifreq &ifr,
-                                                       struct sockaddr_in &)
-                  { ifr.ifr_flags = IFF_UP; } );
+    interface_ioctl( sockfd.raw_fd(), SIOCSIFFLAGS, name,
+                     [] ( struct ifreq &ifr,
+                          struct sockaddr_in & ) { ifr.ifr_flags = IFF_UP; } );
 
     /* assign interface address */
-    ioctl_helper( sockfd.raw_fd(), SIOCSIFADDR, [&] ( struct ifreq &ifr,
-                                                      struct sockaddr_in &sin )
+    interface_ioctl( sockfd.raw_fd(), SIOCSIFADDR, name,
+                     [&] ( struct ifreq &ifr,
+                           struct sockaddr_in &sin )
                   {
-                      if ( inet_aton( addr.c_str(), &sin.sin_addr ) == 0 ) {
-                          throw Exception( "inet_aton" );
-                      }
-                      memcpy( &ifr.ifr_addr, &sin, sizeof( struct sockaddr ) );
+                      sin = Address( addr, 0 ).raw_sockaddr();
+                      ifr.ifr_addr = *reinterpret_cast<sockaddr *>( &sin );
                   } );
+
     /* assign destination addresses */
-    ioctl_helper( sockfd.raw_fd(), SIOCSIFDSTADDR, [&] ( struct ifreq &ifr,
-                                                         struct sockaddr_in &sin )
+    interface_ioctl( sockfd.raw_fd(), SIOCSIFDSTADDR, name,
+                     [&] ( struct ifreq &ifr,
+                           struct sockaddr_in &sin )
                   {
-                      if ( inet_aton( dstaddr.c_str(), &sin.sin_addr ) == 0 ) {
-                          throw Exception( "inet_aton" );
-                      }
-                      memcpy( &ifr.ifr_dstaddr, &sin, sizeof( struct sockaddr ) );
+                      sin = Address( dstaddr, 0 ).raw_sockaddr();
+                      ifr.ifr_dstaddr = *reinterpret_cast<sockaddr *>( &sin );
                   } );
 }
 
