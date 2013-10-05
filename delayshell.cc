@@ -76,11 +76,16 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        if ( setenv( "MAHIMAHI_DELAY", delay.c_str(), true ) < 0 ) {
+
+                        const char *prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
+                        string mahimahi_prefix = prefix ? prefix : "";
+                        mahimahi_prefix.append( "[delay " + delay + "] " );
+
+                        if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
                             throw Exception( "setenv" );
                         }
 
-                        if ( setenv( "PROMPT_COMMAND", "PS1=\"[delay $MAHIMAHI_DELAY] $PS1\" PROMPT_COMMAND=", false ) < 0 ) {
+                        if ( setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) < 0 ) {
                             throw Exception( "setenv" );
                         }
 
