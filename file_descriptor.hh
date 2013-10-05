@@ -22,6 +22,10 @@ public:
             throw Exception( syscall_name );
         }
 
+        if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
+            throw Exception( "FileDescriptor", "fd <= 2" );
+        }
+
         /* set close-on-exec flag so our file descriptors
            aren't passed on to unrelated children (like a shell) */
         if ( fcntl( fd_, F_SETFD, FD_CLOEXEC ) < 0 ) {

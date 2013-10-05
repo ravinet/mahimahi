@@ -13,7 +13,6 @@
 #include "socket.hh"
 #include "address.hh"
 #include "util.hh"
-#include "file_descriptor.hh"
 
 using namespace std;
 
@@ -93,9 +92,9 @@ int main( int argc, char *argv[] )
                 /* outside address to send TCP dns requests to */
                 Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp, SocketType::TCP );
 
-                /* Fork again after dropping root priveleges*/
+                /* Fork again after dropping root privileges*/
                 drop_privileges();
-                
+
                 ChildProcess bash_process( []() {
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {

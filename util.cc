@@ -10,6 +10,7 @@
 
 #include "util.hh"
 #include "exception.hh"
+#include "file_descriptor.hh"
 
 using namespace std;
 
@@ -66,10 +67,13 @@ void check_requirements( const int argc, const char * const argv[] )
 {
     if ( argc <= 0 ) {
         /* really crazy user */
-        cerr << "Error: argc <= 0";
-        _exit( EXIT_FAILURE );
+        throw Exception( "missing argv[ 0 ]", "argc <= 0" );
     }
 
+    /* verify normal fds are present (stderr hasn't been closed) */
+    FileDescriptor( open( "/dev/null", O_RDONLY ), "open" );
+
+    /* verify running as root */
     if ( geteuid() != 0 ) {
         throw Exception( argv[ 0 ], "needs to be installed setuid root" );
     }
