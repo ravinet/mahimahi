@@ -19,8 +19,7 @@ public:
 
     static void interface_ioctl( const int fd, const int request,
                                  const std::string & name,
-                                 std::function<void( struct ifreq &ifr,
-                                                     struct sockaddr_in &sin )> ifr_adjustment);
+                                 std::function<void( struct ifreq &ifr )> ifr_adjustment);
 };
 
 #endif /* TUNDEVICE_HH */

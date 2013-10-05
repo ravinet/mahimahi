@@ -57,9 +57,7 @@ int main( int argc, char *argv[] )
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );
                 TunDevice::interface_ioctl( ioctl_socket.raw_fd(), SIOCSIFFLAGS, "lo",
-                                            [] ( struct ifreq &ifr,
-                                                 struct sockaddr_in & )
-                                            { ifr.ifr_flags = IFF_UP; } );
+                                            [] ( struct ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
 
