@@ -46,19 +46,18 @@ int main( int argc, char *argv[] )
 
         /* create outside listener socket for UDP dns requests */
         Socket listener_socket_outside( SocketType::UDP );
-        listener_socket_outside.bind( Address( egress_addr, "0", SocketType::UDP ) );
+        listener_socket_outside.bind( Address( egress_addr, 0 ) );
 
         /* store port outside listener socket bound to so inside socket can connect to it */
-        string listener_outside_port = to_string( listener_socket_outside.local_addr().port() );
+        uint16_t listener_outside_port = listener_socket_outside.local_addr().port();
 
         /* create outside listener socket for TCP dns requests */
         Socket listener_socket_outside_tcp( SocketType::TCP );
-        listener_socket_outside_tcp.bind( Address( egress_addr, "0", SocketType::TCP ) );
+        listener_socket_outside_tcp.bind( Address( egress_addr, 0 ) );
+        listener_socket_outside_tcp.listen();
 
         /* store port outside listener socket bound to so inside socket can connect to it */
-        string listener_outside_port_tcp = to_string( listener_socket_outside_tcp.local_addr().port() );
-
-        listener_socket_outside_tcp.listen();
+        uint16_t listener_outside_port_tcp = listener_socket_outside_tcp.local_addr().port();
 
         /* Fork */
         ChildProcess container_process( [&]() {
@@ -83,7 +82,7 @@ int main( int argc, char *argv[] )
                 listener_socket_inside.bind( nameserver );
 
                 /* outside address to send UDP dns requests to */
-                Address connect_addr_inside( egress_addr, listener_outside_port, SocketType::UDP );
+                Address connect_addr_inside( egress_addr, listener_outside_port );
 
                 /* create inside listener socket for TCP dns requests */
                 Socket listener_socket_inside_tcp( SocketType::TCP );
@@ -91,7 +90,7 @@ int main( int argc, char *argv[] )
                 listener_socket_inside_tcp.listen();
 
                 /* outside address to send TCP dns requests to */
-                Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp, SocketType::TCP );
+                Address connect_addr_inside_tcp( egress_addr, listener_outside_port_tcp );
 
                 /* Fork again after dropping root privileges*/
                 drop_privileges();

@@ -15,9 +15,10 @@ private:
 public:
     Address( const struct sockaddr_in & s_addr );
     Address( const std::string & hostname, const std::string & service, const SocketType & socket_type );
+    Address( const std::string & ip, const uint16_t port );
     Address();
 
-    std::string hostname( void ) const;
+    std::string ip( void ) const;
     uint16_t port( void ) const;
     std::string str( void ) const;
 

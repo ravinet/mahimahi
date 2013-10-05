@@ -19,10 +19,23 @@ Address::Address( const struct sockaddr_in &s_addr )
 }
 
 Address::Address()
-  : addr_()
+    : addr_()
 {
-  memset( &addr_, 0, sizeof( addr_ ) );
+    memset( &addr_, 0, sizeof( addr_ ) );
 }
+
+Address::Address( const std::string & ip, const uint16_t port )
+    : addr_()
+{
+    addr_.sin_family = AF_INET;
+
+    if ( 1 != inet_pton( AF_INET, ip.c_str(), &addr_.sin_addr ) ) {
+        throw Exception( "inet_pton" );
+    }
+
+    addr_.sin_port = htons( port );
+}
+
 
 Address::Address( const std::string & hostname, const std::string & service, const SocketType & socket_type )
   : addr_()
@@ -58,7 +71,7 @@ Address::Address( const std::string & hostname, const std::string & service, con
 
 string Address::str( void ) const
 {
-  return hostname() + ":" + to_string( port() );
+  return ip() + ":" + to_string( port() );
 }
 
 uint16_t Address::port( void ) const
@@ -66,7 +79,12 @@ uint16_t Address::port( void ) const
   return ntohs( addr_.sin_port );
 }
 
-string Address::hostname( void ) const
+string Address::ip( void ) const
 {
-  return inet_ntoa( addr_.sin_addr );
+    char addrstr[ INET_ADDRSTRLEN ] = {};
+    if ( nullptr == inet_ntop( AF_INET, &addr_.sin_addr, addrstr, INET_ADDRSTRLEN ) ) {
+        throw Exception( "inet_ntop" );
+    }
+
+    return addrstr;
 }
