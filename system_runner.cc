@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <unistd.h>
-#include <cstring>
 #include <numeric>
 
 #include "system_runner.hh"

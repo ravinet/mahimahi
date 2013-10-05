@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
+#include <net/route.h>
 
 #include "tundevice.hh"
 #include "ferry.hh"
@@ -59,7 +60,17 @@ int main( int argc, char *argv[] )
                 TunDevice::interface_ioctl( ioctl_socket.raw_fd(), SIOCSIFFLAGS, "lo",
                                             [] ( struct ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
-                run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
+                /* create default route */
+                struct rtentry route;
+                zero( route );
+
+                route.rt_gateway = Address( egress_addr, 0 ).raw_sockaddr();
+                route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+                if ( ioctl( ioctl_socket.raw_fd(), SIOCADDRT, &route ) < 0 ) {
+                    throw Exception( "ioctl SIOCADDRT" );
+                }
 
                 /* create DNS proxy if nameserver address is local */
                 auto dns_inside = DNSProxy::maybe_proxy( nameserver,

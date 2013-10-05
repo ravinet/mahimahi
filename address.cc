@@ -4,12 +4,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <assert.h>
-#include <string.h>
 #include <arpa/inet.h>
 
 #include "address.hh"
 #include "exception.hh"
 #include "socket.hh"
+#include "util.hh"
 
 using namespace std;
 
@@ -21,7 +21,8 @@ Address::Address( const struct sockaddr_in &s_addr )
 Address::Address()
     : addr_()
 {
-    memset( &addr_, 0, sizeof( addr_ ) );
+    zero( addr_ );
+    addr_.sin_family = AF_INET;
 }
 
 Address::Address( const std::string & ip, const uint16_t port )
@@ -42,7 +43,7 @@ Address::Address( const std::string & hostname, const std::string & service, con
 {
   /* give hints to resolver */
   struct addrinfo hints;
-  memset( &hints, 0, sizeof( hints ) );
+  zero( hints );
   hints.ai_family = AF_INET;
   hints.ai_socktype = socket_type;
 

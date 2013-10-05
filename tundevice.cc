@@ -12,6 +12,7 @@
 #include "exception.hh"
 #include "ezio.hh"
 #include "socket.hh"
+#include "util.hh"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ void TunDevice::interface_ioctl( const int fd, const int request,
                                  std::function<void( struct ifreq &ifr )> ifr_adjustment)
 {
     struct ifreq ifr;
-    memset( &ifr, 0, sizeof( ifr ) ); /* does not have default initializer */
+    zero( ifr );
     strncpy( ifr.ifr_name, name.c_str(), IFNAMSIZ ); /* interface name */
 
     ifr_adjustment( ifr );

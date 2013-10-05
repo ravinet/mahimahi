@@ -10,13 +10,6 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CXX
 
-AC_ARG_VAR([ROUTE], [path to route])
-AC_PATH_PROG([ROUTE], [route], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
-if test "$ROUTE" = "no"; then
-  AC_MSG_ERROR([route is required])
-fi
-AC_DEFINE_UNQUOTED([ROUTE], ["$ROUTE"], [path to route])
-
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
 if test "$IPTABLES" = "no"; then

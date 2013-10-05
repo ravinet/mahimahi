@@ -1,7 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <sys/socket.h>
-#include <string.h>
 #include <netinet/in.h>
 #include <utility>
 #include <arpa/inet.h>
