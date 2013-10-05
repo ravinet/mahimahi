@@ -13,6 +13,8 @@
 #include "socket.hh"
 #include "address.hh"
 #include "util.hh"
+#include "dns_proxy.hh"
+
 #include "config.h"
 
 using namespace std;
@@ -44,14 +46,8 @@ int main( int argc, char *argv[] )
 
         TunDevice egress_tun( "egress", egress_addr, ingress_addr );
 
-        /* create outside listener socket for UDP dns requests */
-        Socket listener_socket_outside( SocketType::UDP );
-        listener_socket_outside.bind( Address( egress_addr, 0 ) );
-
-        /* create outside listener socket for TCP dns requests */
-        Socket listener_socket_outside_tcp( SocketType::TCP );
-        listener_socket_outside_tcp.bind( Address( egress_addr, 0 ) );
-        listener_socket_outside_tcp.listen();
+        /* create DNS proxy */
+        DNSProxy dns_outside( Address( egress_addr, 0 ), nameserver, nameserver );
 
         /* Fork */
         ChildProcess container_process( [&]() {
@@ -71,16 +67,10 @@ int main( int argc, char *argv[] )
 
                 run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
 
-                /* create inside listener socket for UDP dns requests */
-                Socket listener_socket_inside( SocketType::UDP );
-                listener_socket_inside.bind( nameserver );
+                /* create DNS proxy */
+                DNSProxy dns_inside( nameserver, dns_outside.udp_listener().local_addr(), dns_outside.tcp_listener().local_addr() );
 
-                /* create inside listener socket for TCP dns requests */
-                Socket listener_socket_inside_tcp( SocketType::TCP );
-                listener_socket_inside_tcp.bind( nameserver );
-                listener_socket_inside_tcp.listen();
-
-                /* Fork again after dropping root privileges*/
+                /* Fork again after dropping root privileges */
                 drop_privileges();
 
                 ChildProcess bash_process( [&]() {
@@ -101,13 +91,13 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, listener_socket_inside, Address( egress_addr, listener_socket_outside.local_addr().port() ), listener_socket_inside_tcp, Address( egress_addr, listener_socket_outside_tcp.local_addr().port() ), bash_process, delay_ms );
+                return ferry( ingress_tun.fd(), egress_socket, dns_inside, bash_process, delay_ms );
             } );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tun.fd(), ingress_socket, listener_socket_outside, nameserver, listener_socket_outside_tcp, nameserver, container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, dns_outside, container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

@@ -2,97 +2,12 @@
 
 #include <poll.h>
 #include <csignal>
-#include <utility>
-#include <iostream>
-#include <string>
-#include <thread>
 
 #include "ferry.hh"
 #include "ferry_queue.hh"
 #include "signalfd.hh"
 
 using namespace std;
-
-void service_udp_request( Socket & server_socket, const pair< Address, string > request, const Address & connectaddr )
-{
-    try {
-        Socket outgoing_socket( SocketType::UDP );
-        outgoing_socket.connect( connectaddr );
-
-        /* send request to local dns server */
-        outgoing_socket.write( request.second );
-
-        /* wait up to 60 seconds for a reply */
-        struct pollfd pollfds;
-        pollfds.fd = outgoing_socket.raw_fd();
-        pollfds.events = POLLIN;
-
-        if ( poll( &pollfds, 1, 60000 ) < 0 ) {
-            throw Exception( "poll" );
-        }
-
-        if ( pollfds.revents & POLLIN ) {
-            /* read response, then send back to client */
-            server_socket.sendto( request.first, outgoing_socket.read() );
-        }
-    } catch ( const Exception & e ) {
-        cerr.flush();
-        e.perror();
-        return;
-    }
-
-    cerr.flush();
-    return;
-}
-
-void service_tcp_request( Socket & server_socket, const Address & connectaddr )
-{
-    try {
-        Socket outgoing_socket( SocketType::TCP );
-        outgoing_socket.connect( connectaddr );
-
-        struct pollfd pollfds[ 2 ];
-        pollfds[ 0 ].fd = outgoing_socket.raw_fd();
-        pollfds[ 1 ].fd = server_socket.raw_fd();
-
-        /* process requests until either socket is idle for 60 seconds or until EOF */
-        while( true ) {
-            pollfds[ 0 ].events = POLLIN;
-            pollfds[ 1 ].events = POLLIN;
-
-            if ( poll( pollfds, 2, 60000 ) < 0 ) {
-                throw Exception( "poll" );
-            }
-
-            /* if response comes from local dns server, write back to source of request */
-            if ( pollfds[ 0 ].revents & POLLIN ) {
-                /* read response, then send back to client */
-                string buffer = outgoing_socket.read();
-                if ( buffer.empty() ) {
-                    break;
-                }
-                server_socket.write( buffer );
-            } else if ( pollfds[ 1 ].revents & POLLIN ) {
-                /* read request, then send to local dns server */
-                string buffer = server_socket.read();
-                if ( buffer.empty() ) {
-                    break;
-                }
-                outgoing_socket.write( buffer );
-            } else {
-                break; /* timeout */
-            }
-        }
-
-    } catch ( const Exception & e ) {
-        cerr.flush();
-        e.perror();
-        return;
-    }
-
-    cerr.flush();
-    return;
-}
 
 int handle_signal( const signalfd_siginfo & sig,
                    ChildProcess & child_process )
@@ -136,10 +51,7 @@ int handle_signal( const signalfd_siginfo & sig,
 
 int ferry( FileDescriptor & tun,
            FileDescriptor & sibling_fd,
-           Socket & listen_socket_udp,
-           const Address connect_addr_udp,
-           Socket & listen_socket_tcp,
-           const Address connect_addr_tcp,
+           DNSProxy & dns_proxy,
            ChildProcess & child_process,
            const uint64_t delay_ms )
 {
@@ -159,10 +71,10 @@ int ferry( FileDescriptor & tun,
     pollfds[ 2 ].fd = signal_fd.raw_fd();
     pollfds[ 2 ].events = POLLIN;
 
-    pollfds[ 3 ].fd = listen_socket_udp.raw_fd();
+    pollfds[ 3 ].fd = dns_proxy.mutable_udp_listener().raw_fd();
     pollfds[ 3 ].events = POLLIN;
 
-    pollfds[ 4 ].fd = listen_socket_tcp.raw_fd();
+    pollfds[ 4 ].fd = dns_proxy.mutable_tcp_listener().raw_fd();
     pollfds[ 4 ].events = POLLIN;
 
     FerryQueue delay_queue( delay_ms );
@@ -202,18 +114,12 @@ int ferry( FileDescriptor & tun,
 
         if ( pollfds[ 3 ].revents & POLLIN ) {
             /* got dns request */
-            thread newthread( [&listen_socket_udp, &connect_addr_udp] ( const pair< Address, string > request ) {
-                    service_udp_request( listen_socket_udp, request, connect_addr_udp ); },
-                listen_socket_udp.recvfrom() );
-            newthread.detach();
+            dns_proxy.handle_udp();
         }
         
         if ( pollfds[ 4 ].revents & POLLIN ) {
             /* got TCP dns request */
-            thread newthread( [&connect_addr_tcp] ( Socket service_socket ) {
-                    service_tcp_request( service_socket, connect_addr_tcp ); },
-                listen_socket_tcp.accept() );
-            newthread.detach();
+            dns_proxy.handle_tcp();
         }
 
         /* packets FROM tail of delay queue go to sibling */
