@@ -61,7 +61,7 @@ void Socket::listen( void )
   }
 }
 
-Socket Socket::accept( void ) const
+Socket Socket::accept( void )
 {
   /* make new socket address for connection */
   struct sockaddr_in new_connection_addr;
@@ -80,7 +80,7 @@ Socket Socket::accept( void ) const
   return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
 }
 
-string Socket::read( void ) const
+string Socket::read( void )
 {
     return fd_.read();
 }
@@ -96,12 +96,12 @@ void Socket::connect( const Address & addr )
     }
 }
 
-void Socket::write( const std::string & str ) const
+void Socket::write( const std::string & str )
 {
     fd_.write( str );
 }
 
-pair< Address, string > Socket::recvfrom( void ) const
+pair< Address, string > Socket::recvfrom( void )
 {
     static const ssize_t RECEIVE_MTU = 2048;
 
@@ -128,7 +128,7 @@ pair< Address, string > Socket::recvfrom( void ) const
                       string( buf, recv_len ) );
 }
 
-void Socket::sendto( const Address & destination, const std::string & payload ) const
+void Socket::sendto( const Address & destination, const std::string & payload )
 {
     if ( ::sendto( fd_.num(),
                    payload.data(),

@@ -37,11 +37,11 @@ SignalFD::SignalFD( const SignalMask & signals )
 }
 
 /* read one signal */
-signalfd_siginfo SignalFD::read_signal( void ) const
+signalfd_siginfo SignalFD::read_signal( void )
 {
     signalfd_siginfo delivered_signal;
 
-    string delivered_signal_str = fd().read( sizeof( signalfd_siginfo ) );
+    string delivered_signal_str = fd_.read( sizeof( signalfd_siginfo ) );
 
     if ( delivered_signal_str.size() != sizeof( signalfd_siginfo ) ) {
         throw Exception( "signalfd read size mismatch" );

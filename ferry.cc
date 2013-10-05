@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void service_udp_request( const Socket & server_socket, const pair< Address, string > request, const Address & connectaddr )
+void service_udp_request( Socket & server_socket, const pair< Address, string > request, const Address & connectaddr )
 {
     try {
         Socket outgoing_socket( SocketType::UDP );
@@ -45,7 +45,7 @@ void service_udp_request( const Socket & server_socket, const pair< Address, str
     return;
 }
 
-void service_tcp_request( const Socket & server_socket, const Address & connectaddr)
+void service_tcp_request( Socket & server_socket, const Address & connectaddr)
 {
     try {
         Socket outgoing_socket( SocketType::TCP );
@@ -142,11 +142,11 @@ int handle_signal( const signalfd_siginfo & sig,
     return -1;
 }
 
-int ferry( const FileDescriptor & tun,
-           const FileDescriptor & sibling_fd,
-           const Socket & listen_socket_udp,
+int ferry( FileDescriptor & tun,
+           FileDescriptor & sibling_fd,
+           Socket & listen_socket_udp,
            const Address connect_addr_udp,
-           const Socket & listen_socket_tcp,
+           Socket & listen_socket_tcp,
            const Address connect_addr_tcp,
            ChildProcess & child_process,
            const uint64_t delay_ms )
@@ -164,7 +164,7 @@ int ferry( const FileDescriptor & tun,
     pollfds[ 1 ].fd = sibling_fd.num();
     pollfds[ 1 ].events = POLLIN;
 
-    pollfds[ 2 ].fd = signal_fd.fd().num();
+    pollfds[ 2 ].fd = signal_fd.raw_fd();
     pollfds[ 2 ].events = POLLIN;
 
     pollfds[ 3 ].fd = listen_socket_udp.raw_fd();
@@ -218,9 +218,9 @@ int ferry( const FileDescriptor & tun,
         
         if ( pollfds[ 4 ].revents & POLLIN ) {
             /* got TCP dns request */
-            thread newthread( [&connect_addr_tcp] (const Socket & service_socket ) {
-                              service_tcp_request( service_socket, connect_addr_tcp ); },
-                              listen_socket_tcp.accept());
+            thread newthread( [&connect_addr_tcp] (Socket service_socket ) {
+                    service_tcp_request( service_socket, connect_addr_tcp ); },
+                listen_socket_tcp.accept() );
             newthread.detach();
         }
 

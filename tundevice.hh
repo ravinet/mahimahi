@@ -15,7 +15,7 @@ private:
 public:
     TunDevice( const std::string & name, const std::string & addr, const std::string & dstaddr );
 
-    const FileDescriptor & fd( void ) const { return fd_; }
+    FileDescriptor & fd( void ) { return fd_; }
 
     static void interface_ioctl( const int fd, const int request,
                                  const std::string & name,

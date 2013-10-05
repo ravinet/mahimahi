@@ -28,18 +28,18 @@ public:
     void bind( const Address & addr );
     void connect( const Address & addr );
     void listen( void );
-    Socket accept( void ) const;
+    Socket accept( void );
 
     const Address & local_addr( void ) const { return local_addr_; }
     const Address & peer_addr( void ) const { return peer_addr_; }
 
-    std::string read( void ) const;
-    void write( const std::string & str ) const;
+    std::string read( void );
+    void write( const std::string & str );
 
-    int raw_fd( void ) const { return fd_.num(); }
+    int raw_fd( void ) { return fd_.num(); }
 
-    std::pair< Address, std::string > recvfrom( void ) const;
-    void sendto( const Address & destination, const std::string & payload ) const;
+    std::pair< Address, std::string > recvfrom( void );
+    void sendto( const Address & destination, const std::string & payload );
 };
 
 #endif

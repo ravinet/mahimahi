@@ -29,8 +29,8 @@ private:
 public:
     SignalFD( const SignalMask & signals );
 
-    const FileDescriptor & fd( void ) const { return fd_; }
-    signalfd_siginfo read_signal( void ) const; /* read one signal */
+    const int & raw_fd( void ) { return fd_.num(); }
+    signalfd_siginfo read_signal( void ); /* read one signal */
 };
 
 #endif /* SIGNALFD_HH */

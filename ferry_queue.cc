@@ -10,7 +10,7 @@ void FerryQueue::read_packet( const std::string & contents )
     packet_queue_.emplace( timestamp() + delay_ms_, contents );
 }
 
-void FerryQueue::write_packets( const FileDescriptor & fd )
+void FerryQueue::write_packets( FileDescriptor & fd )
 {
     while ( (!packet_queue_.empty())
             && (packet_queue_.front().first <= timestamp()) ) {

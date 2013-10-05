@@ -44,7 +44,7 @@ public:
         }
     }
 
-    const int & num( void ) const { return fd_; }
+    const int & num( void ) { return fd_; }
 
     /* forbid copying FileDescriptor objects or assigning them */
     FileDescriptor( const FileDescriptor & other ) = delete;
@@ -57,17 +57,17 @@ public:
         other.fd_ = -1; /* disable the other FileDescriptor */
     }
 
-    void write( const std::string & buffer ) const
+    void write( const std::string & buffer )
     {
         writeall( num(), buffer );
     }
 
-    std::string read( void ) const
+    std::string read( void )
     {
         return readall( num() );
     }
 
-    std::string read( const size_t limit ) const
+    std::string read( const size_t limit )
     {
         return readall( num(), limit );
     }

@@ -21,7 +21,7 @@ public:
 
     void read_packet( const std::string & contents );
 
-    void write_packets( const FileDescriptor & fd );
+    void write_packets( FileDescriptor & fd );
 
     int wait_time( void ) const;
 };
