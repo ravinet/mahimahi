@@ -44,15 +44,20 @@ std::string readall( const int fd, const size_t limit )
 
 long int myatoi( const string & str )
 {
-  char *end;
+    if ( str.empty() ) {
+        throw Exception( "Invalid integer string", "empty" );
+    }
 
-  errno = 0;
-  long int ret = strtol( str.c_str(), &end, 10 );
+    char *end;
 
-  if ( ( errno != 0 )
-       || ( end != str.c_str() + str.size() ) ) {
-    throw Exception( "strtol", str.c_str() );
-  }
+    errno = 0;
+    long int ret = strtol( str.c_str(), &end, 10 );
 
-  return ret;
+    if ( errno != 0 ) {
+        throw Exception( "strtol" );
+    } else if ( end != str.c_str() + str.size() ) {
+        throw Exception( "Invalid decimal integer", str );
+    }
+
+    return ret;
 }

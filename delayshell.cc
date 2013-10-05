@@ -26,7 +26,8 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        const uint64_t delay_ms = myatoi( argv[ 1 ] );
+        const string delay = argv[ 1 ];
+        const uint64_t delay_ms = myatoi( delay );
 
         /* make pair of connected sockets */
         int pipes[ 2 ];
@@ -100,10 +101,14 @@ int main( int argc, char *argv[] )
                 /* Fork again after dropping root privileges*/
                 drop_privileges();
 
-                ChildProcess bash_process( [&user_environment]() {
+                ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        if ( setenv( "PROMPT_COMMAND", "PS1=\"[delay] $PS1\" PROMPT_COMMAND=", false ) < 0 ) {
+                        if ( setenv( "MAHIMAHI_DELAY", delay.c_str(), true ) < 0 ) {
+                            throw Exception( "setenv" );
+                        }
+
+                        if ( setenv( "PROMPT_COMMAND", "PS1=\"[delay $MAHIMAHI_DELAY] $PS1\" PROMPT_COMMAND=", false ) < 0 ) {
                             throw Exception( "setenv" );
                         }
 
