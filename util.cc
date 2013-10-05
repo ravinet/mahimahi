@@ -90,11 +90,8 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 
     /* verify IP forwarding is enabled */
-    ifstream input;
-    input.open( "/proc/sys/net/ipv4/ip_forward" );
-    string line;
-    getline( input, line );
-    if ( line != "1" ) {
+    FileDescriptor ipf( open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ), "open /proc/sys/net/ipv4/ip_forward" );
+    if ( ipf.read() != "1\n" ) {
         throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }
 }
