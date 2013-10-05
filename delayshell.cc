@@ -19,6 +19,10 @@ using namespace std;
 int main( int argc, char *argv[] )
 {
     try {
+        /* clear environment */
+        char **user_environment = environ;
+        environ = nullptr;
+
         check_requirements( argc, argv );
 
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
@@ -95,9 +99,9 @@ int main( int argc, char *argv[] )
                 /* Fork again after dropping root privileges*/
                 drop_privileges();
 
-                ChildProcess bash_process( []() {
+                ChildProcess bash_process( [&user_environment]() {
                         const string shell = shell_path();
-                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
+                        if ( execle( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ), user_environment ) < 0 ) {
                             throw Exception( "execl" );
                         }
                         return EXIT_FAILURE;
