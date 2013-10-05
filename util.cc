@@ -105,3 +105,19 @@ Address first_nameserver( void )
 
     return _res.nsaddr;
 }
+
+/* tag bash-like shells with the delay parameter */
+void prepend_shell_prefix( const uint64_t & delay_ms )
+{
+    const char *prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
+    string mahimahi_prefix = prefix ? prefix : "";
+    mahimahi_prefix.append( "[delay " + to_string( delay_ms ) + "] " );
+
+    if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
+        throw Exception( "setenv" );
+    }
+
+    if ( setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) < 0 ) {
+        throw Exception( "setenv" );
+    }
+}

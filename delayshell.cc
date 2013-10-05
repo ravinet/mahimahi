@@ -4,18 +4,10 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-#include <memory>
-
 #include "tundevice.hh"
-#include "exception.hh"
 #include "ferry.hh"
-#include "child_process.hh"
-#include "system_runner.hh"
 #include "nat.hh"
-#include "socket.hh"
-#include "address.hh"
 #include "util.hh"
-#include "dns_proxy.hh"
 
 #include "config.h"
 
@@ -50,6 +42,9 @@ int main( int argc, char *argv[] )
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( Address( egress_addr, 0 ), nameserver, nameserver ) );
 
+        /* set up NAT between egress and eth0 */
+        NAT nat_rule;
+
         /* Fork */
         ChildProcess container_process( [&]() {
                 /* Unshare network namespace */
@@ -68,22 +63,10 @@ int main( int argc, char *argv[] )
 
                 run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
 
-                /* create DNS proxy if possible */
-                auto proxy_or_null = [&] () -> DNSProxy * {
-                    try {
-                        return new DNSProxy( nameserver,
-                                             dns_outside->udp_listener().local_addr(),
-                                             dns_outside->tcp_listener().local_addr() );
-                    } catch ( const Exception & e ) {
-                        if ( e.attempt() == "bind" ) {
-                            return nullptr;
-                        } else {
-                            throw;
-                        }
-                    }
-                };
-
-                unique_ptr<DNSProxy> dns_inside( proxy_or_null() );
+                /* create DNS proxy if nameserver address is local */
+                auto dns_inside = DNSProxy::maybe_proxy( nameserver,
+                                                         dns_outside->udp_listener().local_addr(),
+                                                         dns_outside->tcp_listener().local_addr() );
 
                 /* Fork again after dropping root privileges */
                 drop_privileges();
@@ -91,18 +74,7 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-
-                        const char *prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
-                        string mahimahi_prefix = prefix ? prefix : "";
-                        mahimahi_prefix.append( "[delay " + to_string( delay_ms ) + "] " );
-
-                        if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
-                            throw Exception( "setenv" );
-                        }
-
-                        if ( setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) < 0 ) {
-                            throw Exception( "setenv" );
-                        }
+                        prepend_shell_prefix( delay_ms );
 
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
@@ -113,9 +85,6 @@ int main( int argc, char *argv[] )
 
                 return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms );
             } );
-
-        /* set up NAT between egress and eth0 */
-        NAT nat_rule;
 
         return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms );
     } catch ( const Exception & e ) {

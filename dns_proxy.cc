@@ -104,3 +104,16 @@ void DNSProxy::handle_tcp( void )
     /* don't wait around for the reply */
     newthread.detach();
 }
+
+unique_ptr<DNSProxy> DNSProxy::maybe_proxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target )
+{
+    try {
+        return unique_ptr<DNSProxy>( new DNSProxy( listen_address, s_udp_target, s_tcp_target ) );
+    } catch ( const Exception & e ) {
+        if ( e.attempt() == "bind" ) {
+            return nullptr;
+        } else {
+            throw;
+        }
+    }
+}

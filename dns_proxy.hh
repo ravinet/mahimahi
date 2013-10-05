@@ -22,6 +22,8 @@ public:
 
     void handle_udp( void );
     void handle_tcp( void );
+
+    static std::unique_ptr<DNSProxy> maybe_proxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target );
 };
 
 #endif /* DNS_PROXY_HH */
