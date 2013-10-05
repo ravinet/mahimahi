@@ -6,7 +6,7 @@ delayshell_SOURCES = exception.hh ezio.cc ezio.hh delayshell.cc \
 	file_descriptor.hh tundevice.cc tundevice.hh timestamp.cc timestamp.hh \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc \
 	socket.cc socket.hh address.cc address.hh \
-	ferry.hh ferry.cc system_runner.hh nat.hh \
+	ferry.hh ferry.cc system_runner.hh system_runner.cc nat.hh \
 	socket_type.hh util.hh util.cc
 delayshell_LDADD = -lrt
 install-exec-hook:

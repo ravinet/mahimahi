@@ -13,6 +13,7 @@
 #include "socket.hh"
 #include "address.hh"
 #include "util.hh"
+#include "config.h"
 
 using namespace std;
 
@@ -79,7 +80,7 @@ int main( int argc, char *argv[] )
                                                  struct sockaddr_in & )
                                             { ifr.ifr_flags = IFF_UP; } );
 
-                run( "route add -net default gw " + egress_addr );
+                run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
 
                 /* create inside listener socket for UDP dns requests */
                 Socket listener_socket_inside( SocketType::UDP );

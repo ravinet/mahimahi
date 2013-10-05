@@ -5,20 +5,21 @@
 
 /* Network Address Translator */
 
+#include "config.h"
 #include "system_runner.hh"
 
 class NAT
 {
 public:
-  NAT()
-  {
-    run( "iptables -t nat -A POSTROUTING -j MASQUERADE" );
-  }
+    NAT()
+    {
+        run( { IPTABLES, "-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE" } );
+    }
 
-  ~NAT()
-  {
-    run( "iptables -t nat -D POSTROUTING -j MASQUERADE" );
-  }
+    ~NAT()
+    {
+        run( { IPTABLES, "-t", "nat", "-D", "POSTROUTING", "-j", "MASQUERADE" } );
+    }
 };
 
 #endif /* NAT_HH */
