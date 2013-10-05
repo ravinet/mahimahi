@@ -10,13 +10,15 @@
 
    the ferry() routine loops until exit. */
 
+#include <memory>
+
 #include "file_descriptor.hh"
 #include "child_process.hh"
 #include "dns_proxy.hh"
 
 int ferry( FileDescriptor & tun,
            FileDescriptor & sibling_fd,
-           DNSProxy & dns_proxy,
+           std::unique_ptr<DNSProxy> && dns_proxy,
            ChildProcess & child_process,
            const uint64_t delay_ms );
 

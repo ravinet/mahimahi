@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
+#include <memory>
+
 #include "tundevice.hh"
 #include "exception.hh"
 #include "ferry.hh"
@@ -47,7 +49,7 @@ int main( int argc, char *argv[] )
         TunDevice egress_tun( "egress", egress_addr, ingress_addr );
 
         /* create DNS proxy */
-        DNSProxy dns_outside( Address( egress_addr, 0 ), nameserver, nameserver );
+        unique_ptr<DNSProxy> dns_outside( new DNSProxy( Address( egress_addr, 0 ), nameserver, nameserver ) );
 
         /* Fork */
         ChildProcess container_process( [&]() {
@@ -67,8 +69,18 @@ int main( int argc, char *argv[] )
 
                 run( { ROUTE, "add", "-net", "default", "gw", egress_addr } );
 
-                /* create DNS proxy */
-                DNSProxy dns_inside( nameserver, dns_outside.udp_listener().local_addr(), dns_outside.tcp_listener().local_addr() );
+                /* create DNS proxy if possible */
+                auto proxy_or_null = [&] () -> DNSProxy * {
+                    try {
+                        return new DNSProxy( nameserver,
+                                             dns_outside->udp_listener().local_addr(),
+                                             dns_outside->tcp_listener().local_addr() );
+                    } catch ( const Exception & e ) {
+                        return nullptr;
+                    }
+                };
+
+                unique_ptr<DNSProxy> dns_inside( proxy_or_null() );
 
                 /* Fork again after dropping root privileges */
                 drop_privileges();
@@ -96,13 +108,13 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, dns_inside, bash_process, delay_ms );
+                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms );
             } );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
-        return ferry( egress_tun.fd(), ingress_socket, dns_outside, container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
