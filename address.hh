@@ -22,7 +22,11 @@ public:
     uint16_t port( void ) const;
     std::string str( void ) const;
 
-    const struct sockaddr_in & raw_sockaddr( void ) const { return addr_; }
+    const struct sockaddr_in & raw_sockaddr_in( void ) const { return addr_; }
+    const struct sockaddr & raw_sockaddr( void ) const
+    {
+        return *reinterpret_cast<const sockaddr *>( &addr_ );
+    }
 };
 
 #endif /* ADDRESS_HH */

@@ -32,12 +32,12 @@ TunDevice::TunDevice( const string & name,
     /* assign interface address */
     interface_ioctl( sockfd.raw_fd(), SIOCSIFADDR, name,
                      [&] ( struct ifreq &ifr )
-                     { ifr.ifr_addr = *reinterpret_cast<const sockaddr *>( &Address( addr, 0 ).raw_sockaddr() ); } );
+                     { ifr.ifr_addr = Address( addr, 0 ).raw_sockaddr(); } );
 
     /* assign destination addresses */
     interface_ioctl( sockfd.raw_fd(), SIOCSIFDSTADDR, name,
                      [&] ( struct ifreq &ifr )
-                     { ifr.ifr_dstaddr = *reinterpret_cast<const sockaddr *>( &Address( dstaddr, 0 ).raw_sockaddr() ); } );
+                     { ifr.ifr_dstaddr = Address( dstaddr, 0 ).raw_sockaddr(); } );
 }
 
 void TunDevice::interface_ioctl( const int fd, const int request,

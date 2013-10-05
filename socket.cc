@@ -34,7 +34,7 @@ void Socket::bind( const Address & addr )
  
     /* bind the socket to listen_addr */
     if ( ::bind( fd_.num(),
-                 reinterpret_cast<const sockaddr *>( &local_addr_.raw_sockaddr() ),
+                 &local_addr_.raw_sockaddr(),
                  sizeof( local_addr_.raw_sockaddr() ) ) < 0 ) {
         throw Exception( "bind" );
     }
@@ -90,7 +90,7 @@ void Socket::connect( const Address & addr )
     peer_addr_ = addr;
 
     if ( ::connect( fd_.num(),
-                    reinterpret_cast<const struct sockaddr *>( &peer_addr_.raw_sockaddr() ),
+                    &peer_addr_.raw_sockaddr(),
                     sizeof( peer_addr_.raw_sockaddr() ) ) < 0 ) {
         throw Exception( "connect" );
     }
@@ -115,7 +115,7 @@ pair< Address, string > Socket::recvfrom( void )
                                    buf,
                                    sizeof( buf ),
                                    MSG_TRUNC,
-                                   reinterpret_cast< struct sockaddr * >( &packet_remote_addr ),
+                                   reinterpret_cast<struct sockaddr *>( &packet_remote_addr ),
                                    &fromlen );
 
     if ( recv_len < 0 ) {
@@ -134,7 +134,7 @@ void Socket::sendto( const Address & destination, const std::string & payload )
                    payload.data(),
                    payload.size(),
                    0,
-                   reinterpret_cast<const sockaddr *>( &destination.raw_sockaddr() ),
+                   &destination.raw_sockaddr(),
                    sizeof( destination.raw_sockaddr() ) ) < 0 ) {
         throw Exception( "sendto" );
     }
