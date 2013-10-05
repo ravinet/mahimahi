@@ -20,8 +20,6 @@ private:
 
     Address local_addr_, peer_addr_;
 
-    const int listen_backlog_ = 16;
-
 public:
     Socket( const SocketType & socket_type );
 

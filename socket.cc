@@ -52,6 +52,8 @@ void Socket::bind( const Address & addr )
     local_addr_ = Address( new_local_addr );
 }
 
+static const int listen_backlog_ = 16;
+
 void Socket::listen( void )
 {
   if ( ::listen( fd_.num(), listen_backlog_ ) < 0 ) {
