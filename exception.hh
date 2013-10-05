@@ -25,6 +25,8 @@ public:
     {
         std::cerr << attempt_ << ": " << error_ << std::endl;
     }
+
+    const std::string & attempt( void ) const { return attempt_; }
 };
 
 #endif

@@ -75,7 +75,11 @@ int main( int argc, char *argv[] )
                                              dns_outside->udp_listener().local_addr(),
                                              dns_outside->tcp_listener().local_addr() );
                     } catch ( const Exception & e ) {
-                        return nullptr;
+                        if ( e.attempt() == "bind" ) {
+                            return nullptr;
+                        } else {
+                            throw;
+                        }
                     }
                 };
 
