@@ -36,30 +36,32 @@ void drop_privileges( void ) {
 
     /* eliminate ancillary groups */
     if ( eff_uid == 0 ) { /* if root */
-        setgroups( 1, &real_gid );
+        if ( setgroups( 1, &real_gid ) == -1 ) {
+            throw Exception( "setgroups" );
+        }
     }
 
     /* change real group id if necessary */
     if ( real_gid != eff_gid ) {
         if ( setregid( real_gid, real_gid ) == -1 ) {
-            abort( );
+            throw Exception( "setregid" );
         }
     }
 
     /* change real user id if necessary */
     if ( real_uid != eff_uid ) {
         if ( setreuid( real_uid, real_uid ) == -1 ) {
-            abort( );
+            throw Exception( "setreuid" );
         }
     }
 
     /* verify that the changes were successful. if not, abort */
     if ( real_gid != eff_gid && ( setegid( eff_gid ) != -1 || getegid( ) != real_gid ) ) {
-        abort( );
+        throw Exception( "drop_privileges", "dropping gid failed" );
     }
 
     if ( real_uid != eff_uid && ( seteuid( eff_uid ) != -1 || geteuid( ) != real_uid ) ) {
-        abort( );
+        throw Exception( "drop_privileges", "dropping uid failed" );
     }
 }
 
@@ -73,9 +75,13 @@ void check_requirements( const int argc, const char * const argv[] )
     /* verify normal fds are present (stderr hasn't been closed) */
     FileDescriptor( open( "/dev/null", O_RDONLY ), "open" );
 
-    /* verify running as root */
+    /* verify running as euid root, but not ruid root */
     if ( geteuid() != 0 ) {
         throw Exception( argv[ 0 ], "needs to be installed setuid root" );
+    }
+
+    if ( (getuid() == 0) || (getgid() == 0) ) {
+        throw Exception( argv[ 0 ], "please run as non-root" );
     }
 
     if ( argc != 2 ) {
