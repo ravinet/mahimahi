@@ -1,0 +1,4 @@
+mahimahi binary: setuid-binary usr/bin/delayshell 4755 root/root
+# delayshell needs to be setuid root to run unshare().
+# This program drops permissions before executing the user's shell
+# and runs in a sanitized environment.

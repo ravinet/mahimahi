@@ -1,0 +1,2 @@
+version=3
+https://github.com/ravinet/mahimahi/tags .*/mahimahi-(\d[\d\.]+)\.tar\.gz

@@ -9,6 +9,7 @@ delayshell_SOURCES = exception.hh ezio.cc ezio.hh delayshell.cc \
 	ferry.hh ferry.cc system_runner.hh system_runner.cc nat.hh \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc
 delayshell_LDADD = -lrt
+delayshell_LDFLAGS = -pthread
 install-exec-hook:
-	chown root $(bindir)/delayshell
-	chmod u+s $(bindir)/delayshell
+	chown root $(DESTDIR)$(bindir)/delayshell
+	chmod u+s $(DESTDIR)$(bindir)/delayshell
