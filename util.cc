@@ -85,8 +85,7 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 
     if ( argc != 2 ) {
-        cerr << "Usage: " << argv[ 0 ] << " one-way-delay [in milliseconds]" << endl;
-        throw Exception( argv[ 0 ], "invalid command-line arguments" );
+        throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
     }
 
     /* verify IP forwarding is enabled */
