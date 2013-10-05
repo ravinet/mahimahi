@@ -30,8 +30,7 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        const string delay = argv[ 1 ];
-        const uint64_t delay_ms = myatoi( delay );
+        const uint64_t delay_ms = myatoi( argv[ 1 ] );
         const Address nameserver = first_nameserver();
 
         /* make pair of connected sockets */
@@ -91,7 +90,7 @@ int main( int argc, char *argv[] )
 
                         const char *prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
                         string mahimahi_prefix = prefix ? prefix : "";
-                        mahimahi_prefix.append( "[delay " + delay + "] " );
+                        mahimahi_prefix.append( "[delay " + to_string( delay_ms ) + "] " );
 
                         if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
                             throw Exception( "setenv" );
