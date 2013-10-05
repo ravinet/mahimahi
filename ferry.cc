@@ -17,7 +17,7 @@ void service_udp_request( Socket & server_socket, const pair< Address, string > 
 {
     try {
         Socket outgoing_socket( SocketType::UDP );
-        outgoing_socket.connect( Address( connectaddr.hostname(), to_string( connectaddr.port() ), SocketType::UDP ) );
+        outgoing_socket.connect( connectaddr );
 
         /* send request to local dns server */
         outgoing_socket.write( request.second );
@@ -45,26 +45,18 @@ void service_udp_request( Socket & server_socket, const pair< Address, string > 
     return;
 }
 
-void service_tcp_request( Socket & server_socket, const Address & connectaddr)
+void service_tcp_request( Socket & server_socket, const Address & connectaddr )
 {
     try {
         Socket outgoing_socket( SocketType::TCP );
-        outgoing_socket.connect( Address( connectaddr.hostname(), to_string( connectaddr.port() ), SocketType::TCP ) );
+        outgoing_socket.connect( connectaddr );
 
         struct pollfd pollfds[ 2 ];
         pollfds[ 0 ].fd = outgoing_socket.raw_fd();
-        pollfds[ 0 ].events = POLLIN;
-
         pollfds[ 1 ].fd = server_socket.raw_fd();
-        pollfds[ 1 ].events = POLLIN;
 
-        /* process requests until either socket is idle for 20 seconds or until EOF */
-        bool outgoing_eof = false;
-        bool server_eof   = false;
+        /* process requests until either socket is idle for 60 seconds or until EOF */
         while( true ) {
-            if ( outgoing_eof || server_eof ) {
-                break;
-            }
             pollfds[ 0 ].events = POLLIN;
             pollfds[ 1 ].events = POLLIN;
 
@@ -72,23 +64,23 @@ void service_tcp_request( Socket & server_socket, const Address & connectaddr)
                 throw Exception( "poll" );
             }
 
-            if ( pollfds[ 1 ].revents & POLLIN ) {
-                /* read request, then send to local dns server */
-                string buffer = server_socket.read();
-                if ( buffer.empty() ) {
-                     server_eof = true;
-                }
-                outgoing_socket.write( buffer );
-            }
-
             /* if response comes from local dns server, write back to source of request */
             if ( pollfds[ 0 ].revents & POLLIN ) {
                 /* read response, then send back to client */
                 string buffer = outgoing_socket.read();
                 if ( buffer.empty() ) {
-                     outgoing_eof = true;
+                    break;
                 }
                 server_socket.write( buffer );
+            } else if ( pollfds[ 1 ].revents & POLLIN ) {
+                /* read request, then send to local dns server */
+                string buffer = server_socket.read();
+                if ( buffer.empty() ) {
+                    break;
+                }
+                outgoing_socket.write( buffer );
+            } else {
+                break; /* timeout */
             }
         }
 
@@ -218,7 +210,7 @@ int ferry( FileDescriptor & tun,
         
         if ( pollfds[ 4 ].revents & POLLIN ) {
             /* got TCP dns request */
-            thread newthread( [&connect_addr_tcp] (Socket service_socket ) {
+            thread newthread( [&connect_addr_tcp] ( Socket service_socket ) {
                     service_tcp_request( service_socket, connect_addr_tcp ); },
                 listen_socket_tcp.accept() );
             newthread.detach();
