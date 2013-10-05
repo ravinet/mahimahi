@@ -59,9 +59,6 @@ void DNSProxy::handle_udp( void )
 
 void DNSProxy::handle_tcp( void )
 {
-    /* get the request connection */
-    Socket client = tcp_listener_.accept();
-
     /* start a new thread to handle request/reply */
     thread newthread( [&] ( Socket client ) {
             try {
@@ -102,7 +99,7 @@ void DNSProxy::handle_tcp( void )
 
             cerr.flush();
             return;
-        }, move( client ) );
+        }, tcp_listener_.accept() );
 
     /* don't wait around for the reply */
     newthread.detach();
