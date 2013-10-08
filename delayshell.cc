@@ -69,7 +69,7 @@ int main( int argc, char *argv[] )
                 struct rtentry route;
                 zero( route );
 
-                route.rt_gateway = Address( egress_addr, 0 ).raw_sockaddr();
+                route.rt_gateway = egress_addr.raw_sockaddr();
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
