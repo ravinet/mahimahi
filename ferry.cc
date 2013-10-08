@@ -61,7 +61,7 @@ int ferry( FileDescriptor & tun,
 
     SignalFD signal_fd( signals_to_listen_for );
     // set up poll
-    struct pollfd pollfds[ 5 ];
+    pollfd pollfds[ 5 ];
     pollfds[ 0 ].fd = tun.num();
     pollfds[ 0 ].events = POLLIN;
 

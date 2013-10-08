@@ -31,7 +31,7 @@ void DNSProxy::handle_udp( void )
                 dns_server.write( request.second );
 
                 /* wait up to 60 seconds for a reply */
-                struct pollfd pollfds[ 1 ];
+                pollfd pollfds[ 1 ];
                 pollfds[ 0 ].fd = dns_server.raw_fd();
                 pollfds[ 0 ].events = POLLIN;
 
@@ -65,7 +65,7 @@ void DNSProxy::handle_tcp( void )
                 dns_server.connect( tcp_target_ );
 
                 /* ferry bytes in both directions */
-                struct pollfd pollfds[ 2 ];
+                pollfd pollfds[ 2 ];
                 pollfds[ 0 ].fd = client.raw_fd();
                 pollfds[ 0 ].events = POLLIN;
                 pollfds[ 1 ].fd = dns_server.raw_fd();

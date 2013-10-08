@@ -5,6 +5,7 @@
 
 #include <string>
 #include <functional>
+#include <netinet/in.h>
 
 #include "file_descriptor.hh"
 
@@ -19,7 +20,7 @@ public:
 
     static void interface_ioctl( const int fd, const int request,
                                  const std::string & name,
-                                 std::function<void( struct ifreq &ifr )> ifr_adjustment);
+                                 std::function<void( ifreq &ifr )> ifr_adjustment);
 };
 
 #endif /* TUNDEVICE_HH */

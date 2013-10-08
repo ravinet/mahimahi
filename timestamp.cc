@@ -7,7 +7,7 @@
 
 uint64_t timestamp( void )
 {
-    struct timespec ts;
+    timespec ts;
     if ( clock_gettime( CLOCK_REALTIME, &ts ) < 0 ) {
         throw Exception( "clock_gettime" );
     }

@@ -22,30 +22,30 @@ TunDevice::TunDevice( const string & name,
     : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )
 {
     interface_ioctl( fd_.num(), TUNSETIFF, name,
-                     [] ( struct ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
+                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
 
     Socket sockfd( SocketType::UDP );
 
     /* bring interface up */
     interface_ioctl( sockfd.raw_fd(), SIOCSIFFLAGS, name,
-                     [] ( struct ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
     /* assign interface address */
     interface_ioctl( sockfd.raw_fd(), SIOCSIFADDR, name,
-                     [&] ( struct ifreq &ifr )
+                     [&] ( ifreq &ifr )
                      { ifr.ifr_addr = Address( addr, 0 ).raw_sockaddr(); } );
 
     /* assign destination addresses */
     interface_ioctl( sockfd.raw_fd(), SIOCSIFDSTADDR, name,
-                     [&] ( struct ifreq &ifr )
+                     [&] ( ifreq &ifr )
                      { ifr.ifr_dstaddr = Address( dstaddr, 0 ).raw_sockaddr(); } );
 }
 
 void TunDevice::interface_ioctl( const int fd, const int request,
                                  const std::string & name,
-                                 std::function<void( struct ifreq &ifr )> ifr_adjustment)
+                                 std::function<void( ifreq &ifr )> ifr_adjustment)
 {
-    struct ifreq ifr;
+    ifreq ifr;
     zero( ifr );
     strncpy( ifr.ifr_name, name.c_str(), IFNAMSIZ ); /* interface name */
 

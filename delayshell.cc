@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );
                 TunDevice::interface_ioctl( ioctl_socket.raw_fd(), SIOCSIFFLAGS, "lo",
-                                            [] ( struct ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
                 struct rtentry route;

@@ -18,7 +18,7 @@ using namespace std;
 /* Get the user's shell */
 string shell_path( void )
 {
-    struct passwd *pw = getpwuid( getuid() );
+    passwd *pw = getpwuid( getuid() );
     if ( pw == nullptr ) {
         throw Exception( "getpwuid" );
     }

@@ -39,7 +39,7 @@ void Socket::bind( const Address & addr )
     }
 
     /* set local_addr to the address we actually were bound to */
-    struct sockaddr_in new_local_addr;
+    sockaddr_in new_local_addr;
     socklen_t new_local_addr_len = sizeof( new_local_addr );
 
     if ( ::getsockname( fd_.num(),
@@ -63,7 +63,7 @@ void Socket::listen( void )
 Socket Socket::accept( void )
 {
   /* make new socket address for connection */
-  struct sockaddr_in new_connection_addr;
+  sockaddr_in new_connection_addr;
   socklen_t new_connection_addr_size = sizeof( new_connection_addr );
 
   /* wait for client connection */
@@ -105,7 +105,7 @@ pair< Address, string > Socket::recvfrom( void )
     static const ssize_t RECEIVE_MTU = 2048;
 
     /* receive source address and payload */
-    struct sockaddr_in packet_remote_addr;
+    sockaddr_in packet_remote_addr;
     char buf[ RECEIVE_MTU ];
 
     socklen_t fromlen = sizeof( packet_remote_addr );
@@ -114,7 +114,7 @@ pair< Address, string > Socket::recvfrom( void )
                                    buf,
                                    sizeof( buf ),
                                    MSG_TRUNC,
-                                   reinterpret_cast<struct sockaddr *>( &packet_remote_addr ),
+                                   reinterpret_cast< sockaddr * >( &packet_remote_addr ),
                                    &fromlen );
 
     if ( recv_len < 0 ) {
