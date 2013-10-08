@@ -30,6 +30,7 @@ public:
     {
         return *reinterpret_cast<const sockaddr *>( &addr_ );
     }
+    bool operator==( const Address & other ) const;
 };
 
 #endif /* ADDRESS_HH */

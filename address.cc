@@ -35,6 +35,11 @@ Address::Address()
     addr_.sin_family = AF_INET;
 }
 
+bool Address::operator==( const Address & other ) const
+{
+    return 0 == memcmp( &addr_, &other.addr_, sizeof( addr_ ) );
+}
+
 Address::Address( const std::string & ip, const uint16_t port )
     : addr_()
 {

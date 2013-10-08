@@ -4,16 +4,18 @@
 
 using namespace std;
 
+static bool address_matches( const Address & addr, const sockaddr * candidate )
+{
+    return candidate and candidate->sa_family == AF_INET and addr == *candidate;
+}
+
 bool Interfaces::address_in_use( const Address & addr ) const
 {
     /* iterate through list to check if input is in use */
     for ( ifaddrs *ifa = interface_addresses; ifa; ifa = ifa->ifa_next ) {
-        if ( ifa->ifa_addr
-             && ifa->ifa_addr->sa_family == AF_INET ) {
-            Address curr_addr( *ifa->ifa_addr );
-            if ( addr.ip() == curr_addr.ip() ) {
-                return true;
-            }
+        if ( address_matches( addr, ifa->ifa_addr )
+             or address_matches( addr, ifa->ifa_dstaddr ) ) {
+            return true;
         }
     }
 
@@ -30,5 +32,5 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
         last_octet++;
     }
 
-    throw Exception( "first_unassigned_address", "could not find free interface address" );
+    throw Exception( "Interfaces", "could not find free interface address" );
 }
