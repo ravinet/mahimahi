@@ -29,7 +29,7 @@ private:
 public:
     SignalFD( const SignalMask & signals );
 
-    const int & raw_fd( void ) { return fd_.num(); }
+    int raw_fd( void ) const { return fd_.num(); }
     signalfd_siginfo read_signal( void ); /* read one signal */
 };
 

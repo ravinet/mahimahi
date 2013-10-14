@@ -44,7 +44,7 @@ public:
         }
     }
 
-    const int & num( void ) { return fd_; }
+    int num( void ) const { return fd_; }
 
     /* forbid copying FileDescriptor objects or assigning them */
     FileDescriptor( const FileDescriptor & other ) = delete;
