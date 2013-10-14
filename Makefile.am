@@ -21,6 +21,7 @@ tcpnat_SOURCES = exception.hh ezio.cc ezio.hh \
         ferry.hh ferry.cc system_runner.hh system_runner.cc nat.hh \
         socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc \
         get_address.hh, get_address.cc tcpnat.cc
+tcpnat_LDFLAGS = -pthread
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
