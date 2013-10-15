@@ -38,24 +38,23 @@ int main( int argc, char *argv[] )
 
     /* accept any connection request and then service all GETs */
     while ( true ) {
-        thread newthread( [&] ( Socket server_socket ) {
+        thread newthread( [&] ( Socket original_source ) {
         try {
             /* get original destination for connection request */
-            Address original_dst = server_socket.original_dest();
-            cout << "connection intended for: " << original_dst.ip() << endl;
+            Address original_destaddr = original_source.original_dest();
+            cout << "connection intended for: " << original_destaddr.ip() << endl;
 
             /* create socket and connect to original destination and send original request */
-            Socket original( SocketType::TCP );
-            original.connect( original_dst );
-            original.write( server_socket.read() );
+            Socket original_destination( SocketType::TCP );
+            original_destination.connect( original_destaddr );
+            original_destination.write( original_source.read() );
 
             /* poll on original connect socket and new connection socket to ferry packets */
             struct pollfd pollfds[ 2 ];
-	    /* socket connected to original destination */
-            pollfds[ 0 ].fd = original.raw_fd();
+            pollfds[ 0 ].fd = original_destination.raw_fd();
             pollfds[ 0 ].events = POLLIN;
-            /* socket connected to original source */
-            pollfds[ 1 ].fd = server_socket.raw_fd();
+
+            pollfds[ 1 ].fd = original_source.raw_fd();
             pollfds[ 1 ].events = POLLIN;
 
             /* ferry packets between original source and original destination */
@@ -65,13 +64,13 @@ int main( int argc, char *argv[] )
                 }
 
                 if ( pollfds[ 0 ].revents & POLLIN ) {
-                    string buffer = original.read();
+                    string buffer = original_destination.read();
                     if ( buffer.empty() ) { break; } /* EOF */
-                    server_socket.write( buffer );
+                    original_source.write( buffer );
                 } else if ( pollfds[ 1 ].revents & POLLIN ) {
-                    string buffer = server_socket.read();
+                    string buffer = original_source.read();
                     if ( buffer.empty() ) { break; } /* EOF */
-                    original.write( buffer );
+                    original_destination.write( buffer );
                 } else {
                   break; /* timeout */
                 }
