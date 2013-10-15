@@ -15,6 +15,7 @@
 #include "timestamp.hh"
 #include "system_runner.hh"
 #include "config.h"
+#include "dnat.hh"
 
 using namespace std;
 
@@ -31,7 +32,8 @@ int main( int argc, char *argv[] )
     std::string interface_to_forward_to( argv[ 2 ] );
 
     /* add entry to nat table using iptables to direct all TCP traffic to ingress */
-    run( { IPTABLES, "-t", "nat", "-A", "PREROUTING", "-p", "TCP", "-i", interface_to_forward_to, "!", "--dport", "53", "-j", "DNAT", "--to-destination", ip_port_to_bind } );
+    //run( { IPTABLES, "-t", "nat", "-A", "PREROUTING", "-p", "TCP", "-i", interface_to_forward_to, "!", "--dport", "53", "-j", "DNAT", "--to-destination", ip_port_to_bind } );
+    DNAT proxy_test (Address( ip_address_to_bind, 3333 ), interface_to_forward_to );
     Socket listener_socket( SocketType::TCP );
 
     /* bind to egress ip and port 3333 */
