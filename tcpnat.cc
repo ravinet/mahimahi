@@ -27,13 +27,12 @@ int main( int argc, char *argv[] )
     }
 
     /* set up dnat to direct all non-dns TCP traffic from ingress */
-    DNAT proxy_test (Address( string( argv[ 1 ] ), 3333 ), string( argv[ 2 ] ) );
+    Address listener_addr( string( argv[ 1 ] ), 3333 );
+    DNAT proxy_test( listener_addr, string( argv[ 2 ] ) );
     Socket listener_socket( SocketType::TCP );
 
-    /* bind to egress ip and port 3333 */
-    listener_socket.bind( Address( string( argv[ 1 ] ), 3333 ) );
+    listener_socket.bind( listener_addr );
 
-    /* listen on listener socket */
     listener_socket.listen();
 
     /* accept any connection request and then service all GETs */
