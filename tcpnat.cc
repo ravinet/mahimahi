@@ -28,7 +28,7 @@ int main( int argc, char *argv[] )
 
     /* set up dnat to direct all non-dns TCP traffic from ingress */
     Address listener_addr( string( argv[ 1 ] ), 3333 );
-    DNAT proxy_test( listener_addr, string( argv[ 2 ] ) );
+    DNAT http_forwarding( listener_addr, string( argv[ 2 ] ) );
     Socket listener_socket( SocketType::TCP );
 
     listener_socket.bind( listener_addr );
