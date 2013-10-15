@@ -64,7 +64,7 @@ int main( int argc, char *argv[] )
 
             /* ferry packets between original source and original destination */
             while(true) {
-	        if ( poll( pollfds, 1, 60000 ) < 0 ) {
+	        if ( poll( pollfds, 2, 60000 ) < 0 ) {
 	            throw Exception( "poll" );
                 }
 
