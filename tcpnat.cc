@@ -26,18 +26,12 @@ int main( int argc, char *argv[] )
         return EXIT_FAILURE;
     }
 
-    std::string ip_address_to_bind( argv[ 1 ] );
-    std::string ip_port_to_bind(ip_address_to_bind + ":3333");
-
-    std::string interface_to_forward_to( argv[ 2 ] );
-
-    /* add entry to nat table using iptables to direct all TCP traffic to ingress */
-    //run( { IPTABLES, "-t", "nat", "-A", "PREROUTING", "-p", "TCP", "-i", interface_to_forward_to, "!", "--dport", "53", "-j", "DNAT", "--to-destination", ip_port_to_bind } );
-    DNAT proxy_test (Address( ip_address_to_bind, 3333 ), interface_to_forward_to );
+    /* set up dnat to direct all non-dns TCP traffic from ingress */
+    DNAT proxy_test (Address( string( argv[ 1 ] ), 3333 ), string( argv[ 2 ] ) );
     Socket listener_socket( SocketType::TCP );
 
     /* bind to egress ip and port 3333 */
-    listener_socket.bind( Address( ip_address_to_bind, 3333 ) );
+    listener_socket.bind( Address( string( argv[ 1 ] ), 3333 ) );
 
     /* listen on listener socket */
     listener_socket.listen();
@@ -48,26 +42,26 @@ int main( int argc, char *argv[] )
         try {
             /* get original destination for connection request */
             Address original_dst = server_socket.original_dest();
-	    cout << "connection intended for: " << original_dst.ip() << endl;
+            cout << "connection intended for: " << original_dst.ip() << endl;
 
-	    /* create socket and connect to original destination and send original request */
-	    Socket original( SocketType::TCP );
-	    original.connect( original_dst );
+            /* create socket and connect to original destination and send original request */
+            Socket original( SocketType::TCP );
+            original.connect( original_dst );
             original.write( server_socket.read() );
 
             /* poll on original connect socket and new connection socket to ferry packets */
             struct pollfd pollfds[ 2 ];
 	    /* socket connected to original destination */
-	    pollfds[ 0 ].fd = original.raw_fd();
-	    pollfds[ 0 ].events = POLLIN;
-	    /* socket connected to original source */
-	    pollfds[ 1 ].fd = server_socket.raw_fd();
-	    pollfds[ 1 ].events = POLLIN;
+            pollfds[ 0 ].fd = original.raw_fd();
+            pollfds[ 0 ].events = POLLIN;
+            /* socket connected to original source */
+            pollfds[ 1 ].fd = server_socket.raw_fd();
+            pollfds[ 1 ].events = POLLIN;
 
             /* ferry packets between original source and original destination */
             while(true) {
-	        if ( poll( pollfds, 2, 60000 ) < 0 ) {
-	            throw Exception( "poll" );
+                if ( poll( pollfds, 2, 60000 ) < 0 ) {
+                    throw Exception( "poll" );
                 }
 
                 if ( pollfds[ 0 ].revents & POLLIN ) {
