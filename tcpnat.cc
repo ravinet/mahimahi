@@ -22,7 +22,7 @@ using namespace std;
 int main( int argc, char *argv[] )
 {
     if ( argc != 3 ) {
-        cerr << "Usage: " << argv[ 0 ] << " IP_ADDRESS_TO_BIND" << "INTERFACE OF PROXY" << endl;
+        cerr << "Usage: " << argv[ 0 ] << " IP_ADDRESS_TO_BIND" << " INTERFACE OF PROXY" << endl;
         return EXIT_FAILURE;
     }
 
@@ -46,7 +46,6 @@ int main( int argc, char *argv[] )
             /* create socket and connect to original destination and send original request */
             Socket original_destination( SocketType::TCP );
             original_destination.connect( original_destaddr );
-            original_destination.write( original_source.read() );
 
             /* poll on original connect socket and new connection socket to ferry packets */
             struct pollfd pollfds[ 2 ];
