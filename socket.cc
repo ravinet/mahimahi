@@ -143,9 +143,9 @@ void Socket::sendto( const Address & destination, const std::string & payload )
 Address Socket::original_dest( void )
 {
     struct sockaddr_in dstaddr;
-    socklen_t destlen = sizeof(dstaddr);
-    if (getsockopt( fd_.num(), SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen ) < 0) {
+    socklen_t destlen = sizeof( dstaddr );
+    if ( getsockopt( fd_.num(), SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen ) < 0 ) {
         throw Exception( "getsockopt" );
     }
-    return Address(dstaddr );
+    return Address( dstaddr );
 }
