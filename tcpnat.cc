@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
+#include <signal.h>
 
 #include "address.hh"
 #include "socket.hh"
@@ -16,6 +17,7 @@
 #include "system_runner.hh"
 #include "config.h"
 #include "dnat.hh"
+#include "signalfd.hh"
 
 using namespace std;
 
@@ -35,8 +37,37 @@ int main( int argc, char *argv[] )
 
     listener_socket.listen();
 
+    /* set up signal file descriptor */
+    SignalMask signals_to_listen_for = { SIGINT };
+    signals_to_listen_for.block(); /* don't let them interrupt us */
+    SignalFD signal_fd( signals_to_listen_for );
+
+    /* Poll structure */
+    pollfd pollfds[ 2 ];
+
+    pollfds[ 0 ].fd = listener_socket.raw_fd();
+    pollfds[ 0 ].events = POLLIN;
+
+    pollfds[ 1 ].fd = signal_fd.raw_fd();
+    pollfds[ 1 ].events = POLLIN;
+
     /* accept any connection request and then service all GETs */
     while ( true ) {
+        const nfds_t num_pollfds = 2;
+        if ( poll( pollfds, num_pollfds, -1 ) == -1 ) {
+            throw Exception( "poll" );
+        }
+
+        /* check for error on any fd */
+        short revents = 0;
+        for ( nfds_t i = 0; i < num_pollfds; i++ ) {
+            revents |= pollfds[ i ].revents;
+        }
+        if ( revents & (POLLERR | POLLHUP | POLLNVAL) ) {
+            throw Exception( "poll" );
+        }
+
+        if (pollfds[ 0 ].revents & POLLIN) {
         thread newthread( [&] ( Socket original_source ) {
         try {
             /* get original destination for connection request */
@@ -84,5 +115,13 @@ int main( int argc, char *argv[] )
 
         /* don't wait around for the reply */
         newthread.detach();
+        }
+
+        if ( pollfds[ 1 ].revents & POLLIN ) {
+            /* signal handling */
+            printf("Signal handling\n");
+            break;
+        }
     }
+    return EXIT_SUCCESS;
 }
