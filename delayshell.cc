@@ -10,6 +10,8 @@
 #include "nat.hh"
 #include "util.hh"
 #include "get_address.hh"
+#include "dnat.hh"
+#include "address.hh"
 
 #include "config.h"
 
@@ -51,6 +53,14 @@ int main( int argc, char *argv[] )
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
+
+        /* Features specific to recordshell, use a unique_ptr */
+        unique_ptr<Address> proxy_addr = nullptr;
+        unique_ptr<DNAT> dnat_rule = nullptr;
+        if ( operating_mode == "record" ) {
+                proxy_addr = unique_ptr<Address>( new Address( egress_addr.ip(), 3333  ) );
+                dnat_rule = unique_ptr<DNAT>( new DNAT( *proxy_addr, "delayshell" + to_string( getpid() ) ) );
+        }
 
         /* Fork */
         ChildProcess container_process( [&]() {
