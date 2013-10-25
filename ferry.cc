@@ -53,7 +53,8 @@ int ferry( FileDescriptor & tun,
            FileDescriptor & sibling_fd,
            unique_ptr<DNSProxy> && dns_proxy,
            ChildProcess & child_process,
-           const uint64_t delay_ms )
+           const uint64_t delay_ms,
+           unique_ptr<HTTPProxy> && http_proxy )
 {
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
@@ -61,7 +62,7 @@ int ferry( FileDescriptor & tun,
 
     SignalFD signal_fd( signals_to_listen_for );
     // set up poll
-    pollfd pollfds[ 5 ];
+    pollfd pollfds[ 6 ];
     pollfds[ 0 ].fd = tun.num();
     pollfds[ 0 ].events = POLLIN;
 
@@ -71,7 +72,9 @@ int ferry( FileDescriptor & tun,
     pollfds[ 2 ].fd = signal_fd.raw_fd();
     pollfds[ 2 ].events = POLLIN;
 
-    const nfds_t num_pollfds = dns_proxy ? 5 : 3;
+    const nfds_t num_pollfds = dns_proxy ?
+                               ( 5 + (http_proxy ? 1 : 0) ) :
+                               ( 3 + (http_proxy ? 1 : 0) );
 
     if ( dns_proxy ) {
         /* optional behavior for local nameservers only */
@@ -80,6 +83,11 @@ int ferry( FileDescriptor & tun,
 
         pollfds[ 4 ].fd = dns_proxy->mutable_tcp_listener().raw_fd();
         pollfds[ 4 ].events = POLLIN;
+    }
+
+    if ( http_proxy ) {
+        pollfds[ 5 ].fd = http_proxy->mutable_tcp_listener().raw_fd();
+        pollfds[ 5 ].events = POLLIN;
     }
 
     FerryQueue delay_queue( delay_ms );
@@ -128,6 +136,13 @@ int ferry( FileDescriptor & tun,
             if ( pollfds[ 4 ].revents & POLLIN ) {
                 /* got TCP dns request */
                 dns_proxy->handle_tcp();
+            }
+        }
+
+        if ( http_proxy ) {
+            if ( pollfds[ 5 ].revents & POLLIN ) {
+                /* got HTTP SYN */
+                http_proxy->handle_tcp_get();
             }
         }
 

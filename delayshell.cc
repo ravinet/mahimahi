@@ -57,9 +57,11 @@ int main( int argc, char *argv[] )
         /* Features specific to recordshell, use a unique_ptr */
         unique_ptr<Address> proxy_addr = nullptr;
         unique_ptr<DNAT> dnat_rule = nullptr;
+        unique_ptr<HTTPProxy> http_proxy = nullptr;
         if ( operating_mode == "record" ) {
                 proxy_addr = unique_ptr<Address>( new Address( egress_addr.ip(), 3333  ) );
                 dnat_rule = unique_ptr<DNAT>( new DNAT( *proxy_addr, "delayshell" + to_string( getpid() ) ) );
+                http_proxy = unique_ptr<HTTPProxy>( new HTTPProxy( *proxy_addr ) );
         }
 
         /* Fork */
@@ -108,10 +110,10 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms );
+                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms, nullptr );
             } );
 
-        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms );
+        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms, move( http_proxy ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
