@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <utility>
 #include <arpa/inet.h>
+#include <linux/netfilter_ipv4.h>
 
 #include "socket.hh"
 #include "exception.hh"
@@ -137,4 +138,14 @@ void Socket::sendto( const Address & destination, const std::string & payload )
                    sizeof( destination.raw_sockaddr() ) ) < 0 ) {
         throw Exception( "sendto" );
     }
+}
+
+Address Socket::original_dest( void )
+{
+    struct sockaddr_in dstaddr;
+    socklen_t destlen = sizeof( dstaddr );
+    if ( getsockopt( fd_.num(), SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen ) < 0 ) {
+        throw Exception( "getsockopt" );
+    }
+    return Address( dstaddr );
 }

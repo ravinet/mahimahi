@@ -40,6 +40,8 @@ public:
 
     std::pair< Address, std::string > recvfrom( void );
     void sendto( const Address & destination, const std::string & payload );
+
+    Address original_dest( void );
 };
 
 #endif
