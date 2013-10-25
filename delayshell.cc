@@ -43,7 +43,7 @@ int main( int argc, char *argv[] )
 
         Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
-        TunDevice egress_tun( "delayshell-" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
+        TunDevice egress_tun( "delayshell" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
