@@ -86,8 +86,20 @@ void check_requirements( const int argc, const char * const argv[] )
         throw Exception( argv[ 0 ], "please run as non-root" );
     }
 
-    if ( argc != 2 ) {
-        throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
+    if ( argc == 1 ) {
+        throw Exception( "Usage", string( argv[ 0 ] ) + " mode [propagation-delay [in milliseconds]] " );
+    } else if ( argc == 2 ) {
+        if ( string( argv[ 1 ] ) == "delay" ) {
+            throw Exception( "Usage", "Need to pass delay argument" );
+        } else if ( string( argv[ 1 ] ) != "record" ) {
+            throw Exception( "Usage", "Mode has to be one of \"record\" or \"delay\"" );
+        }
+    } else if ( argc == 3 ) {
+        if ( string( argv[ 1 ] ) != "delay" ) {
+            throw Exception( "Usage", "Can pass second argument only to delay" );
+        }
+    } else {
+        throw Exception( "Usage", string( argv[ 0 ] ) + " mode [propagation-delay [in milliseconds]] " );
     }
 
     /* verify IP forwarding is enabled */
