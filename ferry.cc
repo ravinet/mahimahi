@@ -88,6 +88,7 @@ int ferry( FileDescriptor & tun,
     if ( http_proxy ) {
         pollfds[ 5 ].fd = http_proxy->mutable_tcp_listener().raw_fd();
         pollfds[ 5 ].events = POLLIN;
+        assert( dns_proxy );
     }
 
     FerryQueue delay_queue( delay_ms );
