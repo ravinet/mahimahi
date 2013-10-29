@@ -55,13 +55,11 @@ int main( int argc, char *argv[] )
         NAT nat_rule;
 
         /* Features specific to recordshell, use a unique_ptr */
-        unique_ptr<Address> proxy_addr = nullptr;
-        unique_ptr<DNAT> dnat_rule = nullptr;
+        vector<DNAT> dnat_rule_maybe;
         unique_ptr<HTTPProxy> http_proxy = nullptr;
         if ( operating_mode == "record" ) {
-                proxy_addr = unique_ptr<Address>( new Address( egress_addr.ip(), 3333  ) );
-                dnat_rule = unique_ptr<DNAT>( new DNAT( *proxy_addr, "delayshell" + to_string( getpid() ) ) );
-                http_proxy = unique_ptr<HTTPProxy>( new HTTPProxy( *proxy_addr ) );
+                http_proxy = unique_ptr<HTTPProxy>( new HTTPProxy( egress_addr ) );
+                dnat_rule_maybe.emplace_back( http_proxy->tcp_listener().local_addr(), "delayshell" + to_string( getpid() ) );
         }
 
         /* Fork */
