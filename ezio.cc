@@ -27,7 +27,7 @@ void writeall( const int fd, const string & buf )
 
 std::string readall( const int fd, const size_t limit )
 {
-    static char buffer[ ezio::read_chunk_size ];
+    char buffer[ ezio::read_chunk_size ];
 
     ssize_t bytes_read = read( fd, &buffer, min( ezio::read_chunk_size, limit ) );
 
