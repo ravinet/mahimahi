@@ -12,9 +12,7 @@ private:
 
 public:
     HTTPProxy( const Address & listener_addr );
-    const Socket & tcp_listener( void ) { return listener_socket_; }
-
-    Socket & mutable_tcp_listener( void ) { return listener_socket_; }
+    Socket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp_get( void );
 

@@ -27,16 +27,16 @@ TunDevice::TunDevice( const string & name,
     Socket sockfd( SocketType::UDP );
 
     /* bring interface up */
-    interface_ioctl( sockfd.raw_fd(), SIOCSIFFLAGS, name,
+    interface_ioctl( sockfd.fd().num(), SIOCSIFFLAGS, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
     /* assign interface address */
-    interface_ioctl( sockfd.raw_fd(), SIOCSIFADDR, name,
+    interface_ioctl( sockfd.fd().num(), SIOCSIFADDR, name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_addr = Address( addr, 0 ).raw_sockaddr(); } );
 
     /* assign destination addresses */
-    interface_ioctl( sockfd.raw_fd(), SIOCSIFDSTADDR, name,
+    interface_ioctl( sockfd.fd().num(), SIOCSIFDSTADDR, name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_dstaddr = Address( dstaddr, 0 ).raw_sockaddr(); } );
 }

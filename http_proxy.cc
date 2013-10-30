@@ -43,10 +43,10 @@ void HTTPProxy::handle_tcp_get( void )
 
                 /* poll on original connect socket and new connection socket to ferry packets */
                 struct pollfd pollfds[ 2 ];
-                pollfds[ 0 ].fd = original_destination.raw_fd();
+                pollfds[ 0 ].fd = original_destination.fd().num();
                 pollfds[ 0 ].events = POLLIN;
 
-                pollfds[ 1 ].fd = original_source.raw_fd();
+                pollfds[ 1 ].fd = original_source.fd().num();
                 pollfds[ 1 ].events = POLLIN;
 
                 /* ferry packets between original source and original destination */

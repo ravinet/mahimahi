@@ -32,7 +32,7 @@ void DNSProxy::handle_udp( void )
 
                 /* wait up to 60 seconds for a reply */
                 pollfd pollfds[ 1 ];
-                pollfds[ 0 ].fd = dns_server.raw_fd();
+                pollfds[ 0 ].fd = dns_server.fd().num();
                 pollfds[ 0 ].events = POLLIN;
 
                 if ( poll( pollfds, 1, 60000 ) < 0 ) {
@@ -66,9 +66,9 @@ void DNSProxy::handle_tcp( void )
 
                 /* ferry bytes in both directions */
                 pollfd pollfds[ 2 ];
-                pollfds[ 0 ].fd = client.raw_fd();
+                pollfds[ 0 ].fd = client.fd().num();
                 pollfds[ 0 ].events = POLLIN;
-                pollfds[ 1 ].fd = dns_server.raw_fd();
+                pollfds[ 1 ].fd = dns_server.fd().num();
                 pollfds[ 1 ].events = POLLIN;
 
                 while ( true ) {

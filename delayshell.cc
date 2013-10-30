@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
 
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );
-                TunDevice::interface_ioctl( ioctl_socket.raw_fd(), SIOCSIFFLAGS, "lo",
+                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, "lo",
                                             [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                if ( ioctl( ioctl_socket.raw_fd(), SIOCADDRT, &route ) < 0 ) {
+                if ( ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) < 0 ) {
                     throw Exception( "ioctl SIOCADDRT" );
                 }
 

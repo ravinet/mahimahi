@@ -6,11 +6,13 @@
 #include "ferry.hh"
 #include "ferry_queue.hh"
 #include "signalfd.hh"
+#include "poller.hh"
 
 using namespace std;
+using namespace PollerShortNames;
 
-int handle_signal( const signalfd_siginfo & sig,
-                   ChildProcess & child_process )
+Result handle_signal( const signalfd_siginfo & sig,
+                      ChildProcess & child_process )
 {
     switch ( sig.ssi_signo ) {
     case SIGCONT:
@@ -27,7 +29,7 @@ int handle_signal( const signalfd_siginfo & sig,
         child_process.wait();
 
         if ( child_process.terminated() ) {
-            return child_process.exit_status();
+            return Result( ResultType::Exit, child_process.exit_status() );
         } else if ( !child_process.running() ) {
             /* suspend parent too */
             if ( raise( SIGSTOP ) < 0 ) {
@@ -40,13 +42,12 @@ int handle_signal( const signalfd_siginfo & sig,
     case SIGTERM:
         child_process.signal( SIGHUP );
 
-        return EXIT_SUCCESS;
-        break;
+        return ResultType::Exit;
     default:
         throw Exception( "unknown signal" );
     }
 
-    return -1;
+    return ResultType::Continue;
 }
 
 int ferry( FileDescriptor & tun,
@@ -56,95 +57,67 @@ int ferry( FileDescriptor & tun,
            const uint64_t delay_ms,
            unique_ptr<HTTPProxy> && http_proxy )
 {
+    /* Make the queue of datagrams */
+    FerryQueue delay_queue( delay_ms );
+
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
     signals_to_listen_for.block(); /* don't let them interrupt us */
 
     SignalFD signal_fd( signals_to_listen_for );
-    // set up poll
-    pollfd pollfds[ 6 ];
-    pollfds[ 0 ].fd = tun.num();
-    pollfds[ 0 ].events = POLLIN;
 
-    pollfds[ 1 ].fd = sibling_fd.num();
-    pollfds[ 1 ].events = POLLIN;
+    Poller poller;
 
-    pollfds[ 2 ].fd = signal_fd.raw_fd();
-    pollfds[ 2 ].events = POLLIN;
+    /* tun device gets datagram -> read it -> give to delay_queue */
+    poller.add_action( Poller::Action( tun, Direction::In,
+                                       [&] () {
+                                           delay_queue.read_packet( tun.read() );
+                                           return ResultType::Continue;
+                                       } ) );
 
-    const nfds_t num_pollfds = dns_proxy ?
-                               ( 5 + (http_proxy ? 1 : 0) ) :
-                               ( 3 + (http_proxy ? 1 : 0) );
+    /* we get datagram from sibling process -> write it to tun device */
+    poller.add_action( Poller::Action( sibling_fd, Direction::In,
+                                       [&] () {
+                                           tun.write( sibling_fd.read() );
+                                           return ResultType::Continue;
+                                       } ) );
 
+    /* we get signal -> main screen turn on -> handle signal */
+    poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
+                                       [&] () {
+                                           return handle_signal( signal_fd.read_signal(),
+                                                                 child_process );
+                                       } ) );
+
+    /* add dns proxy TCP and UDP sockets */
     if ( dns_proxy ) {
-        /* optional behavior for local nameservers only */
-        pollfds[ 3 ].fd = dns_proxy->mutable_udp_listener().raw_fd();
-        pollfds[ 3 ].events = POLLIN;
+        poller.add_action( Poller::Action( dns_proxy->udp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               dns_proxy->handle_udp();
+                                               return ResultType::Continue;
+                                           } ) );
 
-        pollfds[ 4 ].fd = dns_proxy->mutable_tcp_listener().raw_fd();
-        pollfds[ 4 ].events = POLLIN;
+        poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               dns_proxy->handle_tcp();
+                                               return ResultType::Continue;
+                                           } ) );
     }
 
     if ( http_proxy ) {
-        pollfds[ 5 ].fd = http_proxy->mutable_tcp_listener().raw_fd();
-        pollfds[ 5 ].events = POLLIN;
-        assert( dns_proxy );
+        poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               http_proxy->handle_tcp_get();
+                                               return ResultType::Continue;
+                                           } ) );
     }
-
-    FerryQueue delay_queue( delay_ms );
 
     while ( true ) {
         int wait_time = delay_queue.wait_time();
-        if ( poll( pollfds, num_pollfds, wait_time ) == -1 ) {
-            throw Exception( "poll" );
-        }
+        auto poll_result = poller.poll( wait_time );
 
-        /* check for error on any fd */
-        short revents = 0;
-        for ( nfds_t i = 0; i < num_pollfds; i++ ) {
-            revents |= pollfds[ i ].revents;
-        }
-        if ( revents & (POLLERR | POLLHUP | POLLNVAL) ) {
-            throw Exception( "poll" );
-        }
-
-        if ( pollfds[ 0 ].revents & POLLIN ) {
-            /* packet FROM tun device goes to back of delay queue */
-            delay_queue.read_packet( tun.read() );
-        }
-
-        if ( pollfds[ 1 ].revents & POLLIN ) {
-            /* packet FROM sibling goes to tun device */
-            tun.write( sibling_fd.read() );
-        }
-
-        if ( pollfds[ 2 ].revents & POLLIN ) {
-            /* got a signal */
-            signalfd_siginfo sig = signal_fd.read_signal();
-
-            int return_value = handle_signal( sig, child_process );
-            if ( return_value >= 0 ) {
-                return return_value;
-            }
-        }
-
-        if ( dns_proxy ) {
-            if ( pollfds[ 3 ].revents & POLLIN ) {
-                /* got dns request */
-                dns_proxy->handle_udp();
-            }
-        
-            if ( pollfds[ 4 ].revents & POLLIN ) {
-                /* got TCP dns request */
-                dns_proxy->handle_tcp();
-            }
-        }
-
-        if ( http_proxy ) {
-            if ( pollfds[ 5 ].revents & POLLIN ) {
-                /* got HTTP SYN */
-                http_proxy->handle_tcp_get();
-            }
+        if ( poll_result.result == Poller::Result::Type::Exit ) {
+            return poll_result.exit_status;
         }
 
         /* packets FROM tail of delay queue go to sibling */

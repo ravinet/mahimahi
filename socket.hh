@@ -39,7 +39,7 @@ public:
     std::string read( void );
     void write( const std::string & str );
 
-    int raw_fd( void ) { return fd_.num(); }
+    FileDescriptor & fd( void ) { return fd_; }
 
     std::pair< Address, std::string > recvfrom( void );
     void sendto( const Address & destination, const std::string & payload );

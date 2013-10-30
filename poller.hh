@@ -26,14 +26,14 @@ public:
 
         typedef std::function<Result(void)> CallbackType;
 
-        FileDescriptor fd;
+        FileDescriptor & fd;
         enum PollDirection : short { In = POLLIN, Out = POLLOUT } direction;
         CallbackType callback;
 
-        Action( FileDescriptor && s_fd,
+        Action( FileDescriptor & s_fd,
                 const PollDirection & s_direction,
                 const CallbackType & s_callback )
-            : fd( std::move( s_fd ) ), direction( s_direction ), callback( s_callback ) {}
+            : fd( s_fd ), direction( s_direction ), callback( s_callback ) {}
     };
 
 private:
@@ -50,8 +50,14 @@ public:
     };
 
     Poller() : pollfds_(), callbacks_() {}
-    void add_action( Action & action );
+    void add_action( Action action );
     Result poll( const int & timeout_ms );
 };
+
+namespace PollerShortNames {
+    typedef Poller::Action::Result Result;
+    typedef Poller::Action::Result::Type ResultType;
+    typedef Poller::Action::PollDirection Direction;
+}
 
 #endif

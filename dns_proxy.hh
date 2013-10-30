@@ -14,11 +14,8 @@ private:
 public:
     DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target );
 
-    const Socket & udp_listener( void ) { return udp_listener_; }
-    const Socket & tcp_listener( void ) { return tcp_listener_; }
-
-    Socket & mutable_udp_listener( void ) { return udp_listener_; }
-    Socket & mutable_tcp_listener( void ) { return tcp_listener_; }
+    Socket & udp_listener( void ) { return udp_listener_; }
+    Socket & tcp_listener( void ) { return tcp_listener_; }
 
     void handle_udp( void );
     void handle_tcp( void );
