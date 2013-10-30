@@ -31,7 +31,6 @@ HTTPProxy::HTTPProxy( const Address & listener_addr )
 
 void HTTPProxy::handle_tcp_get( void )
 {
-    printf(" Inside handle_tcp_get \n");
     thread newthread( [&] ( Socket original_source ) {
             try {
                 /* get original destination for connection request */
