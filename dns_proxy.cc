@@ -76,7 +76,7 @@ void DNSProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = dns_server.read();
-                                                       if ( buffer.empty() ) { break; } /* EOF */
+                                                       //if ( buffer.empty() ) { break; } /* EOF */
                                                        client.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
