@@ -19,8 +19,10 @@
 #include "dnat.hh"
 #include "signalfd.hh"
 #include "http_proxy.hh"
+#include "poller.hh"
 
 using namespace std;
+using namespace PollerShortNames;
 
 HTTPProxy::HTTPProxy( const Address & listener_addr )
     : listener_socket_( TCP )
@@ -41,32 +43,26 @@ void HTTPProxy::handle_tcp_get( void )
                 Socket original_destination( TCP );
                 original_destination.connect( original_destaddr );
 
+                Poller poller;
+
                 /* poll on original connect socket and new connection socket to ferry packets */
-                struct pollfd pollfds[ 2 ];
-                pollfds[ 0 ].fd = original_destination.fd().num();
-                pollfds[ 0 ].events = POLLIN;
+                poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
+                                                   [&] () {
+                                                       string buffer = original_destination.read();
+                                                       //if ( buffer.empty() ) { break; } /* EOF */
+                                                       original_source.write( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
 
-                pollfds[ 1 ].fd = original_source.fd().num();
-                pollfds[ 1 ].events = POLLIN;
+                poller.add_action( Poller::Action( original_source.fd(), Direction::In,
+                                                   [&] () {
+                                                       string buffer = original_source.read();
+                                                       //if ( buffer.empty() ) { break; } /* EOF */
+                                                       original_destination.write( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
 
-                /* ferry packets between original source and original destination */
-                while(true) {
-                    if ( poll( pollfds, 2, 60000 ) < 0 ) {
-                        throw Exception( "poll" );
-                    }
-
-                    if ( pollfds[ 0 ].revents & POLLIN ) {
-                        string buffer = original_destination.read();
-                        if ( buffer.empty() ) { break; } /* EOF */
-                        original_source.write( buffer );
-                    } else if ( pollfds[ 1 ].revents & POLLIN ) {
-                        string buffer = original_source.read();
-                        if ( buffer.empty() ) { break; } /* EOF */
-                        original_destination.write( buffer );
-                    } else {
-                        break; /* timeout */
-                    }
-                }
+                poller.poll( 60000 );
             } catch ( const Exception & e ) {
                 e.perror();
                 return;
