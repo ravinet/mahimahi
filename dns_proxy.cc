@@ -63,31 +63,23 @@ void DNSProxy::handle_tcp( void )
                 Socket dns_server( SocketType::TCP );
                 dns_server.connect( tcp_target_ );
 
-                /* ferry bytes in both directions */
-                pollfd pollfds[ 2 ];
-                pollfds[ 0 ].fd = client.fd().num();
-                pollfds[ 0 ].events = POLLIN;
-                pollfds[ 1 ].fd = dns_server.fd().num();
-                pollfds[ 1 ].events = POLLIN;
+                Poller poller;
 
-                while ( true ) {
-                    if ( poll( pollfds, 2, 60000 ) < 0 ) {
-                        throw Exception( "poll" );
-                    }
+                poller.add_action( Poller::Action( client.fd(), Direction::In,
+                                                   [&] () {
+                                                       string buffer = client.read();
+                                                       //if ( buffer.empty() ) { break; } /* EOF */
+                                                       dns_server.write( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
 
-                    /* ferry bytes in both directions */
-                    if ( pollfds[ 0 ].revents & POLLIN ) {
-                        string buffer = client.read();
-                        if ( buffer.empty() ) { break; } /* EOF */
-                        dns_server.write( buffer );
-                    } else if ( pollfds[ 1 ].revents & POLLIN ) {
-                        string buffer = dns_server.read();
-                        if ( buffer.empty() ) { break; } /* EOF */
-                        client.write( buffer );
-                    } else {
-                        break; /* timeout */
-                    }
-                }
+                poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
+                                                   [&] () {
+                                                       string buffer = dns_server.read();
+                                                       if ( buffer.empty() ) { break; } /* EOF */
+                                                       client.write( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
             } catch ( const Exception & e ) {
                 e.perror();
                 return;
