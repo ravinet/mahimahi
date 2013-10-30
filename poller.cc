@@ -16,7 +16,7 @@ Poller::Result Poller::poll( const int & timeout_ms )
     const int poll_return = ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms );
 
     if ( poll_return < 0 ) {
-        throw Exception( "poller" );
+        throw Exception( "poll" );
     } else if ( poll_return == 0 ) {
         return Result::Type::Timeout;
     }

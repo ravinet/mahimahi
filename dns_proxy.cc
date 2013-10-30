@@ -5,8 +5,10 @@
 #include <thread>
 
 #include "dns_proxy.hh"
+#include "poller.hh"
 
 using namespace std;
+using namespace PollerShortNames;
 
 DNSProxy::DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target )
     : udp_listener_( SocketType::UDP ), tcp_listener_( SocketType::TCP ),
@@ -31,18 +33,15 @@ void DNSProxy::handle_udp( void )
                 dns_server.write( request.second );
 
                 /* wait up to 60 seconds for a reply */
-                pollfd pollfds[ 1 ];
-                pollfds[ 0 ].fd = dns_server.fd().num();
-                pollfds[ 0 ].events = POLLIN;
+                Poller poller;
 
-                if ( poll( pollfds, 1, 60000 ) < 0 ) {
-                    throw Exception( "poll" );
-                }
-
-                /* if we got a reply, send it back to client */
-                if ( pollfds[ 0 ].revents & POLLIN ) {
-                    udp_listener_.sendto( request.first, dns_server.read() );
-                }
+                poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
+                                                   [&] () {
+                                                       udp_listener_.sendto( request.first,
+                                                                             dns_server.read() );
+                                                       return ResultType::Continue;
+                                                   } ) );
+                poller.poll( 60000 );
             } catch ( const Exception & e ) {
                 e.perror();
                 return;
