@@ -54,6 +54,12 @@ int main( int argc, char *argv[] )
         /* set up NAT between egress and eth0 */
         NAT nat_rule;
 
+        /* set up http proxy for tcp */
+        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
+
+        /* set up dnat */
+        DNAT dnat( http_proxy->tcp_listener().local_addr(), "delayshell" + to_string( getpid() ) );  
+
         /* Fork */
         ChildProcess container_process( [&]() {
                 /* Unshare network namespace */
@@ -103,7 +109,7 @@ int main( int argc, char *argv[] )
                 return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms, nullptr );
             } );
 
-        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms, nullptr );
+        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms, move( http_proxy ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
