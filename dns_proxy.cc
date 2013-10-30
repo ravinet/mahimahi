@@ -80,7 +80,8 @@ void DNSProxy::handle_tcp( void )
                                                        client.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
-            } catch ( const Exception & e ) {
+                poller.poll( 60000 );
+           } catch ( const Exception & e ) {
                 e.perror();
                 return;
             }
