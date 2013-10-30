@@ -20,6 +20,9 @@ private:
 
     Address local_addr_, peer_addr_;
 
+    void getsockopt( const int level, const int optname,
+                     void *optval, socklen_t *optlen ) const;
+
 public:
     Socket( const SocketType & socket_type );
 
@@ -41,7 +44,7 @@ public:
     std::pair< Address, std::string > recvfrom( void );
     void sendto( const Address & destination, const std::string & payload );
 
-    Address original_dest( void );
+    Address original_dest( void ) const;
 };
 
 #endif

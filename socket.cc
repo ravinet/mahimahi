@@ -5,6 +5,7 @@
 #include <utility>
 #include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
+#include <cassert>
 
 #include "socket.hh"
 #include "exception.hh"
@@ -140,12 +141,19 @@ void Socket::sendto( const Address & destination, const std::string & payload )
     }
 }
 
-Address Socket::original_dest( void )
+void Socket::getsockopt( const int level, const int optname,
+                        void *optval, socklen_t *optlen ) const
+{
+    if ( ::getsockopt( const_cast<FileDescriptor &>( fd_ ).num(), level, optname, optval, optlen ) < 0 ) {
+        throw Exception( "getsockopt" );
+    }
+}
+
+Address Socket::original_dest( void ) const
 {
     struct sockaddr_in dstaddr;
     socklen_t destlen = sizeof( dstaddr );
-    if ( getsockopt( fd_.num(), SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen ) < 0 ) {
-        throw Exception( "getsockopt" );
-    }
-    return Address( dstaddr );
+    getsockopt( SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen );
+    assert( destlen == sizeof( dstaddr ) );
+    return dstaddr;
 }
