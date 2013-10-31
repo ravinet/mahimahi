@@ -80,10 +80,16 @@ void DNSProxy::handle_tcp( void )
                                                        client.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
-                poller.poll( 60000 );
+
+               while( true ) {
+                   auto poll_result = poller.poll( 60000 );
+                   if ( poll_result.result == Poller::Result::Type::Exit ) {
+                       return static_cast<int>( poll_result.exit_status );
+                   }
+               }
            } catch ( const Exception & e ) {
                 e.perror();
-                return;
+                return EXIT_FAILURE;
             }
 
             return;
