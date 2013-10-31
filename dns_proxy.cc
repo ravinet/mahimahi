@@ -81,17 +81,16 @@ void DNSProxy::handle_tcp( void )
                                                        return ResultType::Continue;
                                                    } ) );
 
-               while( true ) {
-                   auto poll_result = poller.poll( 60000 );
-                   if ( poll_result.result == Poller::Result::Type::Exit ) {
-                       return static_cast<int>( poll_result.exit_status );
-                   }
-               }
-           } catch ( const Exception & e ) {
+                while( true ) {
+                    auto poll_result = poller.poll( 60000 );
+                    if ( poll_result.result == Poller::Result::Type::Exit ) {
+                        return static_cast<int>( poll_result.exit_status );
+                    }
+                }
+            } catch ( const Exception & e ) {
                 e.perror();
                 return EXIT_FAILURE;
             }
-
             return;
         }, tcp_listener_.accept() );
 
