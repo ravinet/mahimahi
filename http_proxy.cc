@@ -49,7 +49,7 @@ void HTTPProxy::handle_tcp_get( void )
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = original_destination.read();
-                                                       //if ( buffer.empty() ) { break; } /* EOF */
+                                                       if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
                                                        original_source.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
@@ -57,7 +57,7 @@ void HTTPProxy::handle_tcp_get( void )
                 poller.add_action( Poller::Action( original_source.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = original_source.read();
-                                                       //if ( buffer.empty() ) { break; } /* EOF */
+                                                       if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
                                                        original_destination.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
