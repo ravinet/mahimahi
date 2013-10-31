@@ -86,8 +86,8 @@ void check_requirements( const int argc, const char * const argv[] )
         throw Exception( argv[ 0 ], "please run as non-root" );
     }
 
-    if ( argc != 3 ) {
-        throw Exception( "Usage", string( argv[ 0 ] ) + " mode propagation-delay [in milliseconds]" );
+    if ( argc != 2 ) {
+        throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
     }
 
     /* verify IP forwarding is enabled */

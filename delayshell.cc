@@ -26,8 +26,7 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        string operating_mode( argv[ 1 ] );
-        const uint64_t delay_ms = (operating_mode == "delay") ? myatoi( argv[ 2 ] ) : 0;
+        const uint64_t delay_ms = myatoi( argv[ 1 ] );
         const Address nameserver = first_nameserver();
 
         /* make pair of connected sockets */
