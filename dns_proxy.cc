@@ -91,7 +91,7 @@ void DNSProxy::handle_tcp( void )
                 e.perror();
                 return EXIT_FAILURE;
             }
-            return;
+            return EXIT_SUCCESS;
         }, tcp_listener_.accept() );
 
     /* don't wait around for the reply */
