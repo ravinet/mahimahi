@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <utility>
+#include <queue>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
@@ -43,6 +44,12 @@ void HTTPProxy::handle_tcp_get( void )
                 Socket original_destination( TCP );
                 original_destination.connect( original_destaddr );
 
+                /* Make buffer for original source to original destination */
+                queue< string > from_source;
+
+                /* Make buffer for original destination to original source */
+                queue< string > from_destination;
+
                 Poller poller;
 
                 /* poll on original connect socket and new connection socket to ferry packets */
@@ -50,7 +57,8 @@ void HTTPProxy::handle_tcp_get( void )
                                                    [&] () {
                                                        string buffer = original_destination.read();
                                                        if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
-                                                       original_source.write( buffer );
+                                                       from_destination.emplace( buffer );
+                                                       //original_source.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
 
@@ -58,7 +66,23 @@ void HTTPProxy::handle_tcp_get( void )
                                                    [&] () {
                                                        string buffer = original_source.read();
                                                        if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
+                                                       from_source.emplace( buffer );
                                                        original_destination.write( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
+
+                poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
+                                                   [&] () {
+                                                       size_t amount_written = 0;
+                                                       if ( !from_destination.empty() ) { /* String to be written */
+                                                           amount_written = original_source.writeval( from_destination.front() );
+                                                       }
+                                                       if ( amount_written == from_destination.front().size() ) { /* Remove string from queue */
+                                                           from_destination.pop();
+                                                       } else { /* Erase what was written from front of head of queue */
+                                                           string &front = from_destination.front();
+                                                           front = front.erase( 0, amount_written );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 
