@@ -102,6 +102,11 @@ void Socket::write( const std::string & str )
     fd_.write( str );
 }
 
+size_t Socket::writeval( const std::string & str )
+{
+    return fd_.writeamount( str );
+}
+
 pair< Address, string > Socket::recvfrom( void )
 {
     static const ssize_t RECEIVE_MTU = 2048;

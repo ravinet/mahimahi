@@ -38,6 +38,8 @@ public:
 
     std::string read( void );
     void write( const std::string & str );
+    size_t writeval( const std::string & str );
+
 
     FileDescriptor & fd( void ) { return fd_; }
 

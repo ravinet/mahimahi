@@ -25,6 +25,18 @@ void writeall( const int fd, const string & buf )
     }
 }
 
+size_t writevalue( const int fd, const string & buf )
+{
+    ssize_t bytes_written = write( fd,
+                                   buf.data(),
+                                   buf.size() );
+
+    if ( bytes_written < 0 ) {
+        throw Exception( "write" );
+    }
+    return bytes_written;
+}
+
 std::string readall( const int fd, const size_t limit )
 {
     char buffer[ ezio::read_chunk_size ];

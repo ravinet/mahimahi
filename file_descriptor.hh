@@ -62,6 +62,11 @@ public:
         writeall( num(), buffer );
     }
 
+    size_t writeamount( const std::string & buffer )
+    {
+        return writevalue( num(), buffer );
+    }
+
     std::string read( void )
     {
         return readall( num() );
