@@ -1,7 +1,5 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <poll.h>
-
 #include <thread>
 
 #include "dns_proxy.hh"
@@ -68,7 +66,7 @@ void DNSProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = client.read();
-                                                       if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
+                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                        dns_server.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
@@ -76,7 +74,7 @@ void DNSProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = dns_server.read();
-                                                       if ( buffer.empty() ) { return ResultType::Continue; } /* EOF */
+                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                        client.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
@@ -84,14 +82,14 @@ void DNSProxy::handle_tcp( void )
                 while( true ) {
                     auto poll_result = poller.poll( 60000 );
                     if ( poll_result.result == Poller::Result::Type::Exit ) {
-                        return static_cast<int>( poll_result.exit_status );
+                        return;
                     }
                 }
             } catch ( const Exception & e ) {
                 e.perror();
-                return EXIT_FAILURE;
+                return;
             }
-            return EXIT_SUCCESS;
+            return;
         }, tcp_listener_.accept() );
 
     /* don't wait around for the reply */
