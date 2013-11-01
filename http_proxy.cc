@@ -44,12 +44,15 @@ void HTTPProxy::handle_tcp_get( void )
 
                 Poller poller;
 
+                /* Make bytestream_queue for source->dest and dest->source */
+                ByteStreamQueue from_source; ByteStreamQueue from_destination;
+
                 /* poll on original connect socket and new connection socket to ferry packets */
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = original_destination.read();
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       original_source.write( buffer );
+                                                       from_destination.add( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
 
@@ -57,7 +60,25 @@ void HTTPProxy::handle_tcp_get( void )
                                                    [&] () {
                                                        string buffer = original_source.read();
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       original_destination.write( buffer );
+                                                       from_source.add( buffer );
+                                                       return ResultType::Continue;
+                                                   } ) );
+
+                poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
+                                                   [&] () {
+                                                       if ( !from_source.empty() ) { /* Bytes to be written */
+                                                           size_t amount_written = original_destination.writeval( from_source.head() );
+                                                           from_source.update_head( amount_written );
+                                                       }
+                                                       return ResultType::Continue;
+                                                   } ) );
+
+                poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
+                                                   [&] () {
+                                                       if ( !from_destination.empty() ) { /* Bytes to be written */
+                                                           size_t amount_written = original_source.writeval( from_destination.head() );
+                                                           from_destination.update_head( amount_written );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 

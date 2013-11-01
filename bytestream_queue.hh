@@ -16,6 +16,8 @@ public:
 
     void add( const std::string & buffer );
 
+    bool empty( void );
+
     std::string head( void ) const;
 
     void update_head( size_t & amount_written );
