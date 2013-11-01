@@ -18,6 +18,7 @@
 #include "signalfd.hh"
 #include "http_proxy.hh"
 #include "poller.hh"
+#include "bytestream_queue.hh"
 
 using namespace std;
 using namespace PollerShortNames;
