@@ -45,14 +45,18 @@ void HTTPProxy::handle_tcp_get( void )
                 Poller poller;
 
                 /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_source; ByteStreamQueue from_destination;
+                ByteStreamQueue from_source( 1048576 ); ByteStreamQueue from_destination( 1048576 );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = original_destination.read();
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       from_destination.add( buffer );
+                                                       if ( from_destination.available_to_write() > buffer.size() ) {
+                                                           from_destination.add( buffer );
+                                                       } else {
+                                                           throw Exception( "ByteStreamQueue", "Not enough space to write" );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 
@@ -60,24 +64,26 @@ void HTTPProxy::handle_tcp_get( void )
                                                    [&] () {
                                                        string buffer = original_source.read();
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       from_source.add( buffer );
+                                                       if ( from_source.available_to_write() > buffer.size() ) {
+                                                           from_source.add( buffer );
+                                                       } else {
+                                                           throw Exception( "ByteStreamQueue", "Not enough space to write" );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
                                                    [&] () {
-                                                       if ( !from_source.empty() ) { /* Bytes to be written */
-                                                           size_t amount_written = original_destination.writeval( from_source.head() );
-                                                           from_source.update_head( amount_written );
+                                                       if ( from_source.available_to_write() != 0 ) { /* Bytes to be written */
+                                                           from_source.write_to_fd( original_destination.fd() );
                                                        }
                                                        return ResultType::Continue;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
                                                    [&] () {
-                                                       if ( !from_destination.empty() ) { /* Bytes to be written */
-                                                           size_t amount_written = original_source.writeval( from_destination.head() );
-                                                           from_destination.update_head( amount_written );
+                                                       if ( from_destination.available_to_write() != 0 ) { /* Bytes to be written */
+                                                           from_destination.write_to_fd( original_source.fd() );
                                                        }
                                                        return ResultType::Continue;
                                                    } ) );

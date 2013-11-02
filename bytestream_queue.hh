@@ -6,21 +6,25 @@
 #include <queue>
 #include <string>
 
+#include "file_descriptor.hh"
+
 class ByteStreamQueue
 {
 private:
-    std::queue< std::string > stream_queue_;
+    std::vector< char > buffer_;
+
+    unsigned int next_byte_to_read, next_byte_to_write;
+
+    unsigned int available_to_read( void ) const;
 
 public:
-    ByteStreamQueue( void ) : stream_queue_() {}
+    ByteStreamQueue( const unsigned int size );
+
+    unsigned int available_to_write( void ) const;
 
     void add( const std::string & buffer );
 
-    bool empty( void );
-
-    std::string head( void ) const;
-
-    void update_head( size_t & amount_written );
+    void write_to_fd( FileDescriptor & fd );
 
 };
 
