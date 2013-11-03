@@ -50,31 +50,23 @@ void HTTPProxy::handle_tcp_get( void )
                 /* poll on original connect socket and new connection socket to ferry packets */
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = original_destination.read();
+                                                       string buffer = original_destination.read( from_destination.available_to_write() );
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       if ( from_destination.available_to_write() > buffer.size() ) {
-                                                           from_destination.add( buffer );
-                                                       } else {
-                                                           throw Exception( "ByteStreamQueue", "Not enough space to write" );
-                                                       }
+                                                       from_destination.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = original_source.read();
+                                                       string buffer = original_source.read( from_source.available_to_write() );
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       if ( from_source.available_to_write() > buffer.size() ) {
-                                                           from_source.add( buffer );
-                                                       } else {
-                                                           throw Exception( "ByteStreamQueue", "Not enough space to write" );
-                                                       }
+                                                       from_source.write( buffer );
                                                        return ResultType::Continue;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
                                                    [&] () {
-                                                       if ( from_source.available_to_write() != 0 ) { /* Bytes to be written */
+                                                       if ( from_source.available_to_read() > 0 ) {
                                                            from_source.write_to_fd( original_destination.fd() );
                                                        }
                                                        return ResultType::Continue;
@@ -82,7 +74,7 @@ void HTTPProxy::handle_tcp_get( void )
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
                                                    [&] () {
-                                                       if ( from_destination.available_to_write() != 0 ) { /* Bytes to be written */
+                                                       if ( from_destination.available_to_read() > 0 ) {
                                                            from_destination.write_to_fd( original_source.fd() );
                                                        }
                                                        return ResultType::Continue;

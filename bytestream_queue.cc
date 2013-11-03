@@ -11,34 +11,33 @@ ByteStreamQueue::ByteStreamQueue( const unsigned int size )
 {
 }
 
+/* How much space available to be read from bytestreamqueue and written to fd */
 unsigned int ByteStreamQueue::available_to_read( void ) const
 {
-    if ( next_byte_to_read == 0 && next_byte_to_write == 0 ) { /* beginning or nothing to read */
-        return 0;
-    }
     if ( next_byte_to_read > next_byte_to_write ) { /* must wrap around */
         return ( buffer_.size() - next_byte_to_read + next_byte_to_write );
-    } else { /* write pointer in front of read pointer so don't wrap around */
+    } else if ( next_byte_to_write > next_byte_to_read ) { /* write pointer in front of read pointer so don't wrap around */
         return ( next_byte_to_write - next_byte_to_read );
+    } else { /* read and write pointers are at same place */
+        return 0;
     }
 }
 
+/* How much space available to write to bytestreamqueue */
 unsigned int ByteStreamQueue::available_to_write ( void ) const
 {
-    if ( next_byte_to_read == 0 && next_byte_to_write == 0 ) { /* beginning or just empty */
-        return buffer_.size();
-    }
     if ( next_byte_to_write > next_byte_to_read ) { /* must wrap around */
         return ( buffer_.size() - next_byte_to_write + next_byte_to_read );
-    } else { /* read pointer in front of write pointer so don't wrap around */
+    } else if ( next_byte_to_read > next_byte_to_write ) { /* read pointer in front of write pointer so don't wrap around */
         return ( next_byte_to_read - next_byte_to_write );
+    } else { /* read and write pointers are at same place */
+        return buffer_.size();
     }
 }
 
-void ByteStreamQueue::add( const string & buffer )
+/* Write buffer to bytestreamqueue starting at next_byte_to_write */
+void ByteStreamQueue::write( const string & buffer )
 {
-    /* Must check if buffer length is more than available_to_write (if so, don't write) */
-
     /* current position in buffer */
     unsigned int i = 0;
     /* write until write pointer is at end of vector or you have written entire string */
@@ -47,8 +46,11 @@ void ByteStreamQueue::add( const string & buffer )
         next_byte_to_write++;
         i++;
     }
-    /* Must reset next_byte_to_write to front and continue until end of string*/
-    next_byte_to_write = 0;
+
+    /* Must reset next_byte_to_write to front and continue until end of string, if more to add*/
+    if ( i < buffer.length() ) {
+        next_byte_to_write = 0;
+    }
     while ( i < buffer.length() ) {
         buffer_.at( next_byte_to_write ) = buffer.data()[i];
         next_byte_to_write++;
@@ -58,11 +60,12 @@ void ByteStreamQueue::add( const string & buffer )
 
 void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
 {
-    unsigned int limit = available_to_write();
+    unsigned int limit = available_to_read();
     unsigned int j = 0;
     string to_be_written;
 
-    if ( limit == 0 ) { /* nothing available to read */
+    cout << "About to be written: " << limit << endl;
+    if ( limit == 0 ) { /* nothing available to read from bytestreamqueue and write to fd*/
         return;
     }
     unsigned int current_read_ptr = next_byte_to_read;
@@ -90,8 +93,11 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
         next_byte_to_read++;
         update_counter++;
     }
+
     /* set next_byte_to_read to beginning and continue */
-    next_byte_to_read = 0;
+    if ( update_counter < amount_written ) {
+        next_byte_to_read = 0;
+    }
     while ( update_counter < amount_written ) {
         next_byte_to_read++;
         update_counter++;
