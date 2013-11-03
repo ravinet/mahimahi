@@ -37,6 +37,7 @@ public:
     const Address & peer_addr( void ) const { return peer_addr_; }
 
     std::string read( void );
+    std::string read ( const size_t limit );
     void write( const std::string & str );
     size_t writeval( const std::string & str );
 

@@ -86,6 +86,11 @@ string Socket::read( void )
     return fd_.read();
 }
 
+string Socket::read ( const size_t limit )
+{
+    return fd_.read( limit );
+}
+
 void Socket::connect( const Address & addr )
 {
     peer_addr_ = addr;
