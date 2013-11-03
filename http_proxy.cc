@@ -50,6 +50,7 @@ void HTTPProxy::handle_tcp_get( void )
                 /* poll on original connect socket and new connection socket to ferry packets */
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
+                                                       /* read up to number of bytes available to write to in bytestreamqueue */
                                                        string buffer = original_destination.read( from_destination.available_to_write() );
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                        from_destination.write( buffer );
@@ -58,6 +59,7 @@ void HTTPProxy::handle_tcp_get( void )
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::In,
                                                    [&] () {
+                                                       /* read up to number of bytes available to write to in bytestreamqueue */
                                                        string buffer = original_source.read( from_source.available_to_write() );
                                                        if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                        from_source.write( buffer );
@@ -66,6 +68,7 @@ void HTTPProxy::handle_tcp_get( void )
 
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
                                                    [&] () {
+                                                       /* write to Filedescriptor only if bytes available to be read from bytestreamqueue */
                                                        if ( from_source.available_to_read() > 0 ) {
                                                            from_source.write_to_fd( original_destination.fd() );
                                                        }
@@ -74,6 +77,7 @@ void HTTPProxy::handle_tcp_get( void )
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
                                                    [&] () {
+                                                       /* write to Filedescriptor only if bytes available to be read from bytestreamqueue */
                                                        if ( from_destination.available_to_read() > 0 ) {
                                                            from_destination.write_to_fd( original_source.fd() );
                                                        }

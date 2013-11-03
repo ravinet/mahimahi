@@ -47,7 +47,7 @@ void ByteStreamQueue::write( const string & buffer )
         i++;
     }
 
-    /* Must reset next_byte_to_write to front and continue until end of string, if more to add*/
+    /* Must reset next_byte_to_write to front and continue until end of string, if more to add */
     if ( i < buffer.length() ) {
         next_byte_to_write = 0;
     }
@@ -64,19 +64,18 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
     unsigned int j = 0;
     string to_be_written;
 
-    cout << "About to be written: " << limit << endl;
     if ( limit == 0 ) { /* nothing available to read from bytestreamqueue and write to fd*/
         return;
     }
     unsigned int current_read_ptr = next_byte_to_read;
-    /* Make string to be written (of length available to read) but don't update read pointer */
+    /* Make string to be written (of length available_to_read) but don't update read pointer yet */
     while ( current_read_ptr < buffer_.size() && j < limit ) {
         to_be_written.push_back( buffer_.at( current_read_ptr ) );
         current_read_ptr++;
         j++;
     }
 
-    /* set current_read_ptr to beginning and continue*/
+    /* set current_read_ptr to beginning and continue */
     current_read_ptr = 0;
     while ( j < limit ) {
         to_be_written.push_back( buffer_.at( current_read_ptr ) );
@@ -84,7 +83,7 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
         j++;
     }
 
-    /* Write constructed string to given file descriptor */
+    /* Attempt to write constructed string to given file descriptor */
     auto amount_written = fd.writeamount( to_be_written );
 
     /* Update next_byte_to_read based on what was written */
@@ -94,7 +93,7 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
         update_counter++;
     }
 
-    /* set next_byte_to_read to beginning and continue */
+    /* set next_byte_to_read to beginning and continue, if we wrote more */
     if ( update_counter < amount_written ) {
         next_byte_to_read = 0;
     }
