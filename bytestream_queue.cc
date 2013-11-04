@@ -43,7 +43,11 @@ void ByteStreamQueue::write( const string & buffer )
     /* write until write pointer is at end of vector or you have written entire string */
     while ( next_byte_to_write < buffer_.size() && i < buffer.length() ) {
         buffer_.at( next_byte_to_write ) = buffer.data()[i];
-        next_byte_to_write++;
+        if ( next_byte_to_write == buffer_.size() - 1 ) {
+            next_byte_to_write = 0;
+        } else {
+            next_byte_to_write++;
+        }
         i++;
     }
 
@@ -89,14 +93,14 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
     /* Update next_byte_to_read based on what was written */
     unsigned int update_counter = 0;
     while ( next_byte_to_read < buffer_.size() && update_counter < amount_written ) {
-        next_byte_to_read++;
+        if ( next_byte_to_read == buffer_.size() - 1 ) {
+            next_byte_to_read = 0;
+        } else {
+            next_byte_to_read++;
+        }
         update_counter++;
     }
 
-    /* set next_byte_to_read to beginning and continue, if we wrote more */
-    if ( update_counter < amount_written ) {
-        next_byte_to_read = 0;
-    }
     while ( update_counter < amount_written ) {
         next_byte_to_read++;
         update_counter++;
