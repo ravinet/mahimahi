@@ -7,12 +7,20 @@ using namespace std;
 
 void Poller::add_action( Poller::Action action )
 {
-    pollfds_.push_back( { action.fd.num(), action.direction, 0 } );
-    callbacks_.push_back( action.callback );
+    actions_.push_back( action );
+    pollfds_.push_back( { action.fd.num(), 0, 0 } );
 }
 
 Poller::Result Poller::poll( const int & timeout_ms )
 {
+    assert( pollfds_.size() == actions_.size() );
+
+    /* tell poll whether we care about each fd */
+    for ( unsigned int i = 0; i < actions_.size(); i++ ) {
+        assert( pollfds_.at( i ).fd == actions_.at( i ).fd.num() );
+        pollfds_.at( i ).events = actions_.at( i ).when_interested ? actions_.at( i ).direction : 0;
+    }
+
     const int poll_return = ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms );
 
     if ( poll_return < 0 ) {
@@ -29,7 +37,7 @@ Poller::Result Poller::poll( const int & timeout_ms )
         if ( pollfds_[ i ].revents & pollfds_[ i ].events ) {
             /* we only want to call callback if revents includes
                the event we asked for */
-            auto result = callbacks_[ i ]();
+            auto result = actions_.at( i ).callback();
             if ( result.result == Action::Result::Type::Exit ) {
                 return Result( Result::Type::Exit, result.exit_status );
             }
