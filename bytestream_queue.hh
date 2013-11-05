@@ -18,12 +18,16 @@ private:
 public:
     ByteStreamQueue( const unsigned int size );
 
+    /* Space available to write to bytestreamqueue */
     unsigned int available_to_write( void ) const;
 
+    /* Space available to be read from bytestreamqueue */
     unsigned int available_to_read( void ) const;
 
+    /* Write buffer to bytestreamqueue */
     void write( const std::string & buffer );
 
+    /* Attempt to write available to read from bytestreamqueue to fd */
     void write_to_fd( FileDescriptor & fd );
 
 };
