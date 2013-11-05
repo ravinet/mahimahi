@@ -1,5 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <algorithm>
 #include "poller.hh"
 #include "util.hh"
 
@@ -18,8 +19,12 @@ Poller::Result Poller::poll( const int & timeout_ms )
     /* tell poll whether we care about each fd */
     for ( unsigned int i = 0; i < actions_.size(); i++ ) {
         assert( pollfds_.at( i ).fd == actions_.at( i ).fd.num() );
-        pollfds_.at( i ).events = actions_.at( i ).when_interested ? actions_.at( i ).direction : 0;
+        pollfds_.at( i ).events = actions_.at( i ).when_interested() ? actions_.at( i ).direction : 0;
     }
+
+    /* Check that at least one member in pollfds_ has a non-zero direction */
+    assert( std::accumulate( pollfds_.begin(), pollfds_.end(), false,
+                             [] (bool acc, pollfd x) { return acc or (x.events != 0); }) );
 
     const int poll_return = ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms );
 
