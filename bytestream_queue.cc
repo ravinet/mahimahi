@@ -27,11 +27,11 @@ unsigned int ByteStreamQueue::available_to_read( void ) const
 unsigned int ByteStreamQueue::available_to_write ( void ) const
 {
     if ( next_byte_to_write > next_byte_to_read ) { /* must wrap around */
-        return ( buffer_.size() - next_byte_to_write + next_byte_to_read );
+        return ( buffer_.size() - next_byte_to_write + next_byte_to_read - 1 );
     } else if ( next_byte_to_read > next_byte_to_write ) { /* read pointer in front of write pointer so don't wrap around */
-        return ( next_byte_to_read - next_byte_to_write );
+        return ( next_byte_to_read - next_byte_to_write - 1);
     } else { /* read and write pointers are at same place */
-        return buffer_.size();
+        return ( buffer_.size() - 1 );
     }
 }
 
@@ -48,16 +48,6 @@ void ByteStreamQueue::write( const string & buffer )
         } else {
             next_byte_to_write++;
         }
-        i++;
-    }
-
-    /* Must reset next_byte_to_write to front and continue until end of string, if more to add */
-    if ( i < buffer.length() ) {
-        next_byte_to_write = 0;
-    }
-    while ( i < buffer.length() ) {
-        buffer_.at( next_byte_to_write ) = buffer.data()[i];
-        next_byte_to_write++;
         i++;
     }
 }
@@ -98,11 +88,6 @@ void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
         } else {
             next_byte_to_read++;
         }
-        update_counter++;
-    }
-
-    while ( update_counter < amount_written ) {
-        next_byte_to_read++;
         update_counter++;
     }
 }

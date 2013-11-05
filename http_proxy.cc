@@ -45,24 +45,29 @@ void HTTPProxy::handle_tcp_get( void )
                 Poller poller;
 
                 /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_source( 1048576 ); ByteStreamQueue from_destination( 1048576 );
+                ByteStreamQueue from_source( 1500 ); ByteStreamQueue from_destination( 1500 );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
+
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
                                                    [&] () {
                                                        /* read up to number of bytes available to write to in bytestreamqueue */
-                                                       string buffer = original_destination.read( from_destination.available_to_write() );
-                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       from_destination.write( buffer );
+                                                       if ( from_destination.available_to_write() > 0 ) {
+                                                           string buffer = original_destination.read( from_destination.available_to_write() );
+                                                           if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
+                                                           from_destination.write( buffer );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::In,
                                                    [&] () {
                                                        /* read up to number of bytes available to write to in bytestreamqueue */
-                                                       string buffer = original_source.read( from_source.available_to_write() );
-                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       from_source.write( buffer );
+                                                       if ( from_source.available_to_write() > 0 ) {
+                                                           string buffer = original_source.read( from_source.available_to_write() );
+                                                           if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
+                                                           from_source.write( buffer );
+                                                       }
                                                        return ResultType::Continue;
                                                    } ) );
 
