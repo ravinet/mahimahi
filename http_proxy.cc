@@ -58,6 +58,9 @@ void HTTPProxy::handle_tcp_get( void )
                                                            from_destination.write( buffer );
                                                        }
                                                        return ResultType::Continue;
+                                                   },
+                                                   [&] () {
+                                                       return from_destination.available_to_write() > 0;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::In,
@@ -69,6 +72,9 @@ void HTTPProxy::handle_tcp_get( void )
                                                            from_source.write( buffer );
                                                        }
                                                        return ResultType::Continue;
+                                                   },
+                                                   [&] () {
+                                                       return from_source.available_to_write() > 0;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
@@ -78,6 +84,9 @@ void HTTPProxy::handle_tcp_get( void )
                                                            from_source.write_to_fd( original_destination.fd() );
                                                        }
                                                        return ResultType::Continue;
+                                                   },
+                                                   [&] () {
+                                                       return from_source.available_to_read() > 0;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
@@ -87,6 +96,9 @@ void HTTPProxy::handle_tcp_get( void )
                                                            from_destination.write_to_fd( original_source.fd() );
                                                        }
                                                        return ResultType::Continue;
+                                                   },
+                                                   [&] () {
+                                                       return from_destination.available_to_read() > 0;
                                                    } ) );
 
                 while( true ) {
