@@ -32,10 +32,10 @@ HTTPProxy::HTTPProxy( const Address & listener_addr )
 
 void HTTPProxy::handle_tcp_get( void )
 {
-    thread newthread( [&] ( Socket original_source ) {
+    thread newthread( [&] ( Socket client ) {
             try {
                 /* get original destination for connection request */
-                Address original_destaddr = original_source.original_dest();
+                Address original_destaddr = client.original_dest();
                 cout << "connection intended for: " << original_destaddr.ip() << endl;
 
                 /* create socket and connect to original destination and send original request */
@@ -45,7 +45,7 @@ void HTTPProxy::handle_tcp_get( void )
                 Poller poller;
 
                 /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_source( 1048576 ); ByteStreamQueue from_destination( 1048576 );
+                ByteStreamQueue from_client( 1048576 ); ByteStreamQueue from_destination( 1048576 );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
@@ -63,37 +63,37 @@ void HTTPProxy::handle_tcp_get( void )
                                                        return from_destination.available_to_write() > 0;
                                                    } ) );
 
-                poller.add_action( Poller::Action( original_source.fd(), Direction::In,
+                poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
                                                        /* read up to number of bytes available to write to in bytestreamqueue */
-                                                       if ( from_source.available_to_write() > 0 ) {
-                                                           string buffer = original_source.read( from_source.available_to_write() );
+                                                       if ( from_client.available_to_write() > 0 ) {
+                                                           string buffer = client.read( from_client.available_to_write() );
                                                            if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                           from_source.write( buffer );
+                                                           from_client.write( buffer );
                                                        }
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () {
-                                                       return from_source.available_to_write() > 0;
+                                                       return from_client.available_to_write() > 0;
                                                    } ) );
 
                 poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
                                                    [&] () {
                                                        /* write to Filedescriptor only if bytes available to be read from bytestreamqueue */
-                                                       if ( from_source.available_to_read() > 0 ) {
-                                                           from_source.write_to_fd( original_destination.fd() );
+                                                       if ( from_client.available_to_read() > 0 ) {
+                                                           from_client.write_to_fd( original_destination.fd() );
                                                        }
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () {
-                                                       return from_source.available_to_read() > 0;
+                                                       return from_client.available_to_read() > 0;
                                                    } ) );
 
-                poller.add_action( Poller::Action( original_source.fd(), Direction::Out,
+                poller.add_action( Poller::Action( client.fd(), Direction::Out,
                                                    [&] () {
                                                        /* write to Filedescriptor only if bytes available to be read from bytestreamqueue */
                                                        if ( from_destination.available_to_read() > 0 ) {
-                                                           from_destination.write_to_fd( original_source.fd() );
+                                                           from_destination.write_to_fd( client.fd() );
                                                        }
                                                        return ResultType::Continue;
                                                    },
