@@ -64,21 +64,24 @@ void DNSProxy::handle_tcp( void )
 
                 Poller poller;
 
-                poller.add_action( Poller::Action( client.fd(), Direction::In,
-                                                   [&] () {
-                                                       string buffer = client.read();
-                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       dns_server.write( buffer );
-                                                       return ResultType::Continue;
-                                                   } ) );
+                /* Make bytestreams */
+                ByteStreamQueue from_client( ezio::read_chunk_size ), from_server( ezio::read_chunk_size );
 
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
-                                                   [&] () {
-                                                       string buffer = dns_server.read();
-                                                       if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                       client.write( buffer );
-                                                       return ResultType::Continue;
-                                                   } ) );
+                                                   [&] () { return eof( from_server.push( dns_server.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   from_server.space_available ) );
+
+                poller.add_action( Poller::Action( client.fd(), Direction::In,
+                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   from_client.space_available ) );
+
+                poller.add_action( Poller::Action( dns_server.fd(), Direction::Out,
+                                                   [&] () { from_client.pop( dns_server.fd() ); return ResultType::Continue; },
+                                                   from_client.non_empty ) );
+
+                poller.add_action( Poller::Action( client.fd(), Direction::Out,
+                                                   [&] () { from_server.pop( client.fd() ); return ResultType::Continue; },
+                                                   from_server.non_empty ) );
 
                 while( true ) {
                     auto poll_result = poller.poll( 60000 );
