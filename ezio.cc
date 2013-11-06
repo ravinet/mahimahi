@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <unistd.h>
+#include <cassert>
 
 #include "ezio.hh"
 #include "exception.hh"
@@ -10,31 +11,28 @@ using namespace std;
 /* blocking write of entire buffer */
 void writeall( const int fd, const string & buf )
 {
-    size_t total_bytes_written = 0;
+    auto it = buf.begin();
 
-    while ( total_bytes_written < buf.size() ) {
-        ssize_t bytes_written = write( fd,
-                                       buf.data() + total_bytes_written,
-                                       buf.size() - total_bytes_written );
-
-        if ( bytes_written < 0 ) {
-            throw Exception( "write" );
-        } else {
-            total_bytes_written += bytes_written;
-        }
+    while ( it != buf.end() ) {
+        it = write_some( fd, it, buf.end() );
     }
 }
 
-size_t writevalue( const int fd, const string & buf )
+string::const_iterator write_some( const int fd,
+                                   const string::const_iterator & begin,
+                                   const string::const_iterator & end )
 {
-    ssize_t bytes_written = write( fd,
-                                   buf.data(),
-                                   buf.size() );
+    assert( end > begin );
+
+    ssize_t bytes_written = write( fd, &*begin, end - begin );
 
     if ( bytes_written < 0 ) {
         throw Exception( "write" );
+    } else if ( bytes_written == 0 ) {
+        throw Exception( "write returned 0" );
     }
-    return bytes_written;
+
+    return begin + bytes_written;
 }
 
 std::string readall( const int fd, const size_t limit )

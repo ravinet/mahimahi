@@ -1,85 +1,91 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <cassert>
+
 #include "bytestream_queue.hh"
 
 using namespace std;
 
-ByteStreamQueue::ByteStreamQueue( const unsigned int size )
-    : buffer_ ( size ),
-      next_byte_to_read( 0 ),
-      next_byte_to_write( 0 )
+ByteStreamQueue::ByteStreamQueue( const size_t size )
+    : buffer_( size, 0 ),
+      next_byte_to_push( 0 ),
+      next_byte_to_pop( 0 ),
+      space_available( [&] () { return available_to_push() > 0; } ),
+      non_empty( [&] () { return available_to_pop() > 0; } )
 {
+    assert( size > 1 );
 }
 
-unsigned int ByteStreamQueue::available_to_read( void ) const
+size_t ByteStreamQueue::available_to_pop( void ) const
 {
-    if ( next_byte_to_read > next_byte_to_write ) { /* wrap around */
-        return ( buffer_.size() - next_byte_to_read + next_byte_to_write );
-    }
-    /* don't wrap around or pointers in same place so return 0 */
-    return ( next_byte_to_write - next_byte_to_read );
+    return next_byte_to_push - next_byte_to_pop
+        + ( next_byte_to_pop > next_byte_to_push ? buffer_.size() : 0 );
 }
 
-unsigned int ByteStreamQueue::available_to_write ( void ) const
+size_t ByteStreamQueue::available_to_push( void ) const
 {
-    if ( next_byte_to_read > next_byte_to_write ) { /* don't wrap around */
-        return (next_byte_to_read - next_byte_to_write - 1 );
-    }
-    /* wrap around or pointers in same place so return buffer size - 1 */
-    return ( buffer_.size() - next_byte_to_write + next_byte_to_read - 1 );
+    return next_byte_to_pop - next_byte_to_push - 1
+        + ( next_byte_to_pop > next_byte_to_push ? 0 : buffer_.size() );
 }
 
-void ByteStreamQueue::write( const string & buffer )
+ByteStreamQueue::Result ByteStreamQueue::push( FileDescriptor & fd )
 {
-    /* current position in buffer */
-    unsigned int i = 0;
+    /* will need to handle case if it's possible that more than
+       one action might push to this queue */
+    assert( space_available() );
 
-    /* write entire input buffer */
-    while ( i < buffer.length() ) {
-        buffer_.at( next_byte_to_write ) = buffer.data()[i];
-        if ( next_byte_to_write == buffer_.size() - 1 ) { /* wrap around to beginning */
-            next_byte_to_write = 0;
-        } else {
-            next_byte_to_write++;
-        }
-        i++;
+    size_t contiguous_space_to_push = available_to_push();
+    if ( next_byte_to_push + contiguous_space_to_push >= buffer_.size() ) {
+        contiguous_space_to_push = buffer_.size() - next_byte_to_push;
+    }
+
+    assert( contiguous_space_to_push > 0 );
+
+    /* read from the fd */
+    string new_chunk = fd.read( contiguous_space_to_push );
+    if ( new_chunk.empty() ) {
+        return Result::EndOfFile;
+    }
+
+    assert( new_chunk.size() <= buffer_.size() - next_byte_to_push );
+    memcpy( &buffer_.at( next_byte_to_push ), new_chunk.data(), new_chunk.size() );
+
+    next_byte_to_push += new_chunk.size();
+    assert( next_byte_to_push <= buffer_.size() );
+    if ( next_byte_to_push == buffer_.size() ) {
+        next_byte_to_push = 0;
+    }
+
+    assert( non_empty() );
+    return Result::Success;
+}
+
+void ByteStreamQueue::pop( FileDescriptor & fd )
+{
+    /* will need to handle case if it's possible that more than
+       one action might pop from this queue */
+    assert( non_empty() );
+
+    size_t contiguous_space_to_pop = available_to_pop();
+    if ( next_byte_to_pop + contiguous_space_to_pop >= buffer_.size() ) {
+        contiguous_space_to_pop = buffer_.size() - next_byte_to_pop;
+    }
+    
+    decltype(buffer_)::const_iterator pop_iterator = buffer_.begin() + next_byte_to_pop;
+    auto end_of_pop = pop_iterator + contiguous_space_to_pop;
+
+    assert( end_of_pop >= pop_iterator );
+
+    pop_iterator = fd.write_some( pop_iterator, end_of_pop );
+
+    next_byte_to_pop = pop_iterator - buffer_.begin();
+    assert( next_byte_to_pop <= buffer_.size() );
+    if ( next_byte_to_pop == buffer_.size() ) {
+        next_byte_to_pop = 0;
     }
 }
 
-void ByteStreamQueue::write_to_fd( FileDescriptor & fd )
+bool eof( const ByteStreamQueue::Result & r )
 {
-    unsigned int limit = available_to_read();
-
-    if ( limit == 0 ) { /* nothing available to read */
-        return;
-    }
-
-    unsigned int current_read_ptr = next_byte_to_read;
-    unsigned int j = 0;
-    string to_be_written;
-
-    /* make string to be written (of length available_to_read) but don't update actual read pointer yet */
-    while ( j < limit ) {
-        to_be_written.push_back( buffer_.at( current_read_ptr ) );
-        if ( current_read_ptr < buffer_.size() - 1 ) {
-            current_read_ptr++;
-        } else {
-            current_read_ptr = 0;
-        }
-        j++;
-    }
-
-    /* Attempt to write entire constructed string to given fd */
-    auto amount_written = fd.writeamount( to_be_written );
-
-    /* Update actual read pointer based on what was written to fd */
-    unsigned int update_counter = 0;
-    while ( next_byte_to_read < buffer_.size() && update_counter < amount_written ) {
-        if ( next_byte_to_read == buffer_.size() - 1 ) {
-            next_byte_to_read = 0;
-        } else {
-            next_byte_to_read++;
-        }
-        update_counter++;
-    }
+    return r == ByteStreamQueue::Result::EndOfFile;
 }

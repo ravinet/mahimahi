@@ -12,7 +12,9 @@ namespace ezio
 
 std::string readall( const int fd, const size_t limit = ezio::read_chunk_size );
 void writeall( const int fd, const std::string & buf );
-size_t writevalue( const int fd, const std::string & buf );
+std::string::const_iterator write_some( const int fd,
+                                        const std::string::const_iterator & begin,
+                                        const std::string::const_iterator & end );
 long int myatoi( const std::string & str );
 
 #endif /* EZIO_HH */

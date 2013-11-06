@@ -107,9 +107,10 @@ void Socket::write( const std::string & str )
     fd_.write( str );
 }
 
-size_t Socket::writeval( const std::string & str )
+std::string::const_iterator Socket::write_some( const std::string::const_iterator & begin,
+                                                const std::string::const_iterator & end )
 {
-    return fd_.writeamount( str );
+    return fd_.write_some( begin, end );
 }
 
 pair< Address, string > Socket::recvfrom( void )

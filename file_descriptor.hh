@@ -62,9 +62,10 @@ public:
         writeall( num(), buffer );
     }
 
-    size_t writeamount( const std::string & buffer )
+    std::string::const_iterator write_some( const std::string::const_iterator & begin,
+                                            const std::string::const_iterator & end )
     {
-        return writevalue( num(), buffer );
+        return ::write_some( num(), begin, end );
     }
 
     std::string read( void )

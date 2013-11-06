@@ -39,8 +39,8 @@ public:
     std::string read( void );
     std::string read ( const size_t limit );
     void write( const std::string & str );
-    size_t writeval( const std::string & str );
-
+    std::string::const_iterator write_some( const std::string::const_iterator & begin,
+                                            const std::string::const_iterator & end );
 
     FileDescriptor & fd( void ) { return fd_; }
 

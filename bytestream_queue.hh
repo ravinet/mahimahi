@@ -5,31 +5,32 @@
 
 #include <queue>
 #include <string>
+#include <functional>
 
 #include "file_descriptor.hh"
 
 class ByteStreamQueue
 {
 private:
-    std::vector< char > buffer_;
+    std::string buffer_;
 
-    unsigned int next_byte_to_read, next_byte_to_write;
+    size_t next_byte_to_push, next_byte_to_pop;
+
+    size_t available_to_push( void ) const;
+    size_t available_to_pop( void ) const;
 
 public:
-    ByteStreamQueue( const unsigned int size );
+    ByteStreamQueue( const size_t size );
 
-    /* Space available to write to bytestreamqueue */
-    unsigned int available_to_write( void ) const;
+    enum class Result { Success, EndOfFile };
 
-    /* Space available to be read from bytestreamqueue */
-    unsigned int available_to_read( void ) const;
+    Result push( FileDescriptor & fd );
+    void pop( FileDescriptor & fd );
 
-    /* Write buffer to bytestreamqueue */
-    void write( const std::string & buffer );
-
-    /* Attempt to write available to read from bytestreamqueue to fd */
-    void write_to_fd( FileDescriptor & fd );
-
+    const std::function<bool(void)> space_available;
+    const std::function<bool(void)> non_empty;
 };
+
+bool eof( const ByteStreamQueue::Result & r );
 
 #endif /* BYTESTREAM_QUEUE_HH */
