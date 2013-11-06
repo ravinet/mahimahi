@@ -45,7 +45,7 @@ void HTTPProxy::handle_tcp_get( void )
                 Poller poller;
 
                 /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_client( 1 ); ByteStreamQueue from_destination( 1 );
+                ByteStreamQueue from_client( ezio::read_chunk_size ); ByteStreamQueue from_destination( ezio::read_chunk_size );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
