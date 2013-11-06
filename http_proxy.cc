@@ -39,8 +39,8 @@ void HTTPProxy::handle_tcp_get( void )
                 cout << "connection intended for: " << original_destaddr.ip() << endl;
 
                 /* create socket and connect to original destination and send original request */
-                Socket original_destination( TCP );
-                original_destination.connect( original_destaddr );
+                Socket destination( TCP );
+                destination.connect( original_destaddr );
 
                 Poller poller;
 
@@ -49,11 +49,11 @@ void HTTPProxy::handle_tcp_get( void )
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
-                poller.add_action( Poller::Action( original_destination.fd(), Direction::In,
+                poller.add_action( Poller::Action( destination.fd(), Direction::In,
                                                    [&] () {
                                                        /* read up to number of bytes available to write to in bytestreamqueue */
                                                        if ( from_destination.available_to_write() > 0 ) {
-                                                           string buffer = original_destination.read( from_destination.available_to_write() );
+                                                           string buffer = destination.read( from_destination.available_to_write() );
                                                            if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                            from_destination.write( buffer );
                                                        }
@@ -77,11 +77,11 @@ void HTTPProxy::handle_tcp_get( void )
                                                        return from_client.available_to_write() > 0;
                                                    } ) );
 
-                poller.add_action( Poller::Action( original_destination.fd(), Direction::Out,
+                poller.add_action( Poller::Action( destination.fd(), Direction::Out,
                                                    [&] () {
                                                        /* write to Filedescriptor only if bytes available to be read from bytestreamqueue */
                                                        if ( from_client.available_to_read() > 0 ) {
-                                                           from_client.write_to_fd( original_destination.fd() );
+                                                           from_client.write_to_fd( destination.fd() );
                                                        }
                                                        return ResultType::Continue;
                                                    },
