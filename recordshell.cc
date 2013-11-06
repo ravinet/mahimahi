@@ -26,6 +26,10 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
+        if ( argc != 1 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) );
+        }
+
         const uint64_t delay_ms = 0;
         const Address nameserver = first_nameserver();
 

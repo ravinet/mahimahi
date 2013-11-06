@@ -26,6 +26,10 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
+        }
+
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
         const Address nameserver = first_nameserver();
 

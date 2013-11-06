@@ -86,12 +86,6 @@ void check_requirements( const int argc, const char * const argv[] )
         throw Exception( argv[ 0 ], "please run as non-root" );
     }
 
-    if ( argc != 2 && string( argv[ 0 ] ) == "delayshell" ) {
-        throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
-    } else if (argc != 1 && string( argv[ 0 ] ) == "recordshell" ) {
-        throw Exception( "Usage", string( argv[ 0 ] ) );
-    }
-
     /* verify IP forwarding is enabled */
     FileDescriptor ipf( open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ), "open /proc/sys/net/ipv4/ip_forward" );
     if ( ipf.read() != "1\n" ) {
