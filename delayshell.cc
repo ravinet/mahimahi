@@ -94,7 +94,7 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        prepend_shell_prefix( delay_ms );
+                        prepend_shell_prefix( "[delay " + to_string( delay_ms ) + "] " );
 
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {

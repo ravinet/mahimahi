@@ -104,11 +104,11 @@ Address first_nameserver( void )
 }
 
 /* tag bash-like shells with the delay parameter */
-void prepend_shell_prefix( const uint64_t & delay_ms )
+void prepend_shell_prefix( const string & str )
 {
     const char *prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
     string mahimahi_prefix = prefix ? prefix : "";
-    mahimahi_prefix.append( "[delay " + to_string( delay_ms ) + "] " );
+    mahimahi_prefix.append( str );
 
     if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
         throw Exception( "setenv" );

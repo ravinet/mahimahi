@@ -30,7 +30,6 @@ int main( int argc, char *argv[] )
             throw Exception( "Usage", string( argv[ 0 ] ) );
         }
 
-        const uint64_t delay_ms = 0;
         const Address nameserver = first_nameserver();
 
         /* make pair of connected sockets */
@@ -49,7 +48,7 @@ int main( int argc, char *argv[] )
 
         Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
-        TunDevice egress_tun( "delayshell" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
+        TunDevice egress_tun( "recordshell" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -61,7 +60,7 @@ int main( int argc, char *argv[] )
         unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
 
         /* set up dnat */
-        DNAT dnat( http_proxy->tcp_listener().local_addr(), "delayshell" + to_string( getpid() ) );  
+        DNAT dnat( http_proxy->tcp_listener().local_addr(), "recordshell" + to_string( getpid() ) );  
 
         /* Fork */
         ChildProcess container_process( [&]() {
@@ -100,7 +99,7 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        prepend_shell_prefix( delay_ms );
+                        prepend_shell_prefix( "[record] " );
 
                         const string shell = shell_path();
                         if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
@@ -109,10 +108,10 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms, nullptr );
+                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, 0, nullptr );
             } );
 
-        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms, move( http_proxy ) );
+        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, 0, move( http_proxy ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
