@@ -98,10 +98,7 @@ void check_requirements( const int argc, const char * const argv[] )
 Address first_nameserver( void )
 {
     /* find the first nameserver */
-    if ( res_init() < 0 ) {
-        throw Exception( "res_init" );
-    }
-
+    SystemCall( "res_init", res_init() );
     return _res.nsaddr;
 }
 
@@ -112,13 +109,8 @@ void prepend_shell_prefix( const string & str )
     string mahimahi_prefix = prefix ? prefix : "";
     mahimahi_prefix.append( str );
 
-    if ( setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) < 0 ) {
-        throw Exception( "setenv" );
-    }
-
-    if ( setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) < 0 ) {
-        throw Exception( "setenv" );
-    }
+    SystemCall( "setenv", setenv( "MAHIMAHI_SHELL_PREFIX", mahimahi_prefix.c_str(), true ) );
+    SystemCall( "setenv", setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) );
 }
 
 Result handle_signal( const signalfd_siginfo & sig,
@@ -142,9 +134,7 @@ Result handle_signal( const signalfd_siginfo & sig,
             return Result( ResultType::Exit, child_process.exit_status() );
         } else if ( !child_process.running() ) {
             /* suspend parent too */
-            if ( raise( SIGSTOP ) < 0 ) {
-                throw Exception( "raise" );
-            }
+            SystemCall( "raise", raise( SIGSTOP ) );
         }
         break;
 
@@ -158,4 +148,14 @@ Result handle_signal( const signalfd_siginfo & sig,
     }
 
     return ResultType::Continue;
+}
+
+/* error-checking wrapper for most syscalls */
+int SystemCall( const std::string & s_attempt, const int return_value )
+{
+  if ( return_value >= 0 ) {
+    return return_value;
+  }
+
+  throw Exception( s_attempt );
 }

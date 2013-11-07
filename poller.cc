@@ -30,11 +30,7 @@ Poller::Result Poller::poll( const int & timeout_ms )
         return Result::Type::Exit;
     }
 
-    const int poll_return = ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms );
-
-    if ( poll_return < 0 ) {
-        throw Exception( "poll" );
-    } else if ( poll_return == 0 ) {
+    if ( 0 == SystemCall( "poll", ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms ) ) ) {
         return Result::Type::Timeout;
     }
 

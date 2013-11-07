@@ -85,9 +85,7 @@ int main( int argc, char *argv[] )
                         prepend_shell_prefix( "[record] " );
 
                         const string shell = shell_path();
-                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
-                            throw Exception( "execl" );
-                        }
+                        SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
                         return EXIT_FAILURE;
                     } );
 
@@ -113,9 +111,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                if ( ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) < 0 ) {
-                    throw Exception( "ioctl SIOCADDRT" );
-                }
+                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
             } );
 
         return eventloop( move( dns_outside ), container_process, move( http_proxy ) );

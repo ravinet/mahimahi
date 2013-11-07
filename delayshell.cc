@@ -35,9 +35,8 @@ int main( int argc, char *argv[] )
 
         /* make pair of connected sockets */
         int pipes[ 2 ];
-        if ( socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) < 0 ) {
-            throw Exception( "socketpair" );
-        }
+        SystemCall( "socketpair", socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) );
+
         FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
             ingress_socket( pipes[ 1 ], "socketpair" );
 
@@ -72,9 +71,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                if ( ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) < 0 ) {
-                    throw Exception( "ioctl SIOCADDRT" );
-                }
+                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
 
                 /* create DNS proxy if nameserver address is local */
                 auto dns_inside = DNSProxy::maybe_proxy( nameserver,
@@ -90,9 +87,7 @@ int main( int argc, char *argv[] )
                         prepend_shell_prefix( "[delay " + to_string( delay_ms ) + "] " );
 
                         const string shell = shell_path();
-                        if ( execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) < 0 ) {
-                            throw Exception( "execl" );
-                        }
+                        SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
                         return EXIT_FAILURE;
                     } );
 

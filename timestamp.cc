@@ -8,9 +8,7 @@
 uint64_t timestamp( void )
 {
     timespec ts;
-    if ( clock_gettime( CLOCK_REALTIME, &ts ) < 0 ) {
-        throw Exception( "clock_gettime" );
-    }
+    SystemCall( "clock_gettime", clock_gettime( CLOCK_REALTIME, &ts ) );
 
     uint64_t millis = ts.tv_nsec / 1000000;
     millis += uint64_t( ts.tv_sec ) * 1000;

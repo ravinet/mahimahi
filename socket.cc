@@ -34,21 +34,17 @@ void Socket::bind( const Address & addr )
     local_addr_ = addr;
  
     /* bind the socket to listen_addr */
-    if ( ::bind( fd_.num(),
-                 &local_addr_.raw_sockaddr(),
-                 sizeof( local_addr_.raw_sockaddr() ) ) < 0 ) {
-        throw Exception( "bind" );
-    }
+    SystemCall( "bind", ::bind( fd_.num(),
+                                &local_addr_.raw_sockaddr(),
+                                sizeof( local_addr_.raw_sockaddr() ) ) );
 
     /* set local_addr to the address we actually were bound to */
     sockaddr_in new_local_addr;
     socklen_t new_local_addr_len = sizeof( new_local_addr );
 
-    if ( ::getsockname( fd_.num(),
-                        reinterpret_cast<sockaddr *>( &new_local_addr ),
-                        &new_local_addr_len ) < 0 ) {
-        throw Exception( "getsockname" );
-    }
+    SystemCall( "getsockname", ::getsockname( fd_.num(),
+                                              reinterpret_cast<sockaddr *>( &new_local_addr ),
+                                              &new_local_addr_len ) );
 
     local_addr_ = Address( new_local_addr );
 }
@@ -57,9 +53,7 @@ static const int listen_backlog_ = 16;
 
 void Socket::listen( void )
 {
-  if ( ::listen( fd_.num(), listen_backlog_ ) < 0 ) {
-    throw Exception( "listen" );
-  }
+    SystemCall( "listen", ::listen( fd_.num(), listen_backlog_ ) );
 }
 
 Socket Socket::accept( void )
@@ -95,11 +89,9 @@ void Socket::connect( const Address & addr )
 {
     peer_addr_ = addr;
 
-    if ( ::connect( fd_.num(),
-                    &peer_addr_.raw_sockaddr(),
-                    sizeof( peer_addr_.raw_sockaddr() ) ) < 0 ) {
-        throw Exception( "connect" );
-    }
+    SystemCall( "connect", ::connect( fd_.num(),
+                                      &peer_addr_.raw_sockaddr(),
+                                      sizeof( peer_addr_.raw_sockaddr() ) ) );
 }
 
 void Socket::write( const std::string & str )
@@ -142,22 +134,18 @@ pair< Address, string > Socket::recvfrom( void )
 
 void Socket::sendto( const Address & destination, const std::string & payload )
 {
-    if ( ::sendto( fd_.num(),
-                   payload.data(),
-                   payload.size(),
-                   0,
-                   &destination.raw_sockaddr(),
-                   sizeof( destination.raw_sockaddr() ) ) < 0 ) {
-        throw Exception( "sendto" );
-    }
+    SystemCall( "sendto", ::sendto( fd_.num(),
+                                    payload.data(),
+                                    payload.size(),
+                                    0,
+                                    &destination.raw_sockaddr(),
+                                    sizeof( destination.raw_sockaddr() ) ) );
 }
 
 void Socket::getsockopt( const int level, const int optname,
                         void *optval, socklen_t *optlen ) const
 {
-    if ( ::getsockopt( const_cast<FileDescriptor &>( fd_ ).num(), level, optname, optval, optlen ) < 0 ) {
-        throw Exception( "getsockopt" );
-    }
+    SystemCall( "getsockopt", ::getsockopt( const_cast<FileDescriptor &>( fd_ ).num(), level, optname, optval, optlen ) );
 }
 
 Address Socket::original_dest( void ) const

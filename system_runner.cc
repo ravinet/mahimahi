@@ -38,9 +38,7 @@ void run( const vector< string > & command )
 
     /* run with empty environment */
     ChildProcess command_process( [&] () {
-            if ( execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) < 0 ) {
-                throw Exception( "execve" );
-            }
+            SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
             return EXIT_FAILURE;
         } );
 
@@ -67,9 +65,7 @@ void in_network_namespace( pid_t pid, function<void(void)> && procedure )
                 /* change to desired network namespace */
                 const string filename = "/proc/" + to_string( pid ) + "/ns/net";
                 FileDescriptor namespace_fd( open( filename.c_str(), O_RDONLY ), "open " + filename );
-                if ( setns( namespace_fd.num(), CLONE_NEWNET ) < 0 ) {
-                    throw Exception( "setns " + filename );
-                }
+                SystemCall( "setns", setns( namespace_fd.num(), CLONE_NEWNET ) );
 
                 /* run the caller-supplied procedure */
                 procedure();

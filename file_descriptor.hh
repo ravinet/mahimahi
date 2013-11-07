@@ -28,9 +28,7 @@ public:
 
         /* set close-on-exec flag so our file descriptors
            aren't passed on to unrelated children (like a shell) */
-        if ( fcntl( fd_, F_SETFD, FD_CLOEXEC ) < 0 ) {
-            throw Exception( "fcntl FD_CLOEXEC" );
-        }
+        SystemCall( "fcntl FD_CLOEXEC", fcntl( fd_, F_SETFD, FD_CLOEXEC ) );
     }
 
     ~FileDescriptor()
@@ -39,9 +37,7 @@ public:
             return;
         }
 
-        if ( close( fd_ ) < 0 ) {
-            throw Exception( "close" );
-        }
+        SystemCall( "close", close( fd_ ) );
     }
 
     const int & num( void ) { return fd_; }

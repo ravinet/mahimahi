@@ -29,4 +29,7 @@ public:
     const std::string & attempt( void ) const { return attempt_; }
 };
 
+/* error-checking wrapper for most syscalls */
+int SystemCall( const std::string & s_attempt, const int return_value );
+
 #endif

@@ -13,17 +13,13 @@
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace )
-    : pid_( syscall( SYS_clone,
-                     SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
-                     nullptr, nullptr, nullptr, nullptr ) ),
+    : pid_( SystemCall( "clone", syscall( SYS_clone,
+                                          SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
+                                          nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
       terminated_( false ),
       exit_status_()
 {
-    if ( pid_ < 0 ) {
-        throw Exception( "clone" );
-    }
-
     if ( pid_ == 0 ) { /* child */
         try {
             _exit( child_procedure() );
@@ -40,9 +36,7 @@ void ChildProcess::wait( void )
     assert( !terminated_ );
 
     siginfo_t infop;
-    if ( waitid( P_PID, pid_, &infop, WEXITED | WSTOPPED | WCONTINUED ) < 0 ) {
-        throw Exception( "waitid" );
-    }
+    SystemCall( "waitid", waitid( P_PID, pid_, &infop, WEXITED | WSTOPPED | WCONTINUED ) );
     
     assert( infop.si_pid == pid_ );
     assert( infop.si_signo == SIGCHLD );    
@@ -82,9 +76,7 @@ void ChildProcess::resume( void )
 void ChildProcess::signal( const int sig )
 {
     if ( !terminated_ ) {
-        if ( kill( pid_, sig ) < 0 ) {
-            throw Exception( "kill" );
-        }
+        SystemCall( "kill", kill( pid_, sig ) );
     }
 }
 

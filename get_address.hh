@@ -22,9 +22,7 @@ public:
     Interfaces()
       : interface_addresses()
     {
-        if ( getifaddrs( &interface_addresses ) < 0 ) {
-            throw Exception( "getifaddrs" );
-        }
+        SystemCall( "getifaddrs", getifaddrs( &interface_addresses ) );
     }
 
     ~Interfaces()

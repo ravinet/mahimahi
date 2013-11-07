@@ -10,14 +10,10 @@ using namespace std;
 SignalMask::SignalMask( const initializer_list< int > signals )
     : mask_()
 {
-    if ( sigemptyset( &mask_ ) < 0 ) {
-        throw Exception( "sigemptyset" );
-    }
+    SystemCall( "sigemptyset", sigemptyset( &mask_ ) );
 
     for ( const auto signal : signals ) {
-        if ( sigaddset( &mask_, signal ) < 0 ) {
-            throw Exception( "sigaddset" );
-        }
+        SystemCall( "sigaddset", sigaddset( &mask_, signal ) );
     }
 }
 
@@ -25,9 +21,7 @@ SignalMask::SignalMask( const initializer_list< int > signals )
 /* (because we'll use a signalfd instead to read them */
 void SignalMask::block( void ) const
 {
-    if ( sigprocmask( SIG_BLOCK, &mask(), NULL ) < 0 ) {
-        throw Exception( "sigprocmask" );
-    }
+    SystemCall( "sigprocmask", sigprocmask( SIG_BLOCK, &mask(), NULL ) );
 }
 
 SignalFD::SignalFD( const SignalMask & signals )

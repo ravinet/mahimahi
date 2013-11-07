@@ -54,9 +54,7 @@ void interface_ioctl( FileDescriptor & fd, const int request,
 
     ifr_adjustment( ifr );
 
-    if ( ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) < 0 ) {
-        throw Exception( "ioctl " + name );
-    }
+    SystemCall( "ioctl " + name, ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) );
 }
 
 void assign_address( const string & device_name, const Address & addr )
