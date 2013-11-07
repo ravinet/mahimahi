@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )
         VirtualEthernetPair veth_devices( egress_name, ingress_name );
 
         /* bring up egress */
-        assign_address( egress_name, egress_addr );
+        assign_address( egress_name, egress_addr, ingress_addr );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -103,7 +103,7 @@ int main( int argc, char *argv[] )
                                  [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* bring up veth device */
-                assign_address( ingress_name, ingress_addr );
+                assign_address( ingress_name, ingress_addr, egress_addr );
 
                 /* create default route */
                 struct rtentry route;

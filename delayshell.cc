@@ -46,7 +46,7 @@ int main( int argc, char *argv[] )
 
         Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
-        TunDevice egress_tun( "delayshell" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
+        TunDevice egress_tun( "delayshell" + to_string( getpid() ) , egress_addr, ingress_addr );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -56,7 +56,7 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         ChildProcess container_process( [&]() {
-                TunDevice ingress_tun( "ingress", ingress_addr.ip(), egress_addr.ip() );
+                TunDevice ingress_tun( "ingress", ingress_addr, egress_addr );
 
                 /* bring up localhost */
                 Socket ioctl_socket( UDP );

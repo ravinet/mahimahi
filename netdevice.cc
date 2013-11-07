@@ -20,28 +20,14 @@
 using namespace std;
 
 TunDevice::TunDevice( const string & name,
-                      const string & addr,
-                      const string & dstaddr )
+                      const Address & addr,
+                      const Address & peer )
     : fd_( SystemCall( "open /dev/net/tun", open( "/dev/net/tun", O_RDWR ) ) )
 {
     interface_ioctl( fd_, TUNSETIFF, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
 
-    Socket sock( UDP );
-
-    /* bring interface up */
-    interface_ioctl( sock.fd(), SIOCSIFFLAGS, name,
-                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-
-    /* assign interface address */
-    interface_ioctl( sock.fd(), SIOCSIFADDR, name,
-                     [&] ( ifreq &ifr )
-                     { ifr.ifr_addr = Address( addr, 0 ).raw_sockaddr(); } );
-
-    /* assign destination addresses */
-    interface_ioctl( sock.fd(), SIOCSIFDSTADDR, name,
-                     [&] ( ifreq &ifr )
-                     { ifr.ifr_dstaddr = Address( dstaddr, 0 ).raw_sockaddr(); } );
+    assign_address( name, addr, peer );
 }
 
 void interface_ioctl( FileDescriptor & fd, const int request,
@@ -57,18 +43,28 @@ void interface_ioctl( FileDescriptor & fd, const int request,
     SystemCall( "ioctl " + name, ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) );
 }
 
-void assign_address( const string & device_name, const Address & addr )
+void assign_address( const string & device_name, const Address & addr, const Address & peer )
 {
     Socket ioctl_socket( UDP );
 
-    /* assign addresses */
+    /* assign address */
     interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, device_name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_addr = addr.raw_sockaddr(); } );
 
+    /* destination */
+    interface_ioctl( ioctl_socket.fd(), SIOCSIFDSTADDR, device_name,
+                     [&] ( ifreq &ifr )
+                     { ifr.ifr_addr = peer.raw_sockaddr(); } );
+
+    /* netmask */
+    interface_ioctl( ioctl_socket.fd(), SIOCSIFNETMASK, device_name,
+                     [&] ( ifreq &ifr )
+                     { ifr.ifr_netmask = Address( "255.255.255.255", 0 ).raw_sockaddr(); } );
+
     /* bring interface up */
     interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, device_name,
-                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP | IFF_NOARP; } );
 }
 
 void name_check( const string & str )
@@ -86,10 +82,6 @@ VirtualEthernetPair::VirtualEthernetPair( const string & outside_name, const str
     name_check( inside_name );
 
     run( { IP, "link", "add", outside_name, "type", "veth", "peer", "name", inside_name } );
-
-    /* turn off arp */
-    run( { IP, "link", "set", "dev", outside_name, "arp", "off" } );
-    run( { IP, "link", "set", "dev", inside_name, "arp", "off" } );
 }
 
 VirtualEthernetPair::~VirtualEthernetPair()

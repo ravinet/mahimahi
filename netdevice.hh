@@ -15,14 +15,14 @@ void interface_ioctl( FileDescriptor & fd, const int request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 
-void assign_address( const std::string & device_name, const Address & addr );
+void assign_address( const std::string & device_name, const Address & addr, const Address & peer );
 
 class TunDevice
 {
 private:
     FileDescriptor fd_;
 public:
-    TunDevice( const std::string & name, const std::string & addr, const std::string & dstaddr );
+    TunDevice( const std::string & name, const Address & addr, const Address & peer );
 
     FileDescriptor & fd( void ) { return fd_; }
 };
