@@ -15,6 +15,6 @@ void writeall( const int fd, const std::string & buf );
 std::string::const_iterator write_some( const int fd,
                                         const std::string::const_iterator & begin,
                                         const std::string::const_iterator & end );
-long int myatoi( const std::string & str );
+long int myatoi( const std::string & str, const int base = 10 );
 
 #endif /* EZIO_HH */

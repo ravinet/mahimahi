@@ -54,7 +54,7 @@ std::string readall( const int fd, const size_t limit )
     }
 }
 
-long int myatoi( const string & str )
+long int myatoi( const string & str, const int base )
 {
     if ( str.empty() ) {
         throw Exception( "Invalid integer string", "empty" );
@@ -63,7 +63,7 @@ long int myatoi( const string & str )
     char *end;
 
     errno = 0;
-    long int ret = strtol( str.c_str(), &end, 10 );
+    long int ret = strtol( str.c_str(), &end, base );
 
     if ( errno != 0 ) {
         throw Exception( "strtol" );
