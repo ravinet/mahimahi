@@ -18,7 +18,7 @@ public:
     {
         struct Result
         {
-            enum class Type { Continue, Exit } result;
+            enum class Type { Continue, Exit, Cancel } result;
             unsigned int exit_status;
             Result( const Type & s_result = Type::Continue, const unsigned int & s_status = EXIT_SUCCESS )
                 : result( s_result ), exit_status( s_status ) {}
@@ -30,12 +30,14 @@ public:
         enum PollDirection : short { In = POLLIN, Out = POLLOUT } direction;
         CallbackType callback;
         std::function<bool(void)> when_interested;
+        bool active;
 
         Action( FileDescriptor & s_fd,
                 const PollDirection & s_direction,
                 const CallbackType & s_callback,
                 const std::function<bool(void)> & s_when_interested = [] () { return true; } )
-            : fd( s_fd ), direction( s_direction ), callback( s_callback ), when_interested( s_when_interested ) {}
+            : fd( s_fd ), direction( s_direction ), callback( s_callback ),
+              when_interested( s_when_interested ), active( true ) {}
     };
 
 private:

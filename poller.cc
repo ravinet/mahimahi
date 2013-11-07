@@ -5,6 +5,7 @@
 #include "util.hh"
 
 using namespace std;
+using namespace PollerShortNames;
 
 void Poller::add_action( Poller::Action action )
 {
@@ -19,12 +20,15 @@ Poller::Result Poller::poll( const int & timeout_ms )
     /* tell poll whether we care about each fd */
     for ( unsigned int i = 0; i < actions_.size(); i++ ) {
         assert( pollfds_.at( i ).fd == actions_.at( i ).fd.num() );
-        pollfds_.at( i ).events = actions_.at( i ).when_interested() ? actions_.at( i ).direction : 0;
+        pollfds_.at( i ).events = (actions_.at( i ).active and actions_.at( i ).when_interested())
+            ? actions_.at( i ).direction : 0;
     }
 
-    /* Check that at least one member in pollfds_ has a non-zero direction */
-    assert( std::accumulate( pollfds_.begin(), pollfds_.end(), false,
-                             [] (bool acc, pollfd x) { return acc or (x.events != 0); }) );
+    /* Quit if no member in pollfds_ has a non-zero direction */
+    if ( not std::accumulate( pollfds_.begin(), pollfds_.end(), false,
+                              [] ( bool acc, pollfd x ) { return acc or x.events; } ) ) {
+        return Result::Type::Exit;
+    }
 
     const int poll_return = ::poll( &pollfds_[ 0 ], pollfds_.size(), timeout_ms );
 
@@ -44,8 +48,14 @@ Poller::Result Poller::poll( const int & timeout_ms )
             /* we only want to call callback if revents includes
                the event we asked for */
             auto result = actions_.at( i ).callback();
-            if ( result.result == Action::Result::Type::Exit ) {
+
+            switch ( result.result ) {
+            case ResultType::Exit:
                 return Result( Result::Type::Exit, result.exit_status );
+            case ResultType::Cancel:
+                actions_.at( i ).active = false;
+            case ResultType::Continue:
+                break;
             }
         }
     }

@@ -39,6 +39,8 @@ std::string readall( const int fd, const size_t limit )
 {
     char buffer[ ezio::read_chunk_size ];
 
+    assert( limit > 0 );
+
     ssize_t bytes_read = read( fd, &buffer, min( ezio::read_chunk_size, limit ) );
 
     if ( bytes_read == 0 ) {

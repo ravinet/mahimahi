@@ -50,11 +50,11 @@ void HTTPProxy::handle_tcp( void )
                 /* poll on original connect socket and new connection socket to ferry packets */
 
                 poller.add_action( Poller::Action( destination.fd(), Direction::In,
-                                                   [&] () { return eof( from_destination.push( destination.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   [&] () { return eof( from_destination.push( destination.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_destination.space_available ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
-                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_client.space_available ) );
 
                 poller.add_action( Poller::Action( destination.fd(), Direction::Out,

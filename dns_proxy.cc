@@ -68,11 +68,11 @@ void DNSProxy::handle_tcp( void )
                 ByteStreamQueue from_client( ezio::read_chunk_size ), from_server( ezio::read_chunk_size );
 
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
-                                                   [&] () { return eof( from_server.push( dns_server.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   [&] () { return eof( from_server.push( dns_server.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_server.space_available ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
-                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Exit : ResultType::Continue; },
+                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_client.space_available ) );
 
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::Out,
