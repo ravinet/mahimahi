@@ -17,6 +17,13 @@ if test "$IPTABLES" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([IPTABLES], ["$IPTABLES"], [path to iptables])
 
+AC_ARG_VAR([IP], [path to ip])
+AC_PATH_PROG([IP], [ip], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$IP" = "no"; then
+  AC_MSG_ERROR([ip is required])
+fi
+AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
+
 # Checks for libraries.
 
 # Checks for header files.
