@@ -5,6 +5,9 @@
 
 /* Network Address Translator */
 
+#include <string>
+#include <unistd.h>
+
 #include "config.h"
 #include "system_runner.hh"
 #include "address.hh"
@@ -40,8 +43,8 @@ private:
 
 public:
     NAT( const Address & ingress_addr )
-    : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK", "--set-mark", "1" } ),
-      post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark", "--mark", "1" } )
+    : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK", "--set-mark", std::to_string( getpid() ) } ),
+      post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark", "--mark", std::to_string( getpid() ) } )
     {}
 };
 
