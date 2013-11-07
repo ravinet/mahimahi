@@ -80,7 +80,7 @@ bool HTTPParser::parse( const string & buf )
         } else if ( first_line_ending == 0 ) { /* end of headers */
             headers_finished_ = true;
             body_left_ = body_len();
-            current_request_.append( internal_buffer_.substr( 0, first_line_ending + crlf.size() ) );
+            //current_request_.append( internal_buffer_.substr( 0, first_line_ending + crlf.size() ) );
             //internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
 
             //return true;
