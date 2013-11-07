@@ -11,7 +11,6 @@
 #include "nat.hh"
 #include "util.hh"
 #include "get_address.hh"
-#include "dnat.hh"
 #include "address.hh"
 #include "signalfd.hh"
 #include "dns_proxy.hh"

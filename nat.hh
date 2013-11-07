@@ -6,7 +6,6 @@
 /* Network Address Translator */
 
 #include <string>
-#include <unistd.h>
 
 #include "config.h"
 #include "system_runner.hh"
@@ -18,40 +17,34 @@
    We mark the connections on entry from the ingress address (with our PID),
    and then look for the mark on output. */
 
+class NATRule {
+private:
+    std::vector< std::string > arguments;
+
+public:
+    NATRule( const std::vector< std::string > & s_args );
+    ~NATRule();
+
+    NATRule( const NATRule & other ) = delete;
+    const NATRule & operator=( const NATRule & other ) = delete;
+};
+
 class NAT
 {
 private:
-    class Rule {
-    private:
-        std::vector< std::string > arguments;
-
-    public:
-        Rule( const std::vector< std::string > & s_args )
-            : arguments( s_args )
-        {
-            std::vector< std::string > command = { IPTABLES, "-t", "nat", "-A" };
-            command.insert( command.end(), arguments.begin(), arguments.end() );
-            run( command );
-        }
-
-        ~Rule()
-        {
-            std::vector< std::string > command = { IPTABLES, "-t", "nat", "-D" };
-            command.insert( command.end(), arguments.begin(), arguments.end() );
-            run( command );
-        }
-
-        Rule( const Rule & other ) = delete;
-        const Rule & operator=( const Rule & other ) = delete;
-    };
-
-    Rule pre_, post_;
+    NATRule pre_, post_;
 
 public:
-    NAT( const Address & ingress_addr )
-    : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK", "--set-mark", std::to_string( getpid() ) } ),
-      post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark", "--mark", std::to_string( getpid() ) } )
-    {}
+    NAT( const Address & ingress_addr );
+};
+
+class DNAT
+{
+private:
+    NATRule rule_;
+
+public:
+    DNAT( const Address & listener, const std::string & interface );
 };
 
 #endif /* NAT_HH */

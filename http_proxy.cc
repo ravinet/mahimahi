@@ -14,7 +14,6 @@
 #include "timestamp.hh"
 #include "system_runner.hh"
 #include "config.h"
-#include "dnat.hh"
 #include "signalfd.hh"
 #include "http_proxy.hh"
 #include "poller.hh"
