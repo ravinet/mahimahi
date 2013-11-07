@@ -23,4 +23,14 @@ public:
     FileDescriptor & fd( void ) { return fd_; }
 };
 
+class VirtualEthernetPair
+{
+private:
+    std::string name;
+
+public:
+    VirtualEthernetPair( const std::string & s_outside_name, const std::string & s_inside_name );
+    ~VirtualEthernetPair();
+};
+
 #endif /* NETDEVICE_HH */

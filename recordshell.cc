@@ -52,11 +52,7 @@ int main( int argc, char *argv[] )
 
         /* make pair of devices */
         string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
-        run( { IP, "link", "add", egress_name, "type", "veth", "peer", "name", ingress_name } );
-
-        /* turn arp off for v0 */
-        run( { IP, "link", "set", "dev", egress_name, "arp", "off" } );
-        run( { IP, "link", "set", "dev", ingress_name, "arp", "off" } );
+        VirtualEthernetPair veth_devices( egress_name, ingress_name );
 
         /* bring up egress */
         Socket ioctl_socket( SocketType::UDP );

@@ -13,6 +13,9 @@
 #include "ezio.hh"
 #include "socket.hh"
 #include "util.hh"
+#include "system_runner.hh"
+
+#include "config.h"
 
 using namespace std;
 
@@ -54,4 +57,31 @@ void interface_ioctl( FileDescriptor & fd, const int request,
     if ( ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) < 0 ) {
         throw Exception( "ioctl " + name );
     }
+}
+
+void name_check( const string & str )
+{
+    if ( str.find( "veth-" ) != 0 ) {
+        throw Exception( str, "name of veth device must start with \"veth-\"" );
+    }
+}
+
+VirtualEthernetPair::VirtualEthernetPair( const string & outside_name, const string & inside_name )
+    : name( outside_name )
+{
+    /* make pair of veth devices */
+    name_check( outside_name );
+    name_check( inside_name );
+
+    run( { IP, "link", "add", outside_name, "type", "veth", "peer", "name", inside_name } );
+
+    /* turn off arp */
+    run( { IP, "link", "set", "dev", outside_name, "arp", "off" } );
+    run( { IP, "link", "set", "dev", inside_name, "arp", "off" } );
+}
+
+VirtualEthernetPair::~VirtualEthernetPair()
+{
+    run( { IP, "link", "del", name } );
+    /* deleting one is sufficient to delete both */
 }
