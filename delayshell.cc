@@ -5,7 +5,7 @@
 #include <linux/if.h>
 #include <net/route.h>
 
-#include "tundevice.hh"
+#include "netdevice.hh"
 #include "ferry.hh"
 #include "nat.hh"
 #include "util.hh"
@@ -68,8 +68,8 @@ int main( int argc, char *argv[] )
 
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );
-                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, "lo",
-                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
                 struct rtentry route;

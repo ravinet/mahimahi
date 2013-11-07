@@ -16,7 +16,7 @@
 #include "signalfd.hh"
 #include "dns_proxy.hh"
 #include "http_proxy.hh"
-#include "tundevice.hh"
+#include "netdevice.hh"
 
 #include "config.h"
 
@@ -60,13 +60,13 @@ int main( int argc, char *argv[] )
 
         /* bring up egress */
         Socket ioctl_socket( SocketType::UDP );
-        TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, egress_name,
-                                    [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+        interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, egress_name,
+                         [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
         /* assign addresses */
-        TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFADDR, egress_name,
-                                    [&] ( ifreq &ifr )
-                                    { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
+        interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, egress_name,
+                         [&] ( ifreq &ifr )
+                         { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -118,16 +118,16 @@ int main( int argc, char *argv[] )
         in_network_namespace( container_process.pid(), [&] () {
                 /* bring up localhost */
                 Socket ioctl_socket( SocketType::UDP );
-                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, "lo",
-                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* bring up veth device */
-                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFADDR, ingress_name,
-                                            [&] ( ifreq &ifr )
-                                            { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, ingress_name,
+                                 [&] ( ifreq &ifr )
+                                 { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
 
-                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, ingress_name,
-                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, ingress_name,
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
                 struct rtentry route;

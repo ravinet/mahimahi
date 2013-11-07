@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <functional>
 
-#include "tundevice.hh"
+#include "netdevice.hh"
 #include "exception.hh"
 #include "ezio.hh"
 #include "socket.hh"
@@ -21,29 +21,29 @@ TunDevice::TunDevice( const string & name,
                       const string & dstaddr )
     : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )
 {
-    interface_ioctl( fd_.num(), TUNSETIFF, name,
+    interface_ioctl( fd_, TUNSETIFF, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
 
-    Socket sockfd( SocketType::UDP );
+    Socket sock( SocketType::UDP );
 
     /* bring interface up */
-    interface_ioctl( sockfd.fd().num(), SIOCSIFFLAGS, name,
+    interface_ioctl( sock.fd(), SIOCSIFFLAGS, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
     /* assign interface address */
-    interface_ioctl( sockfd.fd().num(), SIOCSIFADDR, name,
+    interface_ioctl( sock.fd(), SIOCSIFADDR, name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_addr = Address( addr, 0 ).raw_sockaddr(); } );
 
     /* assign destination addresses */
-    interface_ioctl( sockfd.fd().num(), SIOCSIFDSTADDR, name,
+    interface_ioctl( sock.fd(), SIOCSIFDSTADDR, name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_dstaddr = Address( dstaddr, 0 ).raw_sockaddr(); } );
 }
 
-void TunDevice::interface_ioctl( const int fd, const int request,
-                                 const std::string & name,
-                                 std::function<void( ifreq &ifr )> ifr_adjustment)
+void interface_ioctl( FileDescriptor & fd, const int request,
+                      const std::string & name,
+                      std::function<void( ifreq &ifr )> ifr_adjustment)
 {
     ifreq ifr;
     zero( ifr );
@@ -51,8 +51,7 @@ void TunDevice::interface_ioctl( const int fd, const int request,
 
     ifr_adjustment( ifr );
 
-    if ( ioctl( fd, request, static_cast<void *>( &ifr ) ) < 0 ) {
+    if ( ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) < 0 ) {
         throw Exception( "ioctl " + name );
     }
 }
-    
