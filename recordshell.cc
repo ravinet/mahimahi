@@ -55,14 +55,7 @@ int main( int argc, char *argv[] )
         VirtualEthernetPair veth_devices( egress_name, ingress_name );
 
         /* bring up egress */
-        Socket ioctl_socket( SocketType::UDP );
-        interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, egress_name,
-                         [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-
-        /* assign addresses */
-        interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, egress_name,
-                         [&] ( ifreq &ifr )
-                         { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
+        assign_address( egress_name, egress_addr );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -113,17 +106,10 @@ int main( int argc, char *argv[] )
         /* bring up ingress */
         in_network_namespace( container_process.pid(), [&] () {
                 /* bring up localhost */
-                Socket ioctl_socket( SocketType::UDP );
-                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                assign_address( "lo", Address() );
 
                 /* bring up veth device */
-                interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, ingress_name,
-                                 [&] ( ifreq &ifr )
-                                 { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
-
-                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, ingress_name,
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                assign_address( ingress_name, ingress_addr );
 
                 /* create default route */
                 struct rtentry route;
@@ -133,7 +119,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                if ( ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) < 0 ) {
+                if ( ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) < 0 ) {
                     throw Exception( "ioctl SIOCADDRT" );
                 }
             } );

@@ -8,10 +8,14 @@
 #include <netinet/in.h>
 
 #include "file_descriptor.hh"
+#include "address.hh"
 
+/* general helpers */
 void interface_ioctl( FileDescriptor & fd, const int request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
+
+void assign_address( const std::string & device_name, const Address & addr );
 
 class TunDevice
 {

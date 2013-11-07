@@ -59,6 +59,20 @@ void interface_ioctl( FileDescriptor & fd, const int request,
     }
 }
 
+void assign_address( const string & device_name, const Address & addr )
+{
+    Socket ioctl_socket( UDP );
+
+    /* assign addresses */
+    interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, device_name,
+                     [&] ( ifreq &ifr )
+                     { ifr.ifr_addr = addr.raw_sockaddr(); } );
+
+    /* bring interface up */
+    interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, device_name,
+                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+}
+
 void name_check( const string & str )
 {
     if ( str.find( "veth-" ) != 0 ) {
