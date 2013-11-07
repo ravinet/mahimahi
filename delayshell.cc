@@ -52,7 +52,7 @@ int main( int argc, char *argv[] )
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
 
         /* set up NAT between egress and eth0 */
-        NAT nat_rule;
+        NAT nat_rule( ingress_addr );
 
         /* Fork */
         ChildProcess container_process( [&]() {

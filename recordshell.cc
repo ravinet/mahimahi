@@ -61,7 +61,7 @@ int main( int argc, char *argv[] )
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
 
         /* set up NAT between egress and eth0 */
-        NAT nat_rule;
+        NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
         unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
