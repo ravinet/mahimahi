@@ -35,7 +35,7 @@ string::const_iterator write_some( const int fd,
     return begin + bytes_written;
 }
 
-std::string readall( const int fd, const size_t limit )
+string readall( const int fd, const size_t limit )
 {
     char buffer[ ezio::read_chunk_size ];
 

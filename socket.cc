@@ -95,13 +95,13 @@ void Socket::connect( const Address & addr )
                                       sizeof( peer_addr_.raw_sockaddr() ) ) );
 }
 
-void Socket::write( const std::string & str )
+void Socket::write( const string & str )
 {
     fd_.write( str );
 }
 
-std::string::const_iterator Socket::write_some( const std::string::const_iterator & begin,
-                                                const std::string::const_iterator & end )
+string::const_iterator Socket::write_some( const string::const_iterator & begin,
+                                           const string::const_iterator & end )
 {
     return fd_.write_some( begin, end );
 }
@@ -133,7 +133,7 @@ pair< Address, string > Socket::recvfrom( void )
                       string( buf, recv_len ) );
 }
 
-void Socket::sendto( const Address & destination, const std::string & payload )
+void Socket::sendto( const Address & destination, const string & payload )
 {
     SystemCall( "sendto", ::sendto( fd_.num(),
                                     payload.data(),
@@ -151,7 +151,7 @@ void Socket::getsockopt( const int level, const int optname,
 
 Address Socket::original_dest( void ) const
 {
-    struct sockaddr_in dstaddr;
+    sockaddr_in dstaddr;
     socklen_t destlen = sizeof( dstaddr );
     getsockopt( SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen );
     assert( destlen == sizeof( dstaddr ) );

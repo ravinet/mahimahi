@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
                                  [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
-                struct rtentry route;
+                rtentry route;
                 zero( route );
 
                 route.rt_gateway = egress_addr.raw_sockaddr();

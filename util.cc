@@ -152,7 +152,7 @@ Result handle_signal( const signalfd_siginfo & sig,
 }
 
 /* error-checking wrapper for most syscalls */
-int SystemCall( const std::string & s_attempt, const int return_value )
+int SystemCall( const string & s_attempt, const int return_value )
 {
   if ( return_value >= 0 ) {
     return return_value;

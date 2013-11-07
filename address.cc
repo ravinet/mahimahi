@@ -40,7 +40,7 @@ bool Address::operator==( const Address & other ) const
     return 0 == memcmp( &addr_, &other.addr_, sizeof( addr_ ) );
 }
 
-Address::Address( const std::string & ip, const uint16_t port )
+Address::Address( const string & ip, const uint16_t port )
     : addr_()
 {
     addr_.sin_family = AF_INET;
@@ -57,7 +57,7 @@ Address Address::cgnat( const uint8_t last_octet )
     return Address( "100.64.0." + to_string( last_octet ), 0 );
 }
 
-Address::Address( const std::string & hostname, const std::string & service, const SocketType & socket_type )
+Address::Address( const string & hostname, const string & service, const SocketType & socket_type )
   : addr_()
 {
   /* give hints to resolver */

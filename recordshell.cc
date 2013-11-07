@@ -22,9 +22,9 @@
 using namespace std;
 using namespace PollerShortNames;
 
-int eventloop( std::unique_ptr<DNSProxy> && dns_proxy,
+int eventloop( unique_ptr<DNSProxy> && dns_proxy,
                ChildProcess & child_process,
-               std::unique_ptr<HTTPProxy> && http_proxy );
+               unique_ptr<HTTPProxy> && http_proxy );
 
 int main( int argc, char *argv[] )
 {
@@ -105,7 +105,7 @@ int main( int argc, char *argv[] )
                 assign_address( ingress_name, ingress_addr, egress_addr );
 
                 /* create default route */
-                struct rtentry route;
+                rtentry route;
                 zero( route );
 
                 route.rt_gateway = egress_addr.raw_sockaddr();
@@ -124,9 +124,9 @@ int main( int argc, char *argv[] )
     return EXIT_SUCCESS;
 }
 
-int eventloop( std::unique_ptr<DNSProxy> && dns_proxy,
+int eventloop( unique_ptr<DNSProxy> && dns_proxy,
                ChildProcess & child_process,
-               std::unique_ptr<HTTPProxy> && http_proxy )
+               unique_ptr<HTTPProxy> && http_proxy )
 {
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };

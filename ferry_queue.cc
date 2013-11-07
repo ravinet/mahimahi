@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void FerryQueue::read_packet( const std::string & contents )
+void FerryQueue::read_packet( const string & contents )
 {
     packet_queue_.emplace( timestamp() + delay_ms_, contents );
 }

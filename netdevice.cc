@@ -31,8 +31,8 @@ TunDevice::TunDevice( const string & name,
 }
 
 void interface_ioctl( FileDescriptor & fd, const int request,
-                      const std::string & name,
-                      std::function<void( ifreq &ifr )> ifr_adjustment)
+                      const string & name,
+                      function<void( ifreq &ifr )> ifr_adjustment)
 {
     ifreq ifr;
     zero( ifr );

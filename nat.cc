@@ -11,10 +11,12 @@
 #include "nat.hh"
 #include "exception.hh"
 
-NATRule::NATRule( const std::vector< std::string > & s_args )
+using namespace std;
+
+NATRule::NATRule( const vector< string > & s_args )
     : arguments( s_args )
 {
-    std::vector< std::string > command = { IPTABLES, "-t", "nat", "-A" };
+    vector< string > command = { IPTABLES, "-t", "nat", "-A" };
     command.insert( command.end(), arguments.begin(), arguments.end() );
     run( command );
 }
@@ -22,7 +24,7 @@ NATRule::NATRule( const std::vector< std::string > & s_args )
 NATRule::~NATRule()
 {
     try {
-        std::vector< std::string > command = { IPTABLES, "-t", "nat", "-D" };
+        vector< string > command = { IPTABLES, "-t", "nat", "-D" };
         command.insert( command.end(), arguments.begin(), arguments.end() );
         run( command );
     } catch ( const Exception & e ) { /* don't throw from destructor */
@@ -32,12 +34,12 @@ NATRule::~NATRule()
 
 NAT::NAT( const Address & ingress_addr )
 : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK",
-            "--set-mark", std::to_string( getpid() ) } ),
+            "--set-mark", to_string( getpid() ) } ),
   post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark",
-              "--mark", std::to_string( getpid() ) } )
+              "--mark", to_string( getpid() ) } )
 {}
 
-DNAT::DNAT( const Address & listener, const std::string & interface )
+DNAT::DNAT( const Address & listener, const string & interface )
     : rule_( { "PREROUTING", "-p", "TCP", "-i", interface, "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
