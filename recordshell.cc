@@ -98,7 +98,9 @@ int main( int argc, char *argv[] )
         /* bring up ingress */
         in_network_namespace( container_process.pid(), [&] () {
                 /* bring up localhost */
-                assign_address( "lo", Address() );
+                Socket ioctl_socket( UDP );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* bring up veth device */
                 assign_address( ingress_name, ingress_addr );
@@ -111,7 +113,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
+                SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
             } );
 
         return eventloop( move( dns_outside ), container_process, move( http_proxy ) );

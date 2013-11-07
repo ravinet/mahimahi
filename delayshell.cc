@@ -59,7 +59,9 @@ int main( int argc, char *argv[] )
                 TunDevice ingress_tun( "ingress", ingress_addr.ip(), egress_addr.ip() );
 
                 /* bring up localhost */
-                assign_address( "lo", Address() );
+                Socket ioctl_socket( UDP );
+                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                 /* create default route */
                 struct rtentry route;
@@ -69,7 +71,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
+                SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
 
                 /* create DNS proxy if nameserver address is local */
                 auto dns_inside = DNSProxy::maybe_proxy( nameserver,
