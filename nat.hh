@@ -12,6 +12,12 @@
 #include "system_runner.hh"
 #include "address.hh"
 
+/* RAII class to make connections coming from the ingress address
+   look like they're coming from the output device's address.
+
+   We mark the connections on entry from the ingress address (with our PID),
+   and then look for the mark on output. */
+
 class NAT
 {
 private:
