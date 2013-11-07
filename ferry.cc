@@ -64,8 +64,7 @@ int ferry_with_delay( FileDescriptor & tun,
     }
 
     while ( true ) {
-        int wait_time = delay_queue.wait_time();
-        auto poll_result = poller.poll( wait_time );
+        auto poll_result = poller.poll( delay_queue.wait_time() );
 
         if ( poll_result.result == Poller::Result::Type::Exit ) {
             return poll_result.exit_status;
