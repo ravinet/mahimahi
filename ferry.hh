@@ -17,11 +17,10 @@
 #include "dns_proxy.hh"
 #include "http_proxy.hh"
 
-int ferry( FileDescriptor & tun,
-           FileDescriptor & sibling_fd,
-           std::unique_ptr<DNSProxy> && dns_proxy,
-           ChildProcess & child_process,
-           const uint64_t delay_ms,
-           std::unique_ptr<HTTPProxy> && http_proxy );
+int ferry_with_delay( FileDescriptor & tun,
+                      FileDescriptor & sibling_fd,
+                      std::unique_ptr<DNSProxy> && dns_proxy,
+                      ChildProcess & child_process,
+                      const uint64_t delay_ms );
 
 #endif /* FERRY_HH */

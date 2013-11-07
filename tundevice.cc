@@ -52,7 +52,7 @@ void TunDevice::interface_ioctl( const int fd, const int request,
     ifr_adjustment( ifr );
 
     if ( ioctl( fd, request, static_cast<void *>( &ifr ) ) < 0 ) {
-        throw Exception( "ioctl" );
+        throw Exception( "ioctl " + name );
     }
 }
     

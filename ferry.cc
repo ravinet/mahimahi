@@ -4,57 +4,17 @@
 
 #include "ferry.hh"
 #include "ferry_queue.hh"
-#include "signalfd.hh"
+#include "util.hh"
 #include "poller.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-Result handle_signal( const signalfd_siginfo & sig,
-                      ChildProcess & child_process )
-{
-    switch ( sig.ssi_signo ) {
-    case SIGCONT:
-        /* resume child process too */
-        child_process.resume();
-        break;
-
-    case SIGCHLD:
-        /* make sure it's from the child process */
-        /* unfortunately sig.ssi_pid is a uint32_t instead of pid_t, so need to cast */
-        assert( sig.ssi_pid == static_cast<decltype(sig.ssi_pid)>( child_process.pid() ) );
-
-        /* figure out what happened to it */
-        child_process.wait();
-
-        if ( child_process.terminated() ) {
-            return Result( ResultType::Exit, child_process.exit_status() );
-        } else if ( !child_process.running() ) {
-            /* suspend parent too */
-            if ( raise( SIGSTOP ) < 0 ) {
-                throw Exception( "raise" );
-            }
-        }
-        break;
-
-    case SIGHUP:
-    case SIGTERM:
-        child_process.signal( SIGHUP );
-
-        return ResultType::Exit;
-    default:
-        throw Exception( "unknown signal" );
-    }
-
-    return ResultType::Continue;
-}
-
-int ferry( FileDescriptor & tun,
-           FileDescriptor & sibling_fd,
-           unique_ptr<DNSProxy> && dns_proxy,
-           ChildProcess & child_process,
-           const uint64_t delay_ms,
-           unique_ptr<HTTPProxy> && http_proxy )
+int ferry_with_delay( FileDescriptor & tun,
+                      FileDescriptor & sibling_fd,
+                      unique_ptr<DNSProxy> && dns_proxy,
+                      ChildProcess & child_process,
+                      const uint64_t delay_ms )
 {
     /* Make the queue of datagrams */
     FerryQueue delay_queue( delay_ms );
@@ -99,14 +59,6 @@ int ferry( FileDescriptor & tun,
         poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
                                            [&] () {
                                                dns_proxy->handle_tcp();
-                                               return ResultType::Continue;
-                                           } ) );
-    }
-
-    if ( http_proxy ) {
-        poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
-                                               http_proxy->handle_tcp_get();
                                                return ResultType::Continue;
                                            } ) );
     }

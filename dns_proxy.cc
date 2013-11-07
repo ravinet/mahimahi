@@ -84,8 +84,7 @@ void DNSProxy::handle_tcp( void )
                                                    from_server.non_empty ) );
 
                 while( true ) {
-                    auto poll_result = poller.poll( 60000 );
-                    if ( poll_result.result == Poller::Result::Type::Exit ) {
+                    if ( poller.poll( 60000 ).result == Poller::Result::Type::Exit ) {
                         return;
                     }
                 }

@@ -3,10 +3,13 @@
 #include <cassert>
 #include <unistd.h>
 #include <numeric>
+#include <thread>
+#include <exception>
 
 #include "system_runner.hh"
 #include "child_process.hh"
 #include "exception.hh"
+#include "file_descriptor.hh"
 
 using namespace std;
 
@@ -52,5 +55,33 @@ void run( const vector< string > & command )
                                          { return a + " " + b; } );
         throw Exception( "`" + command_str + "'", "command returned "
                          + to_string( command_process.exit_status() ) );
+    }
+}
+
+void in_network_namespace( pid_t pid, function<void(void)> && procedure )
+{
+    exception_ptr inner_exception;
+
+    thread newthread( [&] () {
+            try {
+                /* change to desired network namespace */
+                const string filename = "/proc/" + to_string( pid ) + "/ns/net";
+                FileDescriptor namespace_fd( open( filename.c_str(), O_RDONLY ), "open " + filename );
+                if ( setns( namespace_fd.num(), CLONE_NEWNET ) < 0 ) {
+                    throw Exception( "setns " + filename );
+                }
+
+                /* run the caller-supplied procedure */
+                procedure();
+            } catch ( ... )  {
+                inner_exception = current_exception();
+            }
+        } );
+
+    /* wait for completion */
+    newthread.join();
+
+    if ( inner_exception != exception_ptr() ) {
+        rethrow_exception( inner_exception );
     }
 }

@@ -1,21 +1,31 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <memory>
+#include <csignal>
+
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <net/route.h>
 
-#include "tundevice.hh"
-#include "ferry.hh"
 #include "nat.hh"
 #include "util.hh"
 #include "get_address.hh"
 #include "dnat.hh"
 #include "address.hh"
+#include "signalfd.hh"
+#include "dns_proxy.hh"
+#include "http_proxy.hh"
+#include "tundevice.hh"
 
 #include "config.h"
 
 using namespace std;
+using namespace PollerShortNames;
+
+int eventloop( std::unique_ptr<DNSProxy> && dns_proxy,
+               ChildProcess & child_process,
+               std::unique_ptr<HTTPProxy> && http_proxy );
 
 int main( int argc, char *argv[] )
 {
@@ -32,14 +42,6 @@ int main( int argc, char *argv[] )
 
         const Address nameserver = first_nameserver();
 
-        /* make pair of connected sockets */
-        int pipes[ 2 ];
-        if ( socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) < 0 ) {
-            throw Exception( "socketpair" );
-        }
-        FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
-            ingress_socket( pipes[ 1 ], "socketpair" );
-
         /* set egress and ingress ip addresses */
         Interfaces interfaces;
 
@@ -48,7 +50,23 @@ int main( int argc, char *argv[] )
 
         Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
-        TunDevice egress_tun( "recordshell" + to_string( getpid() ) , egress_addr.ip(), ingress_addr.ip() );
+        /* make pair of devices */
+        string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
+        run( { IP, "link", "add", egress_name, "type", "veth", "peer", "name", ingress_name } );
+
+        /* turn arp off for v0 */
+        run( { IP, "link", "set", "dev", egress_name, "arp", "off" } );
+        run( { IP, "link", "set", "dev", ingress_name, "arp", "off" } );
+
+        /* bring up egress */
+        Socket ioctl_socket( SocketType::UDP );
+        TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, egress_name,
+                                    [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+        /* assign addresses */
+        TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFADDR, egress_name,
+                                    [&] ( ifreq &ifr )
+                                    { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
 
         /* create DNS proxy */
         unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
@@ -60,32 +78,13 @@ int main( int argc, char *argv[] )
         unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
 
         /* set up dnat */
-        DNAT dnat( http_proxy->tcp_listener().local_addr(), "recordshell" + to_string( getpid() ) );  
+        DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );
 
         /* Fork */
         ChildProcess container_process( [&]() {
                 /* Unshare network namespace */
                 if ( unshare( CLONE_NEWNET ) == -1 ) {
                     throw Exception( "unshare" );
-                }
-
-                TunDevice ingress_tun( "ingress", ingress_addr.ip(), egress_addr.ip() );
-
-                /* bring up localhost */
-                Socket ioctl_socket( SocketType::UDP );
-                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, "lo",
-                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-
-                /* create default route */
-                struct rtentry route;
-                zero( route );
-
-                route.rt_gateway = egress_addr.raw_sockaddr();
-                route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
-                route.rt_flags = RTF_UP | RTF_GATEWAY;
-
-                if ( ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) < 0 ) {
-                    throw Exception( "ioctl SIOCADDRT" );
                 }
 
                 /* create DNS proxy if nameserver address is local */
@@ -108,10 +107,42 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, 0, nullptr );
+                return eventloop( move( dns_inside ), bash_process, nullptr );
             } );
 
-        return ferry( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, 0, move( http_proxy ) );
+
+        /* give ingress to container */
+        run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
+
+        /* bring up ingress */
+        in_network_namespace( container_process.pid(), [&] () {
+                /* bring up localhost */
+                Socket ioctl_socket( SocketType::UDP );
+                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, "lo",
+                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+                /* bring up veth device */
+                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFADDR, ingress_name,
+                                            [&] ( ifreq &ifr )
+                                            { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
+
+                TunDevice::interface_ioctl( ioctl_socket.fd().num(), SIOCSIFFLAGS, ingress_name,
+                                            [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+                /* create default route */
+                struct rtentry route;
+                zero( route );
+
+                route.rt_gateway = egress_addr.raw_sockaddr();
+                route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+                if ( ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) < 0 ) {
+                    throw Exception( "ioctl SIOCADDRT" );
+                }
+            } );
+
+        return eventloop( move( dns_outside ), container_process, move( http_proxy ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
@@ -119,3 +150,53 @@ int main( int argc, char *argv[] )
 
     return EXIT_SUCCESS;
 }
+
+int eventloop( std::unique_ptr<DNSProxy> && dns_proxy,
+               ChildProcess & child_process,
+               std::unique_ptr<HTTPProxy> && http_proxy )
+{
+    /* set up signal file descriptor */
+    SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
+    signals_to_listen_for.block(); /* don't let them interrupt us */
+
+    SignalFD signal_fd( signals_to_listen_for );
+
+    Poller poller;
+
+    if ( dns_proxy ) {
+        poller.add_action( Poller::Action( dns_proxy->udp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               dns_proxy->handle_udp();
+                                               return ResultType::Continue;
+                                           } ) );
+
+        poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               dns_proxy->handle_tcp();
+                                               return ResultType::Continue;
+                                           } ) );
+    }
+
+    if ( http_proxy ) {
+        poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
+                                           [&] () {
+                                               http_proxy->handle_tcp_get();
+                                               return ResultType::Continue;
+                                           } ) );
+    }
+
+    /* we get signal -> main screen turn on -> handle signal */
+    poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
+                                       [&] () {
+                                           return handle_signal( signal_fd.read_signal(),
+                                                                 child_process );
+                                       } ) );
+
+    while ( true ) {
+        auto poll_result = poller.poll( 60000 );
+        if ( poll_result.result == Poller::Result::Type::Exit ) {
+            return poll_result.exit_status;
+        }
+    }
+}
+
