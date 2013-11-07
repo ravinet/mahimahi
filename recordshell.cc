@@ -71,11 +71,6 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         ChildProcess container_process( [&]() {
-                /* Unshare network namespace */
-                if ( unshare( CLONE_NEWNET ) == -1 ) {
-                    throw Exception( "unshare" );
-                }
-
                 /* create DNS proxy if nameserver address is local */
                 auto dns_inside = DNSProxy::maybe_proxy( nameserver,
                                                          dns_outside->udp_listener().local_addr(),
@@ -97,8 +92,7 @@ int main( int argc, char *argv[] )
                     } );
 
                 return eventloop( move( dns_inside ), bash_process, nullptr );
-            } );
-
+            }, true ); /* new network namespace */
 
         /* give ingress to container */
         run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );

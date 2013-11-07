@@ -59,11 +59,6 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         ChildProcess container_process( [&]() {
-                /* Unshare network namespace */
-                if ( unshare( CLONE_NEWNET ) == -1 ) {
-                    throw Exception( "unshare" );
-                }
-
                 TunDevice ingress_tun( "ingress", ingress_addr.ip(), egress_addr.ip() );
 
                 /* bring up localhost */
@@ -102,7 +97,7 @@ int main( int argc, char *argv[] )
                     } );
 
                 return ferry_with_delay( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms );
-            } );
+            }, true );  /* new network namespace */
 
         return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms );
     } catch ( const Exception & e ) {

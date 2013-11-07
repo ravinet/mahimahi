@@ -17,7 +17,7 @@ private:
     int exit_status_;
 
 public:
-    ChildProcess( std::function<int()> && child_procedure );
+    ChildProcess( std::function<int()> && child_procedure, const bool new_namespace = false );
 
     void wait( void ); /* wait for process to change state */
     void signal( const int sig ); /* send signal */

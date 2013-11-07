@@ -5,20 +5,23 @@
 #include <cassert>
 #include <csignal>
 #include <cstdlib>
+#include <sys/syscall.h>
 
 #include "child_process.hh"
 #include "exception.hh"
 
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
-ChildProcess::ChildProcess( std::function<int()> && child_procedure )
-    : pid_( fork() ),
+ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace )
+    : pid_( syscall( SYS_clone,
+                     SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
+                     nullptr, nullptr, nullptr, nullptr ) ),
       running_( true ),
       terminated_( false ),
       exit_status_()
 {
     if ( pid_ < 0 ) {
-        throw Exception( "fork" );
+        throw Exception( "clone" );
     }
 
     if ( pid_ == 0 ) { /* child */
