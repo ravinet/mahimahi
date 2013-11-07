@@ -18,6 +18,7 @@
 #include "http_proxy.hh"
 #include "poller.hh"
 #include "bytestream_queue.hh"
+#include "http_parser.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -43,8 +44,10 @@ void HTTPProxy::handle_tcp( void )
 
                 Poller poller;
 
+                HTTPParser from_client_parser;
+
                 /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_client( ezio::read_chunk_size ), from_destination( ezio::read_chunk_size );
+                ByteStreamQueue from_destination( ezio::read_chunk_size );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
@@ -53,12 +56,18 @@ void HTTPProxy::handle_tcp( void )
                                                    from_destination.space_available ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
-                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
-                                                   from_client.space_available ) );
-
-                poller.add_action( Poller::Action( destination.fd(), Direction::Out,
-                                                   [&] () { from_client.pop( destination.fd() ); return ResultType::Continue; },
-                                                   from_client.non_empty ) );
+                                                   [&] () {
+                                                   string buffer = client.read();
+                                                   if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
+                                                   if ( from_client_parser.parse( buffer ) ) {
+                                                       cout << "REQUEST: " << endl;
+                                                       cout << from_client_parser.get_current_request() << endl;
+                                                       cout << "END" << endl;
+                                                       /* if full request, write to destination and clear current request in parser */
+                                                       destination.write( from_client_parser.get_current_request() );
+                                                       from_client_parser.reset_current_request();
+                                                   }
+                                                   return ResultType::Continue; } ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::Out,
                                                    [&] () { from_destination.pop( client.fd() ); return ResultType::Continue; },
