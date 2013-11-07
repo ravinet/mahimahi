@@ -27,7 +27,7 @@ TunDevice::TunDevice( const string & name,
     interface_ioctl( fd_, TUNSETIFF, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
 
-    Socket sock( SocketType::UDP );
+    Socket sock( UDP );
 
     /* bring interface up */
     interface_ioctl( sock.fd(), SIOCSIFFLAGS, name,

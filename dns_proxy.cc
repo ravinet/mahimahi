@@ -10,7 +10,7 @@ using namespace std;
 using namespace PollerShortNames;
 
 DNSProxy::DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target )
-    : udp_listener_( SocketType::UDP ), tcp_listener_( SocketType::TCP ),
+    : udp_listener_( UDP ), tcp_listener_( TCP ),
       udp_target_( s_udp_target ), tcp_target_( s_tcp_target )
 {
     udp_listener_.bind( listen_address );
@@ -27,7 +27,7 @@ void DNSProxy::handle_udp( void )
     thread newthread( [&] ( pair< Address, string > request ) {
             try {
                 /* send request to the DNS server */
-                Socket dns_server( SocketType::UDP );
+                Socket dns_server( UDP );
                 dns_server.connect( udp_target_ );
                 dns_server.write( request.second );
 
@@ -59,7 +59,7 @@ void DNSProxy::handle_tcp( void )
     thread newthread( [&] ( Socket client ) {
             try {
                 /* connect to DNS server */
-                Socket dns_server( SocketType::TCP );
+                Socket dns_server( TCP );
                 dns_server.connect( tcp_target_ );
 
                 Poller poller;
