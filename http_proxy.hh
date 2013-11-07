@@ -14,7 +14,7 @@ public:
     HTTPProxy( const Address & listener_addr );
     Socket & tcp_listener( void ) { return listener_socket_; }
 
-    void handle_tcp_get( void );
+    void handle_tcp( void );
 };
 
 #endif /* HTTP_PROXY_HH */

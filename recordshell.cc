@@ -162,7 +162,7 @@ int eventloop( std::unique_ptr<DNSProxy> && dns_proxy,
     if ( http_proxy ) {
         poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
                                            [&] () {
-                                               http_proxy->handle_tcp_get();
+                                               http_proxy->handle_tcp();
                                                return ResultType::Continue;
                                            } ) );
     }

@@ -30,7 +30,7 @@ HTTPProxy::HTTPProxy( const Address & listener_addr )
     listener_socket_.listen();
 }
 
-void HTTPProxy::handle_tcp_get( void )
+void HTTPProxy::handle_tcp( void )
 {
     thread newthread( [&] ( Socket client ) {
             try {
