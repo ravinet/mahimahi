@@ -22,7 +22,7 @@ using namespace std;
 TunDevice::TunDevice( const string & name,
                       const string & addr,
                       const string & dstaddr )
-    : fd_( open( "/dev/net/tun", O_RDWR ), "open /dev/net/tun" )
+    : fd_( SystemCall( "open /dev/net/tun", open( "/dev/net/tun", O_RDWR ) ) )
 {
     interface_ioctl( fd_, TUNSETIFF, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );

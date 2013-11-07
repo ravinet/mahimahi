@@ -77,7 +77,7 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 
     /* verify normal fds are present (stderr hasn't been closed) */
-    FileDescriptor( open( "/dev/null", O_RDONLY ), "open" );
+    FileDescriptor( SystemCall( "open /dev/null", open( "/dev/null", O_RDONLY ) ) );
 
     /* verify running as euid root, but not ruid root */
     if ( geteuid() != 0 ) {
@@ -89,7 +89,8 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 
     /* verify IP forwarding is enabled */
-    FileDescriptor ipf( open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ), "open /proc/sys/net/ipv4/ip_forward" );
+    FileDescriptor ipf( SystemCall( "open /proc/sys/net/ipv4/ip_forward",
+                                    open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ) ) );
     if ( ipf.read() != "1\n" ) {
         throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }

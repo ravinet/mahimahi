@@ -64,7 +64,8 @@ void in_network_namespace( pid_t pid, function<void(void)> && procedure )
             try {
                 /* change to desired network namespace */
                 const string filename = "/proc/" + to_string( pid ) + "/ns/net";
-                FileDescriptor namespace_fd( open( filename.c_str(), O_RDONLY ), "open " + filename );
+                FileDescriptor namespace_fd( SystemCall( "open " + filename,
+                                                         open( filename.c_str(), O_RDONLY ) ) );
                 SystemCall( "setns", setns( namespace_fd.num(), CLONE_NEWNET ) );
 
                 /* run the caller-supplied procedure */

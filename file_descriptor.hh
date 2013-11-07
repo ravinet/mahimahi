@@ -15,13 +15,9 @@ private:
     int fd_;
 
 public:
-    FileDescriptor( const int s_fd, const std::string & syscall_name )
+    FileDescriptor( const int s_fd )
         : fd_( s_fd )
     {
-        if ( fd_ < 0 ) {
-            throw Exception( syscall_name );
-        }
-
         if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
             throw Exception( "FileDescriptor", "fd <= 2" );
         }

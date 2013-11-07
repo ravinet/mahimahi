@@ -36,9 +36,7 @@ int main( int argc, char *argv[] )
         /* make pair of connected sockets */
         int pipes[ 2 ];
         SystemCall( "socketpair", socketpair( AF_UNIX, SOCK_DGRAM, 0, pipes ) );
-
-        FileDescriptor egress_socket( pipes[ 0 ], "socketpair" ),
-            ingress_socket( pipes[ 1 ], "socketpair" );
+        FileDescriptor egress_socket( pipes[ 0 ] ), ingress_socket( pipes[ 1 ] );
 
         /* set egress and ingress ip addresses */
         Interfaces interfaces;

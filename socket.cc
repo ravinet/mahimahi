@@ -15,7 +15,7 @@
 using namespace std;
 
 Socket::Socket( const SocketType & socket_type )
-    : fd_( socket( AF_INET, socket_type, 0 ), "socket" ),
+    : fd_( SystemCall( "socket", socket( AF_INET, socket_type, 0 ) ) ),
       local_addr_(),
       peer_addr_()
 {
@@ -63,9 +63,10 @@ Socket Socket::accept( void )
   socklen_t new_connection_addr_size = sizeof( new_connection_addr );
 
   /* wait for client connection */
-  FileDescriptor new_fd( ::accept( fd_.num(),
-                         reinterpret_cast<sockaddr *>( &new_connection_addr ),
-                         &new_connection_addr_size ), "accept" );
+  FileDescriptor new_fd( SystemCall( "accept",
+                                     ::accept( fd_.num(),
+                                               reinterpret_cast<sockaddr *>( &new_connection_addr ),
+                                               &new_connection_addr_size ) ) );
 
   // verify length is what we expected 
   if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {

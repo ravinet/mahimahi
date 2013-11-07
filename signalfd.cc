@@ -25,7 +25,7 @@ void SignalMask::block( void ) const
 }
 
 SignalFD::SignalFD( const SignalMask & signals )
-    : fd_( signalfd( -1, &signals.mask(), 0 ), "signalfd" )
+    : fd_( SystemCall( "signalfd", signalfd( -1, &signals.mask(), 0 ) ) )
 {
 }
 
