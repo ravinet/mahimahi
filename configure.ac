@@ -33,7 +33,7 @@ AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 # Checks for library functions.
 
 # Add picky CXXFLAGS
-PICKY_CXXFLAGS="-std=c++0x -pedantic -Wall -Wextra -Weffc++ -Werror"
+PICKY_CXXFLAGS="-std=c++0x -pedantic -Wall -Wextra -Weffc++ -Werror -fno-default-inline"
 AC_SUBST([PICKY_CXXFLAGS])
 
 AC_CONFIG_FILES([Makefile])
