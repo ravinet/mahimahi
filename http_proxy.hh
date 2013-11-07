@@ -15,8 +15,6 @@ public:
     Socket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp_get( void );
-
-    static std::unique_ptr<HTTPProxy> maybe_proxy( const Address & listener_addr );
 };
 
 #endif /* HTTP_PROXY_HH */
