@@ -1,3 +1,5 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 #ifndef HTTP_PARSER_HH
 #define HTTP_PARSER_HH
 
