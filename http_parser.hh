@@ -6,17 +6,7 @@
 #include <vector>
 #include <string>
 
-class HTTPHeader
-{
-private:
-  std::string key_, value_;
-
-public:
-  HTTPHeader( const std::string & buf );
-
-  std::string key( void ) const { return key_; }
-  std::string value( void ) const { return value_; }
-};
+#include "http_header.hh"
 
 class HTTPParser
 {
@@ -27,6 +17,8 @@ private:
   std::vector< HTTPHeader > headers_;
 
   bool headers_finished_;
+
+  std::string body_;
 
   size_t body_left_;
 
@@ -39,6 +31,7 @@ public:
 		       request_line_(),
 		       headers_(),
 		       headers_finished_( false ),
+                       body_(),
 		       body_left_( 0 ),
                        current_request_()
   {}
