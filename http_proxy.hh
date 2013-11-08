@@ -3,12 +3,17 @@
 #ifndef HTTP_PROXY_HH
 #define HTTP_PROXY_HH
 
+#include <fstream>
+
 #include "socket.hh"
 
 class HTTPProxy
 {
 private:
     Socket listener_socket_;
+    std::fstream original_requests_;
+    std::fstream sent_requests_;
+
 
 public:
     HTTPProxy( const Address & listener_addr );
