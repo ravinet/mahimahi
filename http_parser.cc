@@ -36,14 +36,15 @@ HTTPHeader::HTTPHeader( const string & buf )
 
 bool HTTPParser::parse( const string & buf )
 {
-    /* step 1: append buf to internal buffer */
+    /* append buf to internal buffer */
     internal_buffer_ += buf;
+
+    /* determine if full request (headers and body) */
     while(1) {
-        /* are we looking for headers or for the body? */
+        /* headers finished, now determine if body is finished */
         if ( headers_finished_ ) {
-            /* looking for body */
-            if ( body_left_ <= internal_buffer_.size() ) {
-                /* reset me */
+            if ( body_left_ <= internal_buffer_.size() ) { /* body finished */
+                /* remove remaining part of current request from internal_buffer and reset */
                 current_request_.append( internal_buffer_.substr( 0, body_left_ ) );
                 internal_buffer_.replace( 0, body_left_, string() );
                 request_line_.erase();
@@ -51,50 +52,44 @@ bool HTTPParser::parse( const string & buf )
                 headers_finished_ = false;
                 body_left_ = 0;
                 return true;
-            } else {
+            } else { /* body_left > internal_buffer.size, so previous request body not complete */
                 body_left_ -= internal_buffer_.size();
                 internal_buffer_.erase();
-                return false; // body_left is more than internal_buffer.size so you have not completeld previous request body
+                return false;
             }
         }
 
-        if ( headers_finished_ ) {
+        if ( headers_finished_ ) { /* headers finished but body not finished */
             return false;
         }
 
         const string crlf = "\r\n";
 
-        /* step 2: parse all the lines */
-        //while ( 1 ) {
-        /* step 2a: do we have a line? */
+
+        /* do we have a complete line? */
         size_t first_line_ending = internal_buffer_.find( crlf );
         if ( first_line_ending == std::string::npos ) {
         /* we don't have a full line yet */
             return false;
         }
 
-        /* step 2b: yes, we have at least one full line */
-
+        /* we have a complete line */
         if ( request_line_.empty() ) { /* request line always comes first */
             request_line_ = internal_buffer_.substr( 0, first_line_ending );
         } else if ( first_line_ending == 0 ) { /* end of headers */
             headers_finished_ = true;
             body_left_ = body_len();
-            //current_request_.append( internal_buffer_.substr( 0, first_line_ending + crlf.size() ) );
-            //internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
-
-            //return true;
         } else { /* it's a header */
             headers_.emplace_back( internal_buffer_.substr( 0, first_line_ending ) );
         }
 
-        /* step 2c: delete the parsed line from internal_buffer */
+        /* add parsed line to current_request and delete it from internal_buffer */
         current_request_.append( internal_buffer_.substr( 0, first_line_ending + crlf.size() ) );
         internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
     }
 }
 
-string HTTPParser::get_current_request( void )
+const string & HTTPParser::get_current_request( void ) const
 {
     return current_request_;
 }

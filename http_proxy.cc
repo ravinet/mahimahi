@@ -24,9 +24,7 @@ using namespace std;
 using namespace PollerShortNames;
 
 HTTPProxy::HTTPProxy( const Address & listener_addr )
-    : listener_socket_( TCP ),
-      original_requests_("original.req", std::ios::binary|std::ios::out),
-      sent_requests_("sent.req", std::ios::binary|std::ios::out)
+    : listener_socket_( TCP )
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -60,16 +58,8 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
                                                    string buffer = client.read();
-                                                   if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
-                                                   original_requests_.write( buffer.c_str(), buffer.size() );
-                                                   original_requests_.flush();
-                                                   if ( from_client_parser.parse( buffer ) ) {
-                                                       cout << "REQUEST: " << endl;
-                                                       cout << from_client_parser.get_current_request() << endl;
-                                                       cout << "END" << endl;
-                                                       sent_requests_.write(from_client_parser.get_current_request().c_str(), from_client_parser.get_current_request().size() );
-                                                       sent_requests_.flush();
-                                                       /* if full request, write to destination and clear current request in parser */
+                                                   if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
+                                                   if ( from_client_parser.parse( buffer ) ) { /* header and body complete so write to destination and clear current request in parser */
                                                        destination.write( from_client_parser.get_current_request() );
                                                        from_client_parser.reset_current_request();
                                                    }

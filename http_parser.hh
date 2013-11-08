@@ -47,7 +47,7 @@ public:
   std::string get_header_value( const std::string & header_name ) const;
   bool has_header( const std::string & header_name ) const;
 
-  std::string get_current_request( void );
+  const std::string & get_current_request( void ) const;
 
   void reset_current_request( void ) { current_request_.clear(); }
 

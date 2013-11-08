@@ -11,9 +11,6 @@ class HTTPProxy
 {
 private:
     Socket listener_socket_;
-    std::fstream original_requests_;
-    std::fstream sent_requests_;
-
 
 public:
     HTTPProxy( const Address & listener_addr );
