@@ -36,7 +36,7 @@ HTTPHeader::HTTPHeader( const string & buf )
     */
 }
 
-bool HTTPParser::parse( const string & buf )
+void HTTPParser::parse( const string & buf )
 {
     /* append buf to internal buffer */
     internal_buffer_ += buf;
@@ -46,35 +46,37 @@ bool HTTPParser::parse( const string & buf )
         /* headers finished, now determine if body is finished */
         if ( headers_finished_ ) {
             if ( body_left_ <= internal_buffer_.size() ) { /* body finished */
-                /* remove remaining part of current request from internal_buffer and reset */
-                current_request_.append( internal_buffer_.substr( 0, body_left_ ) );
+                /* Create HTTP request and add to complete_requests */
+                body_.append( internal_buffer_.substr( 0, body_left_ ) ); /* store body */
                 internal_buffer_.replace( 0, body_left_, string() );
+                complete_requests_.emplace( HTTPRequest( headers_, request_line_, body_ ) );
+
+                /* remove remaining part of current request from internal_buffer and reset */
                 request_line_.erase();
                 headers_.clear();
+                body_.clear(); /* reset body */
                 headers_finished_ = false;
                 body_left_ = 0;
-                return true;
+                return;
             } else { /* body_left > internal_buffer.size, so previous request body not complete */
                 body_left_ -= internal_buffer_.size();
                 internal_buffer_.erase();
-                return false;
+                return;
             }
         }
 
         if ( headers_finished_ ) { /* headers finished but body not finished */
-            return false;
+            return;
         }
 
         const string crlf = "\r\n";
-
 
         /* do we have a complete line? */
         size_t first_line_ending = internal_buffer_.find( crlf );
         if ( first_line_ending == std::string::npos ) {
         /* we don't have a full line yet */
-            return false;
+            return;
         }
-
         /* we have a complete line */
         if ( request_line_.empty() ) { /* request line always comes first */
             request_line_ = internal_buffer_.substr( 0, first_line_ending );
@@ -85,15 +87,9 @@ bool HTTPParser::parse( const string & buf )
             headers_.emplace_back( internal_buffer_.substr( 0, first_line_ending ) );
         }
 
-        /* add parsed line to current_request and delete it from internal_buffer */
-        current_request_.append( internal_buffer_.substr( 0, first_line_ending + crlf.size() ) );
+        /* delete parsed line from internal_buffer */
         internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
     }
-}
-
-const string & HTTPParser::get_current_request( void ) const
-{
-    return current_request_;
 }
 
 bool HTTPParser::has_header( const string & header_name ) const
@@ -133,4 +129,18 @@ size_t HTTPParser::body_len( void ) const
     } else {
         throw Exception( "Cannot handle HTTP method", request_line_ );
     }
+}
+
+HTTPRequest HTTPParser::get_request( void )
+{
+    /* make sure there is a new complete request */
+    assert( !empty() );
+
+    HTTPRequest new_request;
+
+    new_request = complete_requests_.front();
+
+    complete_requests_.pop();
+
+    return new_request;
 }

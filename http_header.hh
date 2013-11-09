@@ -17,4 +17,4 @@ public:
   std::string value( void ) const { return value_; }
 };
 
-#endif /* HTTP_PARSER_HH */
+#endif /* HTTP_HEADER_HH */
