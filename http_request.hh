@@ -35,20 +35,15 @@ public:
         std::string request;
 
         /* add request line to request */
-        request.append( request_line_ );
-        request.append( "\r\n" );
+        request.append( request_line_ + "\r\n" );
 
         /* iterate through headers and add "key: value\r\n" to request */
         for ( const auto & header : complete_headers_ ) {
-            request.append( header.key() );
-            request.append( ": " );
-            request.append( header.value() );
-            request.append( "\r\n" );
+            request.append( header.key() + ": " + header.value() + "\r\n" );
         }
 
-        /* separate headers and body with "\r\n" and then add body to request */
-        request.append( "\r\n" );
-        request.append( body_ );
+        /* separate headers and body and then add body to request */
+        request.append( "\r\n" + body_ );
         return request;
     }
 };
