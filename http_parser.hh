@@ -13,44 +13,45 @@
 class HTTPParser
 {
 private:
-  std::string internal_buffer_;
+    std::string internal_buffer_;
 
-  std::string request_line_;
-  std::vector< HTTPHeader > headers_;
+    std::string request_line_;
 
-  bool headers_finished_;
+    std::vector< HTTPHeader > headers_;
 
-  std::string body_;
+    bool headers_finished_;
 
-  size_t body_left_;
+    std::string body_;
 
-  size_t body_len( void ) const;
+    size_t body_left_;
 
-  std::queue< HTTPRequest > complete_requests_;
+    size_t body_len( void ) const;
+
+    std::queue< HTTPRequest > complete_requests_;
 
 public:
-  HTTPParser() : internal_buffer_(),
-		       request_line_(),
-		       headers_(),
-		       headers_finished_( false ),
-                       body_(),
-		       body_left_( 0 ),
-                       complete_requests_()
-  {}
+    HTTPParser() : internal_buffer_(),
+		   request_line_(),
+		   headers_(),
+		   headers_finished_( false ),
+                   body_(),
+		   body_left_( 0 ),
+                   complete_requests_()
+    {}
 
-  void parse( const std::string & buf );
+    void parse( const std::string & buf );
 
-  bool headers_parsed( void ) const { return headers_finished_; }
+    bool headers_parsed( void ) const { return headers_finished_; }
 
-  std::string get_header_value( const std::string & header_name ) const;
+    std::string get_header_value( const std::string & header_name ) const;
 
-  bool has_header( const std::string & header_name ) const;
+    bool has_header( const std::string & header_name ) const;
 
-  const std::string & request_line( void ) const { return request_line_; }
+    const std::string & request_line( void ) const { return request_line_; }
 
-  bool empty( void ) const { return complete_requests_.empty(); }
+    bool empty( void ) const { return complete_requests_.empty(); }
 
-  HTTPRequest get_request( void );
+    HTTPRequest get_request( void );
 
 };
 

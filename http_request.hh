@@ -19,32 +19,34 @@ private:
 
 public:
     HTTPRequest( const std::vector< HTTPHeader > headers_, const std::string request, const std::string body )
-      : complete_headers_( headers_ ),
-        request_line_( request ),
-        body_( body )
-{
-}
+        : complete_headers_( headers_ ),
+          request_line_( request ),
+          body_( body )
+    {}
 
     /* default constructor to create temp in parser */
     HTTPRequest( void )
-      : complete_headers_(),
-        request_line_(),
-        body_()
-{
-}
+        : complete_headers_(),
+          request_line_(),
+          body_()
+    {}
 
     std::string str( void ) {
-        /* iterate through headers and add append /r/n to each line (key: value/r/n) */
         std::string request;
 
+        /* add request line to request */
         request.append( request_line_ );
         request.append( "\r\n" );
+
+        /* iterate through headers and add "key: value\r\n" to request */
         for ( const auto & header : complete_headers_ ) {
             request.append( header.key() );
             request.append( ": " );
             request.append( header.value() );
             request.append( "\r\n" );
         }
+
+        /* separate headers and body with "\r\n" and then add body to request */
         request.append( "\r\n" );
         request.append( body_ );
         return request;
