@@ -9,40 +9,13 @@
 
 using namespace std;
 
-/* parse a header line into a key and a value */
-HTTPHeader::HTTPHeader( const string & buf )
-  : key_(), value_()
-{
-    const string separator = ":";
-
-    /* step 1: does buffer contain colon? */
-    size_t colon_location = buf.find( separator );
-    if ( colon_location == std::string::npos ) {
-        fprintf( stderr, "Buffer: %s\n", buf.c_str() );
-        throw Exception( "HTTPHeader", "buffer does not contain colon" ); 
-    }
-
-    /* step 2: split buffer */
-    key_ = buf.substr( 0, colon_location );
-    string value_temp = buf.substr( colon_location + separator.size() );
-
-    /* strip whitespace */
-    size_t first_nonspace = value_temp.find_first_not_of( " " );
-    value_ = value_temp.substr( first_nonspace );
-
-    /*
-    fprintf( stderr, "Got header. key=[[%s]] value = [[%s]]\n",
-             key_.c_str(), value_.c_str() );
-    */
-}
-
 void HTTPParser::parse( const string & buf )
 {
     /* append buf to internal buffer */
     internal_buffer_ += buf;
 
     /* determine if full request (headers and body) */
-    while(1) {
+    while( true ) {
         /* headers finished, now determine if body is finished */
         if ( headers_finished_ ) {
             if ( body_left_ <= internal_buffer_.size() ) { /* body finished */
