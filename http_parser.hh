@@ -5,48 +5,54 @@
 
 #include <vector>
 #include <string>
+#include <queue>
 
 #include "http_header.hh"
+#include "http_request.hh"
 
 class HTTPParser
 {
 private:
-  std::string internal_buffer_;
+    std::string internal_buffer_;
 
-  std::string request_line_;
-  std::vector< HTTPHeader > headers_;
+    std::string request_line_;
 
-  bool headers_finished_;
+    std::vector< HTTPHeader > headers_;
 
-  std::string body_;
+    bool headers_finished_;
 
-  size_t body_left_;
+    std::string body_;
 
-  size_t body_len( void ) const;
+    size_t body_left_;
 
-  std::string current_request_;
+    size_t body_len( void ) const;
+
+    std::queue< HTTPRequest > complete_requests_;
 
 public:
-  HTTPParser() : internal_buffer_(),
-		       request_line_(),
-		       headers_(),
-		       headers_finished_( false ),
-                       body_(),
-		       body_left_( 0 ),
-                       current_request_()
-  {}
+    HTTPParser() : internal_buffer_(),
+		   request_line_(),
+		   headers_(),
+		   headers_finished_( false ),
+                   body_(),
+		   body_left_( 0 ),
+                   complete_requests_()
+    {}
 
-  bool parse( const std::string & buf );
-  bool headers_parsed( void ) const { return headers_finished_; }
+    void parse( const std::string & buf );
 
-  std::string get_header_value( const std::string & header_name ) const;
-  bool has_header( const std::string & header_name ) const;
+    bool headers_parsed( void ) const { return headers_finished_; }
 
-  const std::string & get_current_request( void ) const;
+    std::string get_header_value( const std::string & header_name ) const;
 
-  void reset_current_request( void ) { current_request_.clear(); }
+    bool has_header( const std::string & header_name ) const;
 
-  const std::string & request_line( void ) const { return request_line_; }
+    const std::string & request_line( void ) const { return request_line_; }
+
+    bool empty( void ) const { return complete_requests_.empty(); }
+
+    HTTPRequest get_request( void );
+
 };
 
 #endif /* HTTP_PARSER_HH */
