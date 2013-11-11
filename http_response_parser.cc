@@ -98,9 +98,13 @@ void HTTPResponseParser::parse( const string & buf )
                 cout << "NOT CHUNKED" << endl;
                 body_left_ = body_len();
             } else if ( has_header( "Transfer-Encoding" ) ) {
-                cout << "CHUNKED" << endl;
-                chunked_ = true; /* chunked so don't get body length now */
-                first_chunk_ = true;
+                if ( get_header_value( "Transfer-Encoding" ) == "chunked" ) {
+                    cout << "CHUNKED" << endl;
+                    chunked_ = true; /* chunked so don't get body length now */
+                    first_chunk_ = true;
+                } else {
+                    throw Exception( "Not valid repsonse format" );
+                }
             } else {
                 throw Exception( "Not valid response format" );
             }
