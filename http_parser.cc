@@ -32,8 +32,8 @@ void HTTPParser::parse( const string & buf )
                 body_left_ = 0;
                 return;
             } else { /* body_left > internal_buffer.size, so previous request body not complete */
-                body_left_ -= internal_buffer_.size();
-                internal_buffer_.erase();
+                //body_left_ -= internal_buffer_.size();
+                //internal_buffer_.erase();
                 return;
             }
         }
