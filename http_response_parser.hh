@@ -29,6 +29,8 @@ private:
 
     bool chunked_;
 
+    bool first_chunk_;
+
 public:
     HTTPResponseParser() : internal_buffer_(),
 		   status_line_(),
@@ -37,7 +39,8 @@ public:
                    body_(),
 		   body_left_( 0 ),
                    complete_responses_(),
-                   chunked_( false )
+                   chunked_( false ),
+                   first_chunk_( false )
     {}
 
     void parse( const std::string & buf );
@@ -52,8 +55,10 @@ public:
 
     bool empty( void ) const { return complete_responses_.empty(); }
 
+    /* gets chunk size and appends chunk size line to body_ */
     size_t get_chunk_size( void );
 
+    /* returns body size if response not chunked */
     size_t body_len( void );
 
     HTTPResponse get_response( void );

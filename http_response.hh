@@ -19,15 +19,17 @@ private:
 
     bool chunk_;
 
-    std::string chunk_size_line_;
+    bool full_;
+// Variable which indicates whether it is a full response/first chunk or an intermediate chunk  since str will vary with this */
 
 public:
-    HTTPResponse( const std::vector< HTTPHeader > headers_, const std::string status, const std::string body )
+    /* constructor for full response or first chunked response */
+    HTTPResponse( const std::vector< HTTPHeader > headers_, const std::string status, const std::string body, bool chunked_ = false )
         : complete_headers_( headers_ ),
           status_line_( status ),
           body_( body ),
-          chunk_( false ),
-          chunk_size_line_()
+          chunk_( chunked_ ),
+          full_( true )
     {}
 
     /* default constructor to create temp in parser */
@@ -36,30 +38,35 @@ public:
           status_line_(),
           body_(),
           chunk_( false ),
-          chunk_size_line_()
+          full_()
     {}
 
-    HTTPResponse( const std::string chunk_size_line, const std::string body )
+    /* constructor for intermediate/last chunk */
+    HTTPResponse( const std::string body )
         : complete_headers_(),
           status_line_(),
           body_( body ),
           chunk_( true ),
-          chunk_size_line_( chunk_size_line )
+          full_( false )
     {}
 
     std::string str( void ) {
         std::string response;
 
-        /* add request line to request */
-        response.append( status_line_ + "\r\n" );
+        /* check if response is a full response/first chunk or intermediate/last chunk */
+        if ( full_ ) {
+            /* add request line to response */
+            response.append( status_line_ + "\r\n" );
 
-        /* iterate through headers and add "key: value\r\n" to request */
-        for ( const auto & header : complete_headers_ ) {
-            response.append( header.key() + ": " + header.value() + "\r\n" );
+            /* iterate through headers and add "key: value\r\n" to response */
+            for ( const auto & header : complete_headers_ ) {
+                response.append( header.key() + ": " + header.value() + "\r\n" );
+            }
+            response.append( "\r\n" );
         }
 
-        /* separate headers and body and then add body to request */
-        response.append( "\r\n" + body_ );
+        /* add body to response */
+        response.append( body_ );
         return response;
     }
 };
