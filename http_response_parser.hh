@@ -13,6 +13,8 @@
 class HTTPResponseParser
 {
 private:
+    const std::string crlf = "\r\n";
+
     std::string internal_buffer_;
 
     std::string status_line_;
@@ -30,6 +32,8 @@ private:
     bool chunked_;
 
     bool first_chunk_;
+
+    bool update_ = true;
 
 public:
     HTTPResponseParser() : internal_buffer_(),
