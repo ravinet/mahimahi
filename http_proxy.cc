@@ -19,6 +19,7 @@
 #include "poller.hh"
 #include "bytestream_queue.hh"
 #include "http_parser.hh"
+#include "http_response_parser.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -46,14 +47,22 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTPParser from_client_parser;
 
+                HTTPResponseParser from_destination_parser;
+
                 /* Make bytestream_queue for source->dest and dest->source */
                 ByteStreamQueue from_destination( ezio::read_chunk_size );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
                 poller.add_action( Poller::Action( destination.fd(), Direction::In,
-                                                   [&] () { return eof( from_destination.push( destination.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
-                                                   from_destination.space_available ) );
+                                                   [&] () {
+                                                   string buffer = destination.read();
+                                                   if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
+                                                   from_destination_parser.parse( buffer );
+                                                   if ( !from_destination_parser.empty() ) {
+                                                       client.write( from_destination_parser.get_response().str() );
+                                                   }
+                                                   return ResultType::Continue; } ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
@@ -64,10 +73,6 @@ void HTTPProxy::handle_tcp( void )
                                                        destination.write( from_client_parser.get_request().str() );
                                                    }
                                                    return ResultType::Continue; } ) );
-
-                poller.add_action( Poller::Action( client.fd(), Direction::Out,
-                                                   [&] () { from_destination.pop( client.fd() ); return ResultType::Continue; },
-                                                   from_destination.non_empty ) );
 
                 while( true ) {
                     auto poll_result = poller.poll( 60000 );
