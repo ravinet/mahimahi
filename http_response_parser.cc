@@ -23,7 +23,7 @@ void HTTPResponseParser::parse( const string & buf )
                 if ( body_left_ <= internal_buffer_.size() ) { /* we have first chunk */
                     /* store body and remove it from internal_buffer_*/
                     body_.append( internal_buffer_.substr( 0, body_left_ ) );
-                    internal_buffer_.replace( 0, body_left_, string() );
+                    internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
                     /* SHOULD CHECK IF NEXT LINE IS CRLF or next chunk size (if CRLF, remove here and add in response str) */
                     /* create response and add to completed response queue */
                     complete_responses_.emplace( HTTPResponse( headers_, status_line_, body_, true ) );
@@ -35,7 +35,8 @@ void HTTPResponseParser::parse( const string & buf )
             } else { /* not first chunk so check if last chunk and make response from just body */
                 if ( body_left_ == 0 ) { /* last chunk of size 0 */
                     /* add response for chunk and reset for next response */
-                    complete_responses_.emplace( HTTPResponse( body_ ) );
+                    body_.append( "\r\n" );
+                    complete_responses_.emplace( HTTPResponse( body_  ) );
                     status_line_.erase();
                     headers_.clear();
                     body_.clear(); /* reset body */
@@ -47,7 +48,7 @@ void HTTPResponseParser::parse( const string & buf )
                     if ( body_left_ <= internal_buffer_.size() ) { /* we have full chunk */
                         /* store body and remove it from internal_buffer_ */
                         body_.append( internal_buffer_.substr( 0, body_left_ ) ); /* store body */
-                        internal_buffer_.replace( 0, body_left_, string() );
+                        internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
                         /* create response and add to completed response queue */
                         complete_responses_.emplace( HTTPResponse( body_ ) );
                         body_.clear(); /* reset body */
@@ -80,8 +81,6 @@ void HTTPResponseParser::parse( const string & buf )
         if ( headers_finished_ ) { /* headers finished but body not finished */
             return;
         }
-
-        const string crlf = "\r\n";
 
         /* do we have a complete line? */
         size_t first_line_ending = internal_buffer_.find( crlf );
@@ -145,12 +144,11 @@ size_t HTTPResponseParser::get_chunk_size( void )
     assert( chunked_ );
     /* read internal buffer's first line which should have chunk size and add it to body_  */
     string chunk_size;
-    const string crlf = "\r\n";
     size_t end_of_line = internal_buffer_.find( crlf );
     chunk_size = internal_buffer_.substr( 0, end_of_line );
     body_.append( internal_buffer_.substr(0, end_of_line + crlf.size() ) );
     internal_buffer_.replace( 0, end_of_line + crlf.size(), string() );
-    return stol( chunk_size, nullptr, 16);
+    return strtol( chunk_size.c_str(), nullptr, 16);
 }
 
 size_t HTTPResponseParser::body_len( void )

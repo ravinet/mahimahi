@@ -13,6 +13,8 @@
 class HTTPResponseParser
 {
 private:
+    const std::string crlf = "\r\n";
+
     std::string internal_buffer_;
 
     std::string status_line_;
