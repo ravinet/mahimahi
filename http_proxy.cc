@@ -60,10 +60,11 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () {
                                                    string buffer = destination.read();
                                                    if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
-                                                   from_destination_parser.parse( buffer );
+                                                   /*from_destination_parser.parse( buffer );
                                                    if ( !from_destination_parser.empty() ) {
                                                        client.write( from_destination_parser.get_response().str() );
-                                                   }
+                                                   }*/
+                                                   client.write( buffer );
                                                    return ResultType::Continue; } ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
@@ -74,6 +75,7 @@ void HTTPProxy::handle_tcp( void )
                                                    if ( !from_client_parser.empty() ) {
                                                        destination.write( from_client_parser.get_request().str() );
                                                    }
+                                                   //destination.write( buffer );
                                                    return ResultType::Continue; } ) );
 
                 while( true ) {
