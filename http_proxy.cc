@@ -54,8 +54,6 @@ void HTTPProxy::handle_tcp( void )
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
-                //string testbuf = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: text/html\r\n\r\nc\r\n<h1>go!</h1>\r\n1b\r\n<h1>first chunk loaded</h1>\r\n2a\r\n<h1>second chunk loaded and displayed</h1>\r\n29\r\n<h1>third chunk loaded and displayed</h1>\r\n0\r\n\r\n";
-
                 poller.add_action( Poller::Action( destination.fd(), Direction::In,
                                                    [&] () {
                                                    string buffer = destination.read();
