@@ -35,10 +35,6 @@ void HTTPParser::parse( const string & buf )
             }
         }
 
-        if ( headers_finished_ ) { /* headers finished but body not finished */
-            return;
-        }
-
         const string crlf = "\r\n";
 
         /* do we have a complete line? */
