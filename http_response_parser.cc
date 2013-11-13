@@ -11,105 +11,94 @@ using namespace std;
 
 void HTTPResponseParser::parse( const string & buf )
 {
-    /* append buf to internal buffer */
     internal_buffer_ += buf;
 
     while( true ) {
         if ( headers_finished_ && chunked_ ) { /* headers are finished and we know body is chunked */
-            if ( first_chunk_ ) { /* make response from headers, status line and first chunk body, set first_chunk to false */
+            if ( first_chunk_ ) { /* update buffer, make response, and set first_chunk to false */
                 if ( body_left_ <= internal_buffer_.size() ) { /* we have first chunk */
-                    /* store body and remove it from internal_buffer_*/
                     body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) );
                     internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
-                    /* create response and add to completed response queue */
                     complete_responses_.emplace( HTTPResponse( headers_, status_line_, body_ ) );
-                    body_.clear(); /* reset body */
+                    body_.clear();
                     first_chunk_ = false;
                     body_left_ = get_chunk_size();
-                } else { /* chunk not in internal_buffer_ yet */
+                } else { /* we don't have first chunk yet */
                     return;
                 }
-            } else { /* not first chunk so check if last chunk and make response from just body */
+            } else { /* intermediate or last chunk, update buffer and make response (if last chunk, reset) */
                 if ( body_left_ == 0 ) { /* last chunk of size 0 */
-                    /* add response for chunk and reset for next response */
                     size_t crlf_loc;
-                    while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) { /* optional trailers present */
-                        if ( crlf_loc == std::string::npos ) {
-                            /* we don't have a full line for trailer */
-                            return;
+                    if ( has_header( "Trailer" ) ) { /* trailers present */
+                        while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) {
+                            if ( crlf_loc == std::string::npos ) {
+                                /* we don't have a full line for trailer */
+                                return;
+                            }
+                            body_.append( internal_buffer_.substr( 0, crlf_loc + crlf.size() ) );
+                            internal_buffer_.replace( 0, crlf_loc + crlf.size(), string() );
                         }
-                        body_.append( internal_buffer_.substr( 0, crlf_loc + crlf.size() ) );
-                        internal_buffer_.replace( 0, crlf_loc + crlf.size(), string() ); 
                     }
                     body_.append( crlf );
                     complete_responses_.emplace( HTTPResponse( body_  ) );
                     internal_buffer_.replace( 0, crlf.size(), string() );
                     status_line_.erase();
                     headers_.clear();
-                    body_.clear(); /* reset body */
+                    body_.clear();
                     headers_finished_ = false;
                     body_left_ = 0;
                     chunked_ = false;
                 } else { /* intermediate chunk */
                     if ( body_left_ <= internal_buffer_.size() ) { /* we have full chunk */
-                        /* store body and remove it from internal_buffer_ */
-                        body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) ); /* store body */
+                        body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) );
                         internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
-                        /* create response and add to completed response queue */
                         complete_responses_.emplace( HTTPResponse( body_ ) );
-                        body_.clear(); /* reset body */
+                        body_.clear();
                         body_left_ = get_chunk_size();
-                    } else { /* chunk not in internal_buffer_ yet */
+                    } else { /* we don't have chunk yet */
                         return;
                     }
                 }
             }
         }
 
-        /* headers finished and body not chunked, now determine if body is finished */
-        if ( headers_finished_  && !chunked_) {
-            if ( body_left_ <= internal_buffer_.size() ) { /* body finished */
-                /* Create HTTP response and add to complete_responses */
-                body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size()) ); /* store body */
+        /* headers finished and body not chunked */
+        if ( headers_finished_  && !chunked_ ) {
+            if ( body_left_ <= internal_buffer_.size() ) { /* we have body so make response and reset */
+                body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) );
                 internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
                 complete_responses_.emplace( HTTPResponse( headers_, status_line_, body_ ) );
-                /* remove remaining part of current request from internal_buffer and reset */
                 status_line_.erase();
                 headers_.clear();
-                body_.clear(); /* reset body */
+                body_.clear();
                 headers_finished_ = false;
                 body_left_ = 0;
-            } else { /* body_left > internal_buffer.size, so previous request body not complete */
+            } else { /* we don't have full body yet */
                 return;
             }
         }
 
-        if ( headers_finished_ ) { /* headers finished but body not finished */
-            return;
-        }
+        /* headers not finished */
 
         /* do we have a complete line? */
         size_t first_line_ending = internal_buffer_.find( crlf );
         if ( first_line_ending == std::string::npos ) {
-        /* we don't have a full line yet */
+            /* we don't have a full line yet */
             return;
         }
         /* we have a complete line */
         if ( status_line_.empty() ) { /* request line always comes first */
             status_line_ = internal_buffer_.substr( 0, first_line_ending );
-            /* delete parsed line from internal_buffer */
             internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
         } else if ( first_line_ending == 0 ) { /* end of headers */
             headers_finished_ = true;
-            if ( has_header( "Content-Length" ) ) { /* not chunked so get body length */
+            if ( has_header( "Content-Length" ) ) { /* not chunked */
                 body_left_ = body_len();
-                /* delete parsed line from internal_buffer */
                 internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
             } else if ( has_header( "Transfer-Encoding" ) ) {
                 if ( get_header_value( "Transfer-Encoding" ) == "chunked" ) {
-                    chunked_ = true; /* chunked so don't get body length now */
+                    chunked_ = true; /* chunked */
                     first_chunk_ = true;
-                    /* delete parsed line from internal_buffer */
                     internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
                     body_left_ = get_chunk_size(); 
                 } else {
@@ -119,9 +108,7 @@ void HTTPResponseParser::parse( const string & buf )
                 throw Exception( "Not valid response format" );
             }
         } else { /* it's a header */
-            //cout <<  internal_buffer_.substr( 0, first_line_ending ) << endl;
             headers_.emplace_back( internal_buffer_.substr( 0, first_line_ending ) );
-            /* delete parsed line from internal_buffer */
             internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
         }
     }
@@ -134,7 +121,6 @@ bool HTTPResponseParser::has_header( const string & header_name ) const
             return true;
         }
     }
-
     return false;
 }
 
@@ -145,14 +131,15 @@ string HTTPResponseParser::get_header_value( const string & header_name ) const
             return header.value();
         }
     }
-
     throw Exception( "HTTPHeaderParser header not found", header_name );
 }
 
 size_t HTTPResponseParser::get_chunk_size( void )
 {
+    assert( headers_parsed() );
     assert( chunked_ );
-    /* read internal buffer's first line which should have chunk size and add it to body_  */
+
+    /* read internal buffer's first line, get chunk size, and add chunk size line to body_ */
     string chunk_size;
     size_t end_of_line = internal_buffer_.find( crlf );
     chunk_size = internal_buffer_.substr( 0, end_of_line );
@@ -171,12 +158,11 @@ size_t HTTPResponseParser::body_len( void )
 
 HTTPResponse HTTPResponseParser::get_response( void )
 {
+    assert( !complete_responses_.empty() );
 
+    /* return oldest pending complete response */
     HTTPResponse new_response;
-
     new_response = complete_responses_.front();
-
     complete_responses_.pop();
-
     return new_response;
 }
