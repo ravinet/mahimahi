@@ -17,18 +17,14 @@ private:
 
     std::string body_;
 
-    bool chunk_;
-
     bool full_;
-// Variable which indicates whether it is a full response/first chunk or an intermediate chunk  since str will vary with this */
 
 public:
     /* constructor for full response or first chunked response */
-    HTTPResponse( const std::vector< HTTPHeader > headers_, const std::string status, const std::string body, bool chunked_ = false )
+    HTTPResponse( const std::vector< HTTPHeader > headers_, const std::string status, const std::string body )
         : complete_headers_( headers_ ),
           status_line_( status ),
           body_( body ),
-          chunk_( chunked_ ),
           full_( true )
     {}
 
@@ -37,7 +33,6 @@ public:
         : complete_headers_(),
           status_line_(),
           body_(),
-          chunk_( false ),
           full_()
     {}
 
@@ -46,7 +41,6 @@ public:
         : complete_headers_(),
           status_line_(),
           body_( body ),
-          chunk_( true ),
           full_( false )
     {}
 

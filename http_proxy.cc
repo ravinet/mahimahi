@@ -60,26 +60,21 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () {
                                                    string buffer = destination.read();
                                                    if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
-                                                   /*from_destination_parser.parse( buffer );
+                                                   from_destination_parser.parse( buffer );
                                                    if ( !from_destination_parser.empty() ) {
                                                        client.write( from_destination_parser.get_response().str() );
-                                                   }*/
-                                                   client.write( buffer );
+                                                   }
+                                                   //client.write( buffer );
                                                    return ResultType::Continue; } ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
                                                    string buffer = client.read();
-                                                   string tmp;
                                                    if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
                                                    from_client_parser.parse( buffer );
                                                    if ( !from_client_parser.empty() ) {
-                                                       tmp = from_client_parser.get_request().str();
-                                                       //destination.write( from_client_parser.get_request().str() );
+                                                       destination.write( from_client_parser.get_request().str() );
                                                    }
-                                                   cout << "TEMP: " << tmp << "DONE" << endl << endl << endl;
-                                                   destination.write( buffer );
-                                                   cout << "BUFFER: " << buffer << "DONE" << endl;
                                                    return ResultType::Continue; } ) );
 
                 while( true ) {
