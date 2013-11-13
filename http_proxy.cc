@@ -70,12 +70,16 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
                                                    string buffer = client.read();
+                                                   string tmp;
                                                    if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
                                                    from_client_parser.parse( buffer );
                                                    if ( !from_client_parser.empty() ) {
-                                                       destination.write( from_client_parser.get_request().str() );
+                                                       tmp = from_client_parser.get_request().str();
+                                                       //destination.write( from_client_parser.get_request().str() );
                                                    }
-                                                   //destination.write( buffer );
+                                                   cout << "TEMP: " << tmp << "DONE" << endl << endl << endl;
+                                                   destination.write( buffer );
+                                                   cout << "BUFFER: " << buffer << "DONE" << endl;
                                                    return ResultType::Continue; } ) );
 
                 while( true ) {
