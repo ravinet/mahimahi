@@ -62,7 +62,6 @@ void HTTPProxy::handle_tcp( void )
                                                    while ( !from_destination_parser.empty() ) {
                                                        client.write( from_destination_parser.get_response().str() );
                                                    }
-                                                   //client.write( buffer );
                                                    return ResultType::Continue; } ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::In,

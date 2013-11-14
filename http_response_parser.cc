@@ -27,7 +27,6 @@ void HTTPResponseParser::parse( const string & buf )
                     complete_responses_.emplace( HTTPResponse( headers_, status_line_, body_ ) );
                     body_.clear();
                     first_chunk_ = false;
-                    cout << "DID FIRST CHUNK" << endl;
                     update_ = true;
                 } else { /* we don't have first chunk yet */
                     update_ = false;
@@ -35,7 +34,6 @@ void HTTPResponseParser::parse( const string & buf )
                 }
             } else { /* intermediate or last chunk, update buffer and make response (if last chunk, reset) */
                 if ( body_left_ == 0 ) { /* last chunk of size 0 */
-                    cout << "DID LAST CHUNK" << endl;
                     size_t crlf_loc;
                     if ( has_header( "Trailer" ) ) { /* trailers present */
                         while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) {
@@ -59,14 +57,12 @@ void HTTPResponseParser::parse( const string & buf )
                     update_ = true;
                 } else { /* intermediate chunk */
                     if ( body_left_ <= internal_buffer_.size() ) { /* we have full chunk */
-                        cout << "DEALING WITH INTERMEDIATE CHUNK" << endl;
                         body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) );
                         internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
                         complete_responses_.emplace( HTTPResponse( body_ ) );
                         body_.clear();
                         update_ = true;
                     } else { /* we don't have chunk yet */
-                        cout << "DEALING WITH INTERMEDIATE BUT CANT " << endl;
                         update_ = false;
                         return;
                     }
@@ -116,8 +112,8 @@ void HTTPResponseParser::parse( const string & buf )
                     } else {
                         throw Exception( "Not valid encoding format" );
                     }
-                } else {
-                    throw Exception( "Not valid response format" );
+                } else { /* handle 304 Not Modified */
+                    body_left_ = 0;
                 }
             } else { /* it's a header */
                 headers_.emplace_back( internal_buffer_.substr( 0, first_line_ending ) );
@@ -158,8 +154,6 @@ size_t HTTPResponseParser::get_chunk_size( void )
     chunk_size = internal_buffer_.substr( 0, end_of_line );
     body_.append( internal_buffer_.substr(0, end_of_line + crlf.size() ) );
     internal_buffer_.replace( 0, end_of_line + crlf.size(), string() );
-    cout << "CHUNK LINE: " << chunk_size << endl;
-    cout << "CHUNK SIZE: " << strtol( chunk_size.c_str(), nullptr, 16) << endl;
     return strtol( chunk_size.c_str(), nullptr, 16);
 }
 
