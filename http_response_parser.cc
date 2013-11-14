@@ -13,8 +13,13 @@ void HTTPResponseParser::parse( const string & buf )
 {
     internal_buffer_ += buf;
     while( true ) {
-        cout << "START ITERATION with buffer size: " << internal_buffer_.size() << endl;
         if ( headers_finished_ && chunked_ ) { /* headers are finished and we know body is chunked */
+            if ( update_ ) { /* update body_left_ to handle next chunk */
+                if ( internal_buffer_.find( crlf ) == std::string::npos ) { /* no line for next chunk size yet */
+                    return;
+                }
+                body_left_ = get_chunk_size();
+            }
             if ( first_chunk_ ) { /* update buffer, make response, and set first_chunk to false */
                 if ( body_left_ <= internal_buffer_.size() ) { /* we have first chunk */
                     body_.append( internal_buffer_.substr( 0, body_left_ + crlf.size() ) );
@@ -23,8 +28,9 @@ void HTTPResponseParser::parse( const string & buf )
                     body_.clear();
                     first_chunk_ = false;
                     cout << "DID FIRST CHUNK" << endl;
-                    body_left_ = get_chunk_size();
+                    update_ = true;
                 } else { /* we don't have first chunk yet */
+                    update_ = false;
                     return;
                 }
             } else { /* intermediate or last chunk, update buffer and make response (if last chunk, reset) */
@@ -50,6 +56,7 @@ void HTTPResponseParser::parse( const string & buf )
                     headers_finished_ = false;
                     body_left_ = 0;
                     chunked_ = false;
+                    update_ = true;
                 } else { /* intermediate chunk */
                     if ( body_left_ <= internal_buffer_.size() ) { /* we have full chunk */
                         cout << "DEALING WITH INTERMEDIATE CHUNK" << endl;
@@ -57,9 +64,10 @@ void HTTPResponseParser::parse( const string & buf )
                         internal_buffer_.replace( 0, body_left_ + crlf.size(), string() );
                         complete_responses_.emplace( HTTPResponse( body_ ) );
                         body_.clear();
-                        body_left_ = get_chunk_size();
+                        update_ = true;
                     } else { /* we don't have chunk yet */
                         cout << "DEALING WITH INTERMEDIATE BUT CANT " << endl;
+                        update_ = false;
                         return;
                     }
                 }
@@ -105,7 +113,6 @@ void HTTPResponseParser::parse( const string & buf )
                         chunked_ = true; /* chunked */
                         first_chunk_ = true;
                         internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
-                        body_left_ = get_chunk_size();
                     } else {
                         throw Exception( "Not valid encoding format" );
                     }

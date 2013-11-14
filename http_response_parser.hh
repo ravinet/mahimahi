@@ -33,6 +33,8 @@ private:
 
     bool first_chunk_;
 
+    bool update_ = true;
+
 public:
     HTTPResponseParser() : internal_buffer_(),
 		   status_line_(),
