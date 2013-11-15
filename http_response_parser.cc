@@ -100,19 +100,19 @@ void HTTPResponseParser::parse( const string & buf )
                 internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
             } else if ( first_line_ending == 0 ) { /* end of headers */
                 headers_finished_ = true;
-                if ( has_header( "Content-Length" ) ) { /* not chunked */
-                    body_left_ = body_len();
-                    internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
-                } else if ( has_header( "Transfer-Encoding" ) ) {
+                if ( has_header( "Transfer-Encoding" ) ) {
                     if ( get_header_value( "Transfer-Encoding" ) == "chunked" ) {
                         cout << "CHUNKED" << endl;
                         chunked_ = true; /* chunked */
                         first_chunk_ = true;
                         internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
                     } else {
-                        throw Exception( "Not valid encoding format" );
+                        throw Exception( "Transfer-Encoding", "Not valid encoding format" );
                     }
-                } else { /* handle 304 Not Modified */
+                } else if ( has_header( "Content-Length" ) ) { /* not chunked */
+                    body_left_ = body_len();
+                    internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
+                } else { /* handle 304 Not Modified, 1xx, 204 No Content, and any response to HEAD request */
                     body_left_ = 0;
                 }
             } else { /* it's a header */
