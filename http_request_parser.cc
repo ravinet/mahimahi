@@ -1,112 +1,80 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 #include "http_request_parser.hh"
 #include "exception.hh"
-#include "ezio.hh"
+#include "http_request.hh"
 
 using namespace std;
+
+static const string crlf = "\r\n";
+
+bool HTTPRequestParser::have_complete_line( void ) const
+{
+    size_t first_line_ending = internal_buffer_.find( crlf );
+    return first_line_ending != std::string::npos;
+}
+
+string HTTPRequestParser::pop_line( void )
+{
+    size_t first_line_ending = internal_buffer_.find( crlf );
+    assert( first_line_ending != std::string::npos );
+
+    string first_line( internal_buffer_.substr( 0, first_line_ending ) );
+    internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
+    return first_line;
+}
 
 void HTTPRequestParser::parse( const string & buf )
 {
     /* append buf to internal buffer */
     internal_buffer_ += buf;
 
-    /* determine if full request (headers and body) */
-    while( true ) {
-        /* headers finished, now determine if body is finished */
-        if ( headers_finished_ ) {
-            if ( body_left_ <= internal_buffer_.size() ) { /* body finished */
-                /* Create HTTP request and add to complete_requests */
-                body_.append( internal_buffer_.substr( 0, body_left_ ) ); /* store body */
-                internal_buffer_.replace( 0, body_left_, string() );
-                complete_requests_.emplace( headers_, request_line_, body_ );
+    /* parse as much as we can */
+    while ( parsing_step() ) {}
+}
 
-                /* remove remaining part of current request from internal_buffer and reset */
-                request_line_.erase();
-                headers_.clear();
-                body_.clear(); /* reset body */
-                headers_finished_ = false;
-                body_left_ = 0;
-            } else { /* body_left > internal_buffer.size, so previous request body not complete */
-                return;
+bool HTTPRequestParser::parsing_step( void ) {
+    switch ( request_in_progress_.state() ) {
+    case REQUEST_LINE_PENDING:
+        /* do we have a complete line? */
+        if ( not have_complete_line() ) { return false; }
+
+        /* got line, so add it to pending request */
+        request_in_progress_.set_request_line( pop_line() );
+        return true;
+    case HEADERS_PENDING:
+        /* do we have a complete line? */
+        if ( not have_complete_line() ) { return false; }
+
+        /* is line blank? */
+        {
+            string line( pop_line() );
+            if ( line.empty() ) {
+                request_in_progress_.done_with_headers();
+            } else {
+                request_in_progress_.add_header( line );
             }
         }
+        return true;
 
-        const string crlf = "\r\n";
-
-        /* do we have a complete line? */
-        size_t first_line_ending = internal_buffer_.find( crlf );
-        if ( first_line_ending == std::string::npos ) {
-        /* we don't have a full line yet */
-            return;
+    case BODY_PENDING:
+        if ( internal_buffer_.size() < request_in_progress_.expected_body_size() ) {
+            return false;
         }
-        /* we have a complete line */
-        if ( request_line_.empty() ) { /* request line always comes first */
-            request_line_ = internal_buffer_.substr( 0, first_line_ending );
-        } else if ( first_line_ending == 0 ) { /* end of headers */
-            headers_finished_ = true;
-            body_left_ = body_len();
-        } else { /* it's a header */
-            headers_.emplace_back( internal_buffer_.substr( 0, first_line_ending ) );
-        }
-
-        /* delete parsed line from internal_buffer */
-        internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
-    }
-}
-
-bool HTTPRequestParser::has_header( const string & header_name ) const
-{
-    for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name ) {
-            return true;
-        }
+        /* ready to finish the request */
+        request_in_progress_.append_to_body( internal_buffer_.substr( 0, request_in_progress_.expected_body_size() ) );
+        internal_buffer_.replace( 0, request_in_progress_.expected_body_size(), string() );
+        assert( request_in_progress_.state() == COMPLETE );
+        return true;
+    case COMPLETE:
+        complete_requests_.push( request_in_progress_ );
+        request_in_progress_ = HTTPRequest();
+        return true;
     }
 
+    assert( false );
     return false;
-}
-
-string HTTPRequestParser::get_header_value( const string & header_name ) const
-{
-    for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name ) {
-            return header.value();
-        }
-    }
-
-    throw Exception( "HTTPHeaderParser header not found", header_name );
-}
-
-size_t HTTPRequestParser::body_len( void ) const
-{
-    assert( headers_parsed() );
-    if ( request_line_.substr( 0, 4 ) == "GET " ) {
-        return 0;
-    } else if ( request_line_.substr( 0, 5 ) == "POST " ) {
-        if ( !has_header( "Content-Length" ) ) {
-            throw Exception( "HTTPHeaderParser does not support chunked requests or lowercase headers", "sorry" );
-        }
-
-        //    fprintf( stderr, "CONTENT-LENGTH is %s\n", get_header_value( "Content-Length" ).c_str() );
-        return myatoi( get_header_value( "Content-Length" ) );
-    } else {
-        throw Exception( "Cannot handle HTTP method", request_line_ );
-    }
-}
-
-HTTPRequest HTTPRequestParser::get_request( void )
-{
-    /* make sure there is a new complete request */
-    assert( !empty() );
-
-    HTTPRequest new_request;
-
-    new_request = complete_requests_.front();
-
-    complete_requests_.pop();
-
-    return new_request;
 }

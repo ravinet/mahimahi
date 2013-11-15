@@ -19,9 +19,9 @@ bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
 	http_proxy.hh http_proxy.cc \
 	http_request_parser.hh http_request_parser.cc \
-	http_request.hh http_header.hh \
-	http_header.cc http_response_parser.hh \
-	http_response_parser.cc
+	http_request.hh http_request.cc \
+	http_header.hh http_header.cc \
+	http_response_parser.hh http_response_parser.cc
 recordshell_LDADD = -lrt
 recordshell_LDFLAGS = -pthread
 

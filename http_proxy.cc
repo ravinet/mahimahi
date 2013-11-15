@@ -69,8 +69,9 @@ void HTTPProxy::handle_tcp( void )
                                                    string buffer = client.read();
                                                    if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
                                                    from_client_parser.parse( buffer );
-                                                   while ( !from_client_parser.empty() ) {
-                                                       destination.write( from_client_parser.get_request().str() );
+                                                   while ( not from_client_parser.empty() ) {
+                                                       destination.write( from_client_parser.front().str() );
+                                                       from_client_parser.pop();
                                                    }
                                                    return ResultType::Continue; } ) );
 
