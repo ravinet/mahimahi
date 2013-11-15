@@ -5,47 +5,45 @@
 
 #include <vector>
 #include <string>
+#include <cassert>
 
 #include "http_header.hh"
+
+enum RequestState { REQUEST_LINE_PENDING, HEADERS_PENDING, BODY_PENDING, COMPLETE };
 
 class HTTPRequest
 {
 private:
-    std::vector< HTTPHeader > complete_headers_;
-
     std::string request_line_;
+
+    std::vector< HTTPHeader > headers_;
 
     std::string body_;
 
+    RequestState state_;
+
+    size_t expected_body_size_;
+
+    size_t calculate_expected_body_size( void ) const;
+
 public:
-    HTTPRequest( const std::vector< HTTPHeader > headers_, const std::string request, const std::string body )
-        : complete_headers_( headers_ ),
-          request_line_( request ),
-          body_( body )
+    HTTPRequest() : request_line_(), headers_(),
+                    body_(), state_( REQUEST_LINE_PENDING ), expected_body_size_()
     {}
 
-    /* default constructor to create temp in parser */
-    HTTPRequest( void )
-        : complete_headers_(),
-          request_line_(),
-          body_()
-    {}
+    void set_request_line( const std::string & s_request );
+    void add_header( const std::string & str );
+    void done_with_headers( void );
+    void append_to_body( const std::string & str );
 
-    std::string str( void ) {
-        std::string request;
+    size_t expected_body_size( void ) const { assert( state_ > HEADERS_PENDING ); return expected_body_size_; }
 
-        /* add request line to request */
-        request.append( request_line_ + "\r\n" );
+    const RequestState & state( void ) const { return state_; }
 
-        /* iterate through headers and add "key: value\r\n" to request */
-        for ( const auto & header : complete_headers_ ) {
-            request.append( header.key() + ": " + header.value() + "\r\n" );
-        }
+    std::string str( void ) const;
 
-        /* separate headers and body and then add body to request */
-        request.append( "\r\n" + body_ );
-        return request;
-    }
+    bool has_header( const std::string & header_name ) const;
+    const std::string & get_header_value( const std::string & header_name ) const;
 };
 
 #endif /* HTTP_REQUEST_HH */

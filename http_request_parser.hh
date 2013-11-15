@@ -15,44 +15,23 @@ class HTTPRequestParser
 private:
     std::string internal_buffer_;
 
-    std::string request_line_;
-
-    std::vector< HTTPHeader > headers_;
-
-    bool headers_finished_;
-
-    std::string body_;
-
-    size_t body_left_;
-
-    size_t body_len( void ) const;
+    HTTPRequest request_in_progress_;
 
     std::queue< HTTPRequest > complete_requests_;
 
+    bool parsing_step( void );
+
+    bool have_complete_line( void ) const;
+    std::string pop_line( void );
+
 public:
-    HTTPRequestParser() : internal_buffer_(),
-                          request_line_(),
-                          headers_(),
-                          headers_finished_( false ),
-                          body_(),
-                          body_left_( 0 ),
-                          complete_requests_()
-    {}
+    HTTPRequestParser() : internal_buffer_(), request_in_progress_(), complete_requests_() {}
 
     void parse( const std::string & buf );
 
-    bool headers_parsed( void ) const { return headers_finished_; }
-
-    std::string get_header_value( const std::string & header_name ) const;
-
-    bool has_header( const std::string & header_name ) const;
-
-    const std::string & request_line( void ) const { return request_line_; }
-
     bool empty( void ) const { return complete_requests_.empty(); }
-
-    HTTPRequest get_request( void );
-
+    void pop( void ) { complete_requests_.pop(); }
+    HTTPRequest & front( void ) { return complete_requests_.front(); }
 };
 
 #endif /* HTTP_REQUEST_PARSER_HH */

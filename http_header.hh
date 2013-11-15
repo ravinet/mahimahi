@@ -8,13 +8,15 @@
 class HTTPHeader
 {
 private:
-  std::string key_, value_;
+    std::string key_, value_;
 
 public:
-  HTTPHeader( const std::string & buf );
+    HTTPHeader( const std::string & buf );
 
-  std::string key( void ) const { return key_; }
-  std::string value( void ) const { return value_; }
+    const std::string & key( void ) const { return key_; }
+    const std::string & value( void ) const { return value_; }
+
+    std::string str( void ) const { return key_ + ": " + value_; }
 };
 
 #endif /* HTTP_HEADER_HH */
