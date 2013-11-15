@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef HTTP_PARSER_HH
-#define HTTP_PARSER_HH
+#ifndef HTTP_REQUEST_PARSER_HH
+#define HTTP_REQUEST_PARSER_HH
 
 #include <vector>
 #include <string>
@@ -10,7 +10,7 @@
 #include "http_header.hh"
 #include "http_request.hh"
 
-class HTTPParser
+class HTTPRequestParser
 {
 private:
     std::string internal_buffer_;
@@ -30,13 +30,13 @@ private:
     std::queue< HTTPRequest > complete_requests_;
 
 public:
-    HTTPParser() : internal_buffer_(),
-		   request_line_(),
-		   headers_(),
-		   headers_finished_( false ),
-                   body_(),
-		   body_left_( 0 ),
-                   complete_requests_()
+    HTTPRequestParser() : internal_buffer_(),
+                          request_line_(),
+                          headers_(),
+                          headers_finished_( false ),
+                          body_(),
+                          body_left_( 0 ),
+                          complete_requests_()
     {}
 
     void parse( const std::string & buf );
@@ -55,4 +55,4 @@ public:
 
 };
 
-#endif /* HTTP_PARSER_HH */
+#endif /* HTTP_REQUEST_PARSER_HH */

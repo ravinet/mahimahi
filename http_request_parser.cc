@@ -3,13 +3,13 @@
 #include <string>
 #include <assert.h>
 
-#include "http_parser.hh"
+#include "http_request_parser.hh"
 #include "exception.hh"
 #include "ezio.hh"
 
 using namespace std;
 
-void HTTPParser::parse( const string & buf )
+void HTTPRequestParser::parse( const string & buf )
 {
     /* append buf to internal buffer */
     internal_buffer_ += buf;
@@ -58,7 +58,7 @@ void HTTPParser::parse( const string & buf )
     }
 }
 
-bool HTTPParser::has_header( const string & header_name ) const
+bool HTTPRequestParser::has_header( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
         if ( header.key() == header_name ) {
@@ -69,7 +69,7 @@ bool HTTPParser::has_header( const string & header_name ) const
     return false;
 }
 
-string HTTPParser::get_header_value( const string & header_name ) const
+string HTTPRequestParser::get_header_value( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
         if ( header.key() == header_name ) {
@@ -80,7 +80,7 @@ string HTTPParser::get_header_value( const string & header_name ) const
     throw Exception( "HTTPHeaderParser header not found", header_name );
 }
 
-size_t HTTPParser::body_len( void ) const
+size_t HTTPRequestParser::body_len( void ) const
 {
     assert( headers_parsed() );
     if ( request_line_.substr( 0, 4 ) == "GET " ) {
@@ -97,7 +97,7 @@ size_t HTTPParser::body_len( void ) const
     }
 }
 
-HTTPRequest HTTPParser::get_request( void )
+HTTPRequest HTTPRequestParser::get_request( void )
 {
     /* make sure there is a new complete request */
     assert( !empty() );
