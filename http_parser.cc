@@ -22,7 +22,7 @@ void HTTPParser::parse( const string & buf )
                 /* Create HTTP request and add to complete_requests */
                 body_.append( internal_buffer_.substr( 0, body_left_ ) ); /* store body */
                 internal_buffer_.replace( 0, body_left_, string() );
-                complete_requests_.emplace( HTTPRequest( headers_, request_line_, body_ ) );
+                complete_requests_.emplace( headers_, request_line_, body_ );
 
                 /* remove remaining part of current request from internal_buffer and reset */
                 request_line_.erase();
