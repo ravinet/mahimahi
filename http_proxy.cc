@@ -18,7 +18,7 @@
 #include "http_proxy.hh"
 #include "poller.hh"
 #include "bytestream_queue.hh"
-#include "http_parser.hh"
+#include "http_request_parser.hh"
 #include "http_response_parser.hh"
 
 using namespace std;
@@ -45,7 +45,7 @@ void HTTPProxy::handle_tcp( void )
 
                 Poller poller;
 
-                HTTPParser from_client_parser;
+                HTTPRequestParser from_client_parser;
 
                 HTTPResponseParser from_destination_parser;
 
