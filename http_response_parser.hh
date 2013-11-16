@@ -9,64 +9,36 @@
 
 #include "http_header.hh"
 #include "http_response.hh"
+#include "http_request.hh"
 
 class HTTPResponseParser
 {
 private:
-    const std::string crlf = "\r\n";
-
     std::string internal_buffer_;
 
-    std::string status_line_;
-
-    std::vector< HTTPHeader > headers_;
-
-    bool headers_finished_;
-
-    std::string body_;
-
-    size_t body_left_;
+    HTTPResponse response_in_progress_;
 
     std::queue< HTTPResponse > complete_responses_;
 
-    bool chunked_;
+    bool parsing_step( void );
 
-    bool first_chunk_;
+    bool have_complete_line( void ) const;
+    std::string pop_line( void );
 
-    bool update_ = true;
+    /* Need this to handle RFC 2616 section 4.4 rule 1 */
+    std::queue< bool > requests_were_head_;
 
 public:
-    HTTPResponseParser() : internal_buffer_(),
-		   status_line_(),
-		   headers_(),
-		   headers_finished_( false ),
-                   body_(),
-		   body_left_( 0 ),
-                   complete_responses_(),
-                   chunked_( false ),
-                   first_chunk_( false )
-    {}
+    HTTPResponseParser() : internal_buffer_(), response_in_progress_(),
+                           complete_responses_(), requests_were_head_() {}
 
     void parse( const std::string & buf );
 
-    bool headers_parsed( void ) const { return headers_finished_; }
-
-    std::string get_header_value( const std::string & header_name ) const;
-
-    bool has_header( const std::string & header_name ) const;
-
-    const std::string & status_line( void ) const { return status_line_; }
-
     bool empty( void ) const { return complete_responses_.empty(); }
+    void pop( void ) { complete_responses_.pop(); }
+    HTTPResponse & front( void ) { return complete_responses_.front(); }
 
-    /* gets chunk size and appends chunk size line to body_ */
-    size_t get_chunk_size( void );
-
-    /* returns body size if response not chunked */
-    size_t body_len( void );
-
-    HTTPResponse get_response( void );
-
+    void new_request_arrived( const HTTPRequest & request );
 };
 
 #endif /* HTTP_RESPONSE_PARSER_HH */

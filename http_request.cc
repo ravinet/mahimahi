@@ -62,6 +62,11 @@ string HTTPRequest::str( void ) const
     return ret;
 }
 
+bool HTTPRequest::is_head( void ) const
+{
+    return request_line_.substr( 0, 5 ) == "HEAD ";
+}
+
 size_t HTTPRequest::calculate_expected_body_size( void ) const
 {
     assert( state_ > HEADERS_PENDING );

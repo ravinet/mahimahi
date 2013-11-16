@@ -3,7 +3,7 @@
 #ifndef HTTP_PROXY_HH
 #define HTTP_PROXY_HH
 
-#include <fstream>
+#include <queue>
 
 #include "socket.hh"
 

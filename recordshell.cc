@@ -70,6 +70,10 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         ChildProcess container_process( [&]() {
+                /* bring up localhost */
+                interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
                 /* create DNS proxy if nameserver address is local */
                 auto dns_inside = DNSProxy::maybe_proxy( nameserver,
                                                          dns_outside->udp_listener().local_addr(),
@@ -96,11 +100,6 @@ int main( int argc, char *argv[] )
 
         /* bring up ingress */
         in_network_namespace( container_process.pid(), [&] () {
-                /* bring up localhost */
-                Socket ioctl_socket( UDP );
-                interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-
                 /* bring up veth device */
                 assign_address( ingress_name, ingress_addr, egress_addr );
 
@@ -112,7 +111,7 @@ int main( int argc, char *argv[] )
                 route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                 route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
+                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
             } );
 
         return eventloop( move( dns_outside ), container_process, move( http_proxy ) );

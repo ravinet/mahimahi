@@ -28,7 +28,11 @@ HTTPHeader::HTTPHeader( const string & buf )
 
     /* strip whitespace */
     size_t first_nonspace = value_temp.find_first_not_of( " " );
-    value_ = value_temp.substr( first_nonspace );
+    if ( first_nonspace == std::string::npos ) { /* handle case where value is only space */
+        value_ = value_temp;
+    } else {
+        value_ = value_temp.substr( first_nonspace );
+    }
 
     /*
     fprintf( stderr, "Got header. key=[[%s]] value = [[%s]]\n",

@@ -5,64 +5,81 @@
 
 #include <vector>
 #include <string>
+#include <cassert>
 
 #include "http_header.hh"
+#include "body_parser.hh"
+
+enum ResponseState { STATUS_LINE_PENDING, RESPONSE_HEADERS_PENDING, RESPONSE_BODY_PENDING, RESPONSE_COMPLETE };
 
 class HTTPResponse
 {
 private:
-    std::vector< HTTPHeader > complete_headers_;
-
     std::string status_line_;
+
+    std::vector< HTTPHeader > headers_;
 
     std::string body_;
 
-    bool full_;
+    ResponseState state_;
+
+    size_t expected_body_size_;
+    bool headers_specify_size_;
+
+    void calculate_expected_body_size( void );
+
+    std::string status_code( void ) const;
+
+    bool request_was_head_;
+
+    BodyType body_type_;
+
+    std::string lower_case( const std::string & header_name ) const;
+
+    std::string get_boundary( void ) const;
+
+    std::string boundary_;
+
+    BodyParser body_parser_;
+
+    bool trailers_present_;
+
+    bool first_read_;
 
 public:
-    /* constructor for full response or first chunked response */
-    HTTPResponse( const std::vector< HTTPHeader > headers_, const std::string status, const std::string body )
-        : complete_headers_( headers_ ),
-          status_line_( status ),
-          body_( body ),
-          full_( true )
-    {}
-
-    /* default constructor to create temp in parser */
     HTTPResponse( void )
-        : complete_headers_(),
-          status_line_(),
+        : status_line_(),
+          headers_(),
           body_(),
-          full_()
+          state_( STATUS_LINE_PENDING ),
+          expected_body_size_(),
+          headers_specify_size_(),
+          request_was_head_( false ),
+          body_type_(),
+          boundary_(),
+          body_parser_(),
+          trailers_present_( false ),
+          first_read_( true )
     {}
 
-    /* constructor for intermediate/last chunk */
-    HTTPResponse( const std::string body )
-        : complete_headers_(),
-          status_line_(),
-          body_( body ),
-          full_( false )
-    {}
+    void set_status_line( const std::string & s_status, const bool request_was_head );
+    void add_header( const std::string & str );
+    void done_with_headers( void );
+    size_t read( std::string & str );
+    void done_with_body( void );
 
-    std::string str( void ) {
-        std::string response;
+    size_t expected_body_size( void ) const { assert( state_ > RESPONSE_HEADERS_PENDING ); return expected_body_size_; }
 
-        /* check if response is a full response/first chunk or intermediate/last chunk */
-        if ( full_ ) {
-            /* add request line to response */
-            response.append( status_line_ + "\r\n" );
+    const ResponseState & state( void ) const { return state_; }
 
-            /* iterate through headers and add "key: value\r\n" to response */
-            for ( const auto & header : complete_headers_ ) {
-                response.append( header.key() + ": " + header.value() + "\r\n" );
-            }
-            response.append( "\r\n" );
-        }
+    std::string str( void ) const;
 
-        /* add body to response */
-        response.append( body_ );
-        return response;
-    }
+    void eof( void ) { state_ = RESPONSE_COMPLETE; }
+
+    bool has_header( const std::string & header_name ) const;
+    const std::string & get_header_value( const std::string & header_name ) const;
+
+    bool body_size_is_known( void ) const { assert( state_ > RESPONSE_HEADERS_PENDING ); return headers_specify_size_; }
 };
 
 #endif /* HTTP_RESPONSE_HH */

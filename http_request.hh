@@ -44,6 +44,8 @@ public:
 
     bool has_header( const std::string & header_name ) const;
     const std::string & get_header_value( const std::string & header_name ) const;
+
+    bool is_head( void ) const;
 };
 
 #endif /* HTTP_REQUEST_HH */
