@@ -24,8 +24,10 @@ private:
     bool have_complete_line( void ) const;
     std::string pop_line( void );
 
+    bool update_;
+
 public:
-    HTTPResponseParser() : internal_buffer_(), response_in_progress_(), complete_responses_() {}
+    HTTPResponseParser() : internal_buffer_(), response_in_progress_(), complete_responses_(), update_( true ) {}
 
     void parse( const std::string & buf );
 

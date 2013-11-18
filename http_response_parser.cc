@@ -61,14 +61,52 @@ bool HTTPResponseParser::parsing_step( void ) {
         return true;
 
     case RESPONSE_BODY_PENDING:
+        if ( response_in_progress_.is_chunked() && update_) {
+            if ( not have_complete_line() ) { return false; }
+            string size_line( pop_line() );
+            response_in_progress_.get_chunk_size( size_line );
+            response_in_progress_.append_to_body( size_line + crlf );
+        }
         if ( internal_buffer_.size() < response_in_progress_.expected_body_size() ) {
+            if ( response_in_progress_.is_chunked() ) {
+                update_ = false;
+            }
             return false;
         }
-        /* ready to finish the request */
-        response_in_progress_.append_to_body( internal_buffer_.substr( 0, response_in_progress_.expected_body_size() ) );
-        internal_buffer_.replace( 0, response_in_progress_.expected_body_size(), string() );
-        assert( response_in_progress_.state() == RESPONSE_COMPLETE );
-        return true;
+        if ( response_in_progress_.is_chunked() ) { /* chunked */
+            if ( response_in_progress_.expected_body_size() != 0 ) {
+                response_in_progress_.append_to_body( internal_buffer_.substr( 0, response_in_progress_.expected_body_size() ) );
+                response_in_progress_.append_to_body( crlf );
+                internal_buffer_.replace( 0, response_in_progress_.expected_body_size() + crlf.size(), string() );
+                update_ = true;
+                return true;
+            }
+            else { /* last chunk */
+                if ( update_ ) {
+                    response_in_progress_.append_to_body( internal_buffer_.substr( 0, response_in_progress_.expected_body_size() ) );
+                    response_in_progress_.append_to_body( crlf );
+                    internal_buffer_.replace( 0, response_in_progress_.expected_body_size() + crlf.size(), string() );
+                }
+                if ( response_in_progress_.has_header( "Trailer" ) ) { /* trailers present */
+                    size_t crlf_loc;
+                    while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) {
+                        if ( not have_complete_line() ) { update_ = false; return false; }
+                        response_in_progress_.append_to_body( internal_buffer_.substr( 0, crlf_loc + crlf.size() ) );
+                        internal_buffer_.replace( 0, crlf_loc + crlf.size(), string() );
+                    }
+                }
+                response_in_progress_.done_with_body();
+                update_ = true;
+                return true;
+            }
+        }
+        else { /* not chunked */
+            /* ready to finish the request */
+            response_in_progress_.append_to_body( internal_buffer_.substr( 0, response_in_progress_.expected_body_size() ) );
+            internal_buffer_.replace( 0, response_in_progress_.expected_body_size(), string() );
+            assert( response_in_progress_.state() == RESPONSE_COMPLETE );
+            return true;
+        }
     case RESPONSE_COMPLETE:
         complete_responses_.push( response_in_progress_ );
         response_in_progress_ = HTTPResponse();
