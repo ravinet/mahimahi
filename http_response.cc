@@ -82,11 +82,14 @@ void HTTPResponse::get_chunk_size( const string & size_line )
 size_t HTTPResponse::calculate_expected_body_size( void ) const
 {
     assert( state_ > RESPONSE_HEADERS_PENDING );
-    
-    if ( has_header( "Content-Length" ) ) { /* not chunked */
-        return myatoi( get_header_value( "Content-Length" ) );
-    } else { /* handle 304 Not Modified, 1xx, 204 No Content, and any response to HEAD request */
+    assert( !is_chunked() );
+    string status_code = status_line_.substr( status_line_.find( " " ) + 1, 3 );
+    if ( status_code.substr( 0, 1 ) == "1" or status_code == "204" or status_code == "304" ) { /* body size is 0 if 1xx, 204, or 304 */
         return 0;
+    } else if ( has_header( "Content-Length" ) ) { /* not chunked: body size is value of Content-Length" */
+        return myatoi( get_header_value( "Content-Length" ) );
+    } else {
+        throw Exception( "NOT HANDLED" );
     }
 }
 
