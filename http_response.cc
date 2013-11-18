@@ -26,9 +26,8 @@ void HTTPResponse::done_with_headers( void )
 
     if ( not is_chunked() ) {
         expected_body_size_ = calculate_expected_body_size();
-    }
-    else { /* chunked */
-        cout << "CHUNKED: ";
+    } else { /* chunked */
+        cout << "CHUNKED" << endl;
     } 
 }
 
@@ -50,36 +49,30 @@ void HTTPResponse::append_to_body( const std::string & str )
             state_ = RESPONSE_COMPLETE;
         }
     }
-    /*if ( expected_body_size_ == 0 ) { // done with last chunk
-        state_ = RESPONSE_COMPLETE;
-    }*/
 }
 
 string HTTPResponse::str( void ) const
 {
-   assert( state_ == RESPONSE_COMPLETE );
+    assert( state_ == RESPONSE_COMPLETE );
 
     const string CRLF = "\r\n";
 
-    string ret;
+    /* start with status line */
+    string ret( status_line_ + CRLF );
 
-    /* check if response is a full response/first chunk or intermediate/last chunk */
-        /* add request line to response */
-        ret.append( status_line_ + CRLF );
-
-        /* iterate through headers and add "key: value\r\n" to response */
-        for ( const auto & header : headers_ ) {
-            ret.append( header.str() + CRLF );
-        }
-        ret.append( CRLF );
-   // }
+    /* iterate through headers and add "key: value\r\n" to response */
+    for ( const auto & header : headers_ ) {
+        ret.append( header.str() + CRLF );
+    }
+    ret.append( CRLF );
 
     /* add body to response */
     ret.append( body_ );
+
     return ret;
 }
 
-void HTTPResponse::get_chunk_size( string size_line )
+void HTTPResponse::get_chunk_size( const string & size_line )
 {
     assert( state_ > RESPONSE_HEADERS_PENDING );
 

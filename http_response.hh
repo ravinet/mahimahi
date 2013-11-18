@@ -43,7 +43,7 @@ public:
 
     size_t expected_body_size( void ) const { assert( state_ > RESPONSE_HEADERS_PENDING ); return expected_body_size_; }
 
-    void get_chunk_size( std::string size_line );
+    void get_chunk_size( const std::string & size_line );
 
     const ResponseState & state( void ) const { return state_; }
 
