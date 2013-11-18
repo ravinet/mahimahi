@@ -82,19 +82,17 @@ bool HTTPResponseParser::parsing_step( void ) {
                 return true;
             }
             else { /* last chunk */
-                if ( update_ ) {
-                    response_in_progress_.append_to_body( internal_buffer_.substr( 0, response_in_progress_.expected_body_size() ) );
-                    response_in_progress_.append_to_body( crlf );
-                    internal_buffer_.replace( 0, response_in_progress_.expected_body_size() + crlf.size(), string() );
-                }
                 if ( response_in_progress_.has_header( "Trailer" ) ) { /* trailers present */
                     size_t crlf_loc;
-                    while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) {
+                    while ( ( crlf_loc = internal_buffer_.find( crlf ) ) != 0 ) { /* add trailer line to body */
                         if ( not have_complete_line() ) { update_ = false; return false; }
                         response_in_progress_.append_to_body( internal_buffer_.substr( 0, crlf_loc + crlf.size() ) );
                         internal_buffer_.replace( 0, crlf_loc + crlf.size(), string() );
                     }
                 }
+                assert( internal_buffer_.find( crlf ) == 0 );
+                response_in_progress_.append_to_body( crlf ); /* add final CRLF */
+                internal_buffer_.replace(0, crlf.size(), string() );
                 response_in_progress_.done_with_body();
                 update_ = true;
                 return true;
