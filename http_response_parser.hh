@@ -9,6 +9,7 @@
 
 #include "http_header.hh"
 #include "http_response.hh"
+#include "http_request.hh"
 
 class HTTPResponseParser
 {
@@ -24,18 +25,20 @@ private:
     bool have_complete_line( void ) const;
     std::string pop_line( void );
 
-    bool four_full_lines( void );
-
-    bool update_;
+    /* Need this to handle RFC 2616 section 4.4 rule 1 */
+    std::queue< bool > requests_were_head_;
 
 public:
-    HTTPResponseParser() : internal_buffer_(), response_in_progress_(), complete_responses_(), update_( true ) {}
+    HTTPResponseParser() : internal_buffer_(), response_in_progress_(),
+                           complete_responses_(), requests_were_head_() {}
 
     void parse( const std::string & buf );
 
     bool empty( void ) const { return complete_responses_.empty(); }
     void pop( void ) { complete_responses_.pop(); }
     HTTPResponse & front( void ) { return complete_responses_.front(); }
+
+    void new_request_arrived( const HTTPRequest & request );
 };
 
 #endif /* HTTP_RESPONSE_PARSER_HH */

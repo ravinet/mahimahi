@@ -72,6 +72,7 @@ void HTTPProxy::handle_tcp( void )
                                                    from_client_parser.parse( buffer );
                                                    while ( not from_client_parser.empty() ) {
                                                        destination.write( from_client_parser.front().str() );
+                                                       from_destination_parser.new_request_arrived( from_client_parser.front() );
                                                        from_client_parser.pop();
                                                    }
                                                    return ResultType::Continue; } ) );

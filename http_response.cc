@@ -3,14 +3,17 @@
 #include "http_response.hh"
 #include "exception.hh"
 #include "ezio.hh"
+#include "tokenize.hh"
+#include "mime_type.hh"
 
 using namespace std;
 
-void HTTPResponse::set_status_line( const std::string & s_response )
+void HTTPResponse::set_status_line( const std::string & s_response, const bool request_was_head )
 {
     assert( state_ == STATUS_LINE_PENDING );
     status_line_ = s_response;
     state_ = RESPONSE_HEADERS_PENDING;
+    request_was_head_ = request_was_head;
 }
 
 void HTTPResponse::add_header( const std::string & str )
@@ -24,6 +27,7 @@ void HTTPResponse::done_with_headers( void )
     assert( state_ == RESPONSE_HEADERS_PENDING );
     state_ = RESPONSE_BODY_PENDING;
 
+#if 0
     if ( not is_chunked() ) {
         expected_body_size_ = calculate_expected_body_size();
     } else if ( is_chunked() ) { /* chunked */
@@ -31,6 +35,7 @@ void HTTPResponse::done_with_headers( void )
     } else { /* multipart */
         cout << "MULTIPART" << endl;
     }
+#endif
 }
 
 void HTTPResponse::done_with_body( void )
@@ -40,10 +45,14 @@ void HTTPResponse::done_with_body( void )
     state_ = RESPONSE_COMPLETE;
 
 }
-void HTTPResponse::append_to_body( const std::string & str )
+
+size_t HTTPResponse::read( const std::string & str )
 {
     assert( state_ == RESPONSE_BODY_PENDING );
     body_.append( str );
+    return str.size(); /* XXX need to handle case where we don't read the whole thing */
+
+#if 0
     if ( !is_chunked() ) {
         if ( body_.size() > expected_body_size_ ) {
             throw Exception( "HTTPResponse", "body was bigger than expected" );
@@ -51,6 +60,7 @@ void HTTPResponse::append_to_body( const std::string & str )
             state_ = RESPONSE_COMPLETE;
         }
     }
+#endif
 }
 
 string HTTPResponse::str( void ) const
@@ -74,79 +84,6 @@ string HTTPResponse::str( void ) const
     return ret;
 }
 
-void HTTPResponse::get_chunk_size( const string & size_line )
-{
-    assert( state_ > RESPONSE_HEADERS_PENDING );
-
-    expected_body_size_ = strtol( size_line.c_str(), nullptr, 16 );
-}
-
-void HTTPResponse::get_part_size( const string & size_line )
-{
-    assert( state_ > RESPONSE_HEADERS_PENDING );
-    assert( is_multipart() );
-
-    /* Content-range: bytes 500-899/8000 */
-    size_t dash = size_line.find( "-" );
-    size_t range_start = size_line.find( "bytes" ) + 6;
-    size_t range_end = size_line.find( "/" ) - 1;
-
-    string lower_bound = size_line.substr( range_start, dash - range_start );
-    string upper_bound = size_line.substr( dash + 1, range_end - dash );
-
-    expected_body_size_ = strtol(upper_bound.c_str(), nullptr, 16 ) - strtol( lower_bound.c_str(), nullptr, 16 );
-}
-
-string HTTPResponse::get_boundary( void ) const
-{
-    assert( state_ > STATUS_LINE_PENDING );
-    assert( is_multipart() );
-
-    string content_type = get_header_value( "Content-type" );
-    size_t boundary_start = content_type.find( "boundary=" ) + 9;
-    return ( string( "--" ) + content_type.substr( boundary_start, content_type.length() - boundary_start ) );
-}
-
-size_t HTTPResponse::calculate_expected_body_size( void ) const
-{
-    assert( state_ > RESPONSE_HEADERS_PENDING );
-    assert( !is_chunked() );
-    string status_code = status_line_.substr( status_line_.find( " " ) + 1, 3 );
-    if ( status_code.substr( 0, 1 ) == "1" or status_code == "204" or status_code == "304" ) { /* body size is 0 if 1xx, 204, or 304 */
-        return 0;
-    } else if ( has_header( "Content-Length" ) ) { /* not chunked: body size is value of Content-Length" */
-        return myatoi( get_header_value( "Content-Length" ) );
-    } else { /* Response to Head request */
-        throw Exception( "NOT HANDLED: ", status_line_ );
-    }
-}
-
-bool HTTPResponse::is_chunked( void ) const
-{
-    assert( state_ > STATUS_LINE_PENDING );
-    if ( has_header( "Transfer-Encoding" ) ) {
-        if ( get_header_value( "Transfer-Encoding" ) == "chunked" ) {
-            return true;
-        }
-        else {
-            throw Exception( "Transfer-Encoding: " + get_header_value( "Transfer-Encoding" ), "Not valid encoding format" );
-        }
-    }
-    return false;
-}
-
-bool HTTPResponse::is_multipart( void ) const
-{
-    assert( state_ > STATUS_LINE_PENDING );
-    if ( has_header( "Content-type" ) ) {
-        if ( get_header_value( "Content-type" ).find( "multipart/byteranges" ) != std::string::npos ) {
-            return true;
-        }
-    }
-    return false;
-
-}
-
 bool HTTPResponse::has_header( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
@@ -167,4 +104,56 @@ const string & HTTPResponse::get_header_value( const string & header_name ) cons
     }
 
     throw Exception( "HTTPHeaderParser header not found", header_name );
+}
+
+string HTTPResponse::status_code( void ) const
+{
+    assert( state_ > STATUS_LINE_PENDING );
+    auto tokens = split( status_line_, " " );
+    if ( tokens.size() != 3 ) {
+        throw Exception( "HTTPResponse", "Invalid status line" );
+    }
+
+    return tokens.at( 1 );
+}
+
+void HTTPResponse::calculate_expected_body_size( void )
+{
+    assert( state_ > RESPONSE_HEADERS_PENDING );
+
+    /* implement rules of RFC 2616 section 4.4 ("Message Length") */
+
+    if ( status_code().at( 0 ) == '1'
+         or status_code() == "204"
+         or status_code() == "304"
+         or request_was_head_ ) {
+
+        /* Rule 1 */
+
+        headers_specify_size_ = true;
+        expected_body_size_ = 0;
+    } else if ( has_header( "Transfer-Encoding" )
+                and get_header_value( "Transfer-Encoding" ) != "identity" ) {
+
+        /* Rule 2 */
+
+        headers_specify_size_ = false;
+    } else if ( (not has_header( "Transfer-Encoding" ) )
+                and has_header( "Content-Length" ) ) {
+
+        /* Rule 3 */
+
+        headers_specify_size_ = true;
+        expected_body_size_ = myatoi( get_header_value( "Content-Length" ) );
+    } else if ( has_header( "Content-Type" )
+                and MIMEType( get_header_value( "Content-Type" ) ).type() == "multipart/byteranges" ) {
+
+        /* Rule 4 */
+
+        headers_specify_size_ = false;
+    } else {
+
+        /* Rule 5 */
+        headers_specify_size_ = false;
+    }
 }

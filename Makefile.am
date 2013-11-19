@@ -22,7 +22,8 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
 	http_header.hh http_header.cc \
-	http_response_parser.hh http_response_parser.cc
+	http_response_parser.hh http_response_parser.cc \
+	tokenize.hh mime_type.hh mime_type.cc
 recordshell_LDADD = -lrt
 recordshell_LDFLAGS = -pthread
 
