@@ -26,9 +26,11 @@ void HTTPResponse::done_with_headers( void )
 
     if ( not is_chunked() ) {
         expected_body_size_ = calculate_expected_body_size();
-    } else { /* chunked */
+    } else if ( is_chunked() ) { /* chunked */
         cout << "CHUNKED" << endl;
-    } 
+    } else { /* multipart */
+        cout << "MULTIPART" << endl;
+    }
 }
 
 void HTTPResponse::done_with_body( void )
@@ -79,6 +81,32 @@ void HTTPResponse::get_chunk_size( const string & size_line )
     expected_body_size_ = strtol( size_line.c_str(), nullptr, 16 );
 }
 
+void HTTPResponse::get_part_size( const string & size_line )
+{
+    assert( state_ > RESPONSE_HEADERS_PENDING );
+    assert( is_multipart() );
+
+    /* Content-range: bytes 500-899/8000 */
+    size_t dash = size_line.find( "-" );
+    size_t range_start = size_line.find( "bytes" ) + 6;
+    size_t range_end = size_line.find( "/" ) - 1;
+
+    string lower_bound = size_line.substr( range_start, dash - range_start );
+    string upper_bound = size_line.substr( dash + 1, range_end - dash );
+
+    expected_body_size_ = strtol(upper_bound.c_str(), nullptr, 16 ) - strtol( lower_bound.c_str(), nullptr, 16 );
+}
+
+string HTTPResponse::get_boundary( void ) const
+{
+    assert( state_ > STATUS_LINE_PENDING );
+    assert( is_multipart() );
+
+    string content_type = get_header_value( "Content-type" );
+    size_t boundary_start = content_type.find( "boundary=" ) + 9;
+    return ( string( "--" ) + content_type.substr( boundary_start, content_type.length() - boundary_start ) );
+}
+
 size_t HTTPResponse::calculate_expected_body_size( void ) const
 {
     assert( state_ > RESPONSE_HEADERS_PENDING );
@@ -88,8 +116,8 @@ size_t HTTPResponse::calculate_expected_body_size( void ) const
         return 0;
     } else if ( has_header( "Content-Length" ) ) { /* not chunked: body size is value of Content-Length" */
         return myatoi( get_header_value( "Content-Length" ) );
-    } else {
-        throw Exception( "NOT HANDLED" );
+    } else { /* Response to Head request */
+        throw Exception( "NOT HANDLED: ", status_line_ );
     }
 }
 
@@ -105,6 +133,18 @@ bool HTTPResponse::is_chunked( void ) const
         }
     }
     return false;
+}
+
+bool HTTPResponse::is_multipart( void ) const
+{
+    assert( state_ > STATUS_LINE_PENDING );
+    if ( has_header( "Content-type" ) ) {
+        if ( get_header_value( "Content-type" ).find( "multipart/byteranges" ) != std::string::npos ) {
+            return true;
+        }
+    }
+    return false;
+
 }
 
 bool HTTPResponse::has_header( const string & header_name ) const

@@ -24,6 +24,8 @@ private:
     bool have_complete_line( void ) const;
     std::string pop_line( void );
 
+    bool four_full_lines( void );
+
     bool update_;
 
 public:

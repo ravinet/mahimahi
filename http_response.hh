@@ -45,6 +45,12 @@ public:
 
     void get_chunk_size( const std::string & size_line );
 
+    std::string get_boundary( void ) const;
+
+    bool is_multipart( void ) const;
+
+    void get_part_size(const std::string & size_line);
+
     const ResponseState & state( void ) const { return state_; }
 
     std::string str( void ) const;
