@@ -49,15 +49,15 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTPResponseParser from_destination_parser;
 
-                /* Make bytestream_queue for source->dest and dest->source */
-                ByteStreamQueue from_destination( ezio::read_chunk_size );
-
                 /* poll on original connect socket and new connection socket to ferry packets */
 
                 poller.add_action( Poller::Action( destination.fd(), Direction::In,
                                                    [&] () {
                                                    string buffer = destination.read();
-                                                   if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
+                                                   /* we rely here on parse() to parse everything pending,
+                                                      so we can never get stuck with a ready-to-send
+                                                      response pending in the parser */
+                                                   if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
                                                    from_destination_parser.parse( buffer );
                                                    while ( not from_destination_parser.empty() ) {
                                                        client.write( from_destination_parser.front().str() );
