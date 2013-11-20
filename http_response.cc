@@ -27,6 +27,8 @@ void HTTPResponse::done_with_headers( void )
     assert( state_ == RESPONSE_HEADERS_PENDING );
     state_ = RESPONSE_BODY_PENDING;
 
+    calculate_expected_body_size();
+
 #if 0
     if ( not is_chunked() ) {
         expected_body_size_ = calculate_expected_body_size();
@@ -49,8 +51,19 @@ void HTTPResponse::done_with_body( void )
 size_t HTTPResponse::read( const std::string & str )
 {
     assert( state_ == RESPONSE_BODY_PENDING );
-    body_.append( str );
-    return str.size(); /* XXX need to handle case where we don't read the whole thing */
+
+    size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_ );
+
+    if ( amount_parsed == std::string::npos ) { /* not enough to finish response */
+        body_.append( str );
+        return str.size();
+    } else { /* finished response */
+        body_.append( str.substr( 0, amount_parsed ) );
+        state_ = RESPONSE_COMPLETE;
+        return amount_parsed;
+    }
+
+    //return str.size(); /* XXX need to handle case where we don't read the whole thing */
 
 #if 0
     if ( !is_chunked() ) {
@@ -132,18 +145,22 @@ void HTTPResponse::calculate_expected_body_size( void )
 
         headers_specify_size_ = true;
         expected_body_size_ = 0;
+        body_type_ = IDENTITY_KNOWN;
+
     } else if ( has_header( "Transfer-Encoding" )
                 and get_header_value( "Transfer-Encoding" ) != "identity" ) {
 
         /* Rule 2 */
 
         headers_specify_size_ = false;
+        body_type_ = CHUNKED;
     } else if ( (not has_header( "Transfer-Encoding" ) )
                 and has_header( "Content-Length" ) ) {
 
         /* Rule 3 */
 
         headers_specify_size_ = true;
+        body_type_ = IDENTITY_KNOWN;
         expected_body_size_ = myatoi( get_header_value( "Content-Length" ) );
     } else if ( has_header( "Content-Type" )
                 and MIMEType( get_header_value( "Content-Type" ) ).type() == "multipart/byteranges" ) {
@@ -151,9 +168,12 @@ void HTTPResponse::calculate_expected_body_size( void )
         /* Rule 4 */
 
         headers_specify_size_ = false;
+        body_type_ = MULTIPART;
     } else {
 
         /* Rule 5 */
         headers_specify_size_ = false;
+        body_type_ = IDENTITY_UNKNOWN;
     }
+
 }

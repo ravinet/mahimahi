@@ -72,7 +72,7 @@ bool HTTPResponseParser::parsing_step( void ) {
                 return false;
             }
 
-            /* ready to finish the request */
+            /* ready to finish the response */
             size_t amount_read = response_in_progress_.read( internal_buffer_ );
             assert( amount_read == response_in_progress_.expected_body_size() );
             internal_buffer_.replace( 0, response_in_progress_.expected_body_size(), string() );

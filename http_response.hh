@@ -8,8 +8,11 @@
 #include <cassert>
 
 #include "http_header.hh"
+#include "body_parser.hh"
 
 enum ResponseState { STATUS_LINE_PENDING, RESPONSE_HEADERS_PENDING, RESPONSE_BODY_PENDING, RESPONSE_COMPLETE };
+
+enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
 
 class HTTPResponse
 {
@@ -31,6 +34,10 @@ private:
 
     bool request_was_head_;
 
+    BodyType body_type_;
+
+    BodyParser body_parser_;
+
 public:
     HTTPResponse( void )
         : status_line_(),
@@ -39,7 +46,9 @@ public:
           state_( STATUS_LINE_PENDING ),
           expected_body_size_(),
           headers_specify_size_(),
-          request_was_head_( false )
+          request_was_head_( false ),
+          body_type_(),
+          body_parser_()
     {}
 
     void set_status_line( const std::string & s_status, const bool request_was_head );
@@ -51,6 +60,8 @@ public:
     size_t expected_body_size( void ) const { assert( state_ > RESPONSE_HEADERS_PENDING ); return expected_body_size_; }
 
     const ResponseState & state( void ) const { return state_; }
+
+    //const BodyType & body_type( void ) const { return body_type_; }
 
     std::string str( void ) const;
 
