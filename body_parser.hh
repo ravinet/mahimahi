@@ -7,6 +7,8 @@
 
 #include "http_response.hh"
 
+enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
+
 class BodyParser
 {
 private:
@@ -35,7 +37,14 @@ private:
     const std::string CRLF = "\r\n";    
 
 public:
-    BodyParser( void ) : buffer_(), body_in_progress_(), chunk_size_(), chunk_pending_( false ), part_size_(), part_pending_( false ) {}
+    BodyParser( void )
+        : buffer_(),
+          body_in_progress_(),
+          chunk_size_(),
+          chunk_pending_( false ),
+          part_size_(),
+          part_pending_( false )
+    {}
 
     size_t read( const std::string & str, BodyType type, size_t expected_body_size, const std::string & boundary );
 };

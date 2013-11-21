@@ -52,7 +52,7 @@ size_t HTTPResponse::read( const std::string & str )
 {
     assert( state_ == RESPONSE_BODY_PENDING );
 
-    size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_ );
+    size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_, boundary_ );
 
     if ( amount_parsed == std::string::npos ) { /* not enough to finish response */
         body_.append( str );
@@ -119,6 +119,16 @@ const string & HTTPResponse::get_header_value( const string & header_name ) cons
     throw Exception( "HTTPHeaderParser header not found", header_name );
 }
 
+string HTTPResponse::get_boundary( void ) const
+{
+    assert( state_ > STATUS_LINE_PENDING );
+    assert( body_type_ == MULTIPART );
+
+    string content_type = get_header_value( "Content-type" ); /* must check if it can be Content-Type */
+    size_t boundary_start = content_type.find( "boundary=" ) + 9;
+    return ( string( "--" ) + content_type.substr( boundary_start, content_type.length() - boundary_start ) );
+}
+
 string HTTPResponse::status_code( void ) const
 {
     assert( state_ > STATUS_LINE_PENDING );
@@ -169,6 +179,7 @@ void HTTPResponse::calculate_expected_body_size( void )
 
         headers_specify_size_ = false;
         body_type_ = MULTIPART;
+        boundary_ = get_boundary();
     } else {
 
         /* Rule 5 */

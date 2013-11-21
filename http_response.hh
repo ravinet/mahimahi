@@ -12,8 +12,6 @@
 
 enum ResponseState { STATUS_LINE_PENDING, RESPONSE_HEADERS_PENDING, RESPONSE_BODY_PENDING, RESPONSE_COMPLETE };
 
-enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
-
 class HTTPResponse
 {
 private:
@@ -36,6 +34,10 @@ private:
 
     BodyType body_type_;
 
+    std::string get_boundary( void ) const;
+
+    std::string boundary_;
+
     BodyParser body_parser_;
 
 public:
@@ -48,6 +50,7 @@ public:
           headers_specify_size_(),
           request_was_head_( false ),
           body_type_(),
+          boundary_(),
           body_parser_()
     {}
 
