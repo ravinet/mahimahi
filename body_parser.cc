@@ -2,49 +2,55 @@
 
 #include <string>
 #include <cassert>
+#include <iostream>
 
 #include "body_parser.hh"
 #include "tokenize.hh"
+#include "exception.hh"
 
 using namespace std;
 
+static const std::string CRLF = "\r\n";
+
 bool BodyParser::have_complete_line( void ) const
 {
-    size_t first_line_ending = buffer_.find( crlf );
+    size_t first_line_ending = buffer_.find( CRLF );
     return first_line_ending != std::string::npos;
 }
 
-size_t BodyParser::read( const string & str, HTTPResponse::BodyType type, size_t expected_body_size, const string & boundary ) {
+size_t BodyParser::read( const string & str, BodyType type, size_t expected_body_size, const string & boundary ) {
     buffer_.clear();
     buffer_ = str;
     switch ( type ) {
     case IDENTITY_KNOWN:
         if ( str.size() < expected_body_size - body_in_progress_.size() ) { /* we don't have enough for full response */
             body_in_progress_.append( str );
-            return std::string::npos
+            return std::string::npos;
         }
         /* we have enough for full response so reset */
         body_in_progress_.clear();
         return expected_body_size - body_in_progress_.size();
 
     case IDENTITY_UNKNOWN:
-
+        cout << "IDENTITY UNKOWN" << endl;
+        return 0;
     case CHUNKED:
-        while ( have_complete_line() ) { /* if complete line, try to parse entire chunk */
-            if ( !chunk_pending_ ) { /* finished previous chunk so get next chunk size */
-                get_chunk_size( buffer_ );
+        while ( not buffer_.empty() ) { /* if complete line, try to parse entire chunk */
+            if ( have_complete_line() and !chunk_pending_ ) { /* finished previous chunk so get next chunk size */
+                get_chunk_size();
             }
             if ( buffer_.size() >= chunk_size_ ) { /* we have enough to finish chunk */
                 body_in_progress_.append( buffer_.substr( 0, chunk_size_ ) );
                 buffer_.replace( 0, chunk_size_, string() ); 
                 chunk_pending_ = false;
                 if ( chunk_size_ == CRLF.size() ) { /* last chunk (end of response) */
+                    body_in_progress_.append( CRLF );
                     size_t parsed_size = body_in_progress_.size();
                     body_in_progress_.clear();
                     return parsed_size;
                 }
             } else { /* we don't have enough to finish chunk */
-                chunk_size_ = chunk_size_ - buffer_.size();
+                chunk_size_ = chunk_size_ - buffer_.size(); // was buffer.size
                 chunk_pending_ = true;
                 body_in_progress_.clear();
                 return std::string::npos;
@@ -71,11 +77,14 @@ size_t BodyParser::read( const string & str, HTTPResponse::BodyType type, size_t
                 return std::string::npos;
             }
         }
+    }
+    throw Exception( "Body Type Not Set" );
+    return 0;
 }
 
 void BodyParser::get_chunk_size( void )
 { /* sets chunk size including CRLF after chunk */
-    string size_line = buffer_.substr( 0, str.find( CRLF ) );
+    string size_line = buffer_.substr( 0, buffer_.find( CRLF ) );
     body_in_progress_.append( size_line + CRLF );
 
     chunk_size_ = strtol( size_line.c_str(), nullptr, 16 ) + CRLF.size();
@@ -93,19 +102,19 @@ bool BodyParser::part_header_present( void )
 /* pops part header and returns part size */
 void BodyParser::pop_part_header( void )
 {
-    boundary_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
+    string boundary_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
     body_in_progress_.append( boundary_line );
     buffer_.replace( 0, boundary_line.size(), string() );
 
-    type_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
+    string type_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
     body_in_progress_.append( type_line );
     buffer_.replace( 0, type_line.size(), string() );
 
-    range_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
+    string range_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
     body_in_progress_.append( range_line );
     buffer_.replace( 0, range_line.size(), string() );
 
-    separator_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
+    string separator_line = buffer_.substr( 0, buffer_.find( CRLF ) + CRLF.size() );
     body_in_progress_.append( separator_line );
     buffer_.replace(0, separator_line.size(), string() );
 

@@ -39,13 +39,14 @@ void HTTPResponseParser::parse( const string & buf )
 bool HTTPResponseParser::parsing_step( void ) {
     switch ( response_in_progress_.state() ) {
     case STATUS_LINE_PENDING:
+
+        /* do we have a complete line? */
+        if ( not have_complete_line() ) { return false; }
+
         /* do we have a request that we expect to match this response up with? */
         if ( requests_were_head_.empty() ) {
             throw Exception( "HTTPResponseParser", "response without matching request" );
         }
-
-        /* do we have a complete line? */
-        if ( not have_complete_line() ) { return false; }
 
         /* got line, so add it to pending request */
         response_in_progress_.set_status_line( pop_line(), requests_were_head_.front() );

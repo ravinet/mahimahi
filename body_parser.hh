@@ -5,8 +5,6 @@
 
 #include <string>
 
-#include "http_response.hh"
-
 enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
 
 class BodyParser
@@ -33,8 +31,6 @@ private:
     void pop_part_header( void );
 
     size_t get_part_size( const std::string & size_line );
-
-    const std::string CRLF = "\r\n";    
 
 public:
     BodyParser( void )
