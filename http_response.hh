@@ -61,8 +61,6 @@ public:
 
     const ResponseState & state( void ) const { return state_; }
 
-    //const BodyType & body_type( void ) const { return body_type_; }
-
     std::string str( void ) const;
 
     bool has_header( const std::string & header_name ) const;
