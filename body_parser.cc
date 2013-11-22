@@ -35,7 +35,7 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
         cout << "IDENTITY UNKOWN" << endl;
         return 0;
     case CHUNKED:
-        while ( not buffer_.empty() ) { /* if complete line, try to parse entire chunk */
+        while ( not buffer_.empty() ) { /* if more in buffer, try to parse entire chunk */
             if ( have_complete_line() and !chunk_pending_ ) { /* finished previous chunk so get next chunk size */
                 get_chunk_size();
             }
@@ -57,9 +57,12 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
             }
         }
     case MULTIPART:
-        while ( part_header_present() ) { /* if we have full part header, try to parse entire part */
-            if( !part_pending_ ) { /* finished previous part so get next part size */
-                pop_part_header();
+        cout << "MULTIPART" << endl;
+        while ( not buffer_.empty() ) { /* if more in buffer, try to parse entire part */
+            if ( part_header_present() ) { /* if we have full part header, try to get next part size */
+                if( !part_pending_ ) { /* finished previous part so get next part size */
+                    pop_part_header();
+                }
             }
             if ( buffer_.size() >= part_size_ ) { /* we have enough to finish part */
                 body_in_progress_.append( buffer_.substr( 0, part_size_ ) );
@@ -71,7 +74,7 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
                     return parsed_size;
                 }
             } else { /* we don't have enough to finish part */
-                part_size_ = part_size_ - str.size();
+                part_size_ = part_size_ - buffer_.size();
                 part_pending_ = true;
                 body_in_progress_.clear();
                 return std::string::npos;

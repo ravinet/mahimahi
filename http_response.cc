@@ -133,8 +133,8 @@ string HTTPResponse::status_code( void ) const
 {
     assert( state_ > STATUS_LINE_PENDING );
     auto tokens = split( status_line_, " " );
-    if ( tokens.size() != 3 ) {
-        throw Exception( "HTTPResponse", "Invalid status line" );
+    if ( tokens.size() < 3 ) {
+        throw Exception( "HTTPResponse", "Invalid status line: " + status_line_ );
     }
 
     return tokens.at( 1 );
