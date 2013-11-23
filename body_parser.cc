@@ -34,7 +34,7 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
 
     case IDENTITY_UNKNOWN:
         cout << "IDENTITY UNKOWN" << endl;
-        return str.size();
+        return std::string::npos;
     case CHUNKED:
         cout << "CHUNKED" << endl;
         while ( !buffer_.empty() ) { /* if more in buffer, try to parse entire chunk */
@@ -95,6 +95,7 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
                 return std::string::npos;
             }
         }
+        return std::string::npos;
     }
     throw Exception( "Body Type Not Set" );
     return 0;
