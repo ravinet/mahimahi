@@ -57,7 +57,10 @@ void HTTPProxy::handle_tcp( void )
                                                    /* we rely here on parse() to parse everything pending,
                                                       so we can never get stuck with a ready-to-send
                                                       response pending in the parser */
-                                                   if ( buffer.empty() ) { return ResultType::Exit; } /* EOF */
+                                                   if ( buffer.empty() ) { /* EOF */
+                                                       from_destination_parser.parse( buffer );
+                                                       return ResultType::Exit;
+                                                   }
                                                    from_destination_parser.parse( buffer );
                                                    while ( not from_destination_parser.empty() ) {
                                                        client.write( from_destination_parser.front().str() );
