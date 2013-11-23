@@ -36,32 +36,8 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
         cout << "IDENTITY UNKOWN" << endl;
         return std::string::npos;
     case CHUNKED:
-        cout << "CHUNKED" << endl;
-        while ( !buffer_.empty() ) { /* if more in buffer, try to parse entire chunk */
-            if ( have_complete_line() and !chunk_pending_ ) { /* finished previous chunk so get next chunk size */
-                get_chunk_size();
-            }
-            if ( buffer_.size() >= chunk_size_ ) { /* we have enough to finish chunk */
-                body_in_progress_.append( buffer_.substr( 0, chunk_size_ ) );
-                buffer_.replace( 0, chunk_size_, string() ); 
-                chunk_pending_ = false;
-                if ( chunk_size_ == CRLF.size() ) { /* last chunk (end of response) */
-                    if ( !handle_trailers( trailers ) ) {
-                        return std::string::npos;
-                    }
-                    body_in_progress_.append( CRLF );
-                    size_t parsed_size = body_in_progress_.size();
-                    body_in_progress_.clear();
-                    return parsed_size;
-                }
-            } else { /* we don't have enough to finish chunk */
-                chunk_size_ = chunk_size_ - buffer_.size();
-                chunk_pending_ = true;
-                body_in_progress_.clear();
-                return std::string::npos;
-            }
-        }
-        return std::string::npos;
+        //cout << "CHUNKED" << endl;
+        return chunked_parser.parse( str, trailers );
     case MULTIPART:
         cout << "MULTIPART" << endl;
         while ( not buffer_.empty() ) { /* if more in buffer, try to parse entire part */
@@ -90,33 +66,6 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
     }
     throw Exception( "Body Type Not Set" );
     return 0;
-}
-
-void BodyParser::get_chunk_size( void )
-{ /* sets chunk size including CRLF after chunk */
-    string size_line = buffer_.substr( 0, buffer_.find( CRLF ) );
-    body_in_progress_.append( size_line + CRLF );
-
-    chunk_size_ = strtol( size_line.c_str(), nullptr, 16 ) + CRLF.size();
-
-    buffer_.replace( 0, buffer_.find( CRLF ) + CRLF.size(), string() );
-}
-
-bool BodyParser::handle_trailers( bool trailers )
-{
-    if ( trailers ) {
-        size_t crlf_loc;
-        while ( ( crlf_loc = buffer_.find( CRLF ) ) != 0 ) { /* add trailer line to body */
-            if ( not have_complete_line() ) {
-                chunk_pending_ = true;
-                body_in_progress_.clear();
-                return false;
-            }
-            body_in_progress_.append( buffer_.substr( 0, crlf_loc + CRLF.size() ) );
-            buffer_.replace( 0, crlf_loc + CRLF.size(), string() );
-        }
-    }
-    return true;
 }
 
 bool BodyParser::part_header_present( void )

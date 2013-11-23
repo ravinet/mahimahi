@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include "chunked_parser.hh"
+
 enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
 
 class BodyParser
@@ -16,13 +18,7 @@ private:
 
     bool have_complete_line( void ) const;
 
-    size_t chunk_size_;
-
-    bool chunk_pending_;
-
-    void get_chunk_size( void );
-
-    bool handle_trailers( bool trailers );
+    ChunkedBodyParser chunked_parser;
 
     size_t part_size_;
 
@@ -38,8 +34,7 @@ public:
     BodyParser( void )
         : buffer_(),
           body_in_progress_(),
-          chunk_size_(),
-          chunk_pending_( false ),
+          chunked_parser(),
           part_size_(),
           part_pending_( false )
     {}
