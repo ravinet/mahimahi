@@ -79,7 +79,7 @@ string HTTPResponse::str( void ) const
 bool HTTPResponse::has_header( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name ) {
+        if ( header.key() == header_name or header.key() == lower_case( header_name ) ) {
             return true;
         }
     }
@@ -90,12 +90,21 @@ bool HTTPResponse::has_header( const string & header_name ) const
 const string & HTTPResponse::get_header_value( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name ) {
+        if ( header.key() == header_name or header.key() == lower_case( header_name ) ) {
             return header.value();
         }
     }
 
     throw Exception( "HTTPHeaderParser header not found", header_name );
+}
+
+string HTTPResponse::lower_case( const string & header_name ) const
+{
+    string upper_case = header_name;
+    for ( size_t pos = 0; pos < header_name.length(); pos++ ) {
+       upper_case[pos] = tolower(upper_case[pos] );
+    }
+    return upper_case;
 }
 
 string HTTPResponse::get_boundary( void ) const

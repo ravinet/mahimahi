@@ -34,6 +34,8 @@ private:
 
     BodyType body_type_;
 
+    std::string lower_case( const std::string & header_name ) const;
+
     std::string get_boundary( void ) const;
 
     std::string boundary_;
