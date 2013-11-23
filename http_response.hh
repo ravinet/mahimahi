@@ -44,6 +44,8 @@ private:
 
     bool trailers_present_;
 
+    bool first_read_;
+
 public:
     HTTPResponse( void )
         : status_line_(),
@@ -56,13 +58,14 @@ public:
           body_type_(),
           boundary_(),
           body_parser_(),
-          trailers_present_( false )
+          trailers_present_( false ),
+          first_read_( true )
     {}
 
     void set_status_line( const std::string & s_status, const bool request_was_head );
     void add_header( const std::string & str );
     void done_with_headers( void );
-    size_t read( const std::string & str );
+    size_t read( std::string & str );
     void done_with_body( void );
 
     size_t expected_body_size( void ) const { assert( state_ > RESPONSE_HEADERS_PENDING ); return expected_body_size_; }

@@ -39,9 +39,19 @@ void HTTPResponse::done_with_body( void )
 
 }
 
-size_t HTTPResponse::read( const std::string & str )
+size_t HTTPResponse::read( std::string & str )
 {
     assert( state_ == RESPONSE_BODY_PENDING );
+
+    const string CRLF = "\r\n";
+
+    if ( body_type_ == MULTIPART and first_read_ ) { /* store extra crlf's between headers and first boundary */
+        while ( str.find( CRLF ) == 0 ) {
+            body_.append( CRLF );
+            str.replace( 0, CRLF.size(), string() );
+        }
+    }
+    first_read_ = false;
 
     size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_, boundary_, trailers_present_ );
 
@@ -51,6 +61,7 @@ size_t HTTPResponse::read( const std::string & str )
     } else { /* finished response */
         body_.append( str.substr( 0, amount_parsed ) );
         state_ = RESPONSE_COMPLETE;
+        first_read_ = true;
         return amount_parsed;
     }
 }
