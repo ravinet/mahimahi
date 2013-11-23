@@ -46,17 +46,8 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
                 buffer_.replace( 0, chunk_size_, string() ); 
                 chunk_pending_ = false;
                 if ( chunk_size_ == CRLF.size() ) { /* last chunk (end of response) */
-                    if ( trailers ) {
-                        size_t crlf_loc;
-                        while ( ( crlf_loc = buffer_.find( CRLF ) ) != 0 ) { /* add trailer line to body */
-                            if ( not have_complete_line() ) {
-                                chunk_pending_ = true;
-                                body_in_progress_.clear();
-                                return std::string::npos;
-                            }
-                            body_in_progress_.append( buffer_.substr( 0, crlf_loc + CRLF.size() ) );
-                            buffer_.replace( 0, crlf_loc + CRLF.size(), string() );
-                        }
+                    if ( !handle_trailers( trailers ) ) {
+                        return std::string::npos;
                     }
                     body_in_progress_.append( CRLF );
                     size_t parsed_size = body_in_progress_.size();
@@ -109,6 +100,23 @@ void BodyParser::get_chunk_size( void )
     chunk_size_ = strtol( size_line.c_str(), nullptr, 16 ) + CRLF.size();
 
     buffer_.replace( 0, buffer_.find( CRLF ) + CRLF.size(), string() );
+}
+
+bool BodyParser::handle_trailers( bool trailers )
+{
+    if ( trailers ) {
+        size_t crlf_loc;
+        while ( ( crlf_loc = buffer_.find( CRLF ) ) != 0 ) { /* add trailer line to body */
+            if ( not have_complete_line() ) {
+                chunk_pending_ = true;
+                body_in_progress_.clear();
+                return false;
+            }
+            body_in_progress_.append( buffer_.substr( 0, crlf_loc + CRLF.size() ) );
+            buffer_.replace( 0, crlf_loc + CRLF.size(), string() );
+        }
+    }
+    return true;
 }
 
 bool BodyParser::part_header_present( void )

@@ -22,6 +22,8 @@ private:
 
     void get_chunk_size( void );
 
+    bool handle_trailers( bool trailers );
+
     size_t part_size_;
 
     bool part_pending_;
