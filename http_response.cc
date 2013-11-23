@@ -29,15 +29,6 @@ void HTTPResponse::done_with_headers( void )
 
     calculate_expected_body_size();
 
-#if 0
-    if ( not is_chunked() ) {
-        expected_body_size_ = calculate_expected_body_size();
-    } else if ( is_chunked() ) { /* chunked */
-        cout << "CHUNKED" << endl;
-    } else { /* multipart */
-        cout << "MULTIPART" << endl;
-    }
-#endif
 }
 
 void HTTPResponse::done_with_body( void )
@@ -52,7 +43,7 @@ size_t HTTPResponse::read( const std::string & str )
 {
     assert( state_ == RESPONSE_BODY_PENDING );
 
-    size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_, boundary_ );
+    size_t amount_parsed = body_parser_.read( str, body_type_, expected_body_size_, boundary_, trailers_present_ );
 
     if ( amount_parsed == std::string::npos ) { /* not enough to finish response */
         body_.append( str );
@@ -62,18 +53,6 @@ size_t HTTPResponse::read( const std::string & str )
         state_ = RESPONSE_COMPLETE;
         return amount_parsed;
     }
-
-    //return str.size(); /* XXX need to handle case where we don't read the whole thing */
-
-#if 0
-    if ( !is_chunked() ) {
-        if ( body_.size() > expected_body_size_ ) {
-            throw Exception( "HTTPResponse", "body was bigger than expected" );
-        } else if ( body_.size() == expected_body_size_ ) {
-            state_ = RESPONSE_COMPLETE;
-        }
-    }
-#endif
 }
 
 string HTTPResponse::str( void ) const
@@ -164,6 +143,9 @@ void HTTPResponse::calculate_expected_body_size( void )
 
         headers_specify_size_ = false;
         body_type_ = CHUNKED;
+        if ( has_header( "Trailer" ) )  {
+            trailers_present_ = true;
+        }
     } else if ( (not has_header( "Transfer-Encoding" ) )
                 and has_header( "Content-Length" ) ) {
 

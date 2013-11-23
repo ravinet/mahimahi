@@ -18,11 +18,12 @@ bool BodyParser::have_complete_line( void ) const
     return first_line_ending != std::string::npos;
 }
 
-size_t BodyParser::read( const string & str, BodyType type, size_t expected_body_size, const string & boundary ) {
+size_t BodyParser::read( const string & str, BodyType type, size_t expected_body_size, const string & boundary, bool trailers ) {
     buffer_.clear();
     buffer_ = str;
     switch ( type ) {
     case IDENTITY_KNOWN:
+        cout << "KNOW SIZE" << endl;
         if ( str.size() < expected_body_size - body_in_progress_.size() ) { /* we don't have enough for full response */
             body_in_progress_.append( str );
             return std::string::npos;
@@ -33,9 +34,10 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
 
     case IDENTITY_UNKNOWN:
         cout << "IDENTITY UNKOWN" << endl;
-        return 0;
+        return str.size();
     case CHUNKED:
-        while ( not buffer_.empty() ) { /* if more in buffer, try to parse entire chunk */
+        cout << "CHUNKED" << endl;
+        while ( !buffer_.empty() ) { /* if more in buffer, try to parse entire chunk */
             if ( have_complete_line() and !chunk_pending_ ) { /* finished previous chunk so get next chunk size */
                 get_chunk_size();
             }
@@ -44,18 +46,31 @@ size_t BodyParser::read( const string & str, BodyType type, size_t expected_body
                 buffer_.replace( 0, chunk_size_, string() ); 
                 chunk_pending_ = false;
                 if ( chunk_size_ == CRLF.size() ) { /* last chunk (end of response) */
+                    if ( trailers ) {
+                        size_t crlf_loc;
+                        while ( ( crlf_loc = buffer_.find( CRLF ) ) != 0 ) { /* add trailer line to body */
+                            if ( not have_complete_line() ) {
+                                chunk_pending_ = true;
+                                body_in_progress_.clear();
+                                return std::string::npos;
+                            }
+                            body_in_progress_.append( buffer_.substr( 0, crlf_loc + CRLF.size() ) );
+                            buffer_.replace( 0, crlf_loc + CRLF.size(), string() );
+                        }
+                    }
                     body_in_progress_.append( CRLF );
                     size_t parsed_size = body_in_progress_.size();
                     body_in_progress_.clear();
                     return parsed_size;
                 }
             } else { /* we don't have enough to finish chunk */
-                chunk_size_ = chunk_size_ - buffer_.size(); // was buffer.size
+                chunk_size_ = chunk_size_ - buffer_.size();
                 chunk_pending_ = true;
                 body_in_progress_.clear();
                 return std::string::npos;
             }
         }
+        return std::string::npos;
     case MULTIPART:
         cout << "MULTIPART" << endl;
         while ( not buffer_.empty() ) { /* if more in buffer, try to parse entire part */

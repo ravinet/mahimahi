@@ -40,6 +40,8 @@ private:
 
     BodyParser body_parser_;
 
+    bool trailers_present_;
+
 public:
     HTTPResponse( void )
         : status_line_(),
@@ -51,7 +53,8 @@ public:
           request_was_head_( false ),
           body_type_(),
           boundary_(),
-          body_parser_()
+          body_parser_(),
+          trailers_present_( false )
     {}
 
     void set_status_line( const std::string & s_status, const bool request_was_head );

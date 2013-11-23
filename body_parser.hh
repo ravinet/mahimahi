@@ -42,7 +42,7 @@ public:
           part_pending_( false )
     {}
 
-    size_t read( const std::string & str, BodyType type, size_t expected_body_size, const std::string & boundary );
+    size_t read( const std::string & str, BodyType type, size_t expected_body_size, const std::string & boundary, bool trailers );
 };
 
 #endif /* BODY_PARSER_HH */
