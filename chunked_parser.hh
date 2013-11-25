@@ -18,8 +18,10 @@ private:
 
     bool chunk_pending_;
 
+    /* sets chunk size including CRLF after chunk */
     void get_chunk_size( void );
 
+    /* returns true if it handled all trailers */
     bool handle_trailers( bool trailers );
 
 public:

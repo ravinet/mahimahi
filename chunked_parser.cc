@@ -47,7 +47,7 @@ size_t ChunkedBodyParser::parse( const string & str, bool trailers ) {
 }
 
 void ChunkedBodyParser::get_chunk_size( void )
-{ /* sets chunk size including CRLF after chunk */
+{
     string size_line = buffer_.substr( 0, buffer_.find( CRLF ) );
     body_in_progress_.append( size_line + CRLF );
 
