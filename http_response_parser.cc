@@ -31,6 +31,7 @@ void HTTPResponseParser::parse( const string & buf )
 {
     if ( buf.empty() ) { /* EOF */
         response_in_progress_.eof();
+        cout << "EOF" << endl;
     }        
 
     /* append buf to internal buffer */
