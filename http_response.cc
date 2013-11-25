@@ -101,7 +101,7 @@ bool HTTPResponse::has_header( const string & header_name ) const
 const string & HTTPResponse::get_header_value( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name or header.key() == lower_case( header_name ) ) {
+        if ( lower_case( header.key() ) == lower_case( header_name ) ) {
             return header.value();
         }
     }
@@ -123,7 +123,7 @@ string HTTPResponse::get_boundary( void ) const
     assert( state_ > STATUS_LINE_PENDING );
     assert( body_type_ == MULTIPART );
 
-    string content_type = get_header_value( "Content-type" ); /* must check if it can be Content-Type */
+    string content_type = get_header_value( "Content-Type" ); /* must check if it can be Content-Type */
     size_t boundary_start = content_type.find( "boundary=" ) + 9;
     return ( string( "--" ) + content_type.substr( boundary_start, content_type.length() - boundary_start ) );
 }
