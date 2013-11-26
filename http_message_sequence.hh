@@ -119,16 +119,13 @@ bool HTTPMessageSequence<MessageType>::parsing_step( void )
         return true;
 
     case BODY_PENDING:
-        if ( buffer_.empty() ) { return false; }
-
         {
             size_t bytes_read = message_in_progress_.read_in_body( buffer_.str() );
+            assert( bytes_read == buffer_.str().size() or message_in_progress_.state() == COMPLETE );
             buffer_.pop_bytes( bytes_read );
-            if ( bytes_read == 0 ) {
-                assert( message_in_progress_.state() == COMPLETE );
-            }
         }
-        return true;
+        return message_in_progress_.state() == COMPLETE;
+
     case COMPLETE:
         complete_messages_.emplace( std::move( message_in_progress_ ) );
         message_in_progress_ = MessageType();

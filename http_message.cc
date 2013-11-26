@@ -101,7 +101,7 @@ bool HTTPMessage::equivalent_strings( const string & a, const string & b )
         return false;
     }
 
-    for ( auto it_a = a.begin(), it_b = b.begin(); it_a < a.end(); it_a++ ) {
+    for ( auto it_a = a.begin(), it_b = b.begin(); it_a < a.end(); it_a++, it_b++ ) {
         if ( http_to_lower( *it_a ) != http_to_lower( *it_b ) ) {
             return false;
         }

@@ -71,7 +71,7 @@ size_t HTTPResponse::read_in_complex_body( const std::string & )
 {
     /* we don't (yet) support complex bodies */
     /* XXX need to support */
-    throw Exception( "HTTPResponse", "does not support chunked requests" );
+    throw Exception( "HTTPResponse", "does not support chunked responses" );
 }
 
 void HTTPResponse::eof_in_body( void )
