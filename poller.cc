@@ -22,6 +22,12 @@ Poller::Result Poller::poll( const int & timeout_ms )
         assert( pollfds_.at( i ).fd == actions_.at( i ).fd.num() );
         pollfds_.at( i ).events = (actions_.at( i ).active and actions_.at( i ).when_interested())
             ? actions_.at( i ).direction : 0;
+
+        /* don't poll in on fds that have had EOF */
+        if ( actions_.at( i ).direction == Direction::In
+             and actions_.at( i ).fd.eof() ) {
+            pollfds_.at( i ).events = 0;
+        }
     }
 
     /* Quit if no member in pollfds_ has a non-zero direction */
