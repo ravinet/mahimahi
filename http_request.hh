@@ -18,8 +18,6 @@ private:
     void eof_in_body( void );
 
 public:
-    using HTTPMessage::HTTPMessage;
-
     bool is_head( void ) const;
 };
 

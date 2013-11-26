@@ -27,7 +27,8 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	body_parser.hh body_parser.cc \
 	chunked_parser.hh chunked_parser.cc \
 	multipart_parser.hh multipart_parser.cc \
-	http_message.hh http_message.cc
+	http_message.hh http_message.cc \
+	http_message_sequence.hh http_message_sequence.cc
 recordshell_LDADD = -lrt
 recordshell_LDFLAGS = -pthread
 
