@@ -90,7 +90,8 @@ string HTTPResponse::str( void ) const
 bool HTTPResponse::has_header( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
-        if ( header.key() == header_name or header.key() == lower_case( header_name ) ) {
+        /* canonicalize header name per RFC 2616 section 2.1 */
+        if ( lower_case( header.key() ) == lower_case( header_name ) ) {
             return true;
         }
     }
@@ -101,6 +102,7 @@ bool HTTPResponse::has_header( const string & header_name ) const
 const string & HTTPResponse::get_header_value( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
+        /* canonicalize header name per RFC 2616 section 2.1 */
         if ( lower_case( header.key() ) == lower_case( header_name ) ) {
             return header.value();
         }
