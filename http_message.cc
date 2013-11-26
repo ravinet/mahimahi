@@ -65,7 +65,10 @@ void HTTPMessage::eof( void )
     case HEADERS_PENDING:
         throw Exception( "HTTPMessage", "EOF received in middle of headers" );
     case BODY_PENDING:
-        return eof_in_body();
+        if ( eof_in_body() ) {
+            state_ = COMPLETE;
+        }
+        break;
     case COMPLETE:
         assert( false ); /* nobody should be calling methods on a complete message */
         return;

@@ -3,34 +3,33 @@
 #ifndef BODY_PARSER_HH
 #define BODY_PARSER_HH
 
-#include <string>
-
-#include "chunked_parser.hh"
-#include "multipart_parser.hh"
-
-enum BodyType { IDENTITY_KNOWN, IDENTITY_UNKNOWN, CHUNKED, MULTIPART };
-
 class BodyParser
 {
-private:
-    std::string buffer_;
-
-    std::string body_in_progress_;
-
-    bool have_complete_line( void ) const;
-
-    ChunkedBodyParser chunked_parser;
-
-    MultipartBodyParser multipart_parser;
 public:
-    BodyParser( void )
-        : buffer_(),
-          body_in_progress_(),
-          chunked_parser(),
-          multipart_parser()
-    {}
+    /* possible return values from body parser:
+        - entire string belongs to body
+        - only some of string (0 bytes to n bytes) belongs to body */
 
-    size_t read( const std::string & str, BodyType type, size_t expected_body_size, const std::string & boundary, bool trailers );
+    virtual std::string::size_type read( const std::string & str ) = 0;
+    virtual bool eof( void ) = 0;
+};
+
+/* used for RFC 2616 4.4 "rule 5" responses -- terminated only by EOF */
+class Rule5BodyParser : public BodyParser
+{
+public:
+    /* all of buffer always belongs to body */
+    std::string::size_type read( const std::string & ) override
+    {
+        return std::string::npos;
+    }
+
+    /* does message become complete upon EOF in body? */
+    /* when there was no content-length header on a response, answer is yes */
+    bool eof( void ) override
+    {
+        return true;
+    }
 };
 
 #endif /* BODY_PARSER_HH */

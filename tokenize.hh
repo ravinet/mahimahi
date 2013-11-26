@@ -16,6 +16,10 @@ static std::vector< std::string > split( const std::string & str, const std::str
         next_token++;
     }
 
+    if ( indices.empty() ) {
+        return { str };
+    }
+
     std::vector< std::string > ret;
 
     /* first token */
