@@ -3,7 +3,7 @@
 #ifndef HTTP_RESPONSE_PARSER_HH
 #define HTTP_RESPONSE_PARSER_HH
 
-#include "http_message_sequence.cc"
+#include "http_message_sequence.hh"
 #include "http_response.hh"
 #include "http_request.hh"
 
@@ -16,8 +16,6 @@ private:
     void initialize_new_message( void );
 
 public:
-    using HTTPMessageSequence::HTTPMessageSequence;
-
     void new_request_arrived( const HTTPRequest & request );
 };
 

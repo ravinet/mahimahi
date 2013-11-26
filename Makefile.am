@@ -18,7 +18,7 @@ delayshell_LDFLAGS = -pthread
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
 	http_proxy.hh http_proxy.cc \
-	http_request_parser.hh http_request_parser.cc \
+	http_request_parser.hh \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
 	http_header.hh http_header.cc \
@@ -28,7 +28,7 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	chunked_parser.hh chunked_parser.cc \
 	multipart_parser.hh multipart_parser.cc \
 	http_message.hh http_message.cc \
-	http_message_sequence.hh http_message_sequence.cc
+	http_message_sequence.hh
 recordshell_LDADD = -lrt
 recordshell_LDFLAGS = -pthread
 
