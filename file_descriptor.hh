@@ -13,10 +13,11 @@ class FileDescriptor
 {
 private:
     int fd_;
+    bool eof_;
 
 public:
     FileDescriptor( const int s_fd )
-        : fd_( s_fd )
+    : fd_( s_fd ), eof_( false )
     {
         if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
             throw Exception( "FileDescriptor", "fd <= 2" );
@@ -37,6 +38,7 @@ public:
     }
 
     const int & num( void ) { return fd_; }
+    const bool & eof( void ) const { return eof_; }
 
     /* forbid copying FileDescriptor objects or assigning them */
     FileDescriptor( const FileDescriptor & other ) = delete;
@@ -44,7 +46,7 @@ public:
 
     /* allow moving FileDescriptor objects */
     FileDescriptor( FileDescriptor && other )
-        : fd_( other.fd_ )
+    : fd_( other.fd_ ), eof_( other.eof_ )
     {
         other.fd_ = -1; /* disable the other FileDescriptor */
     }
@@ -62,12 +64,16 @@ public:
 
     std::string read( void )
     {
-        return readall( num() );
+        auto ret = readall( num() );
+        if ( ret.empty() ) { eof_ = true; }
+        return ret;
     }
 
     std::string read( const size_t limit )
     {
-        return readall( num(), limit );
+        auto ret = readall( num(), limit );
+        if ( ret.empty() ) { eof_ = true; }
+        return ret;
     }
 };
 

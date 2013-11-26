@@ -40,45 +40,53 @@ void HTTPProxy::handle_tcp( void )
                 cout << "connection intended for: " << original_destaddr.ip() << endl;
 
                 /* create socket and connect to original destination and send original request */
-                Socket destination( TCP );
-                destination.connect( original_destaddr );
+                Socket server( TCP );
+                server.connect( original_destaddr );
 
                 Poller poller;
 
-                HTTPRequestParser from_client_parser;
+                HTTPRequestParser request_parser;
 
-                HTTPResponseParser from_destination_parser;
+                HTTPResponseParser response_parser;
 
                 /* poll on original connect socket and new connection socket to ferry packets */
 
-                poller.add_action( Poller::Action( destination.fd(), Direction::In,
+                /* responses from server go to response parser */
+                poller.add_action( Poller::Action( server.fd(), Direction::In,
                                                    [&] () {
-                                                   string buffer = destination.read();
-                                                   /* we rely here on parse() to parse everything pending,
-                                                      so we can never get stuck with a ready-to-send
-                                                      response pending in the parser */
-                                                   if ( buffer.empty() ) { /* EOF, send empty buffer so parser knows response is finished */
-                                                       from_destination_parser.parse( buffer );
-                                                       return ResultType::Exit;
-                                                   }
-                                                   from_destination_parser.parse( buffer );
-                                                   while ( not from_destination_parser.empty() ) {
-                                                       client.write( from_destination_parser.front().str() );
-                                                       from_destination_parser.pop();
-                                                   }
-                                                   return ResultType::Continue; } ) );
+                                                       string buffer = server.read();
+                                                       response_parser.parse( buffer );
+                                                       return ResultType::Continue;
+                                                   },
+                                                   [&] () { return not client.fd().eof(); } ) );
 
+                /* requests from client go to request parser */
                 poller.add_action( Poller::Action( client.fd(), Direction::In,
                                                    [&] () {
-                                                   string buffer = client.read();
-                                                   if ( buffer.empty() ) { return ResultType::Cancel; } /* EOF */
-                                                   from_client_parser.parse( buffer );
-                                                   while ( not from_client_parser.empty() ) {
-                                                       destination.write( from_client_parser.front().str() );
-                                                       from_destination_parser.new_request_arrived( from_client_parser.front() );
-                                                       from_client_parser.pop();
-                                                   }
-                                                   return ResultType::Continue; } ) );
+                                                       string buffer = client.read();
+                                                       request_parser.parse( buffer );
+                                                       return ResultType::Continue;
+                                                   },
+                                                   [&] () { return not server.fd().eof(); } ) );
+
+                /* completed requests from client are serialized and sent to server */
+                poller.add_action( Poller::Action( server.fd(), Direction::Out,
+                                                   [&] () {
+                                                       server.write( request_parser.front().str() );
+                                                       response_parser.new_request_arrived( request_parser.front() );
+                                                       request_parser.pop();
+                                                       return ResultType::Continue;
+                                                   },
+                                                   [&] () { return not request_parser.empty(); } ) );
+
+                /* completed responses from server are serialized and sent to client */
+                poller.add_action( Poller::Action( client.fd(), Direction::Out,
+                                                   [&] () {
+                                                       client.write( response_parser.front().str() );
+                                                       response_parser.pop();
+                                                       return ResultType::Continue;
+                                                   },
+                                                   [&] () { return not response_parser.empty(); } ) );
 
                 while( true ) {
                     auto poll_result = poller.poll( 60000 );
