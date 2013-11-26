@@ -7,6 +7,11 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
+# Add picky CXXFLAGS
+CPPFLAGS="-std=c++11 -pthread"
+PICKY_CXXFLAGS="-pedantic -Wall -Wextra -Weffc++ -Werror -fno-default-inline"
+AC_SUBST([PICKY_CXXFLAGS])
+
 # Checks for programs.
 AC_PROG_CXX
 
@@ -31,10 +36,6 @@ AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
-
-# Add picky CXXFLAGS
-PICKY_CXXFLAGS="-std=c++0x -pedantic -Wall -Wextra -Weffc++ -Werror -fno-default-inline"
-AC_SUBST([PICKY_CXXFLAGS])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
