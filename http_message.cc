@@ -95,13 +95,13 @@ static char http_to_lower( char c )
 }
 
 /* check if two strings are equivalent per HTTP 1.1 comparison (case-insensitive) */
-static bool http_equivalent_strings( const string & a, const string & b )
+bool HTTPMessage::equivalent_strings( const string & a, const string & b )
 {
     if ( a.size() != b.size() ) {
         return false;
     }
 
-    for ( auto it_a = a.begin(), it_b = b.begin(); it_a < a.end(); it_a++ ) {
+    for ( auto it_a = a.begin(), it_b = b.begin(); it_a < a.end(); it_a++, it_b++ ) {
         if ( http_to_lower( *it_a ) != http_to_lower( *it_b ) ) {
             return false;
         }
@@ -114,7 +114,7 @@ bool HTTPMessage::has_header( const string & header_name ) const
 {
     for ( const auto & header : headers_ ) {
         /* canonicalize header name per RFC 2616 section 2.1 */
-        if ( http_equivalent_strings( header.key(), header_name ) ) {
+        if ( equivalent_strings( header.key(), header_name ) ) {
             return true;
         }
     }
@@ -126,7 +126,7 @@ const string & HTTPMessage::get_header_value( const std::string & header_name ) 
 {
     for ( const auto & header : headers_ ) {
         /* canonicalize header name per RFC 2616 section 2.1 */
-        if ( http_equivalent_strings( header.key(), header_name ) ) {
+        if ( equivalent_strings( header.key(), header_name ) ) {
             return header.value();
         }
     }

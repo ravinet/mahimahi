@@ -68,6 +68,10 @@ public:
 
     /* serialize the request or response as one string */
     std::string str( void ) const;
+
+    /* compare two strings for (case-insensitive) equality,
+       in ASCII without sensitivity to locale */
+    static bool equivalent_strings( const std::string & a, const std::string & b );
 };
 
 #endif /* HTTP_MESSAGE_HH */

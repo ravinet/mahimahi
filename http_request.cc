@@ -37,7 +37,7 @@ void HTTPRequest::eof_in_body( void )
 
 bool HTTPRequest::is_head( void ) const
 {
-    assert( HTTPMessage::state_ > FIRST_LINE_PENDING );
+    assert( state_ > FIRST_LINE_PENDING );
     /* RFC 2616 5.1.1 says "The method is case-sensitive." */
     return first_line_.substr( 0, 5 ) == "HEAD ";
 }
