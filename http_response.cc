@@ -30,54 +30,61 @@ void HTTPResponse::calculate_expected_body_size( void )
          or status_code() == "304"
          or request_was_head_ ) {
 
-        /* Rule 1 */
-
+        /* Rule 1: size known to be zero */
         set_expected_body_size( true, 0 );
-        /* XXX set body type to identity, known */
     } else if ( has_header( "Transfer-Encoding" )
                 and not equivalent_strings( get_header_value( "Transfer-Encoding" ),
                                             "identity" ) ) {
 
-        /* Rule 2 */
+        /* Rule 2: size dictated by chunked encoding */
         set_expected_body_size( false );
-
-        /*
-        body_type_ = CHUNKED;
-        if ( has_header( "Trailer" ) )  {
-            trailers_present_ = true;
-        }
-        */
+        //XXX        body_parser_ = new ChunkedBodyParser( has_header( "Trailer" ) );
     } else if ( (not has_header( "Transfer-Encoding" ) )
                 and has_header( "Content-Length" ) ) {
 
-        /* Rule 3 */
+        /* Rule 3: content-length header present to specify size */
         set_expected_body_size( true, myatoi( get_header_value( "Content-Length" ) ) );
-        /* XXX set body type to identity, known */
     } else if ( has_header( "Content-Type" )
                 and equivalent_strings( MIMEType( get_header_value( "Content-Type" ) ).type(),
                                         "multipart/byteranges" ) ) {
 
         /* Rule 4 */
         set_expected_body_size( false );
-        /* XXX set body type */
+        throw Exception( "HTTPResponse", "unsupported multipart/byteranges without Content-Length" );
     } else {
         /* Rule 5 */
         set_expected_body_size( false );
-        /* XXX set body type */
+
+        body_parser_ = unique_ptr< BodyParser >( new Rule5BodyParser() );
     }
 }
 
-size_t HTTPResponse::read_in_complex_body( const std::string & )
+size_t HTTPResponse::read_in_complex_body( const std::string & str )
 {
-    /* we don't (yet) support complex bodies */
-    /* XXX need to support */
-    throw Exception( "HTTPResponse", "does not support chunked responses" );
+    assert( state_ == BODY_PENDING );
+    assert( body_parser_ );
+
+    auto amount_parsed = body_parser_->read( str );
+    if ( amount_parsed == std::string::npos ) {
+        /* all of it belongs to the body */
+        body_.append( str );
+        return str.size();
+    } else {
+        /* body is now complete */
+        body_.append( str.substr( 0, amount_parsed ) );
+        state_ = COMPLETE;
+        return amount_parsed;
+    }
 }
 
-void HTTPResponse::eof_in_body( void )
+bool HTTPResponse::eof_in_body( void )
 {
-    /* XXX need to support */
-    throw Exception( "HTTPResponse", "got EOF in middle of body" );
+    /* complex bodies sometimes allow an EOF to terminate the body */
+    if ( body_parser_ ) {
+        return body_parser_->eof();
+    } else {
+        throw Exception( "HTTPResponse", "got EOF in middle of body" );
+    }
 }
 
 void HTTPResponse::set_request_was_head( void )

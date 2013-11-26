@@ -13,7 +13,7 @@ private:
     /* Need this to handle RFC 2616 section 4.4 rule 1 */
     std::queue< bool > requests_were_head_ {};
 
-    void initialize_new_message( void );
+    void initialize_new_message( void ) override;
 
 public:
     void new_request_arrived( const HTTPRequest & request );

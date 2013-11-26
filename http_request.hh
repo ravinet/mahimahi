@@ -9,13 +9,13 @@ class HTTPRequest : public HTTPMessage
 {
 private:
     /* for a request, will always be known */
-    void calculate_expected_body_size( void );
+    void calculate_expected_body_size( void ) override;
 
     /* we have no complex bodies */
-    size_t read_in_complex_body( const std::string & str );
+    size_t read_in_complex_body( const std::string & str ) override;
 
     /* connection closed while body was pending */
-    void eof_in_body( void );
+    bool eof_in_body( void ) override;
 
 public:
     bool is_head( void ) const;

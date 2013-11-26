@@ -9,7 +9,7 @@
 class HTTPRequestParser : public HTTPMessageSequence<HTTPRequest>
 {
 private:
-    void initialize_new_message( void ) {}
+    void initialize_new_message( void ) override {}
 };
 
 #endif /* HTTP_REQUEST_PARSER_HH */
