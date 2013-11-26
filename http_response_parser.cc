@@ -72,25 +72,14 @@ bool HTTPResponseParser::parsing_step( void ) {
         return true;
 
     case RESPONSE_BODY_PENDING:
-        if ( response_in_progress_.body_size_is_known() ) {
-            if ( internal_buffer_.size() < response_in_progress_.expected_body_size() ) {
-                return false;
-            }
+        if ( internal_buffer_.empty() ) { return false; }
 
-            /* ready to finish the response */
-            size_t amount_read = response_in_progress_.read( internal_buffer_ );
-            assert( amount_read == response_in_progress_.expected_body_size() );
-            internal_buffer_.replace( 0, response_in_progress_.expected_body_size(), string() );
-            assert( response_in_progress_.state() == RESPONSE_COMPLETE );
-            return true;
-        } else if ( not internal_buffer_.empty() ) {
-            /* body size is not known in advance, but we have new bytes for the body */
+        {
             size_t bytes_read = response_in_progress_.read( internal_buffer_ );
+            assert( bytes_read > 0 );
             internal_buffer_.replace( 0, bytes_read, string() );
-            return true;
-        } else {
-            return false;
         }
+        return true;
     case RESPONSE_COMPLETE:
         complete_responses_.push( response_in_progress_ );
         response_in_progress_ = HTTPResponse();
