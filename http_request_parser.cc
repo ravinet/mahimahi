@@ -9,21 +9,19 @@
 
 using namespace std;
 
-static const string crlf = "\r\n";
-
 bool HTTPRequestParser::have_complete_line( void ) const
 {
-    size_t first_line_ending = internal_buffer_.find( crlf );
+    size_t first_line_ending = internal_buffer_.find( CRLF );
     return first_line_ending != std::string::npos;
 }
 
 string HTTPRequestParser::pop_line( void )
 {
-    size_t first_line_ending = internal_buffer_.find( crlf );
+    size_t first_line_ending = internal_buffer_.find( CRLF );
     assert( first_line_ending != std::string::npos );
 
     string first_line( internal_buffer_.substr( 0, first_line_ending ) );
-    internal_buffer_.replace( 0, first_line_ending + crlf.size(), string() );
+    internal_buffer_.replace( 0, first_line_ending + CRLF.size(), string() );
     return first_line;
 }
 
