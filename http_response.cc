@@ -6,6 +6,8 @@
 #include "ezio.hh"
 #include "mime_type.hh"
 
+#include "chunked_parser.hh"
+
 using namespace std;
 
 string HTTPResponse::status_code( void ) const
@@ -39,9 +41,8 @@ void HTTPResponse::calculate_expected_body_size( void )
         /* Rule 2: size dictated by chunked encoding */
         /* Rule 2 is a bit ambiguous, but we think section 3.6 makes this acceptable */
 
-        fprintf( stderr, "Chunked.\n" );
         set_expected_body_size( false );
-        //XXX        body_parser_ = new ChunkedBodyParser( has_header( "Trailer" ) );
+        body_parser_ = unique_ptr< BodyParser >( new ChunkedBodyParser() );
     } else if ( (not has_header( "Transfer-Encoding" ) )
                 and has_header( "Content-Length" ) ) {
 
