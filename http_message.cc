@@ -97,14 +97,27 @@ static char http_to_lower( char c )
     return c;
 }
 
+static string strip_initial_whitespace( const string & str )
+{
+    size_t first_nonspace = str.find_first_not_of( " " );
+    if ( first_nonspace == std::string::npos ) {
+        return "";
+    } else {
+        return str.substr( first_nonspace );
+    }
+}
+
 /* check if two strings are equivalent per HTTP 1.1 comparison (case-insensitive) */
 bool HTTPMessage::equivalent_strings( const string & a, const string & b )
 {
-    if ( a.size() != b.size() ) {
+    const string new_a = strip_initial_whitespace( a ),
+        new_b = strip_initial_whitespace( b );
+
+    if ( new_a.size() != new_b.size() ) {
         return false;
     }
 
-    for ( auto it_a = a.begin(), it_b = b.begin(); it_a < a.end(); it_a++, it_b++ ) {
+    for ( auto it_a = new_a.begin(), it_b = new_b.begin(); it_a < new_a.end(); it_a++, it_b++ ) {
         if ( http_to_lower( *it_a ) != http_to_lower( *it_b ) ) {
             return false;
         }
