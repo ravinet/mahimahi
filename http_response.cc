@@ -33,10 +33,13 @@ void HTTPResponse::calculate_expected_body_size( void )
         /* Rule 1: size known to be zero */
         set_expected_body_size( true, 0 );
     } else if ( has_header( "Transfer-Encoding" )
-                and not equivalent_strings( get_header_value( "Transfer-Encoding" ),
-                                            "identity" ) ) {
+                and equivalent_strings( split( get_header_value( "Transfer-Encoding" ), "," ).back(),
+                                        "chunked" ) ) {
 
         /* Rule 2: size dictated by chunked encoding */
+        /* Rule 2 is a bit ambiguous, but we think section 3.6 makes this acceptable */
+
+        fprintf( stderr, "Chunked.\n" );
         set_expected_body_size( false );
         //XXX        body_parser_ = new ChunkedBodyParser( has_header( "Trailer" ) );
     } else if ( (not has_header( "Transfer-Encoding" ) )

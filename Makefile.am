@@ -25,7 +25,7 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	http_response_parser.hh http_response_parser.cc \
 	tokenize.hh mime_type.hh mime_type.cc \
 	body_parser.hh \
-	chunked_parser.hh chunked_parser.cc \
+	chunked_parser.hh \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh
 recordshell_LDADD = -lrt

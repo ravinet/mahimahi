@@ -68,7 +68,7 @@ long int myatoi( const string & str, const int base )
     if ( errno != 0 ) {
         throw Exception( "strtol" );
     } else if ( end != str.c_str() + str.size() ) {
-        throw Exception( "Invalid decimal integer", str );
+        throw Exception( "Invalid integer", str );
     }
 
     return ret;
