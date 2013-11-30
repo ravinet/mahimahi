@@ -42,7 +42,9 @@ void HTTPResponse::calculate_expected_body_size( void )
         /* Rule 2 is a bit ambiguous, but we think section 3.6 makes this acceptable */
 
         set_expected_body_size( false );
-        body_parser_ = unique_ptr< BodyParser >( new ChunkedBodyParser() );
+
+        /* Create body_parser_ with trailers_enabled if requied (RFC 2616 section 14.40) */
+        body_parser_ = unique_ptr< BodyParser >( new ChunkedBodyParser( has_header( "Trailer" ) ) );
     } else if ( (not has_header( "Transfer-Encoding" ) )
                 and has_header( "Content-Length" ) ) {
 
