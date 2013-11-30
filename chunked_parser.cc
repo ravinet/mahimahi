@@ -21,8 +21,11 @@ uint32_t ChunkedBodyParser::get_chunk_size(const string & chunk_hdr) const
     /* Can't be npos even now */
     assert( pos != string::npos );
 
-    /* Parse hex string */
-    return myatoi(chunk_hdr.substr(0, pos), 16);
+    /* Parse hex string, after removing trailing spaces (RFC 2616 Section 2.1) */
+    auto hex_string = chunk_hdr.substr(0, pos);
+    auto space_loc = hex_string.find(" ");
+    if (space_loc != string::npos) hex_string.erase( space_loc, hex_string.length() - space_loc );
+    return myatoi(hex_string, 16);
 }
 
 /* Byte-at-a-time parser, might be slow, but conceptually simpler */
