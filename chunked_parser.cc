@@ -73,7 +73,7 @@ string::size_type ChunkedBodyParser::read( const std::string & input_buffer )
 {
   for (uint32_t i = 0; i < input_buffer.length(); i++) {
       if (parse_byte( input_buffer.at( i ) )) {
-          return i + 1; /* TODO: i or i + 1 ? */
+          return i + 1; /* i + 1, because it's a size, not an index */
       }
   }
   return string::npos;
