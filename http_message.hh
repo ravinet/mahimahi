@@ -8,6 +8,7 @@
 #include <cassert>
 
 #include "http_header.hh"
+#include "http_record.pb.h"
 
 enum HTTPMessageState { FIRST_LINE_PENDING, HEADERS_PENDING, BODY_PENDING, COMPLETE };
 
@@ -68,6 +69,9 @@ public:
 
     /* serialize the request or response as one string */
     std::string str( void ) const;
+
+    /* return complete request or response as http_message protobuf */
+    HTTP_Record::http_message toprotobuf( void ) const;
 
     /* compare two strings for (case-insensitive) equality,
        in ASCII without sensitivity to locale */

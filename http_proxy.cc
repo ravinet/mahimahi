@@ -20,6 +20,8 @@
 #include "bytestream_queue.hh"
 #include "http_request_parser.hh"
 #include "http_response_parser.hh"
+#include "file_descriptor.hh"
+#include "http_record.pb.h"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -49,6 +51,8 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTPResponseParser response_parser;
 
+                HTTP_Record::reqrespair current_pair;
+
                 /* poll on original connect socket and new connection socket to ferry packets */
 
                 /* responses from server go to response parser */
@@ -74,6 +78,10 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () {
                                                        server.write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
+
+                                                       /* add request to current request/response pair */
+                                                       current_pair.mutable_req()->CopyFrom( request_parser.front().toprotobuf() );
+
                                                        request_parser.pop();
                                                        return ResultType::Continue;
                                                    },
@@ -82,7 +90,33 @@ void HTTPProxy::handle_tcp( void )
                 /* completed responses from server are serialized and sent to client */
                 poller.add_action( Poller::Action( client.fd(), Direction::Out,
                                                    [&] () {
+                                                       /* output string for current request/response pair */
+                                                       string outputmessage;
+
+                                                       /* Use random number generator to create output filename (number between 0 and 99999) */
+                                                       string filename = to_string( rand() % 100000 );
+
+                                                       /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
+                                                       FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );
+
                                                        client.write( response_parser.front().str() );
+
+                                                       /* if request is present in current request/response pair, add response and write to file */
+                                                       if ( current_pair.has_req() ) {
+                                                           current_pair.mutable_res()->CopyFrom( response_parser.front().toprotobuf() );
+                                                           if ( current_pair.SerializeToString( &outputmessage ) ) {
+                                                               messages.write( outputmessage );
+                                                           } else {
+                                                               throw Exception( "Protobuf", "Unable to serialize protobuf to string" );
+                                                           }
+                                                       } else {
+                                                           throw Exception( "Protobuf", "Response ready without Request" );
+                                                       }
+
+                                                       /* clear current request/response pair */
+                                                       current_pair.clear_req();
+                                                       current_pair.clear_res();
+
                                                        response_parser.pop();
                                                        return ResultType::Continue;
                                                    },

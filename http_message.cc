@@ -2,6 +2,7 @@
 
 #include "http_message.hh"
 #include "exception.hh"
+#include "http_record.pb.h"
 
 using namespace std;
 
@@ -170,4 +171,24 @@ std::string HTTPMessage::str( void ) const
     ret.append( body_ );
 
     return ret;
+}
+
+HTTP_Record::http_message HTTPMessage::toprotobuf( void ) const
+{
+    assert( state_ == COMPLETE );
+
+    HTTP_Record::http_message message;
+
+    /* add first line to protobuf http_message */
+    message.set_first_line( first_line_ + CRLF );
+
+    /* iterate through headers and add "key: value\r\n" to protobuf */
+    for ( const auto & header : headers_ ) {
+        message.add_headers( header.str() + CRLF );
+    }
+
+    /* add blank line to separate headers and body, and then add body */
+    message.set_body( CRLF + body_ );
+
+    return message;
 }
