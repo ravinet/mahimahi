@@ -1,0 +1,12 @@
+package HTTP_Record;
+
+message http_message {
+    required string first_line = 1;
+    repeated string headers = 2;
+    optional string body = 3;
+}
+
+message reqrespair {
+    required http_message req = 1;
+    required http_message res = 2;
+}

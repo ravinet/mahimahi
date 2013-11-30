@@ -14,6 +14,7 @@ AC_SUBST([PICKY_CXXFLAGS])
 
 # Checks for programs.
 AC_PROG_CXX
+AC_PROG_RANLIB
 
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
@@ -29,7 +30,12 @@ if test "$IP" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 
+AC_PATH_PROG([PROTOC], [protoc], [])
+AS_IF([test x"$PROTOC" = x],
+  [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
+
 # Checks for libraries.
+PKG_CHECK_MODULES([protobuf], [protobuf])
 
 # Checks for header files.
 
@@ -37,5 +43,5 @@ AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile protobufs/Makefile])
 AC_OUTPUT

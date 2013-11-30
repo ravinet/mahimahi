@@ -1,5 +1,6 @@
+AM_CPPFLAGS = -I./protobufs
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
-
+SUBDIRS = protobufs
 common_source = exception.hh ezio.cc ezio.hh                                   \
 	file_descriptor.hh netdevice.cc netdevice.hh timestamp.cc timestamp.hh \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc              \
@@ -29,6 +30,7 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh
 recordshell_LDADD = -lrt
+recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 recordshell_LDFLAGS = -pthread
 
 install-exec-hook:
