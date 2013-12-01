@@ -23,11 +23,8 @@ private:
 public:
     std::string::size_type read( const std::string & ) override;
 
-    bool eof( void ) override
-    {
-        throw Exception( "ChunkedBodyParser", "invalid EOF in the middle of body" );
-        return false;
-    };
+    /* Follow item 2, Section 4.4 of RFC 2616 */
+    bool eof( void ) override { return true; };
 
     ChunkedBodyParser(bool t_trailers_enabled) : trailers_enabled_( t_trailers_enabled ) {};
 };
