@@ -28,56 +28,93 @@ uint32_t ChunkedBodyParser::get_chunk_size(const string & chunk_hdr) const
     return myatoi(hex_string, 16);
 }
 
-/* Byte-at-a-time parser, might be slow, but conceptually simpler */
-bool ChunkedBodyParser::parse_byte( char byte )
-{
-    parser_buffer_.push_back( byte );
-    switch (state_) {
-    case CHUNK_HDR:
-        /* if you have CRLF, get chunk size & transition to CHUNK/TRAILER */
-        if (parser_buffer_.find("\r\n") != string::npos) {
-            /* get chunk size */
-            current_chunk_size_ = get_chunk_size( parser_buffer_ );
-
-            /* Transition appropriately */
-            state_ = (current_chunk_size_ == 0) ? TRAILER : CHUNK;
-
-            /* reset parser_buffer_ */
-            parser_buffer_ = {};
-        }
-        /* if you haven't seen a CRLF so far do nothing */
-        return false;
-
-    case CHUNK:
-        if (parser_buffer_.length() == current_chunk_size_ + 2) {
-          /* accumulated enough bytes, check CR/LF */
-          assert(parser_buffer_.substr( parser_buffer_.length() - 2, 2 ) == "\r\n");
-
-          /* Transition to next state */
-          state_ = CHUNK_HDR;
-
-          /* reset parser_buffer_ */
-          parser_buffer_ = {};
-        }
-        return false;
-
-    case TRAILER:
-        /* If we find two consectuve CRLFs, we are done */
-        return (trailers_enabled_) ? (parser_buffer_.find("\r\n\r\n") != string::npos)
-                                   : (parser_buffer_.find("\r\n") != string::npos);
-
-    default:
-        assert( false );
-        return false;
-    }
-}
-
 string::size_type ChunkedBodyParser::read( const std::string & input_buffer )
 {
-  for (uint32_t i = 0; i < input_buffer.length(); i++) {
-      if (parse_byte( input_buffer.at( i ) )) {
-          return i + 1; /* i + 1, because it's a size, not an index */
-      }
-  }
-  return string::npos;
+    parser_buffer_ += input_buffer;
+
+    while (!parser_buffer_.empty()) {
+        switch (state_) {
+        case CHUNK_HDR: {
+            auto it = parser_buffer_.find("\r\n");
+            if (it != string::npos) {
+                /* if you have CRLF, get chunk size & transition to CHUNK/TRAILER */
+                current_chunk_size_ = get_chunk_size( parser_buffer_.substr(0, it + 2) );
+
+                /* Transition appropriately */
+                state_ = (current_chunk_size_ == 0) ? TRAILER : CHUNK;
+
+                /* shrink parser_buffer_ */
+                parsed_so_far_ += (it + 2);
+                parser_buffer_ = parser_buffer_.substr(it + 2, string::npos);
+                break;
+            } else {
+                /* if you haven't seen a CRLF so far, do nothing */
+                acked_so_far_ += input_buffer.length();
+                return string::npos;
+            }
+        }
+
+        case CHUNK: {
+            if (parser_buffer_.length() >= current_chunk_size_ + 2) {
+                /* accumulated enough bytes, check CRLF at the end of the chunk */
+                assert(parser_buffer_.substr( current_chunk_size_, 2 ) == "\r\n");
+
+                /* Transition to next state */
+                state_ = CHUNK_HDR;
+
+                /* shrink parser_buffer_ */
+                parsed_so_far_ += current_chunk_size_ + 2;
+                parser_buffer_ = parser_buffer_.substr( current_chunk_size_ + 2, string::npos);
+                break;
+            } else {
+                /* Haven't seen enough bytes so far, do nothing */
+                acked_so_far_ += input_buffer.length();
+                return string::npos;
+            }
+        }
+
+        case TRAILER: {
+            if (trailers_enabled_) {
+                /* We need two consecutive CRLFs */
+                return compute_ack_size( parser_buffer_,
+                                         "\r\n\r\n",
+                                         input_buffer.length() );
+            } else {
+                /* We need only one CRLF now */
+                return compute_ack_size( parser_buffer_,
+                                         "\r\n",
+                                         input_buffer.length() );
+            }
+        }
+
+        default: {
+            assert( false );
+            return false;
+        }
+        }
+    }
+    acked_so_far_ += input_buffer.length();
+    return string::npos;
+}
+
+/*
+   Computes the acknowledgement from the BodyParser to its caller,
+   telling it how much of the current input_buffer has been
+   successfully parsed.
+ */
+string::size_type ChunkedBodyParser::compute_ack_size(const string & haystack,
+                                                      const string & needle,
+                                                      const string::size_type input_size)
+{
+    auto loc = haystack.find( needle );
+    if (loc != string::npos) {
+        /* Can't find it, eat up the whole buffer */
+        parsed_so_far_ += loc + needle.length();
+        assert(parsed_so_far_ > acked_so_far_);
+        return (parsed_so_far_ - acked_so_far_);
+    } else {
+        /* Find unacknowledged buffer so far, ack it, and be done */
+        acked_so_far_ += input_size;
+        return loc;
+    }
 }
