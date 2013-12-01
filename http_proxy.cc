@@ -26,8 +26,9 @@
 using namespace std;
 using namespace PollerShortNames;
 
-HTTPProxy::HTTPProxy( const Address & listener_addr )
-    : listener_socket_( TCP )
+HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
+    : listener_socket_( TCP ),
+      record_folder_( record_folder)
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -94,7 +95,7 @@ void HTTPProxy::handle_tcp( void )
                                                        string outputmessage;
 
                                                        /* Use random number generator to create output filename (number between 0 and 99999) */
-                                                       string filename = to_string( rand() % 100000 );
+                                                       string filename = record_folder_ + to_string( rand() % 100000 );
 
                                                        /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
                                                        FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );

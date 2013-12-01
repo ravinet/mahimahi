@@ -11,9 +11,11 @@ class HTTPProxy
 {
 private:
     Socket listener_socket_;
+    /* folder to store recorded http content in */
+    std::string record_folder_;
 
 public:
-    HTTPProxy( const Address & listener_addr );
+    HTTPProxy( const Address & listener_addr, const std::string & record_folder );
     Socket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp( void );

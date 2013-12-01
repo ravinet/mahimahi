@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <resolv.h>
+#include <sys/stat.h>
 
 #include "util.hh"
 #include "exception.hh"
@@ -94,6 +95,35 @@ void check_requirements( const int argc, const char * const argv[] )
     if ( ipf.read() != "1\n" ) {
         throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }
+}
+
+string check_storage_folder( const char * const folder_path )
+{
+    struct stat sb;
+
+    string directory = folder_path;
+
+    if ( directory.back() != '/' ) {
+        directory.append( "/" );
+    }
+
+/* Check return value of stat but less than 0 can simply indicate directory doesn't exist (no exception)...must check value
+    int stat_return;
+    if ( ( stat_return = stat( directory.c_str(), &sb ) ) < 0 ) {
+        throw Exception( "stat" );
+    }
+*/
+
+    /* check if directory already exists */
+    if (!stat( directory.c_str(), &sb ) == 0 or !S_ISDIR(sb.st_mode))
+    {
+        /* make directory where group has all permissions */
+        if ( mkdir( directory.c_str(), 00070 ) < 0 ) {
+            throw Exception( "mkdir" );
+        }
+    }
+
+    return directory;
 }
 
 Address first_nameserver( void )

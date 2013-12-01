@@ -35,9 +35,12 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 1 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) );
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
         }
+
+        /* check if user-specified storage folder exists, and if not, create it */
+        string directory = check_storage_folder( argv[1] );
 
         const Address nameserver = first_nameserver();
 
@@ -63,7 +66,7 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
+        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr, directory ) );
 
         /* set up dnat */
         DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );
