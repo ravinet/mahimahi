@@ -45,7 +45,7 @@ string::size_type ChunkedBodyParser::read( const std::string & input_buffer )
 
                 /* shrink parser_buffer_ */
                 parsed_so_far_ += ( it + 2 );
-                parser_buffer_ = parser_buffer_.substr( it + 2, string::npos );
+                parser_buffer_ = parser_buffer_.substr( it + 2 );
                 break;
             } else {
                 /* if you haven't seen a CRLF so far, do nothing */
@@ -64,7 +64,7 @@ string::size_type ChunkedBodyParser::read( const std::string & input_buffer )
 
                 /* shrink parser_buffer_ */
                 parsed_so_far_ += current_chunk_size_ + 2;
-                parser_buffer_ = parser_buffer_.substr( current_chunk_size_ + 2, string::npos );
+                parser_buffer_ = parser_buffer_.substr( current_chunk_size_ + 2 );
                 break;
             } else {
                 /* Haven't seen enough bytes so far, do nothing */
