@@ -32,6 +32,9 @@ HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folde
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
+
+    /* set starting seed for random number file names */
+    srandom( time( NULL ) );
 }
 
 void HTTPProxy::handle_tcp( void )
@@ -95,7 +98,7 @@ void HTTPProxy::handle_tcp( void )
                                                        string outputmessage;
 
                                                        /* Use random number generator to create output filename (number between 0 and 99999) */
-                                                       string filename = record_folder_ + to_string( rand() % 100000 );
+                                                       string filename = record_folder_ + to_string( random() % 100000 );
 
                                                        /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
                                                        FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );
