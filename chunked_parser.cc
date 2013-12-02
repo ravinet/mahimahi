@@ -108,7 +108,7 @@ string::size_type ChunkedBodyParser::compute_ack_size( const string & haystack,
 {
     auto loc = haystack.find( needle );
     if ( loc != string::npos ) {
-        /* Can't find it, eat up the whole buffer */
+        /* Found it, eat up the whole buffer */
         parsed_so_far_ += loc + needle.length();
         assert( parsed_so_far_ > acked_so_far_ );
         return ( parsed_so_far_ - acked_so_far_ );
