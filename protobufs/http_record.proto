@@ -1,9 +1,9 @@
 package HTTP_Record;
 
 message http_message {
-    required string first_line = 1;
-    repeated string headers = 2;
-    optional string body = 3;
+    required bytes first_line = 1;
+    repeated bytes headers = 2;
+    optional bytes body = 3;
 }
 
 message reqrespair {

@@ -103,24 +103,20 @@ string check_storage_folder( const char * const folder_path )
 
     string directory = folder_path;
 
+    /* make sure directory ends with '/' so we can prepend directory to file name for storage */
     if ( directory.back() != '/' ) {
         directory.append( "/" );
     }
 
-/* Check return value of stat but less than 0 can simply indicate directory doesn't exist (no exception)...must check value
-    int stat_return;
-    if ( ( stat_return = stat( directory.c_str(), &sb ) ) < 0 ) {
-        throw Exception( "stat" );
-    }
-*/
-
-    /* check if directory already exists */
+    /* check if directory already exists and if not, create it */
     if (!stat( directory.c_str(), &sb ) == 0 or !S_ISDIR(sb.st_mode))
     {
-        /* make directory where group has all permissions */
-        if ( mkdir( directory.c_str(), 00070 ) < 0 ) {
-            throw Exception( "mkdir" );
+        if ( errno != ENOENT ) { /* error is not that directory does not exist */
+            throw Exception( "stat" );
         }
+
+        /* make directory where group has all permissions */
+        SystemCall( "mkdir", mkdir( directory.c_str(), 00070 ) );
     }
 
     return directory;
