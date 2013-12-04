@@ -98,7 +98,7 @@ void HTTPProxy::handle_tcp( void )
                                                        string outputmessage;
 
                                                        /* Use random number generator to create output filename (number between 0 and 99999) */
-                                                       string filename = record_folder_ + to_string( random() % 100000 );
+                                                       string filename = record_folder_ + to_string( random() );
 
                                                        /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
                                                        FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );
