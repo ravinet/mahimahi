@@ -29,9 +29,11 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	body_parser.hh \
 	chunked_parser.hh chunked_parser.cc \
 	http_message.hh http_message.cc \
-	http_message_sequence.hh
+	http_message_sequence.hh \
+	secure_socket.hh secure_socket.cc
 recordshell_LDADD = -lrt
 recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+recordshell_LDADD += -lssl -lcrypto -ldl
 recordshell_LDFLAGS = -pthread
 
 install-exec-hook:
