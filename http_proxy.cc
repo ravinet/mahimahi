@@ -58,29 +58,32 @@ void HTTPProxy::handle_tcp( void )
                 HTTP_Record::reqrespair current_pair;
 
                 /* poll on original connect socket and new connection socket to ferry packets */
+                /* Create Read/Write Interfaces for server and client */
+                ReadWriteInterface & server_rw = server;
+                ReadWriteInterface & client_rw = client;
 
                 /* responses from server go to response parser */
-                poller.add_action( Poller::Action( server.fd(), Direction::In,
+                poller.add_action( Poller::Action( server_rw.fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = server.read();
+                                                       string buffer = server_rw.read();
                                                        response_parser.parse( buffer );
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not client.fd().eof(); } ) );
+                                                   [&] () { return not client_rw.fd().eof(); } ) );
 
                 /* requests from client go to request parser */
-                poller.add_action( Poller::Action( client.fd(), Direction::In,
+                poller.add_action( Poller::Action( client_rw.fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = client.read();
+                                                       string buffer = client_rw.read();
                                                        request_parser.parse( buffer );
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not server.fd().eof(); } ) );
+                                                   [&] () { return not server_rw.fd().eof(); } ) );
 
                 /* completed requests from client are serialized and sent to server */
-                poller.add_action( Poller::Action( server.fd(), Direction::Out,
+                poller.add_action( Poller::Action( server_rw.fd(), Direction::Out,
                                                    [&] () {
-                                                       server.write( request_parser.front().str() );
+                                                       server_rw.write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
 
                                                        /* add request to current request/response pair */
@@ -92,7 +95,7 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () { return not request_parser.empty(); } ) );
 
                 /* completed responses from server are serialized and sent to client */
-                poller.add_action( Poller::Action( client.fd(), Direction::Out,
+                poller.add_action( Poller::Action( client_rw.fd(), Direction::Out,
                                                    [&] () {
                                                        /* output string for current request/response pair */
                                                        string outputmessage;
@@ -103,7 +106,7 @@ void HTTPProxy::handle_tcp( void )
                                                        /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
                                                        FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );
 
-                                                       client.write( response_parser.front().str() );
+                                                       client_rw.write( response_parser.front().str() );
 
                                                        /* if request is present in current request/response pair, add response and write to file */
                                                        if ( current_pair.has_req() ) {
