@@ -11,9 +11,10 @@
 
 #include "address.hh"
 #include "file_descriptor.hh"
+#include "read_write_interface.hh"
 #include "socket_type.hh"
 
-class Socket
+class Socket : public ReadWriteInterface
 {
 private:
     FileDescriptor fd_;
@@ -36,13 +37,13 @@ public:
     const Address & local_addr( void ) const { return local_addr_; }
     const Address & peer_addr( void ) const { return peer_addr_; }
 
-    std::string read( void );
+    std::string read( void ) override;
     std::string read ( const size_t limit );
-    void write( const std::string & str );
+    void write( const std::string & str ) override;
     std::string::const_iterator write_some( const std::string::const_iterator & begin,
                                             const std::string::const_iterator & end );
 
-    FileDescriptor & fd( void ) { return fd_; }
+    FileDescriptor & fd( void ) override { return fd_; }
 
     std::pair< Address, std::string > recvfrom( void );
     void sendto( const Address & destination, const std::string & payload );
