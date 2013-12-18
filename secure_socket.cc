@@ -28,41 +28,37 @@ Secure_Socket::Secure_Socket( Socket && sock, SSL_MODE type, const string & cert
         ctx = SSL_CTX_new( TLSv1_client_method() );
         /* set locations for ctx where CA certificates are located */
         if ( SSL_CTX_load_verify_locations( ctx, certificate.c_str(), NULL ) < 1 ) {
-            ERR_print_errors_fp( stderr );
+            throw Exception( "SSL_CTX_load_verify_locations", ERR_error_string( ERR_get_error(), nullptr ) );
         }
     } else { /* server */
         ctx = SSL_CTX_new( TLSv1_server_method() );
         /* loads first certificate stored in certificate file (PEM format) into ssl ctx object */
         if ( SSL_CTX_use_certificate_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
-            ERR_print_errors_fp( stderr );
+            throw Exception( "SSL_CTX_use_certificate_file", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
         /* load first private key from file with key to ssl ctx object */
         if ( SSL_CTX_use_PrivateKey_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
-            ERR_print_errors_fp( stderr );
+            throw Exception( "SSL_CTX_use_PrivateKey_file", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
         /* checks consistency of private key with loaded certificate */
         if ( SSL_CTX_check_private_key( ctx ) < 1 ) {
-            throw Exception( "SSL_CTX_check_private_key" );
-            exit( EXIT_FAILURE );
+            throw Exception( "SSL_CTX_check_private_key", ERR_error_string( ERR_get_error(), nullptr ) );
         }
     }
     if ( ctx == NULL ) {
-        throw Exception( "SSL_CTX_new" );
-        exit( EXIT_FAILURE );
+        throw Exception( "SSL_CTX_new", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
     /* create new SSL structure */
     if ( (ssl_connection = SSL_new( ctx ) ) == NULL ) {
-        throw Exception( "SSL_new" );
-        exit( EXIT_FAILURE );
+        throw Exception( "SSL_new", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
     /* connect SSL structure with file descriptor for socket connected to new client */
     if ( SSL_set_fd( ssl_connection, underlying_socket.fd().num() ) < 1 ) {
-        throw Exception( "SSL_set_fd" );
-        exit( EXIT_FAILURE );
+        throw Exception( "SSL_set_fd", ERR_error_string( ERR_get_error(), nullptr ) );
     }
     SSL_set_mode( ssl_connection, SSL_MODE_AUTO_RETRY );
     handshake();
@@ -72,16 +68,14 @@ void Secure_Socket::handshake( void )
 {
     if ( mode == CLIENT ) { /* client-initiate handshake */
         if ( SSL_connect( ssl_connection ) < 1 ) {
-            ERR_print_errors_fp( stderr );
-            throw Exception( "SSL_connect" );
-            exit( EXIT_FAILURE );
+            throw Exception( "SSL_connect", ERR_error_string( ERR_get_error(), nullptr ) );
         } else { /* SSL handshake complete */
             /* check server certificates */
             check_server_certificate();
         }
     } else { /* server-finish handshake */
         if ( SSL_accept( ssl_connection ) < 1 ) {
-            ERR_print_errors_fp( stderr );
+            throw Exception( "SSL_accept", ERR_error_string( ERR_get_error(), nullptr ) );
         }
     }
 }
@@ -121,6 +115,9 @@ string Secure_Socket::read( void )
 
     ssize_t bytes_read = SSL_read( ssl_connection, &buffer, SSL_max_record_length );
 
+    /* Make sure that we really are reading from the underlying fd */
+    assert( 0 == SSL_pending( ssl_connection ) );
+
     if ( bytes_read == 0 ) {
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
@@ -143,8 +140,7 @@ void Secure_Socket::write(const string & message )
         } else if ( amount_written < 0 ) { /* write unsuccessful...check error (should not be WANT_READ/WANT_WRITE because we set SSL_MODE_AUTO_RETRY) */
             assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_READ );
             assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_WRITE );
-            cout << "ERROR: " << SSL_get_error( ssl_connection, amount_written ) << endl;
-            exit( EXIT_FAILURE );
+            throw Exception( "SSL_write", ERR_error_string( SSL_get_error( ssl_connection, amount_written ), nullptr ) );
         } else { /* write unsuccessful either due shutdown (either clean or incomplete shutdown) */
             return;
         }
