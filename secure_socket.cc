@@ -38,9 +38,6 @@ Secure_Socket::Secure_Socket( Socket && sock, SSL_MODE type, const string & cert
         }
 
         /* load first private key from file with key to ssl ctx object */
-        /*if ( SSL_CTX_use_PrivateKey_file( ctx, "/home/ravi/testcerts/server.pem", SSL_FILETYPE_PEM ) < 1 ) {
-            ERR_print_errors_fp( stderr );
-        }*/
         if ( SSL_CTX_use_PrivateKey_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
             ERR_print_errors_fp( stderr );
         }
@@ -48,24 +45,24 @@ Secure_Socket::Secure_Socket( Socket && sock, SSL_MODE type, const string & cert
         /* checks consistency of private key with loaded certificate */
         if ( SSL_CTX_check_private_key( ctx ) < 1 ) {
             throw Exception( "SSL_CTX_check_private_key" );
-            abort();
+            exit( EXIT_FAILURE );
         }
     }
     if ( ctx == NULL ) {
         throw Exception( "SSL_CTX_new" );
-        abort();
+        exit( EXIT_FAILURE );
     }
 
     /* create new SSL structure */
     if ( (ssl_connection = SSL_new( ctx ) ) == NULL ) {
         throw Exception( "SSL_new" );
-        abort();
+        exit( EXIT_FAILURE );
     }
 
     /* connect SSL structure with file descriptor for socket connected to new client */
     if ( SSL_set_fd( ssl_connection, underlying_socket.fd().num() ) < 1 ) {
         throw Exception( "SSL_set_fd" );
-        abort();
+        exit( EXIT_FAILURE );
     }
     SSL_set_mode( ssl_connection, SSL_MODE_AUTO_RETRY );
     handshake();
@@ -77,7 +74,7 @@ void Secure_Socket::handshake( void )
         if ( SSL_connect( ssl_connection ) < 1 ) {
             ERR_print_errors_fp( stderr );
             throw Exception( "SSL_connect" );
-            abort();
+            exit( EXIT_FAILURE );
         } else { /* SSL handshake complete */
             /* check server certificates */
             check_server_certificate();
@@ -117,10 +114,12 @@ void Secure_Socket::check_server_certificate( void ) //const string expected_hos
 
 string Secure_Socket::read( void )
 {
-    char buf[ 1024 ];
+    /* SSL record max size is 16kB */
+    char buf[ 16384 ];
     while ( 1 ) {
         int amount_read;
-        if ( ( amount_read = SSL_read( ssl_connection, buf, 1024 ) ) > 0 ) { /* we read some data...read successful */
+        if ( ( amount_read = SSL_read( ssl_connection, buf, sizeof( buf ) ) ) > 0 ) { /* we read some data...read successful */
+            cout << "READ: " << amount_read << endl;
             string peer_message;
             peer_message.append( buf, amount_read );
             return peer_message;
@@ -128,9 +127,9 @@ string Secure_Socket::read( void )
             assert( SSL_get_error( ssl_connection, amount_read ) != SSL_ERROR_WANT_READ );
             assert( SSL_get_error( ssl_connection, amount_read ) != SSL_ERROR_WANT_WRITE );
             cout << "ERROR: " << SSL_get_error( ssl_connection, amount_read ) << endl;
+            exit( EXIT_FAILURE );
             return string();
         } else { /* read unsuccessful either due shutdown (either clean or incomplete shutdown) */
-            cout << "SHUTDOWN" << endl;
             return string();
         }
     }
@@ -138,8 +137,6 @@ string Secure_Socket::read( void )
 
 void Secure_Socket::write(const string & message )
 {
-    /* TODO: figure out what to do when we get error (amount_written <= 0)...do we exit or should we return something to proxy? */
-
     string to_be_written = message;
     size_t total_written = 0;
     while ( total_written < message.size() ) { /* write until we have written entire message or connection closed/has errors */
@@ -151,9 +148,8 @@ void Secure_Socket::write(const string & message )
             assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_READ );
             assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_WRITE );
             cout << "ERROR: " << SSL_get_error( ssl_connection, amount_written ) << endl;
-            return;
+            exit( EXIT_FAILURE );
         } else { /* write unsuccessful either due shutdown (either clean or incomplete shutdown) */
-            cout << "SHUTDOWN" << endl;
             return;
         }
     }

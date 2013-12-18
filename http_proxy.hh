@@ -3,6 +3,7 @@
 #ifndef HTTP_PROXY_HH
 #define HTTP_PROXY_HH
 
+#include <string>
 #include <queue>
 
 #include "secure_socket.hh"
@@ -21,17 +22,10 @@ private:
     void reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, const HTTPResponse & response );
 
 public:
-    struct SslPair {
-        std::unique_ptr<Secure_Socket> ssl_client {nullptr};
-        std::unique_ptr<Secure_Socket> ssl_server {nullptr};
-    public:
-        bool is_null() { return ssl_client == nullptr; }
-    };
-
+    static const std::string client_cert;
+    static const std::string server_cert;
     HTTPProxy( const Address & listener_addr, const std::string & record_folder );
     Socket & tcp_listener( void ) { return listener_socket_; }
-
-    SslPair make_ssl_pair( Socket & client, Socket & server, const int & dst_port );
 
     void handle_tcp( void );
 };

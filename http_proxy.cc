@@ -1,4 +1,4 @@
-			/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <thread>
 #include <string>
@@ -27,6 +27,10 @@
 using namespace std;
 using namespace PollerShortNames;
 
+/* to make server certificate, follow: https://help.ubuntu.com/community/OpenSSL but run "openssl rsa -in private/cakey.key -out private/cakey.pem" to eliminate private key password */
+const string HTTPProxy::client_cert = "/home/ravi/cacert.pem";
+const string HTTPProxy::server_cert =  "/home/ravi/newCA/mycert.pem";
+
 HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
     : listener_socket_( TCP ),
       record_folder_( record_folder)
@@ -46,19 +50,6 @@ HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folde
     SSL_load_error_strings();
 }
 
-HTTPProxy::SslPair HTTPProxy::make_ssl_pair( Socket & client, Socket & server, const int & dst_port ) {
-    SslPair ret;
-    if ( dst_port == 443 ) {
-        /* ssl_client is a SERVER for the browser */
-        /* ssl_server is a CLIENT of the original destination */
-        ret.ssl_client.reset( new Secure_Socket( move( client ), SERVER, string( "/home/ravi/testcerts/server_crt.pem" /*"/home/ravi/testcerts/server_key_cert.pem"*/ ) ) );
-        ret.ssl_server.reset( new Secure_Socket( move( server ), CLIENT, string( "/home/ravi/cacert.pem" ) ) );
-        return ret;
-   } else {
-        return ret;
-   }
-}
-
 void HTTPProxy::handle_tcp( void )
 {
     thread newthread( [&] ( Socket client ) {
@@ -71,10 +62,6 @@ void HTTPProxy::handle_tcp( void )
                 Socket server( TCP );
                 server.connect( original_destaddr );
 
-                /* Make SSL sockets if required */
-                auto ssl_sockets = make_ssl_pair( client, server, original_destaddr.port() );
-                bool secure = not ssl_sockets.is_null();
-
                 Poller poller;
 
                 HTTPRequestParser request_parser;
@@ -83,33 +70,38 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTP_Record::reqrespair current_pair;
 
-                /* poll on original connect socket and new connection socket to ferry packets */
                 /* Create Read/Write Interfaces for server and client */
-                ReadWriteInterface & server_rw = server;
-                ReadWriteInterface & client_rw = client;
+                auto dst_port = original_destaddr.port();
+                std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
+                                                                 static_cast<decltype( server_rw )>( new Secure_Socket( move( server ), CLIENT, client_cert ) ) :
+                                                                 static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
+                std::unique_ptr<ReadWriteInterface> client_rw  = (dst_port == 443) ?
+                                                                 static_cast<decltype( client_rw )>( new Secure_Socket( move( client ), SERVER, server_cert ) ) :
+                                                                 static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
 
+                /* poll on original connect socket and new connection socket to ferry packets */
                 /* responses from server go to response parser */
-                poller.add_action( Poller::Action( server_rw.fd(), Direction::In,
+                poller.add_action( Poller::Action( server_rw->fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = server_rw.read();
+                                                       string buffer = server_rw->read();
                                                        response_parser.parse( buffer );
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not client_rw.fd().eof(); } ) );
+                                                   [&] () { return not client_rw->fd().eof(); } ) );
 
                 /* requests from client go to request parser */
-                poller.add_action( Poller::Action( client_rw.fd(), Direction::In,
+                poller.add_action( Poller::Action( client_rw->fd(), Direction::In,
                                                    [&] () {
-                                                       string buffer = client_rw.read();
+                                                       string buffer = client_rw->read();
                                                        request_parser.parse( buffer );
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not server_rw.fd().eof(); } ) );
+                                                   [&] () { return not server_rw->fd().eof(); } ) );
 
                 /* completed requests from client are serialized and sent to server */
-                poller.add_action( Poller::Action( server_rw.fd(), Direction::Out,
+                poller.add_action( Poller::Action( server_rw->fd(), Direction::Out,
                                                    [&] () {
-                                                       server_rw.write( request_parser.front().str() );
+                                                       server_rw->write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
 
                                                        /* add request to current request/response pair */
@@ -121,9 +113,9 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () { return not request_parser.empty(); } ) );
 
                 /* completed responses from server are serialized and sent to client */
-                poller.add_action( Poller::Action( client_rw.fd(), Direction::Out,
+                poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
                                                    [&] () {
-                                                       client_rw.write( response_parser.front().str() );
+                                                       client_rw->write( response_parser.front().str() );
                                                        reqres_to_protobuf( current_pair, response_parser.front() );
                                                        response_parser.pop();
                                                        return ResultType::Continue;

@@ -157,3 +157,8 @@ Address Socket::original_dest( void ) const
     assert( destlen == sizeof( dstaddr ) );
     return dstaddr;
 }
+
+Socket::Socket( Socket && other )
+   : fd_( std::move( other.fd_ ) ),
+     local_addr_( other.local_addr_),
+     peer_addr_( other.peer_addr_ ) {}

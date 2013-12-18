@@ -29,6 +29,12 @@ public:
 
     Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr );
 
+    /* forbid copying */
+    Socket( const Socket & other ) = delete;
+
+    /* allow moving */
+    Socket( Socket && other );
+
     void bind( const Address & addr );
     void connect( const Address & addr );
     void listen( void );
