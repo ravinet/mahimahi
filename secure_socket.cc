@@ -115,23 +115,19 @@ void Secure_Socket::check_server_certificate( void ) //const string expected_hos
 string Secure_Socket::read( void )
 {
     /* SSL record max size is 16kB */
-    char buf[ 16384 ];
-    while ( 1 ) {
-        int amount_read;
-        if ( ( amount_read = SSL_read( ssl_connection, buf, sizeof( buf ) ) ) > 0 ) { /* we read some data...read successful */
-            cout << "READ: " << amount_read << endl;
-            string peer_message;
-            peer_message.append( buf, amount_read );
-            return peer_message;
-        } else if ( amount_read < 0 ) { /* read unsuccessful...check error (should not be WANT_READ/WANT_WRITE because we set SSL_MODE_AUTO_RETRY) */
-            assert( SSL_get_error( ssl_connection, amount_read ) != SSL_ERROR_WANT_READ );
-            assert( SSL_get_error( ssl_connection, amount_read ) != SSL_ERROR_WANT_WRITE );
-            cout << "ERROR: " << SSL_get_error( ssl_connection, amount_read ) << endl;
-            exit( EXIT_FAILURE );
-            return string();
-        } else { /* read unsuccessful either due shutdown (either clean or incomplete shutdown) */
-            return string();
-        }
+    const size_t SSL_max_record_length = 16384;
+
+    char buffer[ SSL_max_record_length ];
+
+    ssize_t bytes_read = SSL_read( ssl_connection, &buffer, SSL_max_record_length );
+
+    if ( bytes_read == 0 ) {
+        return string(); /* EOF */
+    } else if ( bytes_read < 0 ) {
+        throw Exception( "SSL_read", ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
+    } else {
+        /* success */
+        return string( buffer, bytes_read );
     }
 }
 
