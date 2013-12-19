@@ -7,6 +7,8 @@ message http_message {
 }
 
 message reqrespair {
-    required http_message req = 1;
-    required http_message res = 2;
+    required uint32 port = 1;
+    required string protocol = 2;
+    required http_message req = 3;
+    required http_message res = 4;
 }

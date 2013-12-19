@@ -70,8 +70,13 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTP_Record::reqrespair current_pair;
 
-                /* Create Read/Write Interfaces for server and client */
                 auto dst_port = original_destaddr.port();
+
+                /* Set destination port and protocol in current request/response pair */
+                current_pair.set_port( dst_port );
+                ( dst_port == 443 ) ? current_pair.set_protocol( "HTTPS" ) : current_pair.set_protocol( "HTTP" );
+
+                /* Create Read/Write Interfaces for server and client */
                 std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
                                                                  static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT, client_cert ) ) :
                                                                  static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
