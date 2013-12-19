@@ -73,10 +73,10 @@ void HTTPProxy::handle_tcp( void )
                 /* Create Read/Write Interfaces for server and client */
                 auto dst_port = original_destaddr.port();
                 std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
-                                                                 static_cast<decltype( server_rw )>( new Secure_Socket( move( server ), CLIENT, client_cert ) ) :
+                                                                 static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT, client_cert ) ) :
                                                                  static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
                 std::unique_ptr<ReadWriteInterface> client_rw  = (dst_port == 443) ?
-                                                                 static_cast<decltype( client_rw )>( new Secure_Socket( move( client ), SERVER, server_cert ) ) :
+                                                                 static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER, server_cert ) ) :
                                                                  static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
 
                 /* poll on original connect socket and new connection socket to ferry packets */

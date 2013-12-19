@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Secure_Socket::Secure_Socket( Socket && sock, SSL_MODE type, const string & cert )
+SecureSocket::SecureSocket( Socket && sock, SSL_MODE type, const string & cert )
     : underlying_socket( move( sock ) ),
       ctx(),
       ssl_connection(),
@@ -64,7 +64,7 @@ Secure_Socket::Secure_Socket( Socket && sock, SSL_MODE type, const string & cert
     handshake();
 }
 
-void Secure_Socket::handshake( void )
+void SecureSocket::handshake( void )
 {
     if ( mode == CLIENT ) { /* client-initiate handshake */
         if ( SSL_connect( ssl_connection ) < 1 ) {
@@ -80,7 +80,7 @@ void Secure_Socket::handshake( void )
     }
 }
 
-void Secure_Socket::check_server_certificate( void ) //const string expected_host )
+void SecureSocket::check_server_certificate( void ) //const string expected_host )
 {
     X509 *server_certificate;
     //char peer_common_name[ 256 ];
@@ -106,7 +106,7 @@ void Secure_Socket::check_server_certificate( void ) //const string expected_hos
     }
 }
 
-string Secure_Socket::read( void )
+string SecureSocket::read( void )
 {
     /* SSL record max size is 16kB */
     const size_t SSL_max_record_length = 16384;
@@ -128,21 +128,12 @@ string Secure_Socket::read( void )
     }
 }
 
-void Secure_Socket::write(const string & message )
+void SecureSocket::write(const string & message )
 {
-    string to_be_written = message;
-    size_t total_written = 0;
-    while ( total_written < message.size() ) { /* write until we have written entire message or connection closed/has errors */
-        int amount_written;
-        if ( ( amount_written = SSL_write( ssl_connection, to_be_written.c_str(), to_be_written.length() ) ) > 0 ) { /* we wrote some data...wrote successful */
-            total_written = total_written + amount_written;
-            to_be_written.replace( 0, amount_written, string() );
-        } else if ( amount_written < 0 ) { /* write unsuccessful...check error (should not be WANT_READ/WANT_WRITE because we set SSL_MODE_AUTO_RETRY) */
-            assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_READ );
-            assert( SSL_get_error( ssl_connection, amount_written ) != SSL_ERROR_WANT_WRITE );
-            throw Exception( "SSL_write", ERR_error_string( SSL_get_error( ssl_connection, amount_written ), nullptr ) );
-        } else { /* write unsuccessful either due shutdown (either clean or incomplete shutdown) */
-            return;
-        }
+    /* SSL_write returns with success if complete contents of message are written */
+    ssize_t bytes_written = SSL_write( ssl_connection, message.c_str(), message.length() );
+
+    if ( bytes_written < 0 ) {
+        throw Exception( "SSL_write", ERR_error_string( SSL_get_error( ssl_connection, bytes_written ), nullptr ) );
     }
 }

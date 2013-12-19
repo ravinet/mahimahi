@@ -13,7 +13,7 @@
 
 enum SSL_MODE { CLIENT, SERVER };
 
-class Secure_Socket : public ReadWriteInterface
+class SecureSocket : public ReadWriteInterface
 {
 private:
     Socket underlying_socket;
@@ -27,13 +27,13 @@ private:
     SSL_MODE mode;
 
 public:
-    Secure_Socket( Socket && sock, SSL_MODE type, const std::string & cert );
+    SecureSocket( Socket && sock, SSL_MODE type, const std::string & cert );
 
     /* copy constructor */
-    Secure_Socket( const Secure_Socket & );
+    SecureSocket( const SecureSocket & );
 
     /* override assignment operator */
-    Secure_Socket & operator = ( const Secure_Socket & );
+    SecureSocket & operator = ( const SecureSocket & );
 
     /* initialize context object */
     void handshake( void );
