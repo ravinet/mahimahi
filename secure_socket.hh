@@ -35,10 +35,9 @@ public:
     /* override assignment operator */
     SecureSocket & operator = ( const SecureSocket & );
 
-    /* initialize context object */
     void handshake( void );
 
-    void check_server_certificate( void );//const std::string expected_host );
+    void check_server_certificate( void );
 
     std::string read( void ) override;
 

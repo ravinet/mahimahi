@@ -23,26 +23,25 @@ SecureSocket::SecureSocket( Socket && sock, SSL_MODE type, const string & cert )
       certificate( cert ),
       mode( type )
 {
-    /* initialize context object for client/server TLS version 1 */
+    /* create client/server supporting TLS version 1 */
     if ( mode == CLIENT ) { /* client */
         ctx = SSL_CTX_new( TLSv1_client_method() );
-        /* set locations for ctx where CA certificates are located */
+        /* load CA list used to verify server */
         if ( SSL_CTX_load_verify_locations( ctx, certificate.c_str(), NULL ) < 1 ) {
             throw Exception( "SSL_CTX_load_verify_locations", ERR_error_string( ERR_get_error(), nullptr ) );
         }
     } else { /* server */
         ctx = SSL_CTX_new( TLSv1_server_method() );
-        /* loads first certificate stored in certificate file (PEM format) into ssl ctx object */
+        /* load certificate to present to connected clients */
         if ( SSL_CTX_use_certificate_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
             throw Exception( "SSL_CTX_use_certificate_file", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
-        /* load first private key from file with key to ssl ctx object */
         if ( SSL_CTX_use_PrivateKey_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
             throw Exception( "SSL_CTX_use_PrivateKey_file", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
-        /* checks consistency of private key with loaded certificate */
+        /* check consistency of private key with loaded certificate */
         if ( SSL_CTX_check_private_key( ctx ) < 1 ) {
             throw Exception( "SSL_CTX_check_private_key", ERR_error_string( ERR_get_error(), nullptr ) );
         }
@@ -51,16 +50,17 @@ SecureSocket::SecureSocket( Socket && sock, SSL_MODE type, const string & cert )
         throw Exception( "SSL_CTX_new", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
-    /* create new SSL structure */
     if ( (ssl_connection = SSL_new( ctx ) ) == NULL ) {
         throw Exception( "SSL_new", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
-    /* connect SSL structure with file descriptor for socket connected to new client */
     if ( SSL_set_fd( ssl_connection, underlying_socket.fd().num() ) < 1 ) {
         throw Exception( "SSL_set_fd", ERR_error_string( ERR_get_error(), nullptr ) );
     }
+
+    /* enable read/write to return only after handshake/renegotiation and successful completion */
     SSL_set_mode( ssl_connection, SSL_MODE_AUTO_RETRY );
+
     handshake();
 }
 
@@ -70,7 +70,6 @@ void SecureSocket::handshake( void )
         if ( SSL_connect( ssl_connection ) < 1 ) {
             throw Exception( "SSL_connect", ERR_error_string( ERR_get_error(), nullptr ) );
         } else { /* SSL handshake complete */
-            /* check server certificates */
             check_server_certificate();
         }
     } else { /* server-finish handshake */
@@ -80,29 +79,16 @@ void SecureSocket::handshake( void )
     }
 }
 
-void SecureSocket::check_server_certificate( void ) //const string expected_host )
+void SecureSocket::check_server_certificate( void )
 {
     X509 *server_certificate;
-    //char peer_common_name[ 256 ];
 
-    /* get certificate presented by server (peer). if none, then NULL */
     server_certificate = SSL_get_peer_certificate( ssl_connection );
 
-    /* if certificate is presented, certificate verification is done during the SSL handshake with SSL_connect() and we use SSL_get_verify_result() to get the verification result */
-    if ( server_certificate != NULL ) { /* server presented certificate */
-        cout << "Certificate presented by server" << endl;
-        if ( SSL_get_verify_result( ssl_connection ) == X509_V_OK ) { /* certificate verified, check if server name matches expected name */
-            /*X509_NAME_get_text_by_NID( X509_get_subject_name( server_certificate ), NID_commonName, peer_common_name, 256 );
-            if( strcasecmp( peer_common_name, expected_host.c_str() ) != 0 ) {
-                cout << "Common name doesn't match expected host name: " << peer_common_name << endl;
-            }*/
-            cout << "Successfully verified server" << endl;
-            X509_free( server_certificate );
-        } else { /* verify result did not return X509_V_OK */
-            cout << "Could not successfully verify server certificate. Error: " << SSL_get_verify_result( ssl_connection ) << endl;
-        }
-    } else { /* server did not present certificate */
-        cout << "No certificates" << endl;
+    if ( SSL_get_verify_result( ssl_connection ) == X509_V_OK ) { /* verification succeeded of no certificate presented */
+        X509_free( server_certificate );
+    } else { /* verification failed */
+        throw Exception( "SSL_get_verify_result", ERR_error_string( SSL_get_verify_result( ssl_connection ), nullptr ) );
     }
 }
 
