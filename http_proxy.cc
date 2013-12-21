@@ -27,10 +27,6 @@
 using namespace std;
 using namespace PollerShortNames;
 
-/* to make server certificate, follow: https://help.ubuntu.com/community/OpenSSL but run "openssl rsa -in private/cakey.key -out private/cakey.pem" to eliminate private key password */
-const string HTTPProxy::client_cert = "/home/ravi/cacert.pem";
-const string HTTPProxy::server_cert =  "/home/ravi/newCA/mycert.pem";
-
 HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
     : listener_socket_( TCP ),
       record_folder_( record_folder)
@@ -78,10 +74,10 @@ void HTTPProxy::handle_tcp( void )
 
                 /* Create Read/Write Interfaces for server and client */
                 std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
-                                                                 static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT, client_cert ) ) :
+                                                                 static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
                                                                  static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
                 std::unique_ptr<ReadWriteInterface> client_rw  = (dst_port == 443) ?
-                                                                 static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER, server_cert ) ) :
+                                                                 static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER ) ) :
                                                                  static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
 
                 /* poll on original connect socket and new connection socket to ferry packets */

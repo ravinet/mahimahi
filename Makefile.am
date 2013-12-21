@@ -30,7 +30,8 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	chunked_parser.hh chunked_parser.cc \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh \
-	secure_socket.hh secure_socket.cc
+	secure_socket.hh secure_socket.cc \
+	certificate.hh
 recordshell_LDADD = -lrt
 recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 recordshell_LDADD += -lssl -lcrypto -ldl

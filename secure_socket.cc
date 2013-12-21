@@ -1,13 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <resolv.h>
-#include <netdb.h>
 #include "secure_socket.hh"
-#include "exception.hh"
+#include "certificate.hh"
 
 #include <fstream>
 #include <string>
@@ -16,29 +10,24 @@
 
 using namespace std;
 
-SecureSocket::SecureSocket( Socket && sock, SSL_MODE type, const string & cert )
+SecureSocket::SecureSocket( Socket && sock, SSL_MODE type )
     : underlying_socket( move( sock ) ),
       ctx(),
       ssl_connection(),
-      certificate( cert ),
       mode( type )
 {
     /* create client/server supporting TLS version 1 */
     if ( mode == CLIENT ) { /* client */
         ctx = SSL_CTX_new( TLSv1_client_method() );
-        /* load CA list used to verify server */
-        if ( SSL_CTX_load_verify_locations( ctx, certificate.c_str(), NULL ) < 1 ) {
-            throw Exception( "SSL_CTX_load_verify_locations", ERR_error_string( ERR_get_error(), nullptr ) );
-        }
     } else { /* server */
         ctx = SSL_CTX_new( TLSv1_server_method() );
-        /* load certificate to present to connected clients */
-        if ( SSL_CTX_use_certificate_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
-            throw Exception( "SSL_CTX_use_certificate_file", ERR_error_string( ERR_get_error(), nullptr ) );
+
+        if ( SSL_CTX_use_certificate_ASN1( ctx, 678, certificate ) < 1 ) {
+            throw Exception( "SSL_CTX_use_certificate_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
-        if ( SSL_CTX_use_PrivateKey_file( ctx, certificate.c_str(), SSL_FILETYPE_PEM ) < 1 ) {
-            throw Exception( "SSL_CTX_use_PrivateKey_file", ERR_error_string( ERR_get_error(), nullptr ) );
+        if ( SSL_CTX_use_RSAPrivateKey_ASN1( ctx, private_key, 1191 ) < 1 ) {
+            throw Exception( "SSL_CTX_use_RSAPrivateKey_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
         /* check consistency of private key with loaded certificate */
@@ -69,8 +58,6 @@ void SecureSocket::handshake( void )
     if ( mode == CLIENT ) { /* client-initiate handshake */
         if ( SSL_connect( ssl_connection ) < 1 ) {
             throw Exception( "SSL_connect", ERR_error_string( ERR_get_error(), nullptr ) );
-        } else { /* SSL handshake complete */
-            check_server_certificate();
         }
     } else { /* server-finish handshake */
         if ( SSL_accept( ssl_connection ) < 1 ) {

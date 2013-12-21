@@ -22,12 +22,10 @@ private:
 
     SSL* ssl_connection;
 
-    std::string certificate;
-
     SSL_MODE mode;
 
 public:
-    SecureSocket( Socket && sock, SSL_MODE type, const std::string & cert );
+    SecureSocket( Socket && sock, SSL_MODE type );
 
     /* copy constructor */
     SecureSocket( const SecureSocket & );
