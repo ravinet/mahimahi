@@ -68,7 +68,8 @@ void HTTPProxy::handle_tcp( void )
 
                 auto dst_port = original_destaddr.port();
 
-                /* Set destination port and protocol in current request/response pair */
+                /* Set destination ip, port and protocol in current request/response pair */
+                current_pair.set_ip( original_destaddr.ip() );
                 current_pair.set_port( dst_port );
                 ( dst_port == 443 ) ? current_pair.set_protocol( "HTTPS" ) : current_pair.set_protocol( "HTTP" );
 
