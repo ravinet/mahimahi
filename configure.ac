@@ -30,6 +30,13 @@ if test "$IP" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 
+AC_ARG_VAR([APACHE2], [path to apache2])
+AC_PATH_PROG([APACHE2], [apache2], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$APACHE2" = "no"; then
+  AC_MSG_ERROR([apache2 is required])
+fi
+AC_DEFINE_UNQUOTED([APACHE2], ["$APACHE2"], [path to apache2])
+
 AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])

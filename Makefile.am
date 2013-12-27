@@ -45,6 +45,14 @@ recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 recordshell_LDADD += -lssl -lcrypto -ldl
 recordshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += replayshell
+replayshell_SOURCES = $(common_source) replayshell.cc \
+	temp_file.hh temp_file.cc \
+	web_server.hh web_server.cc \
+	apache_configuration.hh \
+replayshell_LDADD = -lrt
+replayshell_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
@@ -52,3 +60,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/cellshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
+	chown root $(DESTDIR)$(bindir)/replayshell
+	chmod u+s $(DESTDIR)$(bindir)/replayshell
