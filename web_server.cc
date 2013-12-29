@@ -18,7 +18,7 @@ WebServer::WebServer( const string & listen_line, int port )
       access_log( "" )
 {
     /* make pid file using random number */
-    pid_file_name = "/home/ravi/mahimahi/lock" + to_string( random() );
+    pid_file_name = "/tmp/lock" + to_string( random() );
 
     /* if port 443, add ssl components */
     if ( port == 443 ) { /* ssl */
@@ -28,18 +28,18 @@ WebServer::WebServer( const string & listen_line, int port )
     /* add pid file, log files, and listen line to config file and run apache */
     config_file.append( "PidFile " + pid_file_name + "\n" );
 
-    config_file.append( "ErrorLog /home/ravi/mahimahi/" + error_log.name() + "\n" );
+    config_file.append( "ErrorLog " + error_log.name() + "\n" );
 
-    config_file.append( "CustomLog /home/ravi/mahimahi/" + access_log.name() + " common" + "\n" );
+    config_file.append( "CustomLog " + access_log.name() + " common" + "\n" );
 
     config_file.append( listen_line );
 
-    run( { APACHE2, "-f", "/home/ravi/mahimahi/" + config_file.name(), "-k", "start" } );
+    run( { APACHE2, "-f", config_file.name(), "-k", "start" } );
 }
 
 WebServer::~WebServer()
 {
-    run( { APACHE2, "-f", "/home/ravi/mahimahi/" + config_file.name(), "-k", "stop" } );
+    run( { APACHE2, "-f", config_file.name(), "-k", "stop" } );
 
     /* delete pid file */
     SystemCall( "remove", remove( pid_file_name.c_str() ) );

@@ -18,7 +18,6 @@ TempFile::TempFile( const string & contents )
     strcpy( tmp_name, config_file.c_str() );
     fd_ = SystemCall( "mkstemp", mkstemp( tmp_name ) );
     file_name = string( tmp_name );
-    cout << "MADE FILE: " << file_name << endl;
     SystemCall( "write", write( fd_, contents.c_str(), contents.length() ) );
 }
 

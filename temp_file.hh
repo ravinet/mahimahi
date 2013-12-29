@@ -5,7 +5,7 @@
 #ifndef TEMP_FILE_HH
 #define TEMP_FILE_HH
 
-static const std::string config_file = "apache_config.XXXXXX";
+static const std::string config_file = "/tmp/apache_config.XXXXXX";
 
 class TempFile
 {
