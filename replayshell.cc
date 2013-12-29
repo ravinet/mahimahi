@@ -67,38 +67,25 @@ int main( int argc, char *argv[] )
 
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
-/*        WebServer* apache1;
+        run( { IP, "link", "add", "dumb00", "type", "dummy" } );
+        run( { IP, "link", "add", "dumb11", "type", "dummy" } );
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb00",
+                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb11",
+                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb00",
+             [&] ( ifreq &ifr )
+             { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb11",
+             [&] ( ifreq &ifr )
+             { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
 
-        ChildProcess make_files( [&]() {
-                drop_privileges();
-                apache1 = new WebServer( "Listen 100.64.0.1:80", 80 );
-                cout << apache1 << endl;
-                return EXIT_SUCCESS;
-        } );
-        eventloop( make_files );
-*/
+        srandom( time( NULL ) );
+
+        WebServer apache1( "Listen 100.64.0.1:80", 80);
+        WebServer apache2( "Listen 100.64.0.2:80", 80);
 
         ChildProcess bash_process( [&]() {
-                cout << "BASH" << endl;
-                run( { IP, "link", "add", "dumb00", "type", "dummy" } );
-                run( { IP, "link", "add", "dumb11", "type", "dummy" } );
-                interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb00",
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-                interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb11",
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-                interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb00",
-                     [&] ( ifreq &ifr )
-                     { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
-                interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb11",
-                     [&] ( ifreq &ifr )
-                     { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
-
-                //apache1->start();
-                //drop_privileges();
-
-                WebServer apache1( "Listen 100.64.0.1:80", 80);
-                //WebServer apache2( "Listen 100.64.0.2:80", 80);
-
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
