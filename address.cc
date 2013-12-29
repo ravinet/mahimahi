@@ -40,6 +40,11 @@ bool Address::operator==( const Address & other ) const
     return 0 == memcmp( &addr_, &other.addr_, sizeof( addr_ ) );
 }
 
+bool Address::operator<( const Address & other ) const
+{
+    return (memcmp( &addr_, &other.addr_, sizeof( addr_ ) ) < 0 );
+}
+
 Address::Address( const string & ip, const uint16_t port )
     : addr_()
 {
