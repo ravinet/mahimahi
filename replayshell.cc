@@ -82,8 +82,8 @@ int main( int argc, char *argv[] )
 
         srandom( time( NULL ) );
 
-        WebServer apache1( "Listen 100.64.0.1:80", 80);
-        WebServer apache2( "Listen 100.64.0.2:80", 80);
+        WebServer apache1( Address( "100.64.0.1", 80 ) );
+        WebServer apache2( Address( "100.64.0.2", 80 ) );
 
         ChildProcess bash_process( [&]() {
                 drop_privileges();

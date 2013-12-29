@@ -6,6 +6,7 @@
 #include <string>
 
 #include "temp_file.hh"
+#include "address.hh"
 
 class WebServer
 {
@@ -19,7 +20,7 @@ private:
     TempFile access_log;
 
 public:
-    WebServer( const std::string & listen_line, int port );
+    WebServer( const Address & addr );
     ~WebServer();
 };
 

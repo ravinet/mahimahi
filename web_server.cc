@@ -11,7 +11,7 @@
 
 using namespace std;
 
-WebServer::WebServer( const string & listen_line, int port )
+WebServer::WebServer( const Address & addr )
     : pid_file_name(),
       config_file( apache_main_config ),
       error_log( "" ),
@@ -21,7 +21,7 @@ WebServer::WebServer( const string & listen_line, int port )
     pid_file_name = "/tmp/lock" + to_string( random() );
 
     /* if port 443, add ssl components */
-    if ( port == 443 ) { /* ssl */
+    if ( addr.port() == 443 ) { /* ssl */
         config_file.append( apache_ssl_config );
     }
 
@@ -32,7 +32,7 @@ WebServer::WebServer( const string & listen_line, int port )
 
     config_file.append( "CustomLog " + access_log.name() + " common" + "\n" );
 
-    config_file.append( listen_line );
+    config_file.append( "Listen " + addr.ip() + ":" + to_string( addr.port() ) );
 
     run( { APACHE2, "-f", config_file.name(), "-k", "start" } );
 }
