@@ -8,6 +8,8 @@
 #include <linux/if.h>
 #include <net/route.h>
 #include <iostream>
+#include <vector>
+#include <dirent.h>
 
 #include "util.hh"
 #include "get_address.hh"
@@ -61,6 +63,24 @@ void add_dummy_interface( const string & name, const Address & addr )
          { ifr.ifr_addr = addr.raw_sockaddr(); } );
 }
 
+void list_files( const string & dir, vector< string > & files )
+{
+    DIR *dp;
+    struct dirent *dirp;
+
+    if( ( dp  = opendir( dir.c_str() ) ) == NULL ) {
+        throw Exception( "opendir" );
+    }
+
+    while ( ( dirp = readdir( dp ) ) != NULL ) {
+        if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
+            files.push_back( string( dirp->d_name ) );
+        }
+    }
+    SystemCall( "closedir", closedir( dp ) );
+}
+
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -84,8 +104,17 @@ int main( int argc, char *argv[] )
                          [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
         /* create and bring up two dummy interfaces */
+        /* want to: go through recorded folder and for each file, check ip/port...if unique ip, make dummy, if unique ip/port, start web server ...consider dirent.h*/
+        /* protobuf files are files with the serializedstring protobuf written to them */
+
+        vector< string > files;
+        list_files( "recordtest", files );
+        for ( unsigned int i = 0; i < files.size(); i++ ) {
+            cout << files[ i ] << endl;
+        }
+
         add_dummy_interface( "dumb00", egress_addr );
-        add_dummy_interface( "dum11", ingress_addr );
+        add_dummy_interface( "dumb11", ingress_addr );
 
         srandom( time( NULL ) );
 
