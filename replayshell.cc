@@ -49,6 +49,18 @@ int eventloop( ChildProcess & child_process )
     }
 }
 
+void add_dummy_interface( const string & name, const Address & addr )
+{
+
+    run( { IP, "link", "add", name.c_str(), "type", "dummy" } );
+
+    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, name.c_str(),
+             [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+    interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name.c_str(),
+         [&] ( ifreq &ifr )
+         { ifr.ifr_addr = addr.raw_sockaddr(); } );
+}
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -72,18 +84,8 @@ int main( int argc, char *argv[] )
                          [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
         /* create and bring up two dummy interfaces */
-        run( { IP, "link", "add", "dumb00", "type", "dummy" } );
-        run( { IP, "link", "add", "dumb11", "type", "dummy" } );
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb00",
-                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb11",
-                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb00",
-             [&] ( ifreq &ifr )
-             { ifr.ifr_addr = egress_addr.raw_sockaddr(); } );
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, "dumb11",
-             [&] ( ifreq &ifr )
-             { ifr.ifr_addr = ingress_addr.raw_sockaddr(); } );
+        add_dummy_interface( "dumb00", egress_addr );
+        add_dummy_interface( "dum11", ingress_addr );
 
         srandom( time( NULL ) );
 
