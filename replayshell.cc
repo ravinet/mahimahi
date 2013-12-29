@@ -67,6 +67,11 @@ int main( int argc, char *argv[] )
 
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
+        /* bring up localhost */
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+                         [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+        /* create and bring up two dummy interfaces */
         run( { IP, "link", "add", "dumb00", "type", "dummy" } );
         run( { IP, "link", "add", "dumb11", "type", "dummy" } );
         interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "dumb00",
