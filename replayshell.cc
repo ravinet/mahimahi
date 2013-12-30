@@ -28,7 +28,7 @@
 using namespace std;
 using namespace PollerShortNames;
 
-int eventloop( ChildProcess & child_process, vector< WebServer* > & servers )
+int eventloop( ChildProcess & child_process )
 {
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
@@ -48,9 +48,6 @@ int eventloop( ChildProcess & child_process, vector< WebServer* > & servers )
         auto poll_result = poller.poll( 60000 );
         if ( poll_result.result == Poller::Result::Type::Exit ) {
             /* call destructor for each web server created */
-            for( vector<WebServer*>::iterator it = servers.begin(); it != servers.end(); ++it) {
-                delete *it;
-            }
             return poll_result.exit_status;
         }
     }
@@ -68,7 +65,7 @@ void add_dummy_interface( const string & name, const Address & addr )
          { ifr.ifr_addr = addr.raw_sockaddr(); } );
 }
 
-void list_files( const string & dir, vector< string > & files )
+void list_files( const string & dir, vector< string > & files, const string & directory )
 {
     DIR *dp;
     struct dirent *dirp;
@@ -79,7 +76,7 @@ void list_files( const string & dir, vector< string > & files )
 
     while ( ( dirp = readdir( dp ) ) != NULL ) {
         if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
-            files.push_back( "blah/" + string( dirp->d_name ) );
+            files.push_back( directory + string( dirp->d_name ) );
         }
     }
     SystemCall( "closedir", closedir( dp ) );
@@ -94,6 +91,21 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
+        }
+
+        /* check if user-specified storage folder exists */
+        string directory = argv[1];
+        /* make sure directory ends with '/' so we can prepend directory to file name for storage */
+        if ( directory.back() != '/' ) {
+            directory.append( "/" );
+        }
+
+        if ( not check_folder_existence( directory ) ) { /* folder does not exist */
+            throw Exception( "replayshell", "folder with recorded content does not exist" );
+        }
+
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
@@ -104,10 +116,11 @@ int main( int argc, char *argv[] )
         srandom( time( NULL ) );
 
         vector< string > files;
-        list_files( "blah", files );
+        list_files( directory.c_str(), files, directory );
         set< Address > unique_addrs;
         set< string > unique_ips;
-        vector< WebServer* > servers;
+        vector< WebServer > servers;
+        servers.reserve( files.size() );
         unsigned int interface_counter = 0;
 
         for ( unsigned int i = 0; i < files.size(); i++ ) {
@@ -123,7 +136,7 @@ int main( int argc, char *argv[] )
 
             auto result2 = unique_addrs.emplace( current_addr );
             if ( result2.second ) { /* new address */
-                servers.emplace_back( new WebServer( current_addr ) );
+                servers.emplace_back( current_addr );
             }
             SystemCall( "close", close( fd ) );
         }
@@ -138,7 +151,7 @@ int main( int argc, char *argv[] )
                 SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
         } );
-        return eventloop( bash_process, servers );
+        return eventloop( bash_process );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

@@ -97,16 +97,9 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 }
 
-string check_storage_folder( const char * const folder_path )
+bool check_folder_existence( const string & directory )
 {
     struct stat sb;
-
-    string directory = folder_path;
-
-    /* make sure directory ends with '/' so we can prepend directory to file name for storage */
-    if ( directory.back() != '/' ) {
-        directory.append( "/" );
-    }
 
     /* check if directory already exists and if not, create it */
     if (!stat( directory.c_str(), &sb ) == 0 or !S_ISDIR(sb.st_mode))
@@ -114,7 +107,22 @@ string check_storage_folder( const char * const folder_path )
         if ( errno != ENOENT ) { /* error is not that directory does not exist */
             throw Exception( "stat" );
         }
+        return false;
+    }
 
+    return true;
+}
+
+string check_storage_folder( const char * const folder_path )
+{
+    string directory = folder_path;
+
+    /* make sure directory ends with '/' so we can prepend directory to file name for storage */
+    if ( directory.back() != '/' ) {
+        directory.append( "/" );
+    }
+
+    if ( not check_folder_existence( directory ) ) { /* folder exists */
         /* make directory where group has all permissions */
         SystemCall( "mkdir", mkdir( directory.c_str(), 00070 ) );
     }
