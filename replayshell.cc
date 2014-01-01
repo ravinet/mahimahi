@@ -65,7 +65,7 @@ void add_dummy_interface( const string & name, const Address & addr )
          { ifr.ifr_addr = addr.raw_sockaddr(); } );
 }
 
-void list_files( const string & dir, vector< string > & files, const string & directory )
+void list_files( const string & dir, vector< string > & files )
 {
     DIR *dp;
     struct dirent *dirp;
@@ -76,7 +76,7 @@ void list_files( const string & dir, vector< string > & files, const string & di
 
     while ( ( dirp = readdir( dp ) ) != NULL ) {
         if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
-            files.push_back( directory + string( dirp->d_name ) );
+            files.push_back( dir + string( dirp->d_name ) );
         }
     }
     SystemCall( "closedir", closedir( dp ) );
@@ -116,7 +116,7 @@ int main( int argc, char *argv[] )
         srandom( time( NULL ) );
 
         vector< string > files;
-        list_files( directory.c_str(), files, directory );
+        list_files( directory, files );
         set< Address > unique_addrs;
         set< string > unique_ips;
         vector< WebServer > servers;

@@ -55,7 +55,8 @@ replayshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 replayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += replayserver
-replayserver_SOURCES = $(common_source) replayserver.cc
+replayserver_SOURCES = $(common_source) replayserver.cc \
+	http_header.cc http_header.hh
 replayserver_LDADD = -lrt
 replayserver_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 replayserver_LDFLAGS = -pthread
