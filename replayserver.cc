@@ -72,8 +72,16 @@ bool compare_requests( HTTP_Record::http_message & saved_req )
     /* compare request line without query string */
     string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
 
-    if ( not ( new_req == saved_req.first_line().substr(0, saved_req.first_line().find( "?" ) ) ) ) {
-        return false;
+    /* if there is query string, ignore it in comparison */
+    int query_loc = saved_req.first_line().find( "?" );
+    if ( saved_req.first_line().find( "?" ) == std::string::npos ) { /* no query string */
+        if ( not ( new_req == saved_req.first_line() ) ) {
+            return false;
+        }
+    } else {
+        if ( not ( new_req == saved_req.first_line().substr(0, query_loc ) ) ) {
+            return false;
+        }
     } 
 
 
@@ -107,6 +115,7 @@ int main()
             current_record.ParseFromFileDescriptor( fd );
             HTTP_Record::http_message saved_req = current_record.req();
             if ( compare_requests( saved_req ) ) { /* requests match */
+                cout << current_record.res().first_line();
                 for ( int j = 0; j < current_record.res().headers_size(); j++ ) {
                     cout << current_record.res().headers( j );
                 }
