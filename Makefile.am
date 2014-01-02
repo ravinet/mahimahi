@@ -49,7 +49,8 @@ bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) replayshell.cc \
 	temp_file.hh temp_file.cc \
 	web_server.hh web_server.cc \
-	apache_configuration.hh
+	apache_configuration.hh \
+	http_header.cc http_header.hh
 replayshell_LDADD = -lrt
 replayshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 replayshell_LDFLAGS = -pthread

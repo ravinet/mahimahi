@@ -11,6 +11,7 @@
 #include "system_runner.hh"
 #include "http_record.pb.h"
 #include "http_header.hh"
+#include "exception.hh"
 
 using namespace std;
 
@@ -54,9 +55,7 @@ bool check_headers( const string & env_header, const string & stored_header, HTT
     for ( int i = 0; i < saved_req.headers_size(); i++ ) {
         HTTPHeader current_header( saved_req.headers(i) );
         if ( current_header.key() == stored_header ) { /* compare to environment variable */
-            cout << "DEALING WITH: " << stored_header << "new: " << getenv( env_header.c_str() ) << " old: " << current_header.value() << "<br />\n" << endl;
-            if ( current_header.value() == getenv( env_header.c_str() ) ) {
-                cout << "EQUAL HEADER: " << stored_header << endl;
+            if ( current_header.value().substr( 0, current_header.value().find( "\r\n" ) ) == getenv( env_header.c_str() ) ) {
                 return true;
             } else {
                 return false;
@@ -72,14 +71,16 @@ bool compare_requests( HTTP_Record::http_message & saved_req )
 {
     /* compare request line without query string */
     string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
-    if ( not ( new_req == saved_req.first_line() ) ) {
+
+    if ( not ( new_req == saved_req.first_line().substr(0, saved_req.first_line().find( "?" ) ) ) ) {
         return false;
     } 
+
 
     /* compare existing environment variables for request to stored header values */
     if ( not check_headers( "HTTP_ACCEPT_ENCODING", "Accept_Encoding", saved_req ) ) { return false; }
     if ( not check_headers( "HTTP_ACCEPT_LANGUAGE", "Accept_Language", saved_req ) ) { return false; }
-    if ( not check_headers( "HTTP_CONNECTION", "Connection", saved_req ) ) { return false; }
+    //if ( not check_headers( "HTTP_CONNECTION", "Connection", saved_req ) ) { return false; }
     //if ( not check_headers( "HTTP_COOKIE", "Cookie", saved_req ) ) { return false; }
     if ( not check_headers( "HTTP_HOST", "Host", saved_req ) ) { return false; }
     if ( not check_headers( "HTTP_REFERER", "Referer", saved_req ) ) { return false; }
@@ -91,21 +92,21 @@ bool compare_requests( HTTP_Record::http_message & saved_req )
 int main()
 {
     try {
+        //cout << "Content-Type: text/html\r\n\r\n";
         /* print all environment variables */
         /*extern char **environ;
-        //cout << "Content-type: text/html\r\n\r\n";
         for(char **current = environ; *current; current++) {
             cout << *current << endl << "<br />\n";
         }*/
         vector< string > files;
-        list_files( "/home/ravi/mahimahi/blahtest/", files );
-        for ( unsigned int i = 0; i < files.size(); i++ ) { /* iterate through files and call method which compares requests */
+        list_files( "/home/ravi/mahimahi/cnn/", files );
+        unsigned int i;
+        for ( i = 0; i < files.size(); i++ ) { /* iterate through files and call method which compares requests */
             int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
             HTTP_Record::reqrespair current_record;
             current_record.ParseFromFileDescriptor( fd );
             HTTP_Record::http_message saved_req = current_record.req();
             if ( compare_requests( saved_req ) ) { /* requests match */
-                cout << current_record.res().first_line();
                 for ( int j = 0; j < current_record.res().headers_size(); j++ ) {
                     cout << current_record.res().headers( j );
                 }
@@ -115,6 +116,9 @@ int main()
                 break;
             }
             SystemCall( "close", close( fd ) );
+        }
+        if ( i == files.size() ) {
+            throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) ) );
         }
     } catch ( const Exception & e ) {
         e.perror();

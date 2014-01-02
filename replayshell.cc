@@ -24,6 +24,8 @@
 #include "config.h"
 #include "poller.hh"
 #include "http_record.pb.h"
+#include "temp_file.hh"
+#include "http_header.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -82,6 +84,18 @@ void list_files( const string & dir, vector< string > & files )
     SystemCall( "closedir", closedir( dp ) );
 }
 
+/* return hostname by iterating through headers */
+string get_host( HTTP_Record::reqrespair & current_record )
+{
+    for ( int i = 0; i < current_record.req().headers_size(); i++ ) {
+        HTTPHeader current_header( current_record.req().headers(i) );
+        if ( current_header.key() == "Host" ) {
+            return current_header.value().substr( 0, current_header.value().find( "\r\n" ) );
+        }
+    }
+    throw Exception( "replayshell", "No Host Header in Recorded File" );
+}
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -115,6 +129,9 @@ int main( int argc, char *argv[] )
         /* provide seed for random number generator used to create apache pid files */
         srandom( time( NULL ) );
 
+        /* dnsmasq host mapping file */
+        TempFile dnsmasq( "" );
+
         vector< string > files;
         list_files( directory, files );
         set< Address > unique_addrs;
@@ -132,6 +149,9 @@ int main( int argc, char *argv[] )
             if ( result1.second ) { /* new ip */
                 add_dummy_interface( "sharded" + to_string( interface_counter ), current_addr );
                 interface_counter++;
+                /* add entry to dnsmasq host mapping file */
+                string entry_host = get_host( current_record );
+                dnsmasq.append( current_addr.ip() + " " +entry_host + "\n" );
             }
 
             auto result2 = unique_addrs.emplace( current_addr );
@@ -140,6 +160,8 @@ int main( int argc, char *argv[] )
             }
             SystemCall( "close", close( fd ) );
         }
+        /* start dnsmasq with created host mapping file */
+        run( { DNSMASQ, "-i", "lo", "-h", "-H", dnsmasq.name() } );
 
         ChildProcess bash_process( [&]() {
                 drop_privileges();
