@@ -14,8 +14,8 @@ using namespace std;
 WebServer::WebServer( const Address & addr )
     : pid_file_name(),
       config_file( apache_main_config ),
-      error_log( "" ),
-      access_log( "" )
+      error_log( "", "error" ),
+      access_log( "", "access" )
 {
     /* make pid file using random number */
     pid_file_name = "/tmp/lock" + to_string( random() );

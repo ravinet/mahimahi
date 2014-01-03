@@ -10,12 +10,13 @@
 
 using namespace std;
 
-TempFile::TempFile( const string & contents )
+TempFile::TempFile( const string & contents, const string & filename )
     : file_name(),
       fd_()
 {
+    string name = "/tmp/" + filename + ".XXXXXX";
     char tmp_name[30];
-    strcpy( tmp_name, config_file.c_str() );
+    strcpy( tmp_name, name.c_str() );
     fd_ = SystemCall( "mkstemp", mkstemp( tmp_name ) );
     file_name = string( tmp_name );
     SystemCall( "write", write( fd_, contents.c_str(), contents.length() ) );

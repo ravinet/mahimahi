@@ -130,7 +130,7 @@ int main( int argc, char *argv[] )
         srandom( time( NULL ) );
 
         /* dnsmasq host mapping file */
-        TempFile dnsmasq( "" );
+        TempFile dnsmasq( "", "hosts" );
 
         vector< string > files;
         list_files( directory, files );
