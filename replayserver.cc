@@ -67,23 +67,28 @@ bool check_headers( const string & env_header, const string & stored_header, HTT
 }
 
 /* compare request_line and certain headers of incoming request and stored request */
-bool compare_requests( HTTP_Record::http_message & saved_req )
+bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Record::reqrespair > possible_matches )
 {
-    /* compare request line without query string */
-    string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
+    HTTP_Record::http_message saved_req = saved_record.req();
 
-    /* if there is query string, ignore it in comparison */
-    int query_loc = saved_req.first_line().find( "?" );
-    if ( saved_req.first_line().find( "?" ) == std::string::npos ) { /* no query string */
+    /* request line */
+    string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
+
+    /* if query string present, compare. if not a match but object name matches, add to possibilities */
+    uint64_t query_loc = saved_req.first_line().find( "?" );
+    if ( query_loc == std::string::npos ) { /* no query string */
         if ( not ( new_req == saved_req.first_line() ) ) {
             return false;
         }
-    } else {
-        if ( not ( new_req == saved_req.first_line().substr(0, query_loc ) ) ) {
+    } else { /* query string present */
+        if ( not ( new_req == saved_req.first_line() ) ) {
+            string no_query = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
+            if ( no_query == saved_req.first_line().substr( 0, query_loc ) ) { /* request w/o query string matches */
+                possible_matches.emplace_back( saved_record );
+            }
             return false;
         }
     } 
-
 
     /* compare existing environment variables for request to stored header values */
     if ( not check_headers( "HTTP_ACCEPT_ENCODING", "Accept_Encoding", saved_req ) ) { return false; }
@@ -97,6 +102,15 @@ bool compare_requests( HTTP_Record::http_message & saved_req )
     return true;
 }
 
+void return_message( const HTTP_Record::reqrespair & record )
+{
+    cout << record.res().first_line();
+    for ( int j = 0; j < record.res().headers_size(); j++ ) {
+        cout << record.res().headers( j );
+    }
+    cout << record.res().body() << endl;
+}
+
 int main()
 {
     try {
@@ -108,26 +122,27 @@ int main()
         }*/
         vector< string > files;
         list_files( "/home/ravi/mahimahi/cnn/", files );
+        vector< HTTP_Record::reqrespair > possible_matches;
         unsigned int i;
         for ( i = 0; i < files.size(); i++ ) { /* iterate through files and call method which compares requests */
             int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
             HTTP_Record::reqrespair current_record;
             current_record.ParseFromFileDescriptor( fd );
-            HTTP_Record::http_message saved_req = current_record.req();
-            if ( compare_requests( saved_req ) ) { /* requests match */
-                cout << current_record.res().first_line();
-                for ( int j = 0; j < current_record.res().headers_size(); j++ ) {
-                    cout << current_record.res().headers( j );
-                }
-                cout << current_record.res().body() << endl;
-
+            if ( compare_requests( current_record, possible_matches ) ) { /* requests match */
+                return_message( current_record );
                 SystemCall( "close", close( fd ) );
                 break;
             }
             SystemCall( "close", close( fd ) );
         }
-        if ( i == files.size() ) {
-            throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) ) );
+        if ( i == files.size() ) { /* no exact matches for request */
+            if ( possible_matches.size() == 0 ) {
+                throw Exception( "replaymyserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
+                return EXIT_FAILURE;
+            } else { /* for now, return first stored possibility */
+                return_message( possible_matches.at( 0 ) );
+                throw Exception( "replaymyserver", "Had to choose randomly for: " + string( getenv( "REQUEST_URI" ) ) );
+            }
         }
     } catch ( const Exception & e ) {
         e.perror();
