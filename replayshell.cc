@@ -156,7 +156,7 @@ int main( int argc, char *argv[] )
 
             auto result2 = unique_addrs.emplace( current_addr );
             if ( result2.second ) { /* new address */
-                servers.emplace_back( current_addr );
+                servers.emplace_back( current_addr, directory );
             }
             SystemCall( "close", close( fd ) );
         }

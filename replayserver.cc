@@ -162,7 +162,7 @@ int main()
             cout << *current << endl << "<br />\n";
         }*/
         vector< string > files;
-        list_files( "/home/ravi/mahimahi/cnn/", files );
+        list_files( getenv( "RECORD_FOLDER" ), files );
         vector< HTTP_Record::reqrespair > possible_matches;
         possible_matches.reserve( files.size() );
         unsigned int i;

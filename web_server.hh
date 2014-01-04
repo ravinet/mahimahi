@@ -20,7 +20,7 @@ private:
     TempFile access_log;
 
 public:
-    WebServer( const Address & addr );
+    WebServer( const Address & addr, const std::string & record_folder );
     ~WebServer();
 };
 

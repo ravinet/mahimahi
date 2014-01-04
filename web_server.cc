@@ -11,9 +11,9 @@
 
 using namespace std;
 
-WebServer::WebServer( const Address & addr )
+WebServer::WebServer( const Address & addr, const string & record_folder )
     : pid_file_name(),
-      config_file( apache_main_config ),
+      config_file( apache_main_config + record_folder + "\n" ),
       error_log( "", "error" ),
       access_log( "", "access" )
 {
