@@ -9,6 +9,7 @@
 #include <fstream>
 #include <resolv.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include "util.hh"
 #include "exception.hh"
@@ -199,6 +200,23 @@ Result handle_signal( const signalfd_siginfo & sig,
     }
 
     return ResultType::Continue;
+}
+
+void list_files( const string & dir, vector< string > & files )
+{
+    DIR *dp;
+    struct dirent *dirp;
+
+    if( ( dp  = opendir( dir.c_str() ) ) == NULL ) {
+        throw Exception( "opendir" );
+    }
+
+    while ( ( dirp = readdir( dp ) ) != NULL ) {
+        if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
+            files.push_back( dir + string( dirp->d_name ) );
+        }
+    }
+    SystemCall( "closedir", closedir( dp ) );
 }
 
 /* error-checking wrapper for most syscalls */

@@ -9,7 +9,6 @@
 #include <net/route.h>
 #include <iostream>
 #include <vector>
-#include <dirent.h>
 #include <set>
 
 #include "util.hh"
@@ -65,23 +64,6 @@ void add_dummy_interface( const string & name, const Address & addr )
     interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name.c_str(),
          [&] ( ifreq &ifr )
          { ifr.ifr_addr = addr.raw_sockaddr(); } );
-}
-
-void list_files( const string & dir, vector< string > & files )
-{
-    DIR *dp;
-    struct dirent *dirp;
-
-    if( ( dp  = opendir( dir.c_str() ) ) == NULL ) {
-        throw Exception( "opendir" );
-    }
-
-    while ( ( dirp = readdir( dp ) ) != NULL ) {
-        if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
-            files.push_back( dir + string( dirp->d_name ) );
-        }
-    }
-    SystemCall( "closedir", closedir( dp ) );
 }
 
 /* return hostname by iterating through headers */
