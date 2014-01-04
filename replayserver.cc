@@ -15,16 +15,6 @@
 
 using namespace std;
 
-/*
-Find request headers in environment variables
-For each stored req/res pair:
-For each request header present in env and stored request, compare values until we find a match or difference
-Consider: HTTP_ACCEPT, HTTP_ACCEPT_ENCODING, HTTP_ACCEPT_LANGUAGE, HTTP_CONNECTION,
-          HTTP_COOKIE, HTTP_HOST, HTTP_REFERER, HTTP_USER_AGENT
-If difference, move on to next one.
-If all considered/existent headers match, write the response.
-*/
-
 void list_files( const string & dir, vector< string > & files )
 {
     DIR *dp;
@@ -67,7 +57,7 @@ bool check_headers( const string & env_header, const string & stored_header, HTT
 }
 
 /* compare request_line and certain headers of incoming request and stored request */
-bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Record::reqrespair > possible_matches )
+bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Record::reqrespair > & possible_matches )
 {
     HTTP_Record::http_message saved_req = saved_record.req();
 
@@ -82,25 +72,76 @@ bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Reco
         }
     } else { /* query string present */
         if ( not ( new_req == saved_req.first_line() ) ) {
-            string no_query = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
+            string no_query = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "SCRIPT_NAME" ) );
             if ( no_query == saved_req.first_line().substr( 0, query_loc ) ) { /* request w/o query string matches */
                 possible_matches.emplace_back( saved_record );
             }
             return false;
         }
-    } 
+    }
 
     /* compare existing environment variables for request to stored header values */
-    if ( not check_headers( "HTTP_ACCEPT_ENCODING", "Accept_Encoding", saved_req ) ) { return false; }
-    if ( not check_headers( "HTTP_ACCEPT_LANGUAGE", "Accept_Language", saved_req ) ) { return false; }
+    if ( not check_headers( "HTTP_ACCEPT_ENCODING", "Accept_Encoding", saved_req ) ) { cerr << "ACCEPT ENCODING DIFFERENT" << endl; return false; }
+    if ( not check_headers( "HTTP_ACCEPT_LANGUAGE", "Accept_Language", saved_req ) ) { cerr << "ACCEPT LANGUAGE DIFF" << endl; return false; }
     //if ( not check_headers( "HTTP_CONNECTION", "Connection", saved_req ) ) { return false; }
     //if ( not check_headers( "HTTP_COOKIE", "Cookie", saved_req ) ) { return false; }
-    if ( not check_headers( "HTTP_HOST", "Host", saved_req ) ) { return false; }
-    if ( not check_headers( "HTTP_REFERER", "Referer", saved_req ) ) { return false; }
+    if ( not check_headers( "HTTP_HOST", "Host", saved_req ) ) { cerr << "HOST DIFFERENT" << endl; return false; }
+    //if ( not check_headers( "HTTP_REFERER", "Referer", saved_req ) ) { return false; }
     //if ( not check_headers( "HTTP_USER_AGENT", "User-Agent", saved_req ) ) { return false; }
-
     return true;
 }
+
+int longest_substr( const string & str1, const string & str2 )
+{
+    /* http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring#C.2B.2B */
+
+    if ( str1.empty() || str2.empty() ) {
+        return 0;
+    }
+
+    vector< int > curr (str2.size() );
+    vector< int > prev (str2.size() );
+    vector< int > swap;
+    int maxSubstr = 0;
+
+    for ( unsigned int i = 0; i < str1.size(); i++ ) {
+        for ( unsigned int j = 0; j < str2.size(); j++) {
+            if ( str1[ i ] != str2[ j ] ) {
+                curr.at( j ) = 0;
+            } else {
+                if ( i == 0 || j == 0 ) {
+                    curr.at( j ) = 1;
+                } else {
+                    curr.at( j ) = 1 + prev.at( j-1 );
+                }
+                if( maxSubstr < curr.at( j ) ) {
+                    maxSubstr = curr.at( j );
+                }
+            }
+        }
+        swap=curr;
+        curr=prev;
+        prev=swap;
+    }
+    return maxSubstr;
+}
+
+int closest_match( const vector< HTTP_Record::reqrespair > & possible )
+{
+    string req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
+    int longest_str = -1;
+    int index_of_best_match = 0;
+    int match_length;
+    for ( unsigned int i = 0; i < possible.size(); i++ ) {
+        string current_req = possible.at( i ).req().first_line();
+        if ( (match_length = longest_substr( req, current_req) ) > longest_str ) {
+            longest_str = match_length;
+            index_of_best_match = i;
+        }
+    }
+    return index_of_best_match;
+}
+
 
 void return_message( const HTTP_Record::reqrespair & record )
 {
@@ -123,6 +164,7 @@ int main()
         vector< string > files;
         list_files( "/home/ravi/mahimahi/cnn/", files );
         vector< HTTP_Record::reqrespair > possible_matches;
+        possible_matches.reserve( files.size() );
         unsigned int i;
         for ( i = 0; i < files.size(); i++ ) { /* iterate through files and call method which compares requests */
             int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
@@ -137,11 +179,14 @@ int main()
         }
         if ( i == files.size() ) { /* no exact matches for request */
             if ( possible_matches.size() == 0 ) {
+                cout << "HTTP/1.1 200 OK\r\n";
+                cout << "Content-Type: Text/html\r\nConnection: close\r\n";
+                cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
                 throw Exception( "replaymyserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
                 return EXIT_FAILURE;
             } else { /* for now, return first stored possibility */
-                return_message( possible_matches.at( 0 ) );
-                throw Exception( "replaymyserver", "Had to choose randomly for: " + string( getenv( "REQUEST_URI" ) ) );
+                return_message( possible_matches.at( closest_match( possible_matches ) ) );
+                throw Exception( "replayserver", "Chose longest query string match for: " + string( getenv( "REQUEST_URI" ) ) );
             }
         }
     } catch ( const Exception & e ) {
