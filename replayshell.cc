@@ -29,7 +29,7 @@
 using namespace std;
 using namespace PollerShortNames;
 
-int eventloop( ChildProcess & child_process )
+int eventloop( vector<ChildProcess> && child_processes )
 {
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
@@ -42,7 +42,7 @@ int eventloop( ChildProcess & child_process )
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
                                            return handle_signal( signal_fd.read_signal(),
-                                                                 child_process );
+                                                                 child_processes );
                                        } ) );
 
     while ( true ) {
@@ -145,7 +145,9 @@ int main( int argc, char *argv[] )
         /* start dnsmasq with created host mapping file */
         run( { DNSMASQ, "-i", "lo", "-h", "-H", dnsmasq.name() } );
 
-        ChildProcess bash_process( [&]() {
+        vector<ChildProcess> child_processes;
+        /* only one for now, but will add more when we drop privs for replaying */
+        child_processes.emplace_back( [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
@@ -155,7 +157,7 @@ int main( int argc, char *argv[] )
                 SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
         } );
-        return eventloop( bash_process );
+        return eventloop( move( child_processes ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

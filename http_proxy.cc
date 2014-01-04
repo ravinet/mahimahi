@@ -149,8 +149,8 @@ void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, cons
     /* Use random number generator to create output filename (number between 0 and 99999) */
     string filename = record_folder_ + to_string( random() );
 
-    /* FileDescriptor for output file to write current request/response pair protobuf (group has all permissions) */
-    FileDescriptor messages( open(filename.c_str(), O_WRONLY | O_CREAT, 00070 ) );
+    /* FileDescriptor for output file to write current request/response pair protobuf (user has all permissions) */
+    FileDescriptor messages( SystemCall( "open request/response protobuf " + filename + "\n", open(filename.c_str(), O_WRONLY | O_CREAT, 00700 ) ) );
 
     /* if request is present in current request/response pair, add response and write to file */
     if ( current_pair.has_req() ) {

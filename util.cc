@@ -114,21 +114,15 @@ bool check_folder_existence( const string & directory )
     return true;
 }
 
-string check_storage_folder( const char * const folder_path )
+void check_storage_folder( const string & directory )
 {
-    string directory = folder_path;
-
-    /* make sure directory ends with '/' so we can prepend directory to file name for storage */
-    if ( directory.back() != '/' ) {
-        directory.append( "/" );
-    }
+    /* assert that directory ends with '/' */
+    assert( directory.back() == '/' );
 
     if ( not check_folder_existence( directory ) ) { /* folder exists */
-        /* make directory where group has all permissions */
-        SystemCall( "mkdir", mkdir( directory.c_str(), 00070 ) );
+        /* make directory where user has all permissions */
+        SystemCall( "mkdir", mkdir( directory.c_str(), 00700 ) );
     }
-
-    return directory;
 }
 
 Address first_nameserver( void )

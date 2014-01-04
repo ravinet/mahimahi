@@ -16,7 +16,7 @@ std::string shell_path( void );
 void drop_privileges( void );
 void check_requirements( const int argc, const char * const argv[] );
 bool check_folder_existence( const std::string & directory );
-std::string check_storage_folder( const char * const folder_path );
+void check_storage_folder( const std::string & directory );
 Address first_nameserver( void );
 void list_files( const std::string & dir, std::vector< std::string > & files );
 void prepend_shell_prefix( const std::string & str );

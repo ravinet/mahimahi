@@ -43,8 +43,11 @@ int main( int argc, char *argv[] )
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
         }
 
-        /* check if user-specified storage folder exists, and if not, create it */
-        string directory = check_storage_folder( argv[1] );
+        /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
+        string directory( argv[ 1 ] );
+        if ( directory.back() != '/' ) {
+            directory.append( "/" );
+        }
 
         const Address nameserver = first_nameserver();
 
@@ -121,7 +124,19 @@ int main( int argc, char *argv[] )
                 SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
             } );
 
-        return eventloop( move( dns_outside ), move( container_process ), move( http_proxy ) );
+        ChildProcess recordr_process( [&]() {
+                drop_privileges();
+
+                /* check if user-specified storage folder exists, and if not, create it */
+                check_storage_folder( directory );
+                return eventloop( move( dns_outside ), {}, move( http_proxy ) );
+            } );
+
+        vector<ChildProcess> child_processes;
+        child_processes.emplace_back( move( container_process ) );
+        child_processes.emplace_back( move( recordr_process ) );
+
+        return eventloop( move( dns_outside ), move( child_processes ), nullptr );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
