@@ -81,6 +81,7 @@ string get_host( HTTP_Record::reqrespair & current_record )
 int main( int argc, char *argv[] )
 {
     try {
+        string user( getenv( "USER" ) );
         /* clear environment */
         char **user_environment = environ;
         environ = nullptr;
@@ -138,7 +139,7 @@ int main( int argc, char *argv[] )
 
             auto result2 = unique_addrs.emplace( current_addr );
             if ( result2.second ) { /* new address */
-                servers.emplace_back( current_addr, directory );
+                servers.emplace_back( current_addr, directory, user );
             }
             SystemCall( "close", close( fd ) );
         }

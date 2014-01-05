@@ -11,7 +11,7 @@
 
 using namespace std;
 
-WebServer::WebServer( const Address & addr, const string & record_folder )
+WebServer::WebServer( const Address & addr, const string & record_folder, const string & user )
     : pid_file_name(),
       config_file( apache_main_config + record_folder + "\n" ),
       error_log( "", "error" ),
@@ -25,12 +25,16 @@ WebServer::WebServer( const Address & addr, const string & record_folder )
         config_file.append( apache_ssl_config );
     }
 
-    /* add pid file, log files, and listen line to config file and run apache */
+    /* add pid file, log files, user/group name, and listen line to config file and run apache */
     config_file.append( "PidFile " + pid_file_name + "\n" );
 
     config_file.append( "ErrorLog " + error_log.name() + "\n" );
 
     config_file.append( "CustomLog " + access_log.name() + " common" + "\n" );
+
+    config_file.append( "User " + user + "\n" );
+
+    config_file.append( "Group " + user + "\n" );
 
     config_file.append( "Listen " + addr.ip() + ":" + to_string( addr.port() ) );
 
