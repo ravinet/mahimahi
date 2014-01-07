@@ -18,7 +18,8 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool 
                                           nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
       terminated_( false ),
-      exit_status_()
+      exit_status_(),
+      moved_away_( false )
 {
     if ( pid_ == 0 ) { /* child */
         try {
@@ -33,6 +34,7 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool 
 /* wait for process to change state */
 void ChildProcess::wait( void )
 {
+    assert( !moved_away_ );
     assert( !terminated_ );
 
     siginfo_t infop;
@@ -67,6 +69,8 @@ void ChildProcess::wait( void )
 /* if child process was suspended, resume it */
 void ChildProcess::resume( void )
 {
+    assert( !moved_away_ );
+
     if ( !running_ ) {
         signal( SIGCONT );
     }
@@ -75,6 +79,8 @@ void ChildProcess::resume( void )
 /* send a signal to the child process */
 void ChildProcess::signal( const int sig )
 {
+    assert( !moved_away_ );
+
     if ( !terminated_ ) {
         SystemCall( "kill", kill( pid_, sig ) );
     }
@@ -82,9 +88,24 @@ void ChildProcess::signal( const int sig )
 
 ChildProcess::~ChildProcess()
 {
+    if ( moved_away_ ) { return; }
+
     while ( !terminated_ ) {
         resume();
         signal( SIGHUP );
         wait();
     }
+}
+
+/* move constructor */
+ChildProcess::ChildProcess( ChildProcess && other )
+    : pid_( other.pid_ ),
+      running_( other.running_ ),
+      terminated_( other.terminated_ ),
+      exit_status_( other.exit_status_ ),
+      moved_away_( other.moved_away_ )
+{
+    assert( !other.moved_away_ );
+
+    other.moved_away_ = true;
 }

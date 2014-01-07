@@ -16,6 +16,8 @@ private:
     bool running_, terminated_;
     int exit_status_;
 
+    bool moved_away_;
+
 public:
     ChildProcess( std::function<int()> && child_procedure, const bool new_namespace = false );
 
@@ -31,6 +33,16 @@ public:
     bool exit_status( void ) const { assert( terminated_ ); return exit_status_; }
 
     ~ChildProcess();
+
+    /* ban copying */
+    ChildProcess( const ChildProcess & other ) = delete;
+    ChildProcess & operator=( const ChildProcess & other ) = delete;
+
+    /* allow move constructor */
+    ChildProcess( ChildProcess && other );
+
+    /* ... but not move assignment operator */
+    ChildProcess & operator=( ChildProcess && other ) = delete;
 };
 
 #endif /* CHILD_PROCESS_HH */
