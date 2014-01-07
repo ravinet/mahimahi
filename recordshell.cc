@@ -23,7 +23,11 @@ using namespace std;
 using namespace PollerShortNames;
 
 int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               ChildProcess & child_process,
+               ChildProcess && child_process,
+               unique_ptr<HTTPProxy> && http_proxy );
+
+int eventloop( unique_ptr<DNSProxy> && dns_proxy,
+               vector<ChildProcess> && child_processes,
                unique_ptr<HTTPProxy> && http_proxy );
 
 int main( int argc, char *argv[] )
@@ -95,7 +99,7 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return eventloop( move( dns_inside ), bash_process, nullptr );
+                return eventloop( move( dns_inside ), move( bash_process ), nullptr );
             }, true ); /* new network namespace */
 
         /* give ingress to container */
@@ -117,7 +121,7 @@ int main( int argc, char *argv[] )
                 SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
             } );
 
-        return eventloop( move( dns_outside ), container_process, move( http_proxy ) );
+        return eventloop( move( dns_outside ), move( container_process ), move( http_proxy ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
@@ -127,7 +131,17 @@ int main( int argc, char *argv[] )
 }
 
 int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               ChildProcess & child_process,
+               ChildProcess && child_process,
+               unique_ptr<HTTPProxy> && http_proxy )
+{
+    vector<ChildProcess> children;
+    children.emplace_back( move( child_process ) );
+
+    return eventloop( move( dns_proxy ), move( children ), move( http_proxy ) );
+}
+
+int eventloop( unique_ptr<DNSProxy> && dns_proxy,
+               vector<ChildProcess> && child_processes,
                unique_ptr<HTTPProxy> && http_proxy )
 {
     /* set up signal file descriptor */
@@ -164,7 +178,7 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
                                            return handle_signal( signal_fd.read_signal(),
-                                                                 child_process );
+                                                                 child_processes );
                                        } ) );
 
     while ( true ) {

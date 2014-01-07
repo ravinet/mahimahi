@@ -13,7 +13,20 @@ using namespace PollerShortNames;
 int ferry_with_delay( FileDescriptor & tun,
                       FileDescriptor & sibling_fd,
                       unique_ptr<DNSProxy> && dns_proxy,
-                      ChildProcess & child_process,
+                      ChildProcess && child_process,
+                      const uint64_t delay_ms )
+{
+    vector<ChildProcess> children;
+    children.emplace_back( move( child_process ) );
+
+    return ferry_with_delay( tun, sibling_fd, move( dns_proxy ), move( children ),
+                             delay_ms );
+}
+
+int ferry_with_delay( FileDescriptor & tun,
+                      FileDescriptor & sibling_fd,
+                      unique_ptr<DNSProxy> && dns_proxy,
+                      vector<ChildProcess> && child_processes,
                       const uint64_t delay_ms )
 {
     /* Make the queue of datagrams */
@@ -45,7 +58,7 @@ int ferry_with_delay( FileDescriptor & tun,
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
                                            return handle_signal( signal_fd.read_signal(),
-                                                                 child_process );
+                                                                 child_processes );
                                        } ) );
 
     /* add dns proxy TCP and UDP sockets */

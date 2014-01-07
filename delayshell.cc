@@ -90,10 +90,12 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry_with_delay( ingress_tun.fd(), egress_socket, move( dns_inside ), bash_process, delay_ms );
+                return ferry_with_delay( ingress_tun.fd(), egress_socket, move( dns_inside ),
+                                         move( bash_process ), delay_ms );
             }, true );  /* new network namespace */
 
-        return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ), container_process, delay_ms );
+        return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ),
+                                 move( container_process ), delay_ms );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cstring>
+#include <vector>
 
 #include "address.hh"
 #include "poller.hh"
@@ -20,6 +21,6 @@ void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
 
 PollerShortNames::Result handle_signal( const signalfd_siginfo & sig,
-                                        ChildProcess & child_process );
+                                        std::vector<ChildProcess> & child_processes );
 
 #endif /* UTIL_HH */

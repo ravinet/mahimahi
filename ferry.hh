@@ -20,7 +20,13 @@
 int ferry_with_delay( FileDescriptor & tun,
                       FileDescriptor & sibling_fd,
                       std::unique_ptr<DNSProxy> && dns_proxy,
-                      ChildProcess & child_process,
+                      std::vector<ChildProcess> && child_processes,
+                      const uint64_t delay_ms );
+
+int ferry_with_delay( FileDescriptor & tun,
+                      FileDescriptor & sibling_fd,
+                      std::unique_ptr<DNSProxy> && dns_proxy,
+                      ChildProcess && child_process,
                       const uint64_t delay_ms );
 
 #endif /* FERRY_HH */
