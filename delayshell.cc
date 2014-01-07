@@ -6,13 +6,15 @@
 #include <net/route.h>
 
 #include "netdevice.hh"
-#include "ferry.hh"
 #include "nat.hh"
 #include "util.hh"
 #include "get_address.hh"
 #include "address.hh"
+#include "ferry_queue.hh"
 
 #include "config.h"
+
+#include "ferry.cc"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -91,8 +93,9 @@ int main( int argc, char *argv[] )
                         return EXIT_FAILURE;
                     } );
 
-                return ferry_with_delay( ingress_tun.fd(), egress_socket, move( dns_inside ),
-                                         move( bash_process ), delay_ms );
+                FerryQueue uplink_queue( delay_ms );
+                return packet_ferry( uplink_queue, ingress_tun.fd(), egress_socket, move( dns_inside ),
+                                     move( bash_process ) );
             }, true );  /* new network namespace */
 
         /* drop privileges outside for ferrying (but need to keep root for destructors) */
@@ -100,8 +103,9 @@ int main( int argc, char *argv[] )
         ChildProcess outside_ferry_process( [&] () {
                 drop_privileges();
 
-                return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ),
-                                         {}, delay_ms );
+                FerryQueue downlink_queue( delay_ms );
+                return packet_ferry( downlink_queue, egress_tun.fd(), ingress_socket, move( dns_outside ),
+                                     {} );
             } );
 
         /* wait for either child to finish */

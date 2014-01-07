@@ -3,35 +3,32 @@
 #include <csignal>
 
 #include "ferry.hh"
-#include "ferry_queue.hh"
 #include "util.hh"
 #include "poller.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-int ferry_with_delay( FileDescriptor & tun,
-                      FileDescriptor & sibling_fd,
-                      unique_ptr<DNSProxy> && dns_proxy,
-                      ChildProcess && child_process,
-                      const uint64_t delay_ms )
+template <class FerryType>
+int packet_ferry( FerryType & ferry,
+                  FileDescriptor & tun,
+                  FileDescriptor & sibling_fd,
+                  unique_ptr<DNSProxy> && dns_proxy,
+                  ChildProcess && child_process )
 {
     vector<ChildProcess> children;
     children.emplace_back( move( child_process ) );
 
-    return ferry_with_delay( tun, sibling_fd, move( dns_proxy ), move( children ),
-                             delay_ms );
+    return packet_ferry( ferry, tun, sibling_fd, move( dns_proxy ), move( children ) );
 }
 
-int ferry_with_delay( FileDescriptor & tun,
-                      FileDescriptor & sibling_fd,
-                      unique_ptr<DNSProxy> && dns_proxy,
-                      vector<ChildProcess> && child_processes,
-                      const uint64_t delay_ms )
+template <class FerryType>
+int packet_ferry( FerryType & ferry,
+                  FileDescriptor & tun,
+                  FileDescriptor & sibling_fd,
+                  unique_ptr<DNSProxy> && dns_proxy,
+                  vector<ChildProcess> && child_processes )
 {
-    /* Make the queue of datagrams */
-    FerryQueue delay_queue( delay_ms );
-
     /* set up signal file descriptor */
     SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
     signals_to_listen_for.block(); /* don't let them interrupt us */
@@ -40,10 +37,10 @@ int ferry_with_delay( FileDescriptor & tun,
 
     Poller poller;
 
-    /* tun device gets datagram -> read it -> give to delay_queue */
+    /* tun device gets datagram -> read it -> give to ferry */
     poller.add_action( Poller::Action( tun, Direction::In,
                                        [&] () {
-                                           delay_queue.read_packet( tun.read() );
+                                           ferry.read_packet( tun.read() );
                                            return ResultType::Continue;
                                        } ) );
 
@@ -77,13 +74,13 @@ int ferry_with_delay( FileDescriptor & tun,
     }
 
     while ( true ) {
-        auto poll_result = poller.poll( delay_queue.wait_time() );
+        auto poll_result = poller.poll( ferry.wait_time() );
 
         if ( poll_result.result == Poller::Result::Type::Exit ) {
             return poll_result.exit_status;
         }
 
-        /* packets FROM tail of delay queue go to sibling */
-        delay_queue.write_packets( sibling_fd );
+        /* packets FROM tail of ferry go to sibling */
+        ferry.write_packets( sibling_fd );
     }
 }
