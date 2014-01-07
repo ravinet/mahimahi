@@ -167,7 +167,6 @@ Result handle_signal( const signalfd_siginfo & sig,
 
     case SIGHUP:
     case SIGTERM:
-        child_process.signal( SIGHUP );
 
         return ResultType::Exit;
     default:
