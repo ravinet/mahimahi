@@ -15,6 +15,7 @@
 #include "config.h"
 
 using namespace std;
+using namespace PollerShortNames;
 
 int main( int argc, char *argv[] )
 {
@@ -94,8 +95,39 @@ int main( int argc, char *argv[] )
                                          move( bash_process ), delay_ms );
             }, true );  /* new network namespace */
 
-        return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ),
-                                 move( container_process ), delay_ms );
+        /* drop privileges outside for ferrying (but need to keep root for destructors) */
+
+        ChildProcess outside_ferry_process( [&] () {
+                drop_privileges();
+
+                return ferry_with_delay( egress_tun.fd(), ingress_socket, move( dns_outside ),
+                                         {}, delay_ms );
+            } );
+
+        /* wait for either child to finish */
+        Poller poller;
+        SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
+        signals_to_listen_for.block(); /* don't let them interrupt us */
+
+        SignalFD signal_fd( signals_to_listen_for );
+
+        vector<ChildProcess> child_processes;
+        child_processes.emplace_back( move( container_process ) );
+        child_processes.emplace_back( move( outside_ferry_process ) );
+
+        poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
+                                           [&] () {
+                                               return handle_signal( signal_fd.read_signal(),
+                                                                     child_processes );
+                                           } ) );
+
+        while ( true ) {
+            auto poll_result = poller.poll( -1 );
+
+            if ( poll_result.result == Poller::Result::Type::Exit ) {
+                return poll_result.exit_status;
+            }
+        }
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
