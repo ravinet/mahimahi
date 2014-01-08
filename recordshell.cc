@@ -136,7 +136,7 @@ int main( int argc, char *argv[] )
         child_processes.emplace_back( move( container_process ) );
         child_processes.emplace_back( move( recordr_process ) );
 
-        return eventloop( move( dns_outside ), move( child_processes ), nullptr );
+        return eventloop( nullptr, move( child_processes ), nullptr );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
