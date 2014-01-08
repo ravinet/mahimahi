@@ -146,7 +146,7 @@ int main( int argc, char *argv[] )
         run( { DNSMASQ, "-i", "lo", "-h", "-H", dnsmasq.name() } );
 
         vector<ChildProcess> child_processes;
-        /* only one for now, but will add more when we drop privs for replaying */
+
         child_processes.emplace_back( [&]() {
                 drop_privileges();
 

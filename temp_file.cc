@@ -38,8 +38,6 @@ TempFile::TempFile( const string & filename_template )
       filename_( from_mutable( mutable_temp_filename_ ) ),
       moved_away_( false )
 {
-    assert_not_root();
-
     /* check the filename */
     for ( const auto & ch : filename_ ) {
         if ( ch == 0 or ch == '/' ) {
@@ -50,8 +48,6 @@ TempFile::TempFile( const string & filename_template )
 
 TempFile::~TempFile()
 {
-    assert_not_root();
-
     if ( not moved_away_ ) {
         SystemCall( "unlink " + name(), unlink( name().c_str() ) );
     }
