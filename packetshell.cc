@@ -42,7 +42,9 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                                            char ** const user_environment,
                                            Targs&&... Fargs )
 {
-    FerryType uplink_queue( forward<Targs>( Fargs )... );
+    /* g++ bug 55914 makes this hard before version 4.9 */
+    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
+                                  forward<Targs>( Fargs )... );
 
     /* Fork */
     child_processes_.emplace_back( [&]() {
@@ -81,6 +83,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                     return EXIT_FAILURE;
                 } );
 
+            FerryType uplink_queue = ferry_maker();
             return packet_ferry( uplink_queue, ingress_tun.fd(), pipe_.first, move( dns_inside ),
                                  move( bash_process ) );
         }, true );  /* new network namespace */
@@ -89,11 +92,13 @@ template <class FerryType>
 template <typename... Targs>
 void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
 {
-    FerryType downlink_queue( forward<Targs>( Fargs )... );
+    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
+                                  forward<Targs>( Fargs )... );
 
     child_processes_.emplace_back( [&] () {
             drop_privileges();
 
+            FerryType downlink_queue = ferry_maker();
             return packet_ferry( downlink_queue, egress_tun_.fd(),
                                  pipe_.second, move( dns_outside_ ), {} );
         } );

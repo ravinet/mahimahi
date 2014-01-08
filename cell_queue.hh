@@ -12,12 +12,28 @@
 class CellQueue
 {
 private:
-    uint64_t delay_ms_;
-    std::queue< std::pair<uint64_t, std::string> > packet_queue_;
-    /* release timestamp, contents */
+    const static unsigned int PACKET_SIZE = 1504; /* default max TUN payload size */
+
+    struct QueuedPacket
+    {
+        int bytes_to_transmit;
+        std::string contents;
+
+        QueuedPacket( const std::string & s_contents );
+    };
+
+    unsigned int next_delivery_;
+    std::vector< uint64_t > schedule_;
+    uint64_t base_timestamp_;
+
+    std::queue< QueuedPacket > packet_queue_;
+
+    uint64_t next_delivery_time( void ) const;
+
+    void use_a_delivery_opportunity( void );
 
 public:
-    CellQueue( const uint64_t & s_delay_ms ) : delay_ms_( s_delay_ms ), packet_queue_() {}
+    CellQueue( const std::string & filename );
 
     void read_packet( const std::string & contents );
 
