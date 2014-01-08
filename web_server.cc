@@ -27,6 +27,8 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
     //    config_file_.write( "PidFile " + pid_file_.name() + "\n" );
 
+    config_file_.write( "ServerName mahimahi.\n" );
+
     config_file_.write( "ErrorLog " + error_log_.name() + "\n" );
 
     config_file_.write( "CustomLog " + access_log_.name() + " common" + "\n" );
