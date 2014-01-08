@@ -168,7 +168,12 @@ Result handle_signal( const signalfd_siginfo & sig,
                     x.wait();
 
                     if ( x.terminated() ) {
-                        return Result( ResultType::Exit, x.exit_status() );
+                        if ( x.died_on_signal() ) {
+                            throw Exception( "process " + to_string( x.pid() ),
+                                             "died on signal " + to_string( x.exit_status() ) );
+                        } else {
+                            return Result( ResultType::Exit, x.exit_status() );
+                        }
                     } else if ( !x.running() ) {
                         /* suspend parent too */
                         SystemCall( "raise", raise( SIGSTOP ) );

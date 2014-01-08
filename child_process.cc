@@ -12,13 +12,16 @@
 
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
-ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace )
+ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
+                            const int termination_signal )
     : pid_( SystemCall( "clone", syscall( SYS_clone,
                                           SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
                                           nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),
+      died_on_signal_( false ),
+      graceful_termination_signal_( termination_signal ),
       moved_away_( false )
 {
     if ( pid_ == 0 ) { /* child */
@@ -52,7 +55,8 @@ void ChildProcess::wait( void )
     case CLD_KILLED:
     case CLD_DUMPED:
         terminated_ = true;
-        exit_status_ = EXIT_FAILURE; /* died on signal */
+        exit_status_ = infop.si_status; /* died on signal */
+        died_on_signal_ = true;
         break;
     case CLD_STOPPED:
         running_ = false;
@@ -92,7 +96,7 @@ ChildProcess::~ChildProcess()
 
     while ( !terminated_ ) {
         resume();
-        signal( SIGTERM );
+        signal( graceful_termination_signal_ );
         wait();
     }
 }
@@ -103,6 +107,8 @@ ChildProcess::ChildProcess( ChildProcess && other )
       running_( other.running_ ),
       terminated_( other.terminated_ ),
       exit_status_( other.exit_status_ ),
+      died_on_signal_( other.died_on_signal_ ),
+      graceful_termination_signal_( other.graceful_termination_signal_ ),
       moved_away_( other.moved_away_ )
 {
     assert( !other.moved_away_ );

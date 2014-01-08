@@ -151,7 +151,7 @@ int main( int argc, char *argv[] )
                                             "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
                                             static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
-            } );
+            }, false, SIGTERM );
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
