@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef FERRY_QUEUE_HH
-#define FERRY_QUEUE_HH
+#ifndef DELAY_QUEUE_HH
+#define DELAY_QUEUE_HH
 
 #include <queue>
 #include <cstdint>
@@ -9,7 +9,7 @@
 
 #include "file_descriptor.hh"
 
-class FerryQueue
+class DelayQueue
 {
 private:
     uint64_t delay_ms_;
@@ -17,7 +17,7 @@ private:
     /* release timestamp, contents */
 
 public:
-    FerryQueue( const uint64_t & s_delay_ms ) : delay_ms_( s_delay_ms ), packet_queue_() {}
+    DelayQueue( const uint64_t & s_delay_ms ) : delay_ms_( s_delay_ms ), packet_queue_() {}
 
     void read_packet( const std::string & contents );
 
@@ -26,4 +26,4 @@ public:
     int wait_time( void ) const;
 };
 
-#endif /* FERRY_QUEUE_HH */
+#endif /* DELAY_QUEUE_HH */

@@ -1,6 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include "ferry_queue.hh"
+#include "delay_queue.hh"
 
 #include "packetshell.cc"
 
@@ -21,7 +21,7 @@ int main( int argc, char *argv[] )
 
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
 
-        PacketShell<FerryQueue> delay_shell_app( "delay" );
+        PacketShell<DelayQueue> delay_shell_app( "delay" );
 
         delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ", user_environment, delay_ms );
         delay_shell_app.start_downlink( delay_ms );
