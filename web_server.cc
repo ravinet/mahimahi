@@ -25,7 +25,9 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
     }
 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
-    //    config_file_.write( "PidFile " + pid_file_.name() + "\n" );
+    config_file_.write( "PidFile /tmp/replayshell.apache.pid." + to_string( random() ) + "\n" );
+    /* Apache will check if this file exists before clobbering it,
+       so we think it's ok for Apache to write here as root */
 
     config_file_.write( "ServerName mahimahi.\n" );
 
@@ -45,7 +47,7 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
 WebServer::~WebServer()
 {
     if ( not moved_away_ ) {
-        run( { APACHE2, "-f", config_file_.name(), "-k", "stop" } );
+        run( { APACHE2, "-f", config_file_.name(), "-k", "graceful-stop" } );
     }
 }
 
