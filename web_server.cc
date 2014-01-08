@@ -12,8 +12,7 @@
 using namespace std;
 
 WebServer::WebServer( const Address & addr, const string & record_folder, const string & user )
-    : pid_file_( "lock" ),
-      config_file_(),
+    : config_file_(),
       error_log_( "error" ),
       access_log_( "access" ),
       moved_away_( false )
@@ -26,7 +25,7 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
     }
 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
-    config_file_.write( "PidFile " + pid_file_.name() + "\n" );
+    //    config_file_.write( "PidFile " + pid_file_.name() + "\n" );
 
     config_file_.write( "ErrorLog " + error_log_.name() + "\n" );
 
@@ -49,8 +48,7 @@ WebServer::~WebServer()
 }
 
 WebServer::WebServer( WebServer && other )
-    : pid_file_( move( other.pid_file_ ) ),
-      config_file_( move( other.config_file_ ) ),
+    : config_file_( move( other.config_file_ ) ),
       error_log_( move( other.error_log_ ) ),
       access_log_( move( other.access_log_ ) ),
       moved_away_( false )

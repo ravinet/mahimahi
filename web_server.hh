@@ -12,7 +12,6 @@ class WebServer
 {
 private:
     /* each apache instance needs unique configuration file, error/access logs, and pid file */
-    TempFile pid_file_;
     TempFile config_file_;
     TempFile error_log_;
     TempFile access_log_;

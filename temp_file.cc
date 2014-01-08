@@ -26,7 +26,14 @@ string from_mutable( const vector<char> & vec )
     string ret;
 
     for ( const auto & ch : vec ) {
+        if ( ch == 0 ) {
+            break;
+        }
         ret.push_back( ch );
+    }
+
+    if ( ret.size() + 1 != vec.size() ) {
+        throw Exception( "from_mutable", "bad null-terminated vector<char> => string conversion" );
     }
 
     return ret;
@@ -37,14 +44,7 @@ TempFile::TempFile( const string & filename_template )
       fd_( SystemCall( "mkstemp", mkstemp( &mutable_temp_filename_[ 0 ] ) ) ),
       filename_( from_mutable( mutable_temp_filename_ ) ),
       moved_away_( false )
-{
-    /* check the filename */
-    for ( const auto & ch : filename_ ) {
-        if ( ch == 0 or ch == '/' ) {
-            throw Exception( "mkstemp", "invalid character in returned tempfile name" );
-        }
-    }
-}
+{}
 
 TempFile::~TempFile()
 {
