@@ -11,11 +11,19 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
 	read_write_interface.hh
 
+packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
+
 bin_PROGRAMS = delayshell
-delayshell_SOURCES = $(common_source) delayshell.cc ferry.hh ferry.cc \
-	delay_queue.hh delay_queue.cc packetshell.cc packetshell.hh make_pipe.hh
+delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
+	delay_queue.hh delay_queue.cc
 delayshell_LDADD = -lrt
 delayshell_LDFLAGS = -pthread
+
+bin_PROGRAMS += cellshell
+cellshell_SOURCES = $(common_source) $(packet_shell_source) cellshell.cc \
+	cell_queue.hh cell_queue.cc
+cellshell_LDADD = -lrt
+cellshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
@@ -40,5 +48,7 @@ recordshell_LDFLAGS = -pthread
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
+	chown root $(DESTDIR)$(bindir)/cellshell
+	chmod u+s $(DESTDIR)$(bindir)/cellshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
