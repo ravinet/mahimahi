@@ -132,10 +132,11 @@ int main( int argc, char *argv[] )
             if ( result1.second ) { /* new ip */
                 add_dummy_interface( "sharded" + to_string( interface_counter ), current_addr );
                 interface_counter++;
-                /* add entry to dnsmasq host mapping file */
-                string entry_host = get_host( current_record );
-                dnsmasq_hosts.write( current_addr.ip() + " " +entry_host + "\n" );
             }
+
+            /* add entry to dnsmasq host mapping file */
+            string entry_host = get_host( current_record );
+            dnsmasq_hosts.write( current_addr.ip() + " " +entry_host + "\n" );
 
             auto result2 = unique_addrs.emplace( current_addr );
             if ( result2.second ) { /* new address */
