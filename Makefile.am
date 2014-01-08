@@ -72,5 +72,3 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
-	chown root $(DESTDIR)$(bindir)/replayserver
-	chmod u+s $(DESTDIR)$(bindir)/replayserver
