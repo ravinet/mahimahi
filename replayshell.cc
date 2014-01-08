@@ -113,7 +113,7 @@ int main( int argc, char *argv[] )
         srandom( time( NULL ) );
 
         /* dnsmasq host mapping file */
-        TempFile dnsmasq( "hosts" );
+        TempFile dnsmasq_hosts( "hosts" );
 
         vector< string > files;
         list_files( directory, files );
@@ -134,7 +134,7 @@ int main( int argc, char *argv[] )
                 interface_counter++;
                 /* add entry to dnsmasq host mapping file */
                 string entry_host = get_host( current_record );
-                dnsmasq.write( current_addr.ip() + " " +entry_host + "\n" );
+                dnsmasq_hosts.write( current_addr.ip() + " " +entry_host + "\n" );
             }
 
             auto result2 = unique_addrs.emplace( current_addr );
@@ -143,9 +143,15 @@ int main( int argc, char *argv[] )
             }
         }
         /* start dnsmasq with created host mapping file */
-        run( { DNSMASQ, "-i", "lo", "-h", "-H", dnsmasq.name() } );
 
         vector<ChildProcess> child_processes;
+
+        child_processes.emplace_back( [&] () {
+                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--interface=lo",
+                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                                            static_cast<char *>( nullptr ) ) );
+                return EXIT_FAILURE;
+            } );
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
@@ -155,6 +161,7 @@ int main( int argc, char *argv[] )
                 prepend_shell_prefix( "[replayshell] " );
                 const string shell = shell_path();
                 SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
+
                 return EXIT_FAILURE;
         } );
         return eventloop( move( child_processes ) );

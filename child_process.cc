@@ -92,7 +92,7 @@ ChildProcess::~ChildProcess()
 
     while ( !terminated_ ) {
         resume();
-        signal( SIGHUP );
+        signal( SIGTERM );
         wait();
     }
 }
