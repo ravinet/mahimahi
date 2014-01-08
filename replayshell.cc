@@ -113,7 +113,7 @@ int main( int argc, char *argv[] )
         srandom( time( NULL ) );
 
         /* dnsmasq host mapping file */
-        TempFile dnsmasq( "", "hosts" );
+        TempFile dnsmasq( "hosts" );
 
         vector< string > files;
         list_files( directory, files );
@@ -124,9 +124,9 @@ int main( int argc, char *argv[] )
         unsigned int interface_counter = 0;
 
         for ( unsigned int i = 0; i < files.size(); i++ ) {
-            int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
+            FileDescriptor response( SystemCall( "open", open( files[i].c_str(), O_RDONLY ) ) );
             HTTP_Record::reqrespair current_record;
-            current_record.ParseFromFileDescriptor( fd );
+            current_record.ParseFromFileDescriptor( response.num() );
             Address current_addr( current_record.ip(), current_record.port() );
             auto result1 = unique_ips.emplace( current_addr.ip() );
             if ( result1.second ) { /* new ip */
@@ -134,14 +134,13 @@ int main( int argc, char *argv[] )
                 interface_counter++;
                 /* add entry to dnsmasq host mapping file */
                 string entry_host = get_host( current_record );
-                dnsmasq.append( current_addr.ip() + " " +entry_host + "\n" );
+                dnsmasq.write( current_addr.ip() + " " +entry_host + "\n" );
             }
 
             auto result2 = unique_addrs.emplace( current_addr );
             if ( result2.second ) { /* new address */
                 servers.emplace_back( current_addr, directory, user );
             }
-            SystemCall( "close", close( fd ) );
         }
         /* start dnsmasq with created host mapping file */
         run( { DNSMASQ, "-i", "lo", "-h", "-H", dnsmasq.name() } );

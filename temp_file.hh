@@ -20,12 +20,12 @@ private:
     bool moved_away_;
 
 public:
-    TempFile( const std::string & contents, const std::string & filename_template = default_filename_template );
+    TempFile( const std::string & filename_template = default_filename_template );
     ~TempFile();   
 
     const std::string & name( void ) { return filename_; }
 
-    void append( const std::string & contents );
+    void write( const std::string & contents );
 
     TempFile( TempFile && other );
 };

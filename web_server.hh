@@ -11,13 +11,13 @@
 class WebServer
 {
 private:
-    /* pid file cannot be created prior to running apache so we store name for deletion */
-    std::string pid_file_name;
-
     /* each apache instance needs unique configuration file, error/access logs, and pid file */
-    TempFile config_file;
-    TempFile error_log;
-    TempFile access_log;
+    TempFile pid_file_;
+    TempFile config_file_;
+    TempFile error_log_;
+    TempFile access_log_;
+
+    bool moved_away_;
 
 public:
     WebServer( const Address & addr, const std::string & record_folder, const std::string & user );

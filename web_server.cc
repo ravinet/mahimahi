@@ -12,46 +12,48 @@
 using namespace std;
 
 WebServer::WebServer( const Address & addr, const string & record_folder, const string & user )
-    : pid_file_name(),
-      config_file( apache_main_config + record_folder + "\n" ),
-      error_log( "", "error" ),
-      access_log( "", "access" )
+    : pid_file_( "lock" ),
+      config_file_(),
+      error_log_( "error" ),
+      access_log_( "access" ),
+      moved_away_( false )
 {
-    /* make pid file using random number */
-    pid_file_name = "/tmp/lock" + to_string( random() );
+    config_file_.write( apache_main_config + record_folder + "\n" );
 
     /* if port 443, add ssl components */
     if ( addr.port() == 443 ) { /* ssl */
-        config_file.append( apache_ssl_config );
+        config_file_.write( apache_ssl_config );
     }
 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
-    config_file.append( "PidFile " + pid_file_name + "\n" );
+    config_file_.write( "PidFile " + pid_file_.name() + "\n" );
 
-    config_file.append( "ErrorLog " + error_log.name() + "\n" );
+    config_file_.write( "ErrorLog " + error_log_.name() + "\n" );
 
-    config_file.append( "CustomLog " + access_log.name() + " common" + "\n" );
+    config_file_.write( "CustomLog " + access_log_.name() + " common" + "\n" );
 
-    config_file.append( "User " + user + "\n" );
+    config_file_.write( "User " + user + "\n" );
 
-    config_file.append( "Group " + user + "\n" );
+    config_file_.write( "Group " + user + "\n" );
 
-    config_file.append( "Listen " + addr.ip() + ":" + to_string( addr.port() ) );
+    config_file_.write( "Listen " + addr.ip() + ":" + to_string( addr.port() ) );
 
-    run( { APACHE2, "-f", config_file.name(), "-k", "start" } );
+    run( { APACHE2, "-f", config_file_.name(), "-k", "start" } );
 }
 
 WebServer::~WebServer()
 {
-    run( { APACHE2, "-f", config_file.name(), "-k", "stop" } );
-
-    /* delete pid file */
-    SystemCall( "remove", remove( pid_file_name.c_str() ) );
+    if ( not moved_away_ ) {
+        run( { APACHE2, "-f", config_file_.name(), "-k", "stop" } );
+    }
 }
 
 WebServer::WebServer( WebServer && other )
-    : pid_file_name( other.pid_file_name ), /* XXX needs to move */
-      config_file( move( other.config_file ) ),
-      error_log( move( other.error_log ) ),
-      access_log( move( other.access_log ) )
-{}
+    : pid_file_( move( other.pid_file_ ) ),
+      config_file_( move( other.config_file_ ) ),
+      error_log_( move( other.error_log_ ) ),
+      access_log_( move( other.access_log_ ) ),
+      moved_away_( false )
+{
+    other.moved_away_ = true;
+}

@@ -32,7 +32,7 @@ string from_mutable( const vector<char> & vec )
     return ret;
 }
 
-TempFile::TempFile( const string & contents, const string & filename_template )
+TempFile::TempFile( const string & filename_template )
     : mutable_temp_filename_( to_mutable( "/tmp/" + filename_template + ".XXXXXX" ) ),
       fd_( SystemCall( "mkstemp", mkstemp( &mutable_temp_filename_[ 0 ] ) ) ),
       filename_( from_mutable( mutable_temp_filename_ ) ),
@@ -46,9 +46,6 @@ TempFile::TempFile( const string & contents, const string & filename_template )
             throw Exception( "mkstemp", "invalid character in returned tempfile name" );
         }
     }
-
-    /* write the desired contents to the file */
-    fd_.write( contents );
 }
 
 TempFile::~TempFile()
@@ -60,7 +57,7 @@ TempFile::~TempFile()
     }
 }
 
-void TempFile::append( const string & contents )
+void TempFile::write( const string & contents )
 {
     assert( not moved_away_ );
 
