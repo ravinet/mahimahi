@@ -48,3 +48,10 @@ WebServer::~WebServer()
     /* delete pid file */
     SystemCall( "remove", remove( pid_file_name.c_str() ) );
 }
+
+WebServer::WebServer( WebServer && other )
+    : pid_file_name( other.pid_file_name ), /* XXX needs to move */
+      config_file( move( other.config_file ) ),
+      error_log( move( other.error_log ) ),
+      access_log( move( other.access_log ) )
+{}

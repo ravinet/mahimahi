@@ -22,6 +22,8 @@ private:
 public:
     WebServer( const Address & addr, const std::string & record_folder, const std::string & user );
     ~WebServer();
+
+    WebServer( WebServer && other );
 };
 
 #endif

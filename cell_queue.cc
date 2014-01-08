@@ -4,6 +4,7 @@
 
 #include "cell_queue.hh"
 #include "timestamp.hh"
+#include "util.hh"
 
 using namespace std;
 
@@ -13,10 +14,7 @@ CellQueue::CellQueue( const std::string & filename )
       base_timestamp_( timestamp() ),
       packet_queue_()
 {
-    if ( ( getuid() == 0 ) or ( geteuid() == 0 )
-         or ( getgid() == 0 ) or ( getegid() == 0 ) ) {
-        throw Exception( "BUG", "privileges must be dropped before constructing a CellQueue" );
-    }
+    assert_not_root();
 
     /* open filename and load schedule */
     FileDescriptor trace_file( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );

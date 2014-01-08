@@ -10,25 +10,68 @@
 
 using namespace std;
 
-TempFile::TempFile( const string & contents, const string & filename )
-    : file_name(),
-      fd_()
+vector<char> to_mutable( const string & str )
 {
-    string name = "/tmp/" + filename + ".XXXXXX";
-    char tmp_name[30];
-    strcpy( tmp_name, name.c_str() );
-    fd_ = SystemCall( "mkstemp", mkstemp( tmp_name ) );
-    file_name = string( tmp_name );
-    SystemCall( "write", write( fd_, contents.c_str(), contents.length() ) );
+    vector< char > ret;
+    for ( const auto & ch : str ) {
+        ret.push_back( ch );
+    }
+    ret.push_back( 0 ); /* null terminate */
+
+    return ret;
+}
+
+string from_mutable( const vector<char> & vec )
+{
+    string ret;
+
+    for ( const auto & ch : vec ) {
+        ret.push_back( ch );
+    }
+
+    return ret;
+}
+
+TempFile::TempFile( const string & contents, const string & filename_template )
+    : mutable_temp_filename_( to_mutable( "/tmp/" + filename_template + ".XXXXXX" ) ),
+      fd_( SystemCall( "mkstemp", mkstemp( &mutable_temp_filename_[ 0 ] ) ) ),
+      filename_( from_mutable( mutable_temp_filename_ ) ),
+      moved_away_( false )
+{
+    assert_not_root();
+
+    /* check the filename */
+    for ( const auto & ch : filename_ ) {
+        if ( ch == 0 or ch == '/' ) {
+            throw Exception( "mkstemp", "invalid character in returned tempfile name" );
+        }
+    }
+
+    /* write the desired contents to the file */
+    fd_.write( contents );
 }
 
 TempFile::~TempFile()
 {
-    SystemCall( "close", close( fd_ ) );
-    SystemCall( "remove", remove( file_name.c_str() ) );
+    assert_not_root();
+
+    if ( not moved_away_ ) {
+        SystemCall( "unlink " + name(), unlink( name().c_str() ) );
+    }
 }
 
 void TempFile::append( const string & contents )
 {
-    SystemCall( "write", write( fd_, contents.c_str(), contents.length() ) );
+    assert( not moved_away_ );
+
+    fd_.write( contents );
+}
+
+TempFile::TempFile( TempFile && other )
+    : mutable_temp_filename_( other.mutable_temp_filename_ ),
+      fd_( move( other.fd_ ) ),
+      filename_( other.filename_ ),
+      moved_away_( false )
+{
+    other.moved_away_ = true;
 }

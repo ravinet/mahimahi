@@ -120,7 +120,7 @@ int main( int argc, char *argv[] )
         set< Address > unique_addrs;
         set< string > unique_ips;
         vector< WebServer > servers;
-        servers.reserve( files.size() );
+
         unsigned int interface_counter = 0;
 
         for ( unsigned int i = 0; i < files.size(); i++ ) {

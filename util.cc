@@ -222,3 +222,11 @@ int SystemCall( const string & s_attempt, const int return_value )
 
   throw Exception( s_attempt );
 }
+
+void assert_not_root( void )
+{
+    if ( ( getuid() == 0 ) or ( geteuid() == 0 )
+         or ( getgid() == 0 ) or ( getegid() == 0 ) ) {
+        throw Exception( "BUG", "privileges not dropped in sensitive region" );
+    }
+}
