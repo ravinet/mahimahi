@@ -55,13 +55,13 @@ replayshell_LDADD = -lrt
 replayshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 replayshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += replayserver
-replayserver_SOURCES = $(common_source) replayserver.cc \
+bin_PROGRAMS += nph-replayserver.cgi
+nph_replayserver_cgi_SOURCES = $(common_source) replayserver.cc \
 	http_header.cc http_header.hh \
 	http_message.cc http_message.hh
-replayserver_LDADD = -lrt
-replayserver_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
-replayserver_LDFLAGS = -pthread
+nph_replayserver_cgi_LDADD = -lrt
+nph_replayserver_cgi_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+nph_replayserver_cgi_LDFLAGS = -pthread
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
