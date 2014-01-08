@@ -22,4 +22,6 @@ public:
     std::pair< Address, uint16_t > first_unassigned_address( const uint16_t last_octet ) const;
 };
 
+std::pair< Address, Address > two_unassigned_addresses( void );
+
 #endif /* GET_ADDRESS_HH */

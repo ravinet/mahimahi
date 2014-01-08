@@ -6,6 +6,8 @@
 #include <string>
 #include <functional>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <linux/if.h>
 
 #include "file_descriptor.hh"
 #include "address.hh"

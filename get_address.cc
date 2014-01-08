@@ -107,3 +107,13 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
 
     throw Exception( "Interfaces", "could not find free interface address" );
 }
+
+std::pair< Address, Address > two_unassigned_addresses( void )
+{
+    static Interfaces interface_list_on_program_startup;
+
+    auto one = interface_list_on_program_startup.first_unassigned_address( 1 );
+    auto two = interface_list_on_program_startup.first_unassigned_address( one.second + 1 );
+
+    return make_pair( one.first, two.first );
+}
