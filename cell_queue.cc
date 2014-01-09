@@ -1,5 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <cinttypes>
 #include <cstdio>
 
 #include "cell_queue.hh"
@@ -25,7 +26,7 @@ CellQueue::CellQueue( const std::string & filename )
 
     while ( true ) {
         uint64_t ms;
-        int num_matched = fscanf( f, "%lu\n", &ms );
+        int num_matched = fscanf( f, "%" PRIu64 "\n", &ms );
         if ( num_matched != 1 ) {
             break;
         }
