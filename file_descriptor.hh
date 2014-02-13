@@ -75,6 +75,11 @@ public:
         if ( ret.empty() ) { eof_ = true; }
         return ret;
     }
+
+    void set_eof( void )
+    {
+        eof_ = true;
+    }
 };
 
 #endif /* FILE_DESCRIPTOR_HH */
