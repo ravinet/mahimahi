@@ -48,6 +48,63 @@ AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
 
+# Checks for apache configuration modules
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_dir.so], [],
+              [AC_MSG_ERROR([apache2 mod_dir.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_DIR], ["/usr/lib/apache2/modules/mod_dir.so"], [path to apache2 mod_dir])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mpm_prefork.so], [],
+              [AC_MSG_ERROR([apache2 mod_mpm_prefork.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["/usr/lib/apache2/modules/mod_mpm_prefork.so"], [path to apache2 mod_mpm_prefork])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mime.so], [],
+              [AC_MSG_ERROR([apache2 mod_mime.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_MIME], ["/usr/lib/apache2/modules/mod_mime.so"], [path to apache2 mod_mime])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_authz_core.so], [],
+              [AC_MSG_ERROR([apache2 mod_authz_core.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/apache2/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_cgi.so], [],
+              [AC_MSG_ERROR([apache2 mod_cgi.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_CGI], ["/usr/lib/apache2/modules/mod_cgi.so"], [path to apache2 mod_cgi])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_rewrite.so], [],
+              [AC_MSG_ERROR([apache2 mod_rewrite.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_REWRITE], ["/usr/lib/apache2/modules/mod_rewrite.so"], [path to apache2 mod_rewrite])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_env.so], [],
+	      [AC_MSG_ERROR([apache2 mod_env.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_ENV], ["/usr/lib/apache2/modules/mod_env.so"], [path to apache2 mod_env])
+
+AC_CHECK_FILE([/usr/lib/apache2/modules/mod_ssl.so], [],
+              [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
+
+AC_DEFINE_UNQUOTED([MOD_SSL], ["/usr/lib/apache2/modules/mod_ssl.so"], [path to apache2 mod_ssl])
+
+# Checks for SSL certificate file
+AC_CHECK_FILE([/etc/ssl/certs/ssl-cert-snakeoil.pem], [],
+              [AC_MSG_ERROR([ssl certificate file is required])])
+
+AC_DEFINE_UNQUOTED([MOD_SSL_CERTIFICATE_FILE], ["/etc/ssl/certs/ssl-cert-snakeoil.pem"], [path to ssl certificate file])
+
+AC_DEFINE_UNQUOTED([MOD_SSL_KEY], ["/etc/ssl/private/ssl-cert-snakeoil.key"], [path to ssl key])
+
+# Checks for replayshell cgi script
+AC_ARG_VAR([REPLAYSERVER], [path to nph-replayserver.cgi])
+AC_PATH_PROG([REPLAYSERVER], [nph-replayserver.cgi], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$REPLAYSERVER" = "no"; then
+  AC_MSG_ERROR([nph-replayserver.cgi is required])
+fi
+AC_DEFINE_UNQUOTED([REPLAYSERVER], ["$REPLAYSERVER"], [path to nph-replayserver.cgi])
+
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
 
