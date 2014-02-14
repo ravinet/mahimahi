@@ -98,12 +98,7 @@ AC_DEFINE_UNQUOTED([MOD_SSL_CERTIFICATE_FILE], ["/etc/ssl/certs/ssl-cert-snakeoi
 AC_DEFINE_UNQUOTED([MOD_SSL_KEY], ["/etc/ssl/private/ssl-cert-snakeoil.key"], [path to ssl key])
 
 # Checks for replayshell cgi script
-AC_ARG_VAR([REPLAYSERVER], [path to nph-replayserver.cgi])
-AC_PATH_PROG([REPLAYSERVER], [nph-replayserver.cgi], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
-if test "$REPLAYSERVER" = "no"; then
-  AC_MSG_ERROR([nph-replayserver.cgi is required])
-fi
-AC_DEFINE_UNQUOTED([REPLAYSERVER], ["$REPLAYSERVER"], [path to nph-replayserver.cgi])
+AC_DEFINE_UNQUOTED([REPLAYSERVER], ["/usr/local/bin/nph-replayserver.cgi"], [path to nph-replayserver.cgi])
 
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
