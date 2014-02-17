@@ -115,5 +115,5 @@ PKG_CHECK_MODULES([protobuf], [protobuf])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile protobufs/Makefile])
+AC_CONFIG_FILES([Makefile protobufs/Makefile man_pages/Makefile])
 AC_OUTPUT
