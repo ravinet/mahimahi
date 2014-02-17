@@ -1,0 +1,49 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH Mahimahi 1 "February 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+Mahimahi - tools to produce a usable benchmark for Web transport protocols and browser modifications
+.SH DESCRIPTION
+Mahimahi is a set of lightweight tools that can be used to completely record actual Web pages 
+and replay them locally over different emulated links. Mahimahi comprises of four tools:
+\fBdelayshell\fP(1), \fBcellshell\fP(1), \fBrecordshell\fP(1), and \fBreplayshell\fP(1). 
+
+\fBdelayshell\fP(1) emulates a link with a fixed minimum round trip time by delaying all network packets to and from a shell by a user-specified amount of time.  
+
+\fBcellshell\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
+
+\fBrecordshell\fP(1) records complete Web pages by recording all HTTP content sent to and from a shell running a Web browser.
+
+\fBreplayshell\fP(1) replays previously recorded Web pages while accurately mirroring each page's sharding structure. \fBreplayshell\fP(1) creates a shell where browsers can load recorded Web pages locally. 
+
+
+.nf
+
+.SH SEE ALSO
+.BR delayshell (1),
+.BR cellshell (1),
+.BR recordshell (1),
+.BR replayshell (1).
+
+Project home page:
+.I http://mahimahi.csail.mit.edu
+
+.br
+.SH AUTHOR
+Mahimahi was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+.SH BUGS
+Please report bugs to \fImahimahi@mit.edu\fP.
