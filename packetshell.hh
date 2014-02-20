@@ -12,35 +12,38 @@
 #include "address.hh"
 #include "dns_proxy.hh"
 
-template <class FerryType>
 class PacketShell
 {
 private:
-    std::pair<Address, Address> egress_ingress;
+    std::vector<std::pair<Address, Address>> egress_ingress;
     Address nameserver_;
-    TunDevice egress_tun_;
+    TunDevice egress_cell_tun_;
+    TunDevice egress_wifi_tun_;
     std::unique_ptr<DNSProxy> dns_outside_;
-    NAT nat_rule_ {};
+    NAT nat_cell_;
+    NAT nat_wifi_;
 
-    std::pair<FileDescriptor, FileDescriptor> pipe_;
-
+    std::pair<FileDescriptor, FileDescriptor> cell_pipe_;
+    std::pair<FileDescriptor, FileDescriptor> wifi_pipe_;
     std::vector<ChildProcess> child_processes_;
-
-    const Address & egress_addr( void ) { return egress_ingress.first; }
-    const Address & ingress_addr( void ) { return egress_ingress.second; }
 
 public:
     PacketShell( const std::string & device_prefix );
 
-    template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
                        char ** const user_environment,
-                       Targs&&... Fargs );
+                       const uint64_t cell_delay,
+                       const uint64_t wifi_delay,
+                       const std::string & cell_uplink,
+                       const std::string & wifi_uplink );
 
-    template <typename... Targs>
-    void start_downlink( Targs&&... Fargs );
+    void start_downlink( const uint64_t cell_delay,
+                         const uint64_t wifi_delay,
+                         const std::string & cell_downlink,
+                         const std::string & wifi_downlink );
 
-    int wait_for_exit( void );
+    int wait_on_processes( std::vector<ChildProcess> && process_vector );
+    int wait_for_exit() { return wait_on_processes( std::move( child_processes_ ) ); }
 
     PacketShell( const PacketShell & other ) = delete;
     PacketShell & operator=( const PacketShell & other ) = delete;

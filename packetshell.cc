@@ -7,6 +7,7 @@
 #include <signal.h>
 
 #include "packetshell.hh"
+#include "rate_delay_queue.hh"
 #include "netdevice.hh"
 #include "nat.hh"
 #include "util.hh"
@@ -19,14 +20,16 @@
 using namespace std;
 using namespace PollerShortNames;
 
-template <class FerryType>
-PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
-    : egress_ingress( two_unassigned_addresses() ),
+PacketShell::PacketShell( const std::string & device_prefix )
+    : egress_ingress( get_unassigned_address_pairs(2) ),
       nameserver_( first_nameserver() ),
-      egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
-      dns_outside_( new DNSProxy( egress_addr(), nameserver_, nameserver_ ) ),
-      nat_rule_( ingress_addr() ),
-      pipe_( make_pipe() ),
+      egress_cell_tun_( device_prefix + "-cell-" + to_string( getpid() ) , egress_ingress.at(0).first, egress_ingress.at(0).second ),
+      egress_wifi_tun_( device_prefix + "-wifi-" + to_string( getpid() ) , egress_ingress.at(1).first, egress_ingress.at(1).second ),
+      dns_outside_( new DNSProxy( egress_ingress.at(0).first, nameserver_, nameserver_ ) ),
+      nat_cell_( egress_ingress.at(0).second ),
+      nat_wifi_( egress_ingress.at(1).second ),
+      cell_pipe_( make_pipe() ),
+      wifi_pipe_( make_pipe() ),
       child_processes_()
 {
     /* make sure environment has been cleared */
@@ -36,34 +39,43 @@ PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
     assert( dns_outside_ );
 }
 
-template <class FerryType>
-template <typename... Targs>
-void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
-                                           char ** const user_environment,
-                                           Targs&&... Fargs )
+void PacketShell::start_uplink( const std::string & shell_prefix,
+                                char ** const user_environment,
+                                const uint64_t cell_delay,
+                                const uint64_t wifi_delay,
+                                const std::string & cell_uplink,
+                                const std::string & wifi_uplink )
 {
-    /* g++ bug 55914 makes this hard before version 4.9 */
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
-                                  forward<Targs>( Fargs )... );
-
     /* Fork */
     child_processes_.emplace_back( [&]() {
-            TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
-
+            TunDevice ingress_cell_tun( "ingress-cell", egress_ingress.at(0).second, egress_ingress.at(0).first );
+            TunDevice ingress_wifi_tun( "ingress-wifi", egress_ingress.at(1).second, egress_ingress.at(1).first );
             /* bring up localhost */
             Socket ioctl_socket( UDP );
             interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
                              [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
-            /* create default route */
+            /* create default route through cell and wifi */
             rtentry route;
             zero( route );
 
-            route.rt_gateway = egress_addr().raw_sockaddr();
+            route.rt_gateway = egress_ingress.at(0).first.raw_sockaddr();
             route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
             route.rt_flags = RTF_UP | RTF_GATEWAY;
 
             SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
+
+            zero( route );
+
+            route.rt_gateway = egress_ingress.at(1).first.raw_sockaddr();
+            route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+            route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+            SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
+
+            run( { "/sbin/sysctl", "net.ipv4.conf.all.rp_filter=0"} );
+            run( { "/sbin/sysctl", "net.ipv4.conf.ingress-cell.rp_filter=0"} );
+            run( { "/sbin/sysctl", "net.ipv4.conf.ingress-wifi.rp_filter=0"} );
 
             /* create DNS proxy if nameserver address is local */
             auto dns_inside = DNSProxy::maybe_proxy( nameserver_,
@@ -83,29 +95,50 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                     return EXIT_FAILURE;
                 } );
 
-            FerryType uplink_queue = ferry_maker();
-            return packet_ferry( uplink_queue, ingress_tun.fd(), pipe_.first, move( dns_inside ),
-                                 move( bash_process ) );
+            ChildProcess cell_ferry( [&]() {
+                    RateDelayQueue cell_queue( cell_delay, cell_uplink );
+                    return packet_ferry( cell_queue, ingress_cell_tun.fd(), cell_pipe_.first,
+                                         move( dns_inside ),
+                                         {} );
+                } );
+
+            ChildProcess wifi_ferry( [&]() {
+                    RateDelayQueue wifi_queue( wifi_delay, wifi_uplink);
+                    return packet_ferry( wifi_queue, ingress_wifi_tun.fd(), wifi_pipe_.first,
+                                         nullptr,
+                                         {} );
+                } );
+            std::vector<ChildProcess> uplink_processes;
+            uplink_processes.emplace_back( move( bash_process ) );
+            uplink_processes.emplace_back( move( cell_ferry ) );
+            uplink_processes.emplace_back( move( wifi_ferry ) );
+            return wait_on_processes( std::move( uplink_processes ) );
         }, true );  /* new network namespace */
 }
-template <class FerryType>
-template <typename... Targs>
-void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
+
+void PacketShell::start_downlink( const uint64_t cell_delay,
+                                  const uint64_t wifi_delay,
+                                  const std::string & cell_downlink,
+                                  const std::string & wifi_downlink )
 {
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
-                                  forward<Targs>( Fargs )... );
+    child_processes_.emplace_back( [&] () {
+            drop_privileges();
+
+            RateDelayQueue cell_queue( cell_delay, cell_downlink );
+            return packet_ferry( cell_queue, egress_cell_tun_.fd(),
+                                 cell_pipe_.second, move( dns_outside_ ), {} );
+        } );
 
     child_processes_.emplace_back( [&] () {
             drop_privileges();
 
-            FerryType downlink_queue = ferry_maker();
-            return packet_ferry( downlink_queue, egress_tun_.fd(),
-                                 pipe_.second, move( dns_outside_ ), {} );
+            RateDelayQueue wifi_queue( wifi_delay, wifi_downlink );
+            return packet_ferry( wifi_queue, egress_wifi_tun_.fd(),
+                                 wifi_pipe_.second, nullptr, {} );
         } );
 }
 
-template <class FerryType>
-int PacketShell<FerryType>::wait_for_exit( void )
+int PacketShell::wait_on_processes( std::vector<ChildProcess> && process_vector )
 {
     /* wait for either child to finish */
     Poller poller;
@@ -117,7 +150,7 @@ int PacketShell<FerryType>::wait_for_exit( void )
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
                                            return handle_signal( signal_fd.read_signal(),
-                                                                 child_processes_ );
+                                                                 process_vector );
                                        } ) );
 
     while ( true ) {
