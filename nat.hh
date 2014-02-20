@@ -35,6 +35,7 @@ private:
     NATRule pre_, post_;
 
 public:
+    static int counter;
     NAT( const Address & ingress_addr );
 };
 

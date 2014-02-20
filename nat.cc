@@ -13,6 +13,8 @@
 
 using namespace std;
 
+int NAT::counter = 0;
+
 NATRule::NATRule( const vector< string > & s_args )
     : arguments( s_args )
 {
@@ -34,9 +36,9 @@ NATRule::~NATRule()
 
 NAT::NAT( const Address & ingress_addr )
 : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK",
-            "--set-mark", to_string( getpid() ) } ),
+            "--set-mark", to_string( ++NAT::counter ) } ),
   post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark",
-              "--mark", to_string( getpid() ) } )
+              "--mark", to_string( NAT::counter ) } )
 {}
 
 DNAT::DNAT( const Address & listener, const string & interface )
