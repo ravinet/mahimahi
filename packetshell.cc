@@ -66,11 +66,10 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
             SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
 
             /* Policy routing to simulate two default interfaces */
-//            run( {"/bin/echo", "1",  "admin", ">>",  "/etc/iproute2/rt_tables"} );
-            run( {"/sbin/ip", "route", "add", egress_ingress.at(1).first.ip(), "dev", "ingress-wifi", "src", egress_ingress.at(1).second.ip(), "table", "admin"} );
-            run( {"/sbin/ip", "route", "add", "default", "via", egress_ingress.at(1).first.ip(), "dev", "ingress-wifi","table", "admin"} );
-            run( {"/sbin/ip", "rule", "add", "from", egress_ingress.at(1).second.ip(),"table", "admin"} );
-            run( {"/sbin/ip", "rule", "add", "to", egress_ingress.at(1).second.ip(), "table", "admin"} );
+            run( {"/sbin/ip", "route", "add", egress_ingress.at(1).first.ip(), "dev", "ingress-wifi", "src", egress_ingress.at(1).second.ip(), "table", "1"} );
+            run( {"/sbin/ip", "route", "add", "default", "via", egress_ingress.at(1).first.ip(), "dev", "ingress-wifi","table", "1"} );
+            run( {"/sbin/ip", "rule", "add", "from", egress_ingress.at(1).second.ip(),"table", "1"} );
+            run( {"/sbin/ip", "rule", "add", "to", egress_ingress.at(1).second.ip(), "table", "1"} );
             run( {"/sbin/ip", "route", "flush", "cache"} );
 
             /* create DNS proxy if nameserver address is local */
