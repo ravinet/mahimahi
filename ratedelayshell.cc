@@ -26,7 +26,7 @@ int main( int argc, char *argv[] )
 
         PacketShell rate_delay_shell_app( "cd" );
 
-        rate_delay_shell_app.start_uplink( to_string(cell_delay) + cell_uplink + cell_downlink + to_string(wifi_delay) + wifi_uplink + wifi_downlink,
+        rate_delay_shell_app.start_uplink( "[ mpshell ] ",
                                            user_environment,
                                            cell_delay,
                                            wifi_delay,
