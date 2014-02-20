@@ -9,21 +9,17 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc               \
 	get_address.hh get_address.cc                                          \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
-	read_write_interface.hh
+	read_write_interface.hh                                                \
+        cell_queue.hh cell_queue.cc                                            \
+        delay_queue.hh delay_queue.cc
 
 packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
 
-bin_PROGRAMS = delayshell
-delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
-	delay_queue.hh delay_queue.cc
-delayshell_LDADD = -lrt
-delayshell_LDFLAGS = -pthread
-
-bin_PROGRAMS += cellshell
-cellshell_SOURCES = $(common_source) $(packet_shell_source) cellshell.cc \
-	cell_queue.hh cell_queue.cc
-cellshell_LDADD = -lrt
-cellshell_LDFLAGS = -pthread
+bin_PROGRAMS = ratedelayshell
+ratedelayshell_SOURCES = $(common_source) $(packet_shell_source) ratedelayshell.cc \
+	rate_delay_queue.hh rate_delay_queue.cc
+ratedelayshell_LDADD = -lrt
+ratedelayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
@@ -64,11 +60,9 @@ nph_replayserver_cgi_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIB
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 install-exec-hook:
-	chown root $(DESTDIR)$(bindir)/delayshell
-	chmod u+s $(DESTDIR)$(bindir)/delayshell
-	chown root $(DESTDIR)$(bindir)/cellshell
-	chmod u+s $(DESTDIR)$(bindir)/cellshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
+	chown root $(DESTDIR)$(bindir)/ratedelayshell
+	chmod u+s $(DESTDIR)$(bindir)/ratedelayshell
