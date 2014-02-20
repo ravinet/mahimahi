@@ -117,3 +117,18 @@ std::pair< Address, Address > two_unassigned_addresses( void )
 
     return make_pair( one.first, two.first );
 }
+
+std::vector< std::pair< Address, Address >> get_unassigned_address_pairs( int n )
+{
+    static Interfaces interface_list_on_program_startup;
+
+    std::vector< std::pair< Address, Address >> ret;
+    int last_octet = 1;
+    for (int i = 1; i <= n; i++) {
+      auto one = interface_list_on_program_startup.first_unassigned_address( last_octet );
+      auto two = interface_list_on_program_startup.first_unassigned_address( one.second + 1 );
+      last_octet = two.second + 1;
+      ret.emplace_back( make_pair( one.first, two.first ) );
+    }
+    return ret;
+}

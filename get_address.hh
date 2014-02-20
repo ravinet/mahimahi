@@ -23,5 +23,6 @@ public:
 };
 
 std::pair< Address, Address > two_unassigned_addresses( void );
+std::vector< std::pair< Address, Address >> get_unassigned_address_pairs( int n );
 
 #endif /* GET_ADDRESS_HH */
