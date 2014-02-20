@@ -23,6 +23,8 @@ public:
 
     void write_packets( FileDescriptor & fd );
 
+    std::string get_next( void );
+
     int wait_time( void ) const;
 };
 

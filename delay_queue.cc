@@ -19,6 +19,18 @@ void DelayQueue::write_packets( FileDescriptor & fd )
     }
 }
 
+string DelayQueue::get_next( )
+{
+    if ( (!packet_queue_.empty())
+            && (packet_queue_.front().first <= timestamp()) ) {
+        auto ret = packet_queue_.front().second;
+        packet_queue_.pop();
+        return ret;
+    } else {
+        return "";
+    }
+}
+
 int DelayQueue::wait_time( void ) const
 {
     return packet_queue_.empty() ? UINT16_MAX : (packet_queue_.front().first - timestamp());
