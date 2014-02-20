@@ -24,17 +24,17 @@ int main( int argc, char *argv[] )
         const std::string wifi_uplink = argv[ 5 ];
         const std::string wifi_downlink = argv[ 6 ];
 
-        PacketShell rate_delay_shell_app( "cd" );
+        PacketShell mp_shell_app( "cw" );
 
-        rate_delay_shell_app.start_uplink( "[ mpshell ] ",
-                                           user_environment,
-                                           cell_delay,
-                                           wifi_delay,
-                                           cell_uplink,
-                                           wifi_uplink);
+        mp_shell_app.start_uplink( "[ mpshell ] ",
+                                   user_environment,
+                                   cell_delay,
+                                   wifi_delay,
+                                   cell_uplink,
+                                   wifi_uplink);
 
-        rate_delay_shell_app.start_downlink( cell_delay, wifi_delay, cell_downlink, wifi_downlink );
-        return rate_delay_shell_app.wait_for_exit();
+        mp_shell_app.start_downlink( cell_delay, wifi_delay, cell_downlink, wifi_downlink );
+        return mp_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

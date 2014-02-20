@@ -15,11 +15,11 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 
 packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
 
-bin_PROGRAMS = ratedelayshell
-ratedelayshell_SOURCES = $(common_source) $(packet_shell_source) ratedelayshell.cc \
+bin_PROGRAMS = mpshell
+mpshell_SOURCES = $(common_source) $(packet_shell_source) mpshell.cc \
 	rate_delay_queue.hh rate_delay_queue.cc
-ratedelayshell_LDADD = -lrt
-ratedelayshell_LDFLAGS = -pthread
+mpshell_LDADD = -lrt
+mpshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
@@ -64,5 +64,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
-	chown root $(DESTDIR)$(bindir)/ratedelayshell
-	chmod u+s $(DESTDIR)$(bindir)/ratedelayshell
+	chown root $(DESTDIR)$(bindir)/mpshell
+	chmod u+s $(DESTDIR)$(bindir)/mpshell
