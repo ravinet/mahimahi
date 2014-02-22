@@ -84,6 +84,13 @@ bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Reco
                 }
             }
             return false;
+        } else { /* no cookie present in stored response */
+            for ( int i = 0; i < saved_req.headers_size(); i++ ) {
+                HTTPHeader current_header( saved_req.headers(i) );
+                if ( current_header.key() == "Cookie") { /* cookie present in stored response */
+                    return false;
+                }
+            }
         }
     }
 
