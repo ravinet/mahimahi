@@ -73,6 +73,20 @@ bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Reco
     //if ( not check_headers( "HTTP_REFERER", "Referer", saved_req ) ) { return false; }
     //if ( not check_headers( "HTTP_USER_AGENT", "User-Agent", saved_req ) ) { return false; }
 
+    /* match cookie header existence (if there in request, make sure there in request...but don't match value) */
+    /* this is to make sure the login screen is not used as response for home page of facebook */
+    if ( new_req == "GET / HTTP/1.1\r\n" ) {
+        if ( getenv( "HTTP_COOKIE" ) != NULL ) { /* cookie present in incoming request */
+            for ( int i = 0; i < saved_req.headers_size(); i++ ) {
+                HTTPHeader current_header( saved_req.headers(i) );
+                if ( current_header.key() == "Cookie") { /* cookie present in stored response */
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     /* all compared fields match */
     return true;
 }
