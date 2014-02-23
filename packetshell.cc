@@ -44,7 +44,8 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
                                 const uint64_t cell_delay,
                                 const uint64_t wifi_delay,
                                 const std::string & cell_uplink,
-                                const std::string & wifi_uplink )
+                                const std::string & wifi_uplink,
+                                const std::string & program_name )
 {
     /* Fork */
     child_processes_.emplace_back( [&]() {
@@ -86,7 +87,7 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
                     prepend_shell_prefix( shell_prefix );
 
                     const string shell = shell_path();
-                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
+                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), "-c", (string("sudo tcpdump -i any -w opt.pcap & ") + program_name).c_str(), static_cast<const char*>( nullptr ) ) );
                     return EXIT_FAILURE;
                 } );
 
