@@ -40,13 +40,6 @@ void drop_privileges( void ) {
     gid_t real_gid = getgid( ), eff_gid = getegid( );
     uid_t real_uid = getuid( ), eff_uid = geteuid( );
 
-    /* eliminate ancillary groups */
-    if ( eff_uid == 0 ) { /* if root */
-        if ( setgroups( 1, &real_gid ) == -1 ) {
-            throw Exception( "setgroups" );
-        }
-    }
-
     /* change real group id if necessary */
     if ( real_gid != eff_gid ) {
         if ( setregid( real_gid, real_gid ) == -1 ) {
