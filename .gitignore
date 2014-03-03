@@ -10,6 +10,7 @@ Makefile.in
 /autom4te.cache
 /config.h
 /config.h.in
+/config.h.in~
 /config.log
 /config.status
 /configure
@@ -18,3 +19,11 @@ Makefile.in
 /missing
 /mahimahi-*.tar.gz
 /stamp-h1
+
+cellshell
+delayshell
+nph-replayserver.cgi
+protobufs/http_record.pb.cc
+protobufs/http_record.pb.h
+recordshell
+replayshell
