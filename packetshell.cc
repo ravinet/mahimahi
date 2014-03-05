@@ -87,7 +87,7 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
                     prepend_shell_prefix( shell_prefix );
 
                     const string shell = shell_path();
-                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), "-c", (string("sudo tcpdump -i any -w opt.pcap & ") + program_name).c_str(), static_cast<const char*>( nullptr ) ) );
+                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), "-c", program_name.c_str(), static_cast<const char*>( nullptr ) ) );
                     return EXIT_FAILURE;
                 } );
 
