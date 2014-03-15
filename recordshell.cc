@@ -98,7 +98,6 @@ int main( int argc, char *argv[] )
                 drop_privileges();
 
                 ChildProcess bash_process( [&]() {
-                        /* restore environment and tweak bash prompt */
                         environ = user_environment;
                         run( program_to_run, user_environment );
                         return EXIT_FAILURE;

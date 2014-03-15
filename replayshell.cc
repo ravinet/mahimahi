@@ -93,12 +93,12 @@ int main( int argc, char *argv[] )
             throw Exception( "Usage", string( argv[ 0 ] ) + " protocol folder_with_recorded_content program_to_execute" );
         }
 
-        vector< string > program_to_run;
-        for ( int num_args = 2; num_args < argc; num_args++ ) {
-            program_to_run.emplace_back( string( argv[ num_args ] ) );
-        }
-
         bool use_quic = string( argv[1] ) == "quic";
+
+        vector< string > program_to_run;
+        for ( int num_args = 3; num_args < argc; num_args++ ) {
+          program_to_run.emplace_back( string( argv[ num_args ] ) );
+        }
 
         /* check if user-specified storage folder exists */
         string directory = argv[2];
