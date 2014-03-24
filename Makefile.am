@@ -7,7 +7,7 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	socket.cc socket.hh address.cc address.hh                              \
 	system_runner.hh system_runner.cc nat.hh nat.cc                        \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc               \
-	get_address.hh get_address.cc                                          \
+	interfaces.hh interfaces.cc                                            \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
 	read_write_interface.hh
 

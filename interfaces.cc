@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <ifaddrs.h>
 
-#include "get_address.hh"
+#include "interfaces.hh"
 #include "exception.hh"
 #include "file_descriptor.hh"
 #include "util.hh"

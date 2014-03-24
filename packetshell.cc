@@ -10,7 +10,7 @@
 #include "netdevice.hh"
 #include "nat.hh"
 #include "util.hh"
-#include "get_address.hh"
+#include "interfaces.hh"
 #include "address.hh"
 #include "make_pipe.hh"
 
