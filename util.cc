@@ -95,8 +95,8 @@ bool check_folder_existence( const string & directory )
 {
     struct stat sb;
 
-    /* check if directory already exists and if not, create it */
-    if (!stat( directory.c_str(), &sb ) == 0 or !S_ISDIR(sb.st_mode))
+    /* check if directory already exists */
+    if ( !stat( directory.c_str(), &sb ) == 0 or !S_ISDIR( sb.st_mode ) )
     {
         if ( errno != ENOENT ) { /* error is not that directory does not exist */
             throw Exception( "stat" );
@@ -112,9 +112,11 @@ void check_storage_folder( const string & directory )
     /* assert that directory ends with '/' */
     assert( directory.back() == '/' );
 
-    if ( not check_folder_existence( directory ) ) { /* folder exists */
+    if ( not check_folder_existence( directory ) ) { /* directory does not exist */
         /* make directory where user has all permissions */
         SystemCall( "mkdir", mkdir( directory.c_str(), 00700 ) );
+    } else { /* directory already exists */
+        throw Exception( "recordshell", "directory already exists" );
     }
 }
 
