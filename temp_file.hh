@@ -27,7 +27,15 @@ public:
 
     void write( const std::string & contents );
 
+    /* ban copying */
+    TempFile( const TempFile & other ) = delete;
+    TempFile & operator=( const TempFile & other ) = delete;
+
+    /* allow move constructor */
     TempFile( TempFile && other );
+
+    /* ... but not move assignment operator */
+    TempFile & operator=( TempFile && other ) = delete;
 };
 
 #endif
