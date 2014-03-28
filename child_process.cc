@@ -9,6 +9,7 @@
 
 #include "child_process.hh"
 #include "exception.hh"
+#include "annotate_exception.hh"
 
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
@@ -28,7 +29,7 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool 
         try {
             _exit( child_procedure() );
         } catch ( const Exception & e ) {
-            e.perror();
+            annotate_exception( e.perror().c_str() );
             _exit( EXIT_FAILURE );
         }
     }

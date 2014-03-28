@@ -25,6 +25,7 @@
 #include "http_record.pb.h"
 #include "temp_file.hh"
 #include "http_header.hh"
+#include "annotate_exception.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -167,7 +168,7 @@ int main( int argc, char *argv[] )
         } );
         return eventloop( move( child_processes ) );
     } catch ( const Exception & e ) {
-        e.perror();
+        annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;

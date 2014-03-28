@@ -21,9 +21,9 @@ public:
         : attempt_( s_attempt ), error_( strerror( errno ) )
     {}
 
-    void perror( void ) const
+    std::string perror( void ) const
     {
-        std::cerr << attempt_ << ": " << error_ << std::endl << std::flush;
+        return attempt_ + ": " + error_;
     }
 
     const std::string & attempt( void ) const { return attempt_; }

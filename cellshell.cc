@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include "cell_queue.hh"
+#include "annotate_exception.hh"
 
 #include "packetshell.cc"
 
@@ -29,7 +30,7 @@ int main( int argc, char *argv[] )
         cell_shell_app.start_downlink( downlink_filename );
         return cell_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
-        e.perror();
+        annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;
     }
 

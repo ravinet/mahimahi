@@ -23,6 +23,7 @@
 #include "http_request_parser.hh"
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
+#include "annotate_exception.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -131,7 +132,7 @@ void HTTPProxy::handle_tcp( void )
                     }
                 }
             } catch ( const Exception & e ) {
-                e.perror();
+                annotate_exception( e.perror().c_str() );
                 return;
             }
             return;

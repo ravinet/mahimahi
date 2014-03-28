@@ -5,6 +5,7 @@
 #include "dns_proxy.hh"
 #include "poller.hh"
 #include "bytestream_queue.hh"
+#include "annotate_exception.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -42,7 +43,7 @@ void DNSProxy::handle_udp( void )
                                                    } ) );
                 poller.poll( 60000 );
             } catch ( const Exception & e ) {
-                e.perror();
+                annotate_exception( e.perror().c_str() );
                 return;
             }
 
@@ -89,7 +90,7 @@ void DNSProxy::handle_tcp( void )
                     }
                 }
             } catch ( const Exception & e ) {
-                e.perror();
+                annotate_exception( e.perror().c_str() );
                 return;
             }
             return;

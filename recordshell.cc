@@ -16,6 +16,7 @@
 #include "dns_proxy.hh"
 #include "http_proxy.hh"
 #include "netdevice.hh"
+#include "annotate_exception.hh"
 
 #include "config.h"
 
@@ -138,7 +139,7 @@ int main( int argc, char *argv[] )
 
         return eventloop( nullptr, move( child_processes ), nullptr );
     } catch ( const Exception & e ) {
-        e.perror();
+        annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;
     }
 

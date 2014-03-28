@@ -9,7 +9,7 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc               \
 	interfaces.hh interfaces.cc                                            \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
-	read_write_interface.hh
+	read_write_interface.hh annotate_exception.hh
 
 packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
 

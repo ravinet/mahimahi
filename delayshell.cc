@@ -3,6 +3,7 @@
 #include "delay_queue.hh"
 
 #include "packetshell.cc"
+#include "annotate_exception.hh"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ int main( int argc, char *argv[] )
         delay_shell_app.start_downlink( delay_ms );
         return delay_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
-        e.perror();
+        annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;
     }
 

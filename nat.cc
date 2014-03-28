@@ -10,6 +10,7 @@
 
 #include "nat.hh"
 #include "exception.hh"
+#include "annotate_exception.hh"
 
 using namespace std;
 
@@ -28,7 +29,7 @@ NATRule::~NATRule()
         command.insert( command.end(), arguments.begin(), arguments.end() );
         run( command );
     } catch ( const Exception & e ) { /* don't throw from destructor */
-        e.perror();
+        annotate_exception( e.perror().c_str() );
     }
 }
 
