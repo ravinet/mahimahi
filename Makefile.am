@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I./protobufs
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
-SUBDIRS = protobufs
+SUBDIRS = protobufs man_pages
 common_source = exception.hh ezio.cc ezio.hh                                   \
 	file_descriptor.hh netdevice.cc netdevice.hh timestamp.cc timestamp.hh \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc              \
