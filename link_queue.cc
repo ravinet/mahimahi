@@ -3,13 +3,13 @@
 #include <cinttypes>
 #include <cstdio>
 
-#include "cell_queue.hh"
+#include "link_queue.hh"
 #include "timestamp.hh"
 #include "util.hh"
 
 using namespace std;
 
-CellQueue::CellQueue( const std::string & filename )
+LinkQueue::LinkQueue( const std::string & filename )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
@@ -45,22 +45,22 @@ CellQueue::CellQueue( const std::string & filename )
     }
 }
 
-CellQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
+LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
     : bytes_to_transmit( s_contents.size() ),
       contents( s_contents )
 {}
 
-void CellQueue::read_packet( const string & contents )
+void LinkQueue::read_packet( const string & contents )
 {
     packet_queue_.emplace( contents );
 }
 
-uint64_t CellQueue::next_delivery_time( void ) const
+uint64_t LinkQueue::next_delivery_time( void ) const
 {
     return schedule_.at( next_delivery_ ) + base_timestamp_;
 }
 
-void CellQueue::use_a_delivery_opportunity( void )
+void LinkQueue::use_a_delivery_opportunity( void )
 {
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
 
@@ -70,7 +70,7 @@ void CellQueue::use_a_delivery_opportunity( void )
     }
 }
 
-void CellQueue::write_packets( FileDescriptor & fd )
+void LinkQueue::write_packets( FileDescriptor & fd )
 {
     uint64_t now = timestamp();
 
@@ -96,7 +96,7 @@ void CellQueue::write_packets( FileDescriptor & fd )
     }
 }
 
-int CellQueue::wait_time( void ) const
+int LinkQueue::wait_time( void ) const
 {
     return packet_queue_.empty() ? UINT16_MAX : (next_delivery_time() - timestamp());
 }

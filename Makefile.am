@@ -19,11 +19,11 @@ delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
 delayshell_LDADD = -lrt
 delayshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += cellshell
-cellshell_SOURCES = $(common_source) $(packet_shell_source) cellshell.cc \
-	cell_queue.hh cell_queue.cc
-cellshell_LDADD = -lrt
-cellshell_LDFLAGS = -pthread
+bin_PROGRAMS += linkshell
+linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
+	link_queue.hh link_queue.cc
+linkshell_LDADD = -lrt
+linkshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
@@ -66,8 +66,8 @@ nph_replayserver_cgi_LDFLAGS = -pthread
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
-	chown root $(DESTDIR)$(bindir)/cellshell
-	chmod u+s $(DESTDIR)$(bindir)/cellshell
+	chown root $(DESTDIR)$(bindir)/linkshell
+	chmod u+s $(DESTDIR)$(bindir)/linkshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
