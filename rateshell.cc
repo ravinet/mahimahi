@@ -1,6 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include "cell_queue.hh"
+#include "rate_queue.hh"
 #include "annotate_exception.hh"
 
 #include "packetshell.cc"
@@ -23,12 +23,12 @@ int main( int argc, char *argv[] )
         const std::string uplink_filename = argv[ 1 ];
         const std::string downlink_filename = argv[ 2 ];
 
-        PacketShell<CellQueue> cell_shell_app( "cell" );
+        PacketShell<RateQueue> rate_shell_app( "rate" );
 
-        cell_shell_app.start_uplink( "[cell, up=" + uplink_filename + ", down=" + downlink_filename + "] ",
+        rate_shell_app.start_uplink( "[rate, up=" + uplink_filename + ", down=" + downlink_filename + "] ",
                                      user_environment, uplink_filename );
-        cell_shell_app.start_downlink( downlink_filename );
-        return cell_shell_app.wait_for_exit();
+        rate_shell_app.start_downlink( downlink_filename );
+        return rate_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
         annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;

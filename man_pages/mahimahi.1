@@ -20,11 +20,11 @@ Mahimahi - tools to produce a usable benchmark for Web transport protocols and b
 .SH DESCRIPTION
 Mahimahi is a set of lightweight tools that can be used to completely record actual Web pages 
 and replay them locally over different emulated links. Mahimahi comprises of four tools:
-\fBdelayshell\fP(1), \fBcellshell\fP(1), \fBrecordshell\fP(1), and \fBreplayshell\fP(1). 
+\fBdelayshell\fP(1), \fBrateshell\fP(1), \fBrecordshell\fP(1), and \fBreplayshell\fP(1). 
 
 \fBdelayshell\fP(1) emulates a link with a fixed minimum round trip time by delaying all network packets to and from a shell by a user-specified amount of time.  
 
-\fBcellshell\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
+\fBrateshell\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
 
 \fBrecordshell\fP(1) records complete Web pages by recording all HTTP content sent to and from a shell running a Web browser.
 
@@ -35,7 +35,7 @@ and replay them locally over different emulated links. Mahimahi comprises of fou
 
 .SH SEE ALSO
 .BR delayshell (1),
-.BR cellshell (1),
+.BR rateshell (1),
 .BR recordshell (1),
 .BR replayshell (1).
 

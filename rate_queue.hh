@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef CELL_QUEUE_HH
-#define CELL_QUEUE_HH
+#ifndef RATE_QUEUE_HH
+#define RATE_QUEUE_HH
 
 #include <queue>
 #include <cstdint>
@@ -9,7 +9,7 @@
 
 #include "file_descriptor.hh"
 
-class CellQueue
+class RateQueue
 {
 private:
     const static unsigned int PACKET_SIZE = 1504; /* default max TUN payload size */
@@ -33,7 +33,7 @@ private:
     void use_a_delivery_opportunity( void );
 
 public:
-    CellQueue( const std::string & filename );
+    RateQueue( const std::string & filename );
 
     void read_packet( const std::string & contents );
 
@@ -42,4 +42,4 @@ public:
     int wait_time( void ) const;
 };
 
-#endif /* CELL_QUEUE_HH */
+#endif /* RATE_QUEUE_HH */

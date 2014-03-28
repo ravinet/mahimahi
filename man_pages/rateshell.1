@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH cellshell 1 "February 2014"
+.TH rateshell 1 "February 2014"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,25 +16,25 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-cellshell - UNIX shell connected to an emulated cellular link
+rateshell - UNIX shell connected to an emulated link with a user-specified packet-delivery schedule.
 .SH SYNOPSIS
-.B cellshell
+.B rateshell
 \fIuplink\fP
 \fIdownlink\fP
 [\-\- command...]
 .br
 .SH DESCRIPTION
-cellshell is a network emulation tool that emulates links using packet delivery
+rateshell is a network emulation tool that emulates links using packet delivery
 trace files (\fIuplink\fP for the uplink direction and \fIdownlink\fP for the downlink direction) provided on the command
-line. cellshell uses \fBclone\fP(2) to fork a new shell in a distinct network
-namespace.  uplink_trace_file emulates the link from cellshell to the Interent
-and downlink_trace_file emulates the link from the Interent to cellshell.
+line. rateshell uses \fBclone\fP(2) to fork a new shell in a distinct network
+namespace.  uplink_trace_file emulates the link from rateshell to the Interent
+and downlink_trace_file emulates the link from the Interent to rateshell.
 
-cellshell can emulate both time-varying links, such as cellular links, and
+rateshell can emulate both time-varying links, such as cellular links, and
 links with fixed link speeds. When a packet arrives at the link (from either
-the Internent or from cellshell), it is directly placed into one of two packet
+the Internent or from rateshell), it is directly placed into one of two packet
 queues depending on its intended direction: the uplink queue or the downlink
-queue.  cellshell releases packets from each queue based on the corresponding
+queue.  rateshell releases packets from each queue based on the corresponding
 input packet-delivery trace. 
 
 Each line in the trace  represents a packet delivery opportunity: the time at
@@ -43,12 +43,12 @@ at the byte-level, and each delivery opportunity represents the ability to
 deliver 1500 bytes. Thus, a single line in the trace file can delivery several
 smaller packets whose sizes sum to 1500 bytes. Delivery opportunities are
 wasted if bytes are unavailable at the instant of an opportunity. When
-cellshell reaches the end of an input trace file, it wraps around to the
-beginning of the trace file. cellshell can be nested within delayshell (1) to
+rateshell reaches the end of an input trace file, it wraps around to the
+beginning of the trace file. rateshell can be nested within delayshell (1) to
 flexibly create links with a user-supplied one-way delay and a user-supplied
 link rate.
 
-To exit cellshell, simply type "exit" or CTRL-D inside cellshell.
+To exit rateshell, simply type "exit" or CTRL-D inside rateshell.
 
 .SH EXAMPLE
 
@@ -65,13 +65,13 @@ and must follow the pattern below:
 The link above delivers an MTU-sized packet (1500 bytes or 12000 bits) every
 ms.
 
-Run cellshell with:
-$ cellshell 12Mbps_trace 12Mbps_trace
+Run rateshell with:
+$ rateshell 12Mbps_trace 12Mbps_trace
 
-All programs run from within cellshell are sent according 
+All programs run from within rateshell are sent according 
 to the packet delivery times specified in 12Mbps_trace.
 
-cellshell
+rateshell
 [...] (copyright notice omitted)
 
 .fi
@@ -86,6 +86,6 @@ Project home page:
 
 .br
 .SH AUTHOR
-cellshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+rateshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.
