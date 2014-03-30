@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <fstream>
 
 #include "util.hh"
 #include "interfaces.hh"
@@ -143,16 +144,22 @@ int main( int argc, char *argv[] )
                 servers.emplace_back( current_addr, directory, user );
             }
         }
-        /* start dnsmasq with created host mapping file */
 
         vector<ChildProcess> child_processes;
 
+        /* create dummy interface for each nameserver */
+        vector< Address > nameservers = all_nameservers();
+        for ( uint server_num = 0; server_num < nameservers.size(); server_num++ ) {
+            add_dummy_interface( "nameserver" + to_string( server_num ), nameservers.at( server_num ) );
+        }
+
+        /* start dnsmasq to listen on 0.0.0.0:53 */
         child_processes.emplace_back( [&] () {
-                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--interface=lo",
-                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
+                                            "-H", dnsmasq_hosts.name().c_str(),
                                             static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
-            }, false, SIGTERM );
+        }, false, SIGTERM );
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
