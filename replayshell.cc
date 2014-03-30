@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <fstream>
 
 #include "util.hh"
 #include "interfaces.hh"
@@ -148,12 +149,34 @@ int main( int argc, char *argv[] )
 
         vector<ChildProcess> child_processes;
 
-        child_processes.emplace_back( [&] () {
-                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--interface=lo",
-                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
-                                            static_cast<char *>( nullptr ) ) );
-                return EXIT_FAILURE;
-            }, false, SIGTERM );
+        /* start dnsmasq on each nameserver listed in /etc/resolv.conf */
+	ifstream resolv_conf;
+	resolv_conf.open( "/etc/resolv.conf" );
+        int dnscounter = 0;
+        while( not resolv_conf.eof() ) {
+                string resolv_line;
+	        getline( resolv_conf,resolv_line );
+                if ( resolv_line.find( "nameserver" ) != std::string::npos ) { /* line listing nameserver */
+                    string nameserver = resolv_line.substr( resolv_line.find( " " ) + 1 );
+
+                    /* create dummy interface for nameserver address */
+                    Address current_addr( nameserver, 0 );
+                    string interface_name = "nameserver" + to_string( dnscounter );
+                    add_dummy_interface( interface_name, current_addr );
+
+                    /* start dnsmasq on dummy interface */
+                    string interface_cmd = "--interface=" + interface_name;
+                    child_processes.emplace_back( [&] () {
+                            SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", interface_cmd.c_str(),
+                                                        "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                                                        static_cast<char *>( nullptr ) ) );
+                            return EXIT_FAILURE;
+                    }, false, SIGTERM );
+
+                    dnscounter++;
+                }
+        }
+	resolv_conf.close();
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
