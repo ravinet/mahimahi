@@ -28,7 +28,7 @@ a distinct network namespace. Every program run inside delayshell has its IP
 datagrams routed over a virtual network interface. All packets to and from an
 application running inside delayshell are delayed by \fIdelay\fP, the one-way per-packet
 delay specified by the user in milliseconds. delayshell can be nested within
-\fBrateshell\fP(1) to flexibly create links with a user-supplied one-way delay
+\fBlinkshell\fP(1) to flexibly create links with a user-supplied one-way delay
 and a user-supplied link rate.
 
 To exit delayshell, simply type "exit" or CTRL-D inside delayshell. 
@@ -46,7 +46,7 @@ delayshell
 .fi
 
 .SH SEE ALSO
-.BR rateshell (1),
+.BR linkshell (1),
 .BR recordshell (1),
 .BR replayshell (1).
 
