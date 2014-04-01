@@ -10,6 +10,7 @@
 #include <resolv.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <arpa/inet.h>
 
 #include "util.hh"
 #include "exception.hh"
@@ -125,6 +126,21 @@ Address first_nameserver( void )
     /* find the first nameserver */
     SystemCall( "res_init", res_init() );
     return _res.nsaddr;
+}
+
+vector< Address > all_nameservers( void )
+{
+    SystemCall( "res_init", res_init() );
+
+    vector< Address > nameservers;
+
+    /* iterate through the nameservers */
+    for ( unsigned int i = 0; i < MAXNS; i++ ) {
+        if ( _res.nsaddr_list[ i ].sin_port ) {
+            nameservers.emplace_back( Address( inet_ntoa( _res.nsaddr_list[ i ].sin_addr ), ntohs( _res.nsaddr_list[ i ].sin_port ) ) );
+        }
+    }
+    return nameservers;
 }
 
 /* tag bash-like shells with the delay parameter */

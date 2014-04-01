@@ -145,38 +145,22 @@ int main( int argc, char *argv[] )
                 servers.emplace_back( current_addr, directory, user );
             }
         }
-        /* start dnsmasq with created host mapping file */
 
         vector<ChildProcess> child_processes;
 
-        /* start dnsmasq on each nameserver listed in /etc/resolv.conf */
-	ifstream resolv_conf;
-	resolv_conf.open( "/etc/resolv.conf" );
-        int dnscounter = 0;
-        while( not resolv_conf.eof() ) {
-                string resolv_line;
-	        getline( resolv_conf,resolv_line );
-                if ( resolv_line.find( "nameserver" ) != std::string::npos ) { /* line listing nameserver */
-                    string nameserver = resolv_line.substr( resolv_line.find( " " ) + 1 );
-
-                    /* create dummy interface for nameserver address */
-                    Address current_addr( nameserver, 0 );
-                    string interface_name = "nameserver" + to_string( dnscounter );
-                    add_dummy_interface( interface_name, current_addr );
-
-                    /* start dnsmasq on dummy interface */
-                    string interface_cmd = "--interface=" + interface_name;
-                    child_processes.emplace_back( [&] () {
-                            SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", interface_cmd.c_str(),
-                                                        "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
-                                                        static_cast<char *>( nullptr ) ) );
-                            return EXIT_FAILURE;
-                    }, false, SIGTERM );
-
-                    dnscounter++;
-                }
+        /* create dummy interface for each nameserver */
+        vector< Address > nameservers = all_nameservers();
+        for ( uint server_num = 0; server_num < nameservers.size(); server_num++ ) {
+            add_dummy_interface( "nameserver" + to_string( server_num ), nameservers.at( server_num ) );
         }
-	resolv_conf.close();
+
+        /* start dnsmasq to listen on 0.0.0.0:53 */
+        child_processes.emplace_back( [&] () {
+                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
+                                            "-H", dnsmasq_hosts.name().c_str(),
+                                            static_cast<char *>( nullptr ) ) );
+                return EXIT_FAILURE;
+        }, false, SIGTERM );
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
