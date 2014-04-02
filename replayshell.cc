@@ -10,7 +10,6 @@
 #include <iostream>
 #include <vector>
 #include <set>
-#include <fstream>
 
 #include "util.hh"
 #include "interfaces.hh"

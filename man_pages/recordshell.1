@@ -25,11 +25,10 @@ recordshell - record all HTTP content sent to and from a shell for subsequent re
 .SH DESCRIPTION
 recordshell creates a shell in a new network namespace using the \fBclone\fP(2)
 system call. All HTTP requests and responses sent during actual page loads from
-recordshell are parsed and stored in \fidirectory\fP, in a structured
-format to facilitate replay (see \fBreplayshell\fP(2)). If the folder does not
-exist, it will be created. If it exists, the recorded site will be stored in
-the folder alongside existing files (files may be overwritten).
-\fIdirectory\fP can be specified using relative or absolute path.
+recordshell are parsed and stored in \fIdirectory\fP, in a structured format to
+facilitate replay (see \fBreplayshell\fP(2)). \fIdirectory\fP will be created
+by recordshell and must not already exist. \fIdirectory\fP can be specified
+using relative or absolute path.
 
 recordshell adds an iptables rule to forward all TCP traffic from inside
 recordshell to a man-in-the-middle proxy.  This proxy parses, stores, and
