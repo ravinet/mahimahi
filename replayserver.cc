@@ -12,6 +12,7 @@
 #include "http_header.hh"
 #include "exception.hh"
 #include "http_message.hh"
+#include "annotate_exception.hh"
 
 using namespace std;
 
@@ -166,7 +167,7 @@ int main()
             }
         }
     } catch ( const Exception & e ) {
-        e.perror();
+        annotate_exception( e.perror().c_str() );
         return EXIT_FAILURE;
     }
 }

@@ -22,7 +22,15 @@ public:
     WebServer( const Address & addr, const std::string & record_folder, const std::string & user );
     ~WebServer();
 
+    /* ban copying */
+    WebServer( const WebServer & other ) = delete;
+    WebServer & operator=( const WebServer & other ) = delete;
+
+    /* allow move constructor */
     WebServer( WebServer && other );
+
+    /* ... but not move assignment operator */
+    WebServer & operator=( WebServer && other ) = delete;
 };
 
 #endif

@@ -1,7 +1,7 @@
 mahimahi binary: setuid-binary usr/bin/delayshell 4755 root/root
 mahimahi binary: setuid-binary usr/bin/recordshell 4755 root/root
 mahimahi binary: setuid-binary usr/bin/replayshell 4755 root/root
-mahimahi binary: setuid-binary usr/bin/cellshell 4755 root/root
+mahimahi binary: setuid-binary usr/bin/linkshell 4755 root/root
 # delayshell needs to be setuid root to run unshare().
 # This program drops permissions before executing the user's shell
 # and runs in a sanitized environment.

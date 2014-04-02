@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I./protobufs
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
-SUBDIRS = protobufs
+SUBDIRS = protobufs man_pages
 common_source = exception.hh ezio.cc ezio.hh                                   \
 	file_descriptor.hh netdevice.cc netdevice.hh timestamp.cc timestamp.hh \
 	child_process.hh child_process.cc signalfd.hh signalfd.cc              \
@@ -9,7 +9,7 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc               \
 	interfaces.hh interfaces.cc                                            \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
-	read_write_interface.hh
+	read_write_interface.hh annotate_exception.hh
 
 packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
 
@@ -19,11 +19,11 @@ delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
 delayshell_LDADD = -lrt
 delayshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += cellshell
-cellshell_SOURCES = $(common_source) $(packet_shell_source) cellshell.cc \
-	cell_queue.hh cell_queue.cc
-cellshell_LDADD = -lrt
-cellshell_LDFLAGS = -pthread
+bin_PROGRAMS += linkshell
+linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
+	link_queue.hh link_queue.cc
+linkshell_LDADD = -lrt
+linkshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) recordshell.cc \
@@ -66,8 +66,8 @@ nph_replayserver_cgi_LDFLAGS = -pthread
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
-	chown root $(DESTDIR)$(bindir)/cellshell
-	chmod u+s $(DESTDIR)$(bindir)/cellshell
+	chown root $(DESTDIR)$(bindir)/linkshell
+	chmod u+s $(DESTDIR)$(bindir)/linkshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
