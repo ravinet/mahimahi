@@ -70,7 +70,7 @@ Socket Socket::accept( void )
 
   // verify length is what we expected 
   if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
-    throw Exception( "sockaddr size mismatch" );
+    throw Exception( annotate_exception( "sockaddr size mismatch" ) );
   }
   
   return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
@@ -124,9 +124,9 @@ pair< Address, string > Socket::recvfrom( void )
                                    &fromlen );
 
     if ( recv_len < 0 ) {
-        throw Exception( "recvfrom" );
+        throw Exception( annotate_exception( "recvfrom" ) );
     } else if ( recv_len > RECEIVE_MTU ) {
-        throw Exception( "oversized datagram" );
+        throw Exception( annotate_exception( "oversized datagram" ) );
     }
 
     return make_pair( Address( packet_remote_addr ),

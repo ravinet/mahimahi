@@ -51,7 +51,7 @@ void run( const vector< string > & command )
                                          command.front(),
                                          []( const string & a, const string & b )
                                          { return a + " " + b; } );
-        throw Exception( "`" + command_str + "'", "command returned "
+        throw Exception( annotate_exception( string( "`" + command_str + "'" ).c_str() ), "command returned "
                          + to_string( command_process.exit_status() ) );
     }
 }

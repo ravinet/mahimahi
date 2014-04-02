@@ -33,7 +33,7 @@ string from_mutable( const vector<char> & vec )
     }
 
     if ( ret.size() + 1 != vec.size() ) {
-        throw Exception( "from_mutable", "bad null-terminated vector<char> => string conversion" );
+        throw Exception( annotate_exception( "from_mutable" ), "bad null-terminated vector<char> => string conversion" );
     }
 
     return ret;

@@ -20,7 +20,7 @@ public:
     : fd_( s_fd ), eof_( false )
     {
         if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
-            throw Exception( "FileDescriptor", "fd <= 2" );
+            throw Exception( annotate_exception( "FileDescriptor" ), "fd <= 2" );
         }
 
         /* set close-on-exec flag so our file descriptors

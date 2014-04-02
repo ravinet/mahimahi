@@ -13,7 +13,7 @@ void HTTPResponseParser::initialize_new_message( void )
 {
     /* do we have a request that we expect to match this response up with? */
     if ( requests_were_head_.empty() ) {
-        throw Exception( "HTTPResponseParser", "response without matching request" );
+        throw Exception( annotate_exception( "HTTPResponseParser" ), "response without matching request" );
     }
 
     /* got line, so add it to pending request */

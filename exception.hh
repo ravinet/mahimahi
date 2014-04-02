@@ -27,7 +27,15 @@ public:
     }
 
     const std::string & attempt( void ) const { return attempt_; }
+
+    /* Exception with line numbers */
+    static std::string annotate_helper( const char *exception_str, const char *file, int line, const char *function )
+    {
+        return std::string( "Exception at function " + std::string( function ) + " at " + std::string( file ) + ":" + std::to_string( line ) + ": " + std::string( exception_str ) );
+    }
 };
+
+#define annotate_exception(exception_str) Exception::annotate_helper(exception_str, __FILE__, __LINE__, __func__ )
 
 /* error-checking wrapper for most syscalls */
 int SystemCall( const std::string & s_attempt, const int return_value );

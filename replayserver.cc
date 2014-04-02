@@ -160,7 +160,7 @@ int main()
                 cout << "HTTP/1.1 200 OK\r\n";
                 cout << "Content-Type: Text/html\r\nConnection: close\r\n";
                 cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
-                throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
+                throw Exception( annotate_exception( "replayserver" ), "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
             } else { /* return possible match with largest shared substring */
                 return_message( possible_matches.at( closest_match( possible_matches ) ) );
             }
