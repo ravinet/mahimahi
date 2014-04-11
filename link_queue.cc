@@ -1,5 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <limits>
 #include <cinttypes>
 #include <cstdio>
 
@@ -96,7 +97,17 @@ void LinkQueue::write_packets( FileDescriptor & fd )
     }
 }
 
-int LinkQueue::wait_time( void ) const
+unsigned int LinkQueue::wait_time( void ) const
 {
-    return packet_queue_.empty() ? UINT16_MAX : (next_delivery_time() - timestamp());
+    if ( packet_queue_.empty() ) {
+        return numeric_limits<uint16_t>::max();
+    }
+
+    const auto now = timestamp();
+
+    if ( next_delivery_time() <= now ) {
+        return 0;
+    } else {
+        return next_delivery_time() - now;
+    }
 }

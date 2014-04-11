@@ -51,6 +51,14 @@ int packet_ferry( FerryType & ferry,
                                            return ResultType::Continue;
                                        } ) );
 
+    /* ferry ready to write datagram -> send to sibling process */
+    poller.add_action( Poller::Action( sibling_fd, Direction::Out,
+                                       [&] () {
+                                           ferry.write_packets( sibling_fd );
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return ferry.wait_time() <= 0; } ) );
+
     /* we get signal -> main screen turn on -> handle signal */
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
@@ -79,8 +87,5 @@ int packet_ferry( FerryType & ferry,
         if ( poll_result.result == Poller::Result::Type::Exit ) {
             return poll_result.exit_status;
         }
-
-        /* packets FROM tail of ferry go to sibling */
-        ferry.write_packets( sibling_fd );
     }
 }

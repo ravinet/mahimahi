@@ -23,7 +23,7 @@ public:
 
     void write_packets( FileDescriptor & fd );
 
-    int wait_time( void ) const;
+    unsigned int wait_time( void ) const;
 };
 
 #endif /* DELAY_QUEUE_HH */

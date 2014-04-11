@@ -1,5 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <limits>
+
 #include "delay_queue.hh"
 #include "timestamp.hh"
 
@@ -19,7 +21,17 @@ void DelayQueue::write_packets( FileDescriptor & fd )
     }
 }
 
-int DelayQueue::wait_time( void ) const
+unsigned int DelayQueue::wait_time( void ) const
 {
-    return packet_queue_.empty() ? UINT16_MAX : (packet_queue_.front().first - timestamp());
+    if ( packet_queue_.empty() ) {
+        return numeric_limits<uint16_t>::max();
+    }
+
+    const auto now = timestamp();
+
+    if ( packet_queue_.front().first <= now ) {
+        return 0;
+    } else {
+        return packet_queue_.front().first - now;
+    }
 }
