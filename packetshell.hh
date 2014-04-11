@@ -34,6 +34,7 @@ public:
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
+                       const std::vector< std::string > & command,
                        char ** const user_environment,
                        Targs&&... Fargs );
 

@@ -39,6 +39,7 @@ PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
 template <class FerryType>
 template <typename... Targs>
 void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
+                                           const vector< string > & command,
                                            char ** const user_environment,
                                            Targs&&... Fargs )
 {
@@ -77,9 +78,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
-
-                    const string shell = shell_path();
-                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
+                    run( command, user_environment );
                     return EXIT_FAILURE;
                 } );
 
