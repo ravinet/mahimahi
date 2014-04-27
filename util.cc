@@ -10,6 +10,7 @@
 #include <resolv.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <arpa/inet.h>
 
 #include "util.hh"
 #include "exception.hh"
@@ -95,8 +96,8 @@ bool check_folder_existence( const string & directory )
 {
     struct stat sb;
 
-    /* check if directory already exists and if not, create it */
-    if (!stat( directory.c_str(), &sb ) == 0 or !S_ISDIR(sb.st_mode))
+    /* check if directory already exists */
+    if ( !stat( directory.c_str(), &sb ) == 0 or !S_ISDIR( sb.st_mode ) )
     {
         if ( errno != ENOENT ) { /* error is not that directory does not exist */
             throw Exception( "stat" );
@@ -112,9 +113,11 @@ void check_storage_folder( const string & directory )
     /* assert that directory ends with '/' */
     assert( directory.back() == '/' );
 
-    if ( not check_folder_existence( directory ) ) { /* folder exists */
+    if ( not check_folder_existence( directory ) ) { /* directory does not exist */
         /* make directory where user has all permissions */
         SystemCall( "mkdir", mkdir( directory.c_str(), 00700 ) );
+    } else { /* directory already exists */
+        throw Exception( "recordshell", "directory already exists" );
     }
 }
 
@@ -123,6 +126,21 @@ Address first_nameserver( void )
     /* find the first nameserver */
     SystemCall( "res_init", res_init() );
     return _res.nsaddr;
+}
+
+vector< Address > all_nameservers( void )
+{
+    SystemCall( "res_init", res_init() );
+
+    vector< Address > nameservers;
+
+    /* iterate through the nameservers */
+    for ( unsigned int i = 0; i < MAXNS; i++ ) {
+        if ( _res.nsaddr_list[ i ].sin_port ) {
+            nameservers.emplace_back( Address( inet_ntoa( _res.nsaddr_list[ i ].sin_addr ), ntohs( _res.nsaddr_list[ i ].sin_port ) ) );
+        }
+    }
+    return nameservers;
 }
 
 /* tag bash-like shells with the delay parameter */

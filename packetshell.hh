@@ -36,7 +36,7 @@ public:
                        const uint64_t wifi_delay,
                        const std::string & cell_uplink,
                        const std::string & wifi_uplink,
-                       const std::string & program_name );
+                       const std::vector< std::string > & command );
 
     void start_downlink( const uint64_t cell_delay,
                          const uint64_t wifi_delay,

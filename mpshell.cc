@@ -13,7 +13,7 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 8 ) {
+        if ( argc < 8 ) {
             throw Exception( "Usage", string( argv[ 0 ] ) + " cell_delay cell_uplink cell_downlink wifi_delay wifi_uplink wifi_downlink program" );
         }
 
@@ -23,7 +23,11 @@ int main( int argc, char *argv[] )
         const uint64_t wifi_delay = myatoi( argv[ 4 ] );
         const std::string wifi_uplink = argv[ 5 ];
         const std::string wifi_downlink = argv[ 6 ];
-        const std::string program_name = argv[ 7 ];
+
+        vector< string > program_to_run;
+        for ( int num_args = 7; num_args < argc; num_args++ ) {
+            program_to_run.emplace_back( string( argv[ num_args ] ) );
+        }
 
         PacketShell mp_shell_app( "cw" );
 
@@ -33,7 +37,7 @@ int main( int argc, char *argv[] )
                                    wifi_delay,
                                    cell_uplink,
                                    wifi_uplink,
-                                   program_name);
+                                   program_to_run);
 
         mp_shell_app.start_downlink( cell_delay, wifi_delay, cell_downlink, wifi_downlink );
         return mp_shell_app.wait_for_exit();

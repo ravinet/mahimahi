@@ -12,7 +12,6 @@
 #include <set>
 
 #include "util.hh"
-#include "get_address.hh"
 #include "address.hh"
 #include "signalfd.hh"
 #include "netdevice.hh"
@@ -88,8 +87,13 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
+        if ( argc < 3 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content program_to_execute" );
+        }
+
+        vector< string > program_to_run;
+        for ( int num_args = 2; num_args < argc; num_args++ ) {
+            program_to_run.emplace_back( string( argv[ num_args ] ) );
         }
 
         /* check if user-specified storage folder exists */
@@ -143,26 +147,29 @@ int main( int argc, char *argv[] )
                 servers.emplace_back( current_addr, directory, user );
             }
         }
-        /* start dnsmasq with created host mapping file */
 
         vector<ChildProcess> child_processes;
 
+        /* create dummy interface for each nameserver */
+        vector< Address > nameservers = all_nameservers();
+        for ( uint server_num = 0; server_num < nameservers.size(); server_num++ ) {
+            add_dummy_interface( "nameserver" + to_string( server_num ), nameservers.at( server_num ) );
+        }
+
+        /* start dnsmasq to listen on 0.0.0.0:53 */
         child_processes.emplace_back( [&] () {
-                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--interface=lo",
-                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
+                                            "-H", dnsmasq_hosts.name().c_str(),
                                             static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
-            }, false, SIGTERM );
+        }, false, SIGTERM );
 
         child_processes.emplace_back( [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
                 environ = user_environment;
-                prepend_shell_prefix( "[replayshell] " );
-                const string shell = shell_path();
-                SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
-
+                run( program_to_run, user_environment );
                 return EXIT_FAILURE;
         } );
         return eventloop( move( child_processes ) );

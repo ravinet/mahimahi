@@ -45,7 +45,7 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
                                 const uint64_t wifi_delay,
                                 const std::string & cell_uplink,
                                 const std::string & wifi_uplink,
-                                const std::string & program_name )
+                                const vector< string > & command )
 {
     /* Fork */
     child_processes_.emplace_back( [&]() {
@@ -87,7 +87,8 @@ void PacketShell::start_uplink( const std::string & shell_prefix,
                     prepend_shell_prefix( shell_prefix );
 
                     const string shell = shell_path();
-                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), "-c", program_name.c_str(), static_cast<const char*>( nullptr ) ) );
+                    run( command, user_environment );
+                    //SystemCall( "execl", execl( shell.c_str(), shell.c_str(), "-c", program_name.c_str(), static_cast<const char*>( nullptr ) ) );
                     return EXIT_FAILURE;
                 } );
 

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void run( const vector< string > & command )
+void run( const vector< string > & command, char *const envp[] )
 {
     assert( !command.empty() );
 
@@ -38,7 +38,7 @@ void run( const vector< string > & command )
 
     /* run with empty environment */
     ChildProcess command_process( [&] () {
-            SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
+            SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], envp ) );
             return EXIT_FAILURE;
         } );
 
