@@ -10,11 +10,11 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const std::string & filename )
+LinkQueue::LinkQueue( const std::string & filename, const int & max_size )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
-      packet_queue_()
+      packet_queue_( max_size )
 {
     assert_not_root();
 
@@ -45,11 +45,6 @@ LinkQueue::LinkQueue( const std::string & filename )
         throw Exception( filename, "no valid timestamps found" );
     }
 }
-
-LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
-    : bytes_to_transmit( s_contents.size() ),
-      contents( s_contents )
-{}
 
 void LinkQueue::read_packet( const string & contents )
 {
