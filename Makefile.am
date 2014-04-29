@@ -21,7 +21,7 @@ delayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += linkshell
 linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
-	link_queue.hh link_queue.cc
+	link_queue.hh link_queue.cc finite_queue.hh finite_queue.cc
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
