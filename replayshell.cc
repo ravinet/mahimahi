@@ -124,6 +124,8 @@ int main( int argc, char *argv[] )
         unsigned int interface_counter = 0;
 
         for ( unsigned int i = 0; i < files.size(); i++ ) {
+            string bulk_file = directory + "bulkreply.proto";
+            if ( files[i] != bulk_file ) {
             FileDescriptor response( SystemCall( "open", open( files[i].c_str(), O_RDONLY ) ) );
             HTTP_Record::reqrespair current_record;
             current_record.ParseFromFileDescriptor( response.num() );
@@ -143,7 +145,7 @@ int main( int argc, char *argv[] )
                 servers.emplace_back( current_addr, directory, user );
             }
         }
-
+        }
         vector<ChildProcess> child_processes;
 
         /* create dummy interface for each nameserver */
