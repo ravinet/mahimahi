@@ -10,24 +10,24 @@
 #include "socket.hh"
 #include "http_record.pb.h"
 #include "http_response.hh"
+#include "bytestream_queue.hh"
+#include "http_request_parser.hh"
 
 class HTTPProxy
 {
 private:
     Socket listener_socket_;
-    /* folder to store recorded http content in */
-    std::string record_folder_;
 
     /* Pick a random file name and store reqrespair as a serialized string */
-    void reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, const HTTPResponse & response );
+    void add_to_queue( ByteStreamQueue & responses, std::string res, int & counter, HTTPRequestParser & req_parser );
 
 public:
     static const std::string client_cert;
     static const std::string server_cert;
-    HTTPProxy( const Address & listener_addr, const std::string & record_folder );
+    HTTPProxy( const Address & listener_addr );
     Socket & tcp_listener( void ) { return listener_socket_; }
 
-    void handle_tcp( void );
+    void handle_tcp( );
 };
 
 #endif /* HTTP_PROXY_HH */

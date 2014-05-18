@@ -19,17 +19,15 @@
 #include "signalfd.hh"
 #include "http_proxy.hh"
 #include "poller.hh"
-#include "bytestream_queue.hh"
-#include "http_request_parser.hh"
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
+#include "timestamp.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
-    : listener_socket_( TCP ),
-      record_folder_( record_folder)
+HTTPProxy::HTTPProxy( const Address & listener_addr )
+    : listener_socket_( TCP )
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -64,14 +62,7 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTPResponseParser response_parser;
 
-                HTTP_Record::reqrespair current_pair;
-
                 auto dst_port = original_destaddr.port();
-
-                /* Set destination ip, port and protocol in current request/response pair */
-                current_pair.set_ip( original_destaddr.ip() );
-                current_pair.set_port( dst_port );
-                ( dst_port == 443 ) ? current_pair.set_protocol( "HTTPS" ) : current_pair.set_protocol( "HTTP" );
 
                 /* Create Read/Write Interfaces for server and client */
                 std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
@@ -80,6 +71,8 @@ void HTTPProxy::handle_tcp( void )
                 std::unique_ptr<ReadWriteInterface> client_rw  = (dst_port == 443) ?
                                                                  static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER ) ) :
                                                                  static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
+                /* Make bytestream_queue for browser->server and server->browser */
+                ByteStreamQueue from_destination( ezio::read_chunk_size );
 
                 /* poll on original connect socket and new connection socket to ferry packets */
                 /* responses from server go to response parser */
@@ -89,7 +82,7 @@ void HTTPProxy::handle_tcp( void )
                                                        response_parser.parse( buffer );
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not client_rw->fd().eof(); } ) );
+                                                   [&] () { return ( not client_rw->fd().eof() ); } ) );
 
                 /* requests from client go to request parser */
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::In,
@@ -100,25 +93,22 @@ void HTTPProxy::handle_tcp( void )
                                                    },
                                                    [&] () { return not server_rw->fd().eof(); } ) );
 
-                /* completed requests from client are serialized and sent to server */
+                /* completed requests from client are serialized and handled by archive or sent to server */
                 poller.add_action( Poller::Action( server_rw->fd(), Direction::Out,
                                                    [&] () {
+                                                       /* check if request is stored: if pending->wait, if response present->send to client, if neither->send request to server */
                                                        server_rw->write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
-
-                                                       /* add request to current request/response pair */
-                                                       current_pair.mutable_req()->CopyFrom( request_parser.front().toprotobuf() );
 
                                                        request_parser.pop();
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () { return not request_parser.empty(); } ) );
 
-                /* completed responses from server are serialized and sent to client */
+                /* completed responses from server are serialized and sent to client along with complete responses in the bytestreamqueue */
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
                                                    [&] () {
                                                        client_rw->write( response_parser.front().str() );
-                                                       reqres_to_protobuf( current_pair, response_parser.front() );
                                                        response_parser.pop();
                                                        return ResultType::Continue;
                                                    },
@@ -139,32 +129,4 @@ void HTTPProxy::handle_tcp( void )
 
     /* don't wait around for the reply */
     newthread.detach();
-}
-
-void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, const HTTPResponse & response )
-{
-    /* output string for current request/response pair */
-    string outputmessage;
-
-    /* Use random number generator to create output filename (number between 0 and 99999) */
-    string filename = record_folder_ + to_string( random() );
-
-    /* FileDescriptor for output file to write current request/response pair protobuf (user has all permissions) */
-    FileDescriptor messages( SystemCall( "open request/response protobuf " + filename + "\n", open(filename.c_str(), O_WRONLY | O_CREAT, 00700 ) ) );
-
-    /* if request is present in current request/response pair, add response and write to file */
-    if ( current_pair.has_req() ) {
-        current_pair.mutable_res()->CopyFrom( response.toprotobuf() );
-        if ( current_pair.SerializeToString( &outputmessage ) ) {
-            messages.write( outputmessage );
-        } else {
-            throw Exception( "Protobuf", "Unable to serialize protobuf to string" );
-        }
-    } else {
-        throw Exception( "Protobuf", "Response ready without Request" );
-    }
-
-    /* clear current request/response pair */
-    current_pair.clear_req();
-    current_pair.clear_res();
 }
