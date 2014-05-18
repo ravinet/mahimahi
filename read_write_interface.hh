@@ -15,8 +15,10 @@ class ReadWriteInterface
 public:
     virtual std::string read( void ) = 0;
     virtual void write( const std::string & str ) = 0;
+    virtual std::string read_amount( const size_t amount_to_read ) = 0; 
     virtual FileDescriptor & fd( void ) = 0;
-
+    virtual std::string::const_iterator write_some( const std::string::const_iterator & begin,
+                                                    const std::string::const_iterator & end ) = 0;
     virtual ~ReadWriteInterface() {}
 };
 

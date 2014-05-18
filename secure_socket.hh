@@ -37,7 +37,12 @@ public:
 
     void check_server_certificate( void );
 
+    std::string::const_iterator write_some( const std::string::const_iterator & begin,
+                                            const std::string::const_iterator & end );
+
     std::string read( void ) override;
+
+    std::string read_amount( const size_t amount_to_read ) override;
 
     void write( const std::string & message ) override;
 

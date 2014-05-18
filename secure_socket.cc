@@ -92,14 +92,6 @@ string SecureSocket::read( void )
     assert( 0 == SSL_pending( ssl_connection ) );
 
     if ( bytes_read == 0 ) {
-        int error_return = SSL_get_error( ssl_connection, bytes_read );
-        if ( SSL_ERROR_ZERO_RETURN == error_return ) { /* Clean SSL close */
-            underlying_socket.fd().set_eof();
-        } else if ( SSL_ERROR_SYSCALL == error_return ) { /* Underlying TCP connection close */
-            /* Verify error queue is empty so we can conclude it is EOF */
-            assert( ERR_get_error() == 0 );
-            underlying_socket.fd().set_eof();
-        }
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
         throw Exception( "SSL_read", ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
@@ -107,6 +99,44 @@ string SecureSocket::read( void )
         /* success */
         return string( buffer, bytes_read );
     }
+}
+
+string SecureSocket::read_amount( const size_t amount_to_read )
+{
+    /* SSL record max size is 16kB */
+    const size_t SSL_max_record_length = 16384;
+
+    char buffer[ SSL_max_record_length ];
+
+    ssize_t bytes_read = SSL_read( ssl_connection, &buffer, amount_to_read );
+
+    /* Make sure that we really are reading from the underlying fd */
+    assert( 0 == SSL_pending( ssl_connection ) );
+
+    if ( bytes_read == 0 ) {
+        return string(); /* EOF */
+    } else if ( bytes_read < 0 ) {
+        throw Exception( "SSL_read", ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
+    } else {
+        /* success */
+        return string( buffer, bytes_read );
+    }
+}
+
+string::const_iterator SecureSocket::write_some( const string::const_iterator & begin,
+                                                 const string::const_iterator & end )
+{
+    assert( end > begin );
+
+    ssize_t bytes_written = SSL_write( ssl_connection, &*begin, end - begin );
+
+    if ( bytes_written < 0 ) {
+        throw Exception( "write" );
+    } else if ( bytes_written == 0 ) {
+        throw Exception( "write returned 0" );
+    }
+
+    return begin + bytes_written;
 }
 
 void SecureSocket::write(const string & message )

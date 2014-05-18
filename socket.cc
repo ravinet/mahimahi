@@ -86,10 +86,14 @@ string Socket::read ( const size_t limit )
     return fd_.read( limit );
 }
 
+string Socket::read_amount( const size_t limit )
+{
+    return fd_.read( limit );
+}
+
 void Socket::connect( const Address & addr )
 {
     peer_addr_ = addr;
-
     SystemCall( "connect", ::connect( fd_.num(),
                                       &peer_addr_.raw_sockaddr(),
                                       sizeof( peer_addr_.raw_sockaddr() ) ) );

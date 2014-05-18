@@ -45,6 +45,7 @@ public:
 
     std::string read( void ) override;
     std::string read ( const size_t limit );
+    std::string read_amount( const size_t limit ) override;
     void write( const std::string & str ) override;
     std::string::const_iterator write_some( const std::string::const_iterator & begin,
                                             const std::string::const_iterator & end );
