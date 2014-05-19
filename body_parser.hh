@@ -12,6 +12,7 @@ public:
 
     virtual std::string::size_type read( const std::string & str ) = 0;
     virtual bool eof( void ) = 0;
+    virtual ~BodyParser() {};
 };
 
 /* used for RFC 2616 4.4 "rule 5" responses -- terminated only by EOF */

@@ -50,6 +50,7 @@ private:
 protected:
     /* the current message we're working on */
     MessageType message_in_progress_;
+    virtual ~HTTPMessageSequence() {};
 
 public:
     HTTPMessageSequence() : buffer_(), complete_messages_(), message_in_progress_() {}

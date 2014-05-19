@@ -48,6 +48,9 @@ protected:
     /* used by subclasses to set the expected body size */
     void set_expected_body_size( const bool is_known, const size_t value = -1 );
 
+    /* virtual destructor */
+    virtual ~HTTPMessage() {};
+
 public:
     HTTPMessage() : expected_body_size_( { false, -1 } ), first_line_(), headers_(), body_(), state_( FIRST_LINE_PENDING ) {}
 
