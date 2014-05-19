@@ -65,6 +65,8 @@ void HTTPProxy::handle_tcp( void )
 
                 auto dst_port = original_destaddr.port();
 
+                bool bulk_thread = false;
+
                 /* Create Read/Write Interfaces for server and client */
                 std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
                                                                  static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
@@ -102,11 +104,15 @@ void HTTPProxy::handle_tcp( void )
                                                        /* check if request is GET / (will lead to bulk response) */
                                                        if ( complete_request.first_line() == "GET / HTTP/1.1\r\n" ) {
                                                            server_rw->write( request_parser.front().str() );
+                                                           bulk_thread = true;
                                                            response_parser.new_request_arrived( request_parser.front() );
                                                            request_parser.pop();
                                                            return ResultType::Continue;
                                                        }
                                                        if ( Archive::request_pending( complete_request ) ) {
+                                                           if ( bulk_thread ) { /* we are on thread with initial request so don't wait for pending request now */
+                                                               return ResultType::Continue;
+                                                           }
                                                            Archive::wait();
                                                            add_to_queue( from_destination, Archive::corresponding_response( complete_request ), already_sent, request_parser );
                                                        } else if ( Archive::have_response( complete_request ) ) { /* corresponding response already stored- send to client */
