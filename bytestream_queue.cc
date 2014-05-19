@@ -71,7 +71,7 @@ void ByteStreamQueue::pop( FileDescriptor & fd )
         contiguous_space_to_pop = buffer_.size() - next_byte_to_pop;
     }
     
-    decltype(buffer_)::const_iterator pop_iterator = buffer_.begin() + next_byte_to_pop;
+    std::string::const_iterator pop_iterator = buffer_.begin() + next_byte_to_pop;
     auto end_of_pop = pop_iterator + contiguous_space_to_pop;
 
     assert( end_of_pop >= pop_iterator );
