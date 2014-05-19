@@ -13,7 +13,6 @@
 
 #include "address.hh"
 #include "socket.hh"
-#include "timestamp.hh"
 #include "system_runner.hh"
 #include "config.h"
 #include "signalfd.hh"
@@ -21,7 +20,6 @@
 #include "poller.hh"
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
-#include "timestamp.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -79,7 +77,7 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( server_rw->fd(), Direction::In,
                                                    [&] () {
                                                        string buffer = server_rw->read();
-                                                       response_parser.parse( buffer );
+                                                       response_parser.parse( buffer, from_destination );
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () { return ( not client_rw->fd().eof() ); } ) );
