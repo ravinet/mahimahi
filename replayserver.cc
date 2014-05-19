@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #include "util.hh"
 #include "system_runner.hh"
@@ -139,6 +140,32 @@ void return_message( const HTTP_Record::reqrespair & record )
 int main()
 {
     try {
+        /* first check if it is initial request- if so, return bulk.proto */
+        string incoming_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) );
+        if ( incoming_req == "GET /" ) {
+            string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
+            std::ifstream is(bulk_file_name, std::ifstream::binary);
+            string str;
+            if (is) {
+                // get length of file:
+                is.seekg(0, is.end);
+                int length = is.tellg();
+                is.seekg(0, is.beg);
+
+                str.resize(length, ' '); // reserve space
+                char* begin = &*str.begin();
+
+                is.read(begin, length);
+                is.close();
+            }
+            cout << "HTTP/1.1 200 OK\r\n";
+            cout << "Content-Type: application/x-bulkreply\r\n\r\n";
+            cout << str;
+
+            return EXIT_SUCCESS;
+        }
+
+        /* not initial request, so ony send corresponding response back */
         vector< string > files;
         list_files( getenv( "RECORD_FOLDER" ), files );
         vector< HTTP_Record::reqrespair > possible_matches;

@@ -20,6 +20,7 @@
 #include "poller.hh"
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
+#include "archive.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -60,6 +61,8 @@ void HTTPProxy::handle_tcp( void )
 
                 HTTPResponseParser response_parser;
 
+                int already_sent = 0;
+
                 auto dst_port = original_destaddr.port();
 
                 /* Create Read/Write Interfaces for server and client */
@@ -95,22 +98,44 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( server_rw->fd(), Direction::Out,
                                                    [&] () {
                                                        /* check if request is stored: if pending->wait, if response present->send to client, if neither->send request to server */
-                                                       server_rw->write( request_parser.front().str() );
-                                                       response_parser.new_request_arrived( request_parser.front() );
-
-                                                       request_parser.pop();
+                                                       HTTP_Record::http_message complete_request = request_parser.front().toprotobuf();
+                                                       /* check if request is GET / (will lead to bulk response) */
+                                                       if ( complete_request.first_line() == "GET / HTTP/1.1\r\n" ) {
+                                                           server_rw->write( request_parser.front().str() );
+                                                           response_parser.new_request_arrived( request_parser.front() );
+                                                           request_parser.pop();
+                                                           return ResultType::Continue;
+                                                       }
+                                                       if ( Archive::request_pending( complete_request ) ) {
+                                                           Archive::wait();
+                                                           add_to_queue( from_destination, Archive::corresponding_response( complete_request ), already_sent, request_parser );
+                                                       } else if ( Archive::have_response( complete_request ) ) { /* corresponding response already stored- send to client */
+                                                           add_to_queue( from_destination, Archive::corresponding_response( complete_request ), already_sent, request_parser );
+                                                       } else { /* request not listed in archive- send request to server */
+                                                           server_rw->write( request_parser.front().str() );
+                                                           response_parser.new_request_arrived( request_parser.front() );
+                                                           request_parser.pop();
+                                                       }
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () { return not request_parser.empty(); } ) );
 
-                /* completed responses from server are serialized and sent to client along with complete responses in the bytestreamqueue */
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
                                                    [&] () {
-                                                       client_rw->write( response_parser.front().str() );
-                                                       response_parser.pop();
+                                                       if ( from_destination.non_empty() ) {
+                                                           if ( dst_port == 443 ) {
+                                                               from_destination.pop_ssl( move( client_rw ) );
+                                                           } else {
+                                                               from_destination.pop( client_rw->fd() );
+                                                           }
+                                                       }
+                                                       if ( not response_parser.empty() ) {
+                                                           client_rw->write( response_parser.front().str() );
+                                                           response_parser.pop();
+                                                       }
                                                        return ResultType::Continue;
                                                    },
-                                                   [&] () { return not response_parser.empty(); } ) );
+                                                   [&] () { return (from_destination.non_empty() or ( not response_parser.empty() ) ); } ) );
 
                 while( true ) {
                     auto poll_result = poller.poll( 60000 );
@@ -127,4 +152,19 @@ void HTTPProxy::handle_tcp( void )
 
     /* don't wait around for the reply */
     newthread.detach();
+}
+
+void HTTPProxy::add_to_queue( ByteStreamQueue & responses, string res, int & counter, HTTPRequestParser & req_parser )
+{
+    /* given the counter and message, figure out how much can be added and add to queue and update counter */
+    int avail_space = responses.contiguous_space_to_push();
+    int left_to_send = res.size() - counter;
+    if ( avail_space >= left_to_send ) { /* enough space to send rest of message */
+        responses.push_string( res.substr( counter, left_to_send ) );
+        counter = 0;
+        req_parser.pop();
+    } else if (avail_space < left_to_send and avail_space > 0 ) { /* space for some but not all */
+        responses.push_string( res.substr( counter, avail_space ) );
+        counter = counter + avail_space;
+    }
 }
