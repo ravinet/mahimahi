@@ -7,8 +7,36 @@
 #ifndef APACHE_CONFIGURATION_HH
 #define APACHE_CONFIGURATION_HH
 
-std::string apache_main_config = "LoadModule dir_module " + std::string( MOD_DIR ) + "\nLoadModule mpm_prefork_module " + std::string( MOD_MPM_PREFORK ) + "\nLoadModule mime_module " + std::string( MOD_MIME ) + "\n<IfModule mod_mime.c>\nTypesConfig /etc/mime.types\nAddHandler cgi-script .cgi\n</IfModule>\nLoadModule authz_core_module " + std::string( MOD_AUTHZ_CORE ) + "\nLoadModule cgi_module " + std::string( MOD_CGI ) + "\n<Directory " + std::string( EXEC_DIR ) + ">\nAllowOverride None\nOptions +ExecCGI\nRequire all granted\n</Directory>\nLoadModule rewrite_module " + std::string( MOD_REWRITE ) + "\nRewriteEngine On\nRewriteRule ^(.*)$ " + std::string( REPLAYSERVER ) + "\nLoadModule env_module " + std::string( MOD_ENV ) + "\nSetEnv RECORD_FOLDER ";
+std::string apache_main_config =
+"LoadModule dir_module " + std::string( MOD_DIR ) + "\n" +
+"LoadModule mpm_prefork_module " + std::string( MOD_MPM_PREFORK ) + "\n" +
+"LoadModule mime_module " + std::string( MOD_MIME ) + "\n" +
 
-std::string apache_ssl_config = "LoadModule ssl_module " + std::string( MOD_SSL ) + "\nSSLEngine on\nSSLCertificateFile      " + std::string( MOD_SSL_CERTIFICATE_FILE ) + "\nSSLCertificateKeyFile " + std::string( MOD_SSL_KEY ) +"\n";
+"<IfModule mod_mime.c>\n" +
+"TypesConfig /etc/mime.types\n"+
+"AddHandler cgi-script .cgi\n" +
+"</IfModule>\n" +
+
+"LoadModule authz_core_module " + std::string( MOD_AUTHZ_CORE ) + "\n" +
+"LoadModule cgi_module " + std::string( MOD_CGI ) + "\n" +
+
+"<Directory " + std::string( EXEC_DIR ) + ">\n" +
+"AllowOverride None\n" +
+"Options +ExecCGI\n" +
+"Require all granted\n" +
+"</Directory>\n" +
+
+"LoadModule rewrite_module " + std::string( MOD_REWRITE ) + "\n" +
+"RewriteEngine On\n" +
+"RewriteRule ^(.*)$ " + std::string( REPLAYSERVER ) + "\n" +
+
+"LoadModule env_module " + std::string( MOD_ENV ) + "\n" +
+"SetEnv RECORD_FOLDER";
+
+std::string apache_ssl_config =
+"LoadModule ssl_module " + std::string( MOD_SSL ) + "\n" +
+"SSLEngine on\n" +
+"SSLCertificateFile      " + std::string( MOD_SSL_CERTIFICATE_FILE ) + "\n" +
+"SSLCertificateKeyFile " + std::string( MOD_SSL_KEY ) +"\n";
 
 #endif /* APACHE_CONFIGURATION_HH */
