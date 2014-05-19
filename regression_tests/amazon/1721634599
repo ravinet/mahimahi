@@ -1,0 +1,25 @@
+PHTTP173.252.110.27"à
+HGET /fr/u.php?p=221790734642435&m=VBfR9uBgRUaxXVN2maC3VA&r=us HTTP/1.1
+Host: www.facebook.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*¡	
+HTTP/1.1 302 
+Ócontent-security-policy: default-src *;script-src https://*.facebook.com http://*.facebook.com https://*.fbcdn.net http://*.fbcdn.net *.facebook.net *.google-analytics.com *.virtualearth.net *.google.com 127.0.0.1:* *.spotilocal.com:* chrome-extension://lifbcibllhkdhoafpjfnlhfpfgnpldfl 'unsafe-inline' 'unsafe-eval' https://*.akamaihd.net http://*.akamaihd.net *.atlassolutions.com;style-src * 'unsafe-inline';connect-src https://*.facebook.com http://*.facebook.com https://*.fbcdn.net http://*.fbcdn.net *.facebook.net *.spotilocal.com:* https://*.akamaihd.net ws://*.facebook.com:* http://*.akamaihd.net https://fb.scanandcleanlocal.com:* *.atlassolutions.com http://attachment.fbsbx.com https://attachment.fbsbx.com;
+"Cache-Control: public, max-age=0
+(Content-Type: text/html; charset=utf-8
+%Date: Wed, 19 Mar 2014 12:58:03 PDT
+(Expires: Wed, 19 Mar 2014 12:58:03 PDT
+^Location: http://s.amazon-adsystem.com/ecm3?ex=facebook.com&rcode=u&m=VBfR9uBgRUaxXVN2maC3VA
+Pragma: public
+!X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+:X-FB-Debug: uCCntbSLVIX2pz7evu76Cw3cA/XzJUGaf0Nc/wo3M8I=
+Connection: keep-alive
+Content-Length: 0
+

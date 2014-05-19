@@ -1,0 +1,23 @@
+PHTTP72.21.211.9"‹
+‘GET /iu3?d=amazon.com&slot=navFooter&a2=0101b04ce340d4e65f35556a588d95e0ebf1223319c985864d37bf63a103618decf8&old_oo=0&cb=1395259081887 HTTP/1.1
+Host: s.amazon-adsystem.com
+Connection: keep-alive
+TAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+!Referer: http://www.amazon.com/
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*˜
+HTTP/1.1 302 Found
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Server: Server
+TCache-Control: max-age=0, no-cache, no-store, private, must-revalidate, s-maxage=0
+Pragma: no-cache
+(Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Xp3p: policyref="http://www.amazon.com/w3c/p3p.xml", CP="PSAo PSDo OUR SAM OTR DSP COR"
+°Location: http://s.amazon-adsystem.com/iu3?d=amazon.com&slot=navFooter&a2=0101b04ce340d4e65f35556a588d95e0ebf1223319c985864d37bf63a103618decf8&old_oo=0&cb=1395259081887&dcc=t
+Content-Length: 0
+ySet-Cookie: ad-id=A0cagvnWGUBcsoi3eKsGT3g|t; Domain=.amazon-adsystem.com; Expires=Thu, 01-Jan-2037 00:00:01 GMT; Path=/
+Vary: User-Agent
+

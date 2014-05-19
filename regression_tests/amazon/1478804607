@@ -1,0 +1,20 @@
+PHTTP72.21.203.13"÷
+§GET /1/batch/1/OE/ATVPDKIKX0DER:181-8144377-9392865:1AJT35DDXQVRCJCPDYXH:www.amazon.com$cel=j:%7B%22k%22%3A%22mso%22%2C%22n%22%3A%22viewport%20module%22%2C%22t%22%3A1366%7D:1366,j:%7B%22k%22%3A%22mrg%22%2C%22n%22%3A%22features%20module%22%2C%22t%22%3A1366%7D:1366&uedata=s:%2Fuedata%2Fnvp%2Funsticky%2F181-8144377-9392865%2FGateway%2Fntpoffrw%3Fld%26v%3D33%26id%3D1AJT35DDXQVRCJCPDYXH%26ctb%3D1%26sc0%3DcsmCELLSfem%26bb0%3D1366%26pc0%3D1366%26ld0%3D1366%26t0%3D1395259083471%26pty%3DGateway%26spty%3Dgateway-three-column%26pti%3D507846:1366 HTTP/1.1
+Host: fls-na.amazon.com
+Connection: keep-alive
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+Origin: http://www.amazon.com
+Accept: */*
+!Referer: http://www.amazon.com/
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*Ý
+HTTP/1.1 204 No Content
+%Date: Wed, 19 Mar 2014 19:58:02 GMT
+Server: Server
+8x-amzn-RequestId: c7dd8b2e-afa0-11e3-b7c3-a96b25ec4e27
+ Access-Control-Allow-Origin: *
+Vary: User-Agent
+Content-Length: 0
+

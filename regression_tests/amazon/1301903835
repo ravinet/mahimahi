@@ -1,0 +1,21 @@
+PHTTP173.241.242.6"˜
+‚GET /cm?pid=e818ca1e-0c23-caa8-0dd3-096b0ada08b7&dst=http%3A%2F%2Fs.amazon-adsystem.com%2Fecm3%3Fex%3Dopenx.com%26id%3D HTTP/1.1
+Host: bid.openx.net
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*ö
+ HTTP/1.1 302 Moved Temporarily
+“Set-Cookie: i=f7454217-0a51-43f9-dad6-98096290a319; Version=1; Expires=Thu, 19-Mar-2015 19:58:03 GMT; Max-Age=31536000; Domain=.openx.net; Path=/
+CServer: MochiWeb/1.1 WebMachine/1.10.0 (never breaks eye contact)
+#P3P: CP="CUR ADM OUR NOR STA NID"
+bLocation: http://s.amazon-adsystem.com/ecm3?ex=openx.com&id=7c3f0133-bf7c-c7f4-400e-d2766e845b04
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Content-Type: image/gif
+Content-Length: 0
+Connection: close
+

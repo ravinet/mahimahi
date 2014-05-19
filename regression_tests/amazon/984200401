@@ -1,0 +1,14 @@
+PHTTP174.129.243.235"Ž
+ˆGET /ct/0_0_7971460_22418/us/0/1/0/0/0/0/300/250/242/273/0/pixel.gif?v=1211&ttid=2&d=ad.doubleclick.net&r=0.46143580065108836 HTTP/1.1
+Host: l.betrad.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+ëReferer: http://ad.doubleclick.net/adi/N553.amazon.com/B7971460.39;sz=300x250;pc=[TPAS_ID];click=http://adclick.g.doubleclick.net/aclk?sa=L&ai=BQjlWy_YpU4W7HIW6wQHEnYDoBoatjY0FAAAAEAEgADgAWI6O6bloYMmW7oiEpOwPggEXY2EtcHViLTk2Nzc3ODA3MjM0OTQ2NjayAQ53d3cuYW1hem9uLmNvbboBCWdmcF9pbWFnZcgBCdoBFmh0dHA6Ly93d3cuYW1hem9uLmNvbS-YAsQTwAIC4AIA6gITNDIxNS9hbXpuLnVzLmd3LmJ0ZvgC-dEekAPgA5gD4AOoAwHgBAGgBh8&num=0&sig=AOD64_1Npw9kZlE4mDyWf-f6ZpiI_kR28w&client=ca-pub-9677780723494666&adurl=;ord=297639998?
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*9
+HTTP/1.1 204 No Content
+Connection: keep-alive
+

@@ -1,0 +1,26 @@
+PHTTP98.138.49.42"ó
+^GET /cms/v1?esig=1~b9bada6fffbf45c1ffda7783879fb5715486894a&nwid=10000922750&sigv=1 HTTP/1.1
+Host: ads.yahoo.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*á
+HTTP/1.1 302 Found
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+ÓP3P: policyref="http://p3p.yahoo.com/w3c/p3p.xml", CP="CAO DSP COR CUR ADM DEV TAI PSA PSD IVAi IVDi CONi TELo OTPi OUR DELi SAMi OTRi UNRi PUBi IND PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA POL HEA PRE GOV"
+hSet-Cookie: B=2kfrstp9ijtmb&b=3&s=fe; expires=Sat, 19-Mar-2016 19:58:03 GMT; path=/; domain=.yahoo.com
+]Set-Cookie: RMBX=2kfrstp9ijtmb&b=3&s=fe&t=77; path=/; expires=Fri, 18-Mar-2016 19:58:03 GMT
+\Location: http://s.amazon-adsystem.com/ecm3?ex=rightmedia.com&xid=3y3cS.TLEf9R4LwiYJcULTbW
+Cache-Control: private
+)Content-Type: text/plain; charset=utf-8
+Age: 0
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: YTS/1.20.13
+
+0
+

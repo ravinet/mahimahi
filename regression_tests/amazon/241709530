@@ -1,0 +1,27 @@
+PHTTP69.25.24.26"Ð
+2GET /oz/feeds/amazon-rtb/tokens/?rt=img HTTP/1.1
+Host: tap.rubiconproject.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*ñ
+ HTTP/1.1 302 Moved Temporarily
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Server: TRP Apache-Coyote/1.1
+?p3p: CP="NOI CURa ADMa DEVa TAIa OUR BUS IND UNI COM NAV INT"
+YLocation: http://s.amazon-adsystem.com/ecm3?id=&ex=rubiconproject.com&status=no-user-id
+Content-Length: 0
+Cache-control: private
+aSet-Cookie: cd=false; Domain=.rubiconproject.com; Expires=Thu, 19-Mar-2015 19:58:03 GMT; Path=/
+uSet-Cookie: au=HSZ18FD4-67G6-10.9.42.169; Domain=.rubiconproject.com; Expires=Thu, 17-Mar-2022 19:58:03 GMT; Path=/
+GSet-Cookie: dq=1|1|0|0; Expires=Thu, 19-Mar-2015 19:58:03 GMT; Path=/
+dSet-Cookie: put_2179=""; Domain=.rubiconproject.com; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+FSet-Cookie: SERVERID=; Expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/
+ Keep-Alive: timeout=5, max=178
+Connection: Keep-Alive
+)Content-Type: text/plain; charset=UTF-8
+

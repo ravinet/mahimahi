@@ -1,0 +1,19 @@
+ªHTTPS173.194.46.110" 
+oGET /crsignal/client?dist=stable&osname=linux&branding=31.0.1650.63&osver=3.11.0-14-generic&hl=en-US HTTP/1.1
+Host: clients3.google.com
+Connection: keep-alive
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+$Accept-Encoding: gzip,deflate,sdch
+
+*è
+HTTP/1.1 200 OK
+ Content-Type: application/json
+!X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+!X-Xss-Protection: 1; mode=block
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Content-Length: 2
+Server: GFE/2.0
+Alternate-Protocol: 443:quic
+
+{}

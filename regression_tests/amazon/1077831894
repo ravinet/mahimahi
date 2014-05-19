@@ -1,0 +1,72 @@
+PHTTP207.171.162.95"¸
+×GET /x/getadi?src=501&c=100&u=http%3A%2F%2Fwww.amazon.com%2F&sz=300x250&pt=Gateway&slot=right-2&ad-sid=0101b04ce340d4e65f35556a588d95e0ebf1223319c985864d37bf63a103618decf8&pj=%7B%22bn%22%3A%22507846%22%7D HTTP/1.1
+'Host: aax-us-east.amazon-adsystem.com
+Connection: keep-alive
+TAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*æ9
+HTTP/1.1 200 OK
+'Content-Type: text/html;charset=UTF-8
+Content-Length: 7252
+%Date: Wed, 19 Mar 2014 19:58:01 GMT
+Server: Server
+Ö8
+<html>
+<body marginwidth="0" marginheight="0" bgcolor="#FFFFFF" topmargin="0" leftmargin="0" rightmargin="0" bottommargin="0">
+  
+
+<script type="text/javascript">
+
+var clickURL = "http://aax-us-east.amazon-adsystem.com/x/c/nHkX5f6r-K0wJBrvRymQmQ/http://pda-bes.amazon.com/c?i=1$AgAAAAAAAAAEAAAAAAAAAAIAAAAArjFRWhk4XE2gv3Rfs1IQoQ0EQRA90FftHhC.b3WMzV.ms1xg3FWMB.nojAT3QkIiG-w2lx5y568tW-ZfaHoEVyovmDC5JZCkvl2DTCwZfcOOgtaPN-4d702xHFSZTNXk.0pVmpBpBNKRxJSjrtufKEGAJkdlzG3hFZpz0wYMFBVO2-k--YElWXQYBTvMD7zuyEg5U466zZbtdxTmQYnEPEEHOfUbhzD1SQ2GVSnwE3E8AQkzdkTeEER9bQr86s-yokJtWv.6Ubzf2P8qsYE4GTrZMlwDh-vrN.MNJNrzIgXplFapFu4oL-S0zsjHA87mDisAO9fScLzSZ8g.NuPuOf3zi.8gFaojku4ASUlpKiVU6DZRwExdBlAIPuCtrs8lfc-nx6QIzWGjq0SS-L6YofN53b421KE.snEtpi15.fEkF0ywlKgbj79H0nfsgyLdY1Os0P.1L19rHG7hWwPlV6uvN6Nf.i4bTKdr7FsAltav-IqIV1b6dTR5d1bPYaEeIDJCqKPOrmn2NoNRz9UHAu4zgU-wWj5XYlgEXWtg1F26MB4oZxSqDm0Io1kD7CgrNcOCjFI1GEaOCd7hD4alGLwW1yOtNFeqTDg8J8qepYB.R1vfqWpBkEaFRqRcPLTba.xJVPwiGTIySaEIlKwi9O34KIaFVju.ebcydzSJrcXUSuu3D2zZP0q1KetF2QZIVS2zFbNTxsYkr4XC0axsNI77RBlosJfOmW-sH-5wKr90w-qbOr2s2pq-JEOopH9ROcif5wgit4qpqLk5DlHhOMPMxeYgiuDXim-DnqoG4IN1rS5UA0SqwIK4x65SIXftx1i0jgsSAo.KM3amOpr9v6KSkPCtM8b3z1UKM3ep0c2or-yjs8N3XuSCMMk1YPcsJDRoLs76RyFCxRjJz8aiLIEgS8ydD9Vnm8Edsbok9jiXWQv-.Eam5IuemdDZkVNVW-rpEPfZLyc-FIikv5-kFntfwpCKrrNPB3OrjvWR9wWvSsunlakDS-x1ZD-4L163qATNgg7Wf0U7rcfUM-.sRYIE.elN-l9RlzuaJEQKnAXU.0ZwLmRo0JGq25kmGalFwdJmLeprm5K7dUDBmJDmoJipmCa3VqT4KkTRVwIBXxRSzyw4X.KvPR.lRno5tXCpT-61oiF1b9GWeKqpdgyfvHSsH65TQU9qlD0NVzueolsn9-.Vl01MtpovfKljWqcFCJ3PKuPKHkNrpkr4pAfNZqIQa8KWvcKcrU3H.tsV1z20qt5a4IgaqF99pL0CoJuBozXr7.tHrMx1L-UwQxDJ9-BAKxrY6HHh0z9QqpT8d.xHsfQVo4pB7nRHNoDhM3ptHrTkmDGt3OxPCkA-TtgcPsVPW1Qz4LoGXwrLM3JSpCgIqULqOo1IH1EbOIHzRyJ7B0lO1eS4udHlpWHLzwU0uMo3Lj9mKtS--T8h-D8Y9JqjDeKpIYBPx-szWCN5rO5HvL8fDWz4jxTKOqNE8AyOp7ouYTrsGa2J-RsMTCFEUM6RVgCG";
+
+function getFlashVer() {
+  var i,a,o,p,s="Shockwave",f="Flash",t=" 2.0",u=s+" "+f,v=s+f+".",rSW=RegExp("^"+u+" (\\d+)");
+
+  if ((o=navigator.plugins) && (p=o[u]||o[u+t]) && (a=p.description.match(rSW))) {
+    return a[1];
+  }
+  else if (!!(window.ActiveXObject)) {
+    for (i=10; i>0; i--) {
+      try {
+        if (!!(new ActiveXObject(v+v+i)))
+          return i
+      }
+      catch(e) {
+      }
+    }
+  }
+  return 0;
+}
+
+function get3pPixed() {
+  var code = '';
+  code += '<img src="//adyapperstatic.blob.core.windows.net/onad/4297FF7C68?id=AMZN2" width="1" height="1" style="display:none">';
+  return code;
+}
+
+function getFlashVarsStr() {
+  var str = "clickTag=" + escape("http://aax-us-east.amazon-adsystem.com/x/c/nHkX5f6r-K0wJBrvRymQmQ/http://pda-bes.amazon.com/c?i=1$AgAAAAAAAAAEAAAAAAAAAAIAAAAArjFRWp0ZQh-VIvuvaR4ibeGjq2mYzfpTnQjq86QpUWKyswZGA--nTS891AvPg0mIpKPmgcECvOpjPFxQip-j8fBHOLvpwIHlq0T98RxwCs0KPVyzsTuGDfzD1UMayJ5KQaf.NRpZOxd678dL0WOxvBPCiB2g6tiRXeoFU8deGXQPCTJiuv69x83jXMGfAPGxozJs4dAjmMFC3wrFgL1JRWA9XoZs.l6gKEFcCXnBW1mJ7FUJSYZukqnUBjNHL2TXoTgUjIC907rpdOw-89V141jRo2hr0sg0LGYUsrvyi1lAGfOLLFlV0bhws36iaDz3i3C3fXQzmqEba-ovhrJ3X2w0fvDtatEoeMHpvVAbxIxmRTvqLeqm9Zjqo1bO6vF8j18cB1pi2VYY6uFYCGue2AeRtT1uSBxgxJoJvGDhA4AFYrFRSvy0OIdOWGlV.UDYQ5Ox9H4GSZrxOCvz95-cp4YIQrbAfcvJ0PCoUY71imwWqr3NPoAvnPgswQgZ..wq2PgU.ktkNCBqDORo1-cfUXCX7WbYsiUDEGxmcz6G90cZGIHNAPLbggmlUBdKVO7MLx04NpNp1vUxjb1oRVPd6fkxIDAoB7cuvUWJiyJhe6dgvqV8w88a77avM7p9nsXSQqKSoVilJUo5NaCDP17fOlF03WaPoUcjhkEpzgnjXWPcrJRT2kPDLfomKPWj0e0uQVzGCA.G.7WyRq.4dXt2hFparIZJCCETr24t50SmvlITByKi3Z0Rhz84owZ1AStBdN-wQ3JVt22mtJZOu7OBlR0D1oBdy9fW7XR0otU8V6UvUxYHTH.p0F5isd3gHutE3gcz9iJkpmIUOerk1dibYWeLB6zvjn9dwNJZJB-eq0wuNpuHfM112kk8NVOoV5MdrRSeHMNZYgJneSD.AnOiXcjkQWjT0KY0EtXhYkkRgSx.b1.HPTFXkYv-WkiwgdqdPxm5plccnuyDXE61Mjoug5LaBM3oJI36.QFDR-CCoYRCMKAWuM.KkXuNrVahdxo7QHubziA.fPmHJRYsAfYxpMKFVwyDPcob5fv5gKo.gu3sD1TuygkRzCMOtmgV3oXxb45rwXkCFbeM2JYnshEhAQrjOWg.kxngXZ-vXAkzLqQsVUn3DPLu63NNWZTMdG3DPCjw4zIkO6uHXUF7Ox4abMy4Ji1SexRUC-Tbk-I0QmyYAB-0ElQhSBGBcyYn5bBpAld2dbfjPvow7BdQF4TXXs-8P-S6KIqxCLMtftdjhnkT6NHL4k4Kln8P..wVV6XZYMd3HJQJiFG8bn4utvLKdFDQf8d0WDFzTxqRtk8EEBqtdTATdqTEDePMw5hL6CM6gD61.nF63FtHMVawyraw3brrIamvmiNGppzPPxHThXXrpSGu4S26JLWow72IKG9QsgWPWWtjMxpeYFIAb.KSUpM7cKwm.BNCaj36GBiKwYrtuCe-RwLN.AhmziYFtEjlb3jcRSGfW.YL3emmMwhMh-GJXRkLQk6OlhG7TKIk-XDZ9m7J");
+  return str;
+}
+
+var adcode;
+if ((0+6) <= getFlashVer()) {
+  var flashVars = getFlashVarsStr();
+  adcode = get3pPixed();
+  adcode += '<OBJECT classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" ID=FLASH_AD WIDTH="300" HEIGHT="250"><PARAM NAME=movie VALUE="//d2o307dm5mqftz.cloudfront.net/1505855001/1379011338018/13896_Prime_AwarenessB_300x250.swf"><param name="flashvars" value="'+ flashVars + '"><PARAM NAME=quality VALUE=high><PARAM NAME=bgcolor VALUE=#FFFFFF><PARAM NAME=wmode VALUE=opaque><PARAM NAME="AllowScriptAccess" VALUE="always"><EMBED src="//d2o307dm5mqftz.cloudfront.net/1505855001/1379011338018/13896_Prime_AwarenessB_300x250.swf?' + flashVars + '" quality=high wmode=opaque swLiveConnect=TRUE WIDTH="300" HEIGHT="250" bgcolor=#FFFFFF TYPE="application/x-shockwave-flash" AllowScriptAccess="always"></EMBED></OBJECT>';
+  document.write(adcode);
+}
+else {
+  adcode = get3pPixed();
+  adcode += '<A TARGET="_blank" HREF="' + clickURL + '"><IMG SRC="//d2o307dm5mqftz.cloudfront.net/1505855001/1379011338104/13896_Prime_AwarenessB_300x250.jpg" alt="" width="300" height="250" BORDER=0></A>';
+  document.write(adcode);
+}
+</script>
+<noscript>
+  <a target="_blank" href="http://aax-us-east.amazon-adsystem.com/x/c/nHkX5f6r-K0wJBrvRymQmQ/http://pda-bes.amazon.com/c?i=1$AgAAAAAAAAAEAAAAAAAAAAIAAAAArjFRWs225GXt6wINqxpMY1-taa2IXYwiZ1Re-1dg2VFPNinL1jXMJz4KADe0UBEK9n7C5VvxDOLNYT8pYEWhIhgH88q2oo8pI-DPFwRsZ6N4SEew3GcNKmAKT0JSgXu6b2qlCixmVDJoz0SDpwtrBaxnGpOfpIlUqpi5mCBzT4ZpdliWfOxJfns1yZU023OHtmTYVCdELvghb1lQJ6kMKwxBQC6YW0nzh0F9D64wUWx7xTZ2KgmqHmjswfBFYYzwALFsagqtY7cpVl8nWlcmb0ZW5p-MHDxYmFh58F7Y7-v14uRh2kWPlF6cJ7bDHC13qEOUXjyAwAXV-4h1O06oC.nhDtPuv9ZBXP8ij0jZz.Y-62HlD75NWCsT1AMr-6K8FBd.IR1H7itvr13GuB--ibXUzarePacSWyrqb1SMUYJMt-AjbDaiVP.4P-jFq3.N2CBqw5Tye2R5hytUvxX.kaLnviXNDkHu9Hg-U20NeDZWRCVmbHg7D5GjTZZD9yAIMJW2pvYeakKa07w4roFyCDf.kg7R5CJdK2P3n5V2IcYV1pGxVK2KOUk386Jaz.r9AA3beDf-hK8rce3q.luaFsgHXfjLirxf2rUzsKPAxMOeAEfdrdujFGbu0aPO0EFDR0j5owx7LMBpvKqTPhYYxFHZNVu-X93efDt-9DBkxeMVxp022-1LVoWfn0GrHeQV9pf342I5iYcvUcE0yGtUpN37PQj3leRFDP5AwEQo7jSOrS8FLvrMB6JV8kwB90i9GT4KeBSFQPMNUBXXCilHefIvFfjS6TK100DkrSVb4Y4cU4pEWmtmxlUekoaMWuh0Y1ECArN7UWzjNwnIiTFrEsutRS3jbOGkx0Rl7RxBH.bs63fxtPmH8rMBXE3lbUerQHu75Exyv2PRnFAvqWdLmQLJZYN.-iP3i55Zn5uVojsefrgErS5XoakYYjW4yIx1XNP1yvVLJ7WfqH8D4revjJC67rC.JLi9fW6VU.62HzgXkvLG3o2dSmI1DWPJnLrN5.f2m8Mm.s.9fKDpRGaTkAQN6VYL7RcgOygmVqzTdhJtXRyhSfCRUpViBOaEAjG8ZALMssJmii.ZLCrfTiDH.iE0k88MQ7uunk0T.RIAVmL9hrfgIvRgh8T.7Llt9h0rEBi6lt21trfcxtZ-xVs0LV7jY2Ha8VV59mwYq4YisSopXK8e5kk5hMEklc4ElEHc6efCLWilVz0DTZfH9heV8QGWf.WW6JWGeeUgnFE1e7OJSfHasjKPqeHHSgEQMfRI1zoi78sHcbYCxwlipmcwBdAZXzFwIK5.Auqg.YPiyN7iD7OQTHuVqnPxfqHaiduHWZlkeTwfC9.L8a3YFBVavmQyDM-xsbEnJVFeQGQ6RHkwlylgRWeB5IM73t62tQoYYgWH8FqqwI9Z5FnxReqdmmzihiVINevAItpyfsQnYJxFl8ibX.21bMt832bWbIPtV8oZQIyE-TGch759b-WF5upDlc9UbM9M3ownlwWTv1L5a2Vk"><img src="//d2o307dm5mqftz.cloudfront.net/1505855001/1379011338104/13896_Prime_AwarenessB_300x250.jpg" alt="" width="300" height="250" border="0"></a>
+</noscript><!-- creativeModDate = 1394246656000 -->
+</body>
+</html>

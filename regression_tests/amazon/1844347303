@@ -1,0 +1,25 @@
+PHTTP69.5.90.119"á
+oGET /user/3/?redirect=http%3A%2F%2Fs.amazon-adsystem.com%2Fecm3%3Fid%3D%24UID%26ex%3Dadconductor.com HTTP/1.1
+Host: www.burstnet.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*Å
+HTTP/1.1 302 Found
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Server: Apache (Unix)
+jP3P: policyref="http://www.burstnet.com/w3c/p3p.xml", CP="NOI DSP LAW PSAa PSDa OUR IND UNI COM NAV STA"
+eSet-Cookie: TID=19ijtmb1be8ts4; path=/; expires=Tue, 17-Jun-2014 19:58:03 GMT; domain=.burstnet.com
+OLocation: http://s.amazon-adsystem.com/ecm3?rcode=nocookie&ex=adconductor.com
+Pragma: no-cache
+Cache-Control: no-cache
+X-Cnection: close
+Transfer-Encoding: chunked
+Content-Type: text/plain
+
+0
+

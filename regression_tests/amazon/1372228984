@@ -1,0 +1,23 @@
+PHTTP54.236.102.93"¢
+™GET /event?d_event=imp&d_amex=ccsg&d_creative=56741312&d_site=532680&d_adgroup=278653332&d_placement=105676554&d_campaign=7971460&d_cb=4036144 HTTP/1.1
+Host: aexp.demdex.net
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+ëReferer: http://ad.doubleclick.net/adi/N553.amazon.com/B7971460.39;sz=300x250;pc=[TPAS_ID];click=http://adclick.g.doubleclick.net/aclk?sa=L&ai=BQjlWy_YpU4W7HIW6wQHEnYDoBoatjY0FAAAAEAEgADgAWI6O6bloYMmW7oiEpOwPggEXY2EtcHViLTk2Nzc3ODA3MjM0OTQ2NjayAQ53d3cuYW1hem9uLmNvbboBCWdmcF9pbWFnZcgBCdoBFmh0dHA6Ly93d3cuYW1hem9uLmNvbS-YAsQTwAIC4AIA6gITNDIxNS9hbXpuLnVzLmd3LmJ0ZvgC-dEekAPgA5gD4AOoAwHgBAGgBh8&num=0&sig=AOD64_1Npw9kZlE4mDyWf-f6ZpiI_kR28w&client=ca-pub-9677780723494666&adurl=;ord=297639998?
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*Ù
+HTTP/1.1 302 Found
+bCache-Control: no-cache,no-store,must-revalidate,max-age=0,proxy-revalidate,no-transform,private
+4DCS: va6-dcsas1-10-89-2-142.va6.demdex.com 1.18.47
+(Expires: Thu, 01 Jan 2009 00:00:00 GMT
+±Location: http://aexp.demdex.net/firstevent?d_event=imp&d_amex=ccsg&d_creative=56741312&d_site=532680&d_adgroup=278653332&d_placement=105676554&d_campaign=7971460&d_cb=4036144
+cP3P: policyref="/w3c/p3p.xml", CP="NOI NID CURa ADMa DEVa PSAa PSDa OUR SAMa BUS PUR COM NAV INT"
+Pragma: no-cache
+ Server: Jetty(7.6.8.v20121106)
+{Set-Cookie: demdex=56394994098199105404181049899758992864;Path=/;Domain=.demdex.net;Expires=Fri, 18-Mar-2016 19:58:03 GMT
+Content-Length: 0
+Connection: keep-alive
+

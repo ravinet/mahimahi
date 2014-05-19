@@ -1,0 +1,37 @@
+PHTTP199.27.72.166"©
+èGET /bh/rtset?pid=557477&ev=&rurl=http%3A%2F%2Fs.amazon-adsystem.com%2Fecm3%3Fid%3D%25%25ENCRYPTED_VGUID%25%25%26ex%3Dpulsepoint.com HTTP/1.1
+Host: bh.contextweb.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*õ
+ HTTP/1.1 302 Moved Temporarily
+Server: GlassFish v3
+[P3P: policyref="/bh/w3c/p3p.xml", CP="NOI DSP COR NID CURa DEVa PSAa OUR BUS COM NAV INT"
+cSet-Cookie: V=1a5mdUim3ldH; Domain=.contextweb.com; Expires=Sat, 14-Mar-2015 19:58:03 GMT; Path=/
+CW-Server: lga-app606
+7Cache-Control: private, max-age=0, no-cache, no-store
+Expires: -1
+YLocation: http://s.amazon-adsystem.com/ecm3?id=RDh1p60DFNU5rxvzCAdAnQ&ex=pulsepoint.com
+,Content-Type: text/html;charset=ISO-8859-1
+Content-Language: en-US
+fSet-Cookie: sto-id-bh=EMAMMJAK; Domain=contextweb.com; Expires=Sat, 16-Mar-2024 19:58:03 GMT; Path=/
+Content-Length: 231
+Accept-Ranges: bytes
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Via: 1.1 varnish
+Connection: keep-alive
+X-Served-By: cache-v41-ASH
+X-Cache: MISS
+X-Cache-Hits: 0
+È
+<html>
+<head><title>Document moved</title></head>
+<body><h1>Document moved</h1>
+This document has moved <a href="http://s.amazon-adsystem.com/ecm3?id=RDh1p60DFNU5rxvzCAdAnQ&amp;ex=pulsepoint.com">here</a>.<p>
+</body>
+</html>

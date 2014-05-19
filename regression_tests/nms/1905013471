@@ -1,0 +1,26 @@
+PHTTP128.30.76.82"¦
+GET /favicon.ico HTTP/1.1
+Host: nms.csail.mit.edu
+Connection: keep-alive
+Accept: */*
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*å
+HTTP/1.1 404 Not Found
+%Date: Mon, 19 May 2014 19:14:54 GMT
+Server: Apache/2.2.2 (Fedora)
+Content-Length: 291
+Connection: close
+-Content-Type: text/html; charset=iso-8859-1
+¥
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>The requested URL /favicon.ico was not found on this server.</p>
+<hr>
+<address>Apache/2.2.2 (Fedora) Server at nms.csail.mit.edu Port 80</address>
+</body></html>

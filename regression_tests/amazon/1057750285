@@ -1,0 +1,21 @@
+PHTTP72.21.203.13"Û
+‹
+GET /1/batch/1/OE/ATVPDKIKX0DER:181-8144377-9392865:1AJT35DDXQVRCJCPDYXH:www.amazon.com$cel=j:%7B%22k%22%3A%22mso%22%2C%22n%22%3A%22features%20module%22%2C%22t%22%3A1367%7D:1367,j:%7B%22w%22%3A1920%2C%22aw%22%3A1920%2C%22h%22%3A1200%2C%22ah%22%3A1152%2C%22cd%22%3A24%2C%22pd%22%3A24%2C%22t%22%3A1377%2C%22k%22%3A%22sci%22%7D:1377,j:%7B%22w%22%3A1905%2C%22h%22%3A2459%2C%22t%22%3A1377%2C%22k%22%3A%22doi%22%7D:1377,j:%7B%22w%22%3A1905%2C%22h%22%3A1090%2C%22x%22%3A0%2C%22y%22%3A0%2C%22t%22%3A1378%2C%22k%22%3A%22vpi%22%7D:1378,j:%7B%22n%22%3A%22DAr2%22%2C%22w%22%3A300%2C%22h%22%3A280%2C%22d%22%3A0%2C%22x%22%3A1597%2C%22y%22%3A212%2C%22z%22%3A0%2C%22t%22%3A1479%2C%22k%22%3A%22ewi%22%2C%22cl%22%3A%22arid-1f5cfaf9fc354f1685e6c8381824c704%22%7D:1604,j:%7B%22n%22%3A%22DAr7%22%2C%22w%22%3A300%2C%22h%22%3A280%2C%22d%22%3A0%2C%22x%22%3A1597%2C%22y%22%3A1082%2C%22z%22%3A0%2C%22t%22%3A1479%2C%22k%22%3A%22ewi%22%2C%22cl%22%3A%22arid-301878fbefdc4a7ea91496a7aa3689ac%22%7D:1604&uedata=s:%2Fuedata%2Fnvp%2Funsticky%2F181-8144377-9392865%2FGateway%2Fntpoffrw%3Fld%26v%3D33%26id%3D1AJT35DDXQVRCJCPDYXH%26ctb%3D1%26sc0%3DDAr7%26bb0%3D158%26af0%3D1375%26be0%3D1419%26cf0%3D1524%26pc0%3D1727%26ld0%3D1727%26t0%3D1395259083832%26pty%3DGateway%26spty%3Dgateway-three-column%26pti%3D507846:1727 HTTP/1.1
+Host: fls-na.amazon.com
+Connection: keep-alive
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+Origin: http://www.amazon.com
+Accept: */*
+!Referer: http://www.amazon.com/
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*Ý
+HTTP/1.1 204 No Content
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Server: Server
+8x-amzn-RequestId: c8131a3d-afa0-11e3-b05b-8be2de130122
+ Access-Control-Allow-Origin: *
+Vary: User-Agent
+Content-Length: 0
+

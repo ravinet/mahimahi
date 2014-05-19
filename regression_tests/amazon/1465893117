@@ -1,0 +1,21 @@
+PHTTP69.172.216.58"‚
+GET /skeleton.js HTTP/1.1
+"Host: static.adsafeprotected.com
+Connection: keep-alive
+Accept: */*
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+QReferer: http://www.amazon.com/aan/2009-09-09/static/amazon/iframeproxy-36.html
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*ƒ
+HTTP/1.1 200 OK
+Server: nginx/1.2.0
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+(Content-Type: application/x-javascript
+Content-Length: 17
+.Last-Modified: Thu, 02 Jan 2014 17:24:17 GMT
+Connection: close
+Accept-Ranges: bytes
+
+"ad placeholder";

@@ -1,0 +1,6 @@
+nms is nms.csail.mit.edu and has three objects (/, favicon, nms_logo)
+All objects are on the same server (so its a good way to test deadlocking on bulk thread)
+
+
+amazon is a large site but is good test because it requires you to be pending on other threads (objects are pending while bulk response is being parsed on another thread)
+so it tests conditon variables well. 

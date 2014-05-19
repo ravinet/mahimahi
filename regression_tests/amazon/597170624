@@ -1,0 +1,35 @@
+PHTTP
+18.7.20.68"´
+˜GET /AdServer/usersync/usersync.html?predirect=http%3A%2F%2Fs.amazon-adsystem.com%2Fecm3%3Fid%3DPM_UID%26ex%3Dpubmatic.com&userIdMacro=PM_UID HTTP/1.1
+Host: image5.pubmatic.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*£
+ HTTP/1.1 302 Moved Temporarily
+SServer: Apache/2.2.24 (Unix) mod_ssl/2.2.24 OpenSSL/1.0.1e-fips mod_fastcgi/2.4.6
+Content-Length: 153
+Content-Type: text/html
+eLocation: http://s.amazon-adsystem.com/ecm3?id=B923E2F3-612E-47EC-9E6D-4BB36D1217A9&ex=pubmatic.com
+†Set-Cookie: KADUSERCOOKIE=B923E2F3-612E-47EC-9E6D-4BB36D1217A9; expires=Fri, 18 Mar 2016 19:58:03 GMT; path=/; domain=.pubmatic.com;
+#ETag: "1401593-cde-4e5b8598d0580"
+Vary: Accept-Encoding
+}P3P: CP="NOI DSP COR LAW CUR ADMo DEVo TAIo PSAo PSDo IVAo IVDo HISo OTPo OUR SAMo BUS UNI COM NAV INT DEM CNT STA PRE LOC"
+(Expires: Wed, 19 Mar 2014 19:58:03 GMT
+.Cache-Control: max-age=0, no-cache, no-store
+Pragma: no-cache
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Connection: keep-alive
+›
+<HTML>
+<HEAD>
+<TITLE>Error Page</TITLE>
+</HEAD>
+<BODY>
+An error (302 Moved Temporarily) has occured in response to this request.
+</BODY>
+</HTML>

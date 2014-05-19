@@ -1,0 +1,31 @@
+PHTTP173.194.46.121"®
+@GET /pixel?google_nid=a9&google_cm&ex=doubleclick.net HTTP/1.1
+Host: cm.g.doubleclick.net
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+{Referer: http://s.amazon-adsystem.com/v3/pr?a=cm&exlist=fb_g_y_am_rb_ox_an_pm_adconductor_pp&ex-pl=VBfR9uBgRUaxXVN2maC3VA
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+PCookie: id=22001289e20200cc||t=1395259083|et=730|cs=002213fd48d7794a304c98b966
+
+*¥
+HTTP/1.1 302 Found
+¥P3P: policyref="http://googleads.g.doubleclick.net/pagead/gcn_p3p_.xml", CP="CURa ADMa DEVa TAIo PSAo PSDo OUR IND UNI PUR INT DEM STA PRE COM NAV OTC NOI DSP COR"
+uLocation: http://s.amazon-adsystem.com/ecm3?ex=doubleclick.net&google_gid=CAESEHJ3S1-cBHolJoKrVMv2BWQ&google_cver=1
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Pragma: no-cache
+(Expires: Fri, 01 Jan 1990 00:00:00 GMT
+*Cache-Control: no-cache, must-revalidate
+(Content-Type: text/html; charset=UTF-8
+Server: HTTP server (unknown)
+Content-Length: 310
+!X-XSS-Protection: 1; mode=block
+Alternate-Protocol: 80:quic
+¸
+<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+<TITLE>302 Moved</TITLE></HEAD><BODY>
+<H1>302 Moved</H1>
+The document has moved
+<A HREF="http://s.amazon-adsystem.com/ecm3?ex=doubleclick.net&amp;google_gid=CAESEHJ3S1-cBHolJoKrVMv2BWQ&amp;google_cver=1">here</A>.
+</BODY></HTML>

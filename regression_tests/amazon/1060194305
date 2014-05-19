@@ -1,0 +1,19 @@
+PHTTP69.172.216.55"È
+áGET /rfw/st/22615/1765241/skeleton.js?adsafe_url=http%3A%2F%2Fwww.amazon.com%2F&adsafe_type=abeq&adsafe_url=http%3A%2F%2Fwww.amazon.com%2Faan%2F2009-09-09%2Fstatic%2Famazon%2Fiframeproxy-36.html&adsafe_type=f&adsafe_url=http%3A%2F%2Fwww.amazon.com%2Faan%2F2009-09-09%2Fstatic%2Famazon%2Fiframeproxy-36.html%23zus%26cbDAr7%26iDAr7%26r1%26v1&adsafe_type=d&adsafe_jsinfo=,c:7jSyNN,sl:outOfView,em:true,fr:true,pt:1-5-15,wc:0.0.1920.1090,ac:1597.1082.301.250,am:i,cc:0.0.301.250,piv:3,obst:na,th:0,reas:l,br:c,fv:11.9.900,bv:na,dm:na,abv:na,id:c7d833fa-afa0-11e3-b611-00259069bad6,fm:oyZeVj5+111|12|13|14|15*.22615-1765241|151,rpx:0,fc:0,rt:0,cb:0,np:1,uf:0,tt:jss,et:21,uid:4241694cbb9a04f39c2710130e7568,v:7.1.3,sp:0,ct:224,ov:0 HTTP/1.1
+!Host: pixel.adsafeprotected.com
+Connection: keep-alive
+Accept: */*
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+QReferer: http://www.amazon.com/aan/2009-09-09/static/amazon/iframeproxy-36.html
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+
+*ì
+ HTTP/1.1 302 Moved Temporarily
+Server: nginx/1.2.0
+%Date: Wed, 19 Mar 2014 19:58:03 GMT
+Content-Length: 0
+Connection: close
+9Location: http://static.adsafeprotected.com/skeleton.js
+!X-Server-Name: app16.303net.pvt
+
