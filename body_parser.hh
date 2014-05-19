@@ -19,14 +19,14 @@ class Rule5BodyParser : public BodyParser
 {
 public:
     /* all of buffer always belongs to body */
-    std::string::size_type read( const std::string & ) override
+    std::string::size_type read( const std::string & )
     {
         return std::string::npos;
     }
 
     /* does message become complete upon EOF in body? */
     /* when there was no content-length header on a response, answer is yes */
-    bool eof( void ) override
+    bool eof( void )
     {
         return true;
     }

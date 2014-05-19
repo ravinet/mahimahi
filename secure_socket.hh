@@ -37,11 +37,11 @@ public:
 
     void check_server_certificate( void );
 
-    std::string read( void ) override;
+    std::string read( void );
 
-    void write( const std::string & message ) override;
+    void write( const std::string & message );
 
-    FileDescriptor & fd( void ) override { return underlying_socket.fd(); }
+    FileDescriptor & fd( void ) { return underlying_socket.fd(); }
 
     Socket & sock( void ) { return underlying_socket; }
 };
