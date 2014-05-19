@@ -20,7 +20,7 @@ private:
     Address nameserver_;
     TunDevice egress_tun_;
     std::unique_ptr<DNSProxy> dns_outside_;
-    NAT nat_rule_ {};
+    NAT nat_rule_;
 
     std::pair<FileDescriptor, FileDescriptor> pipe_;
 

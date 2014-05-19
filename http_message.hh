@@ -21,7 +21,7 @@ private:
     /* first member of pair specifies whether body size is known in advance,
        and second member is size (if known in advance) */
     /* this is calculated by calculate_expected_body_size() */
-    std::pair< bool, size_t > expected_body_size_ { false, -1 };
+    std::pair< bool, size_t > expected_body_size_;
 
     /* calculating the body size must be implemented by request or response */
     virtual void calculate_expected_body_size( void ) = 0;
@@ -34,22 +34,22 @@ private:
 
 protected:
     /* request line or status line */
-    std::string first_line_ {};
+    std::string first_line_;
 
     /* request/response headers */
-    std::vector< HTTPHeader > headers_ {};
+    std::vector< HTTPHeader > headers_;
 
     /* body may be empty */
-    std::string body_ {};
+    std::string body_;
 
     /* state of an in-progress request or response */
-    HTTPMessageState state_ { FIRST_LINE_PENDING };
+    HTTPMessageState state_;
 
     /* used by subclasses to set the expected body size */
     void set_expected_body_size( const bool is_known, const size_t value = -1 );
 
 public:
-    HTTPMessage() {}
+    HTTPMessage() : expected_body_size_( { false, -1 } ), first_line_(), headers_(), body_(), state_( FIRST_LINE_PENDING ) {}
 
     /* methods called by an external parser */
     void set_first_line( const std::string & str );

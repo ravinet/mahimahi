@@ -13,12 +13,12 @@ private:
                                             const std::string & needle,
                                             std::string::size_type input_size);
     uint32_t get_chunk_size(const std::string & chunk_hdr) const;
-    std::string parser_buffer_ {""};
-    uint32_t current_chunk_size_ {0};
-    std::string::size_type acked_so_far_ {0};
-    std::string::size_type parsed_so_far_ {0};
-    enum {CHUNK_HDR, CHUNK, TRAILER} state_ {CHUNK_HDR};
-    const bool trailers_enabled_ {false};
+    std::string parser_buffer_;
+    uint32_t current_chunk_size_;
+    std::string::size_type acked_so_far_;
+    std::string::size_type parsed_so_far_;
+    enum {CHUNK_HDR, CHUNK, TRAILER} state_;
+    const bool trailers_enabled_;
 
 public:
     std::string::size_type read( const std::string & );
@@ -26,7 +26,7 @@ public:
     /* Follow item 2, Section 4.4 of RFC 2616 */
     bool eof( void ) { return true; };
 
-    ChunkedBodyParser(bool t_trailers_enabled) : trailers_enabled_( t_trailers_enabled ) {};
+    ChunkedBodyParser(bool t_trailers_enabled = false) : parser_buffer_(), current_chunk_size_( 0 ), acked_so_far_( 0 ), parsed_so_far_( 0 ), state_( CHUNK_HDR ), trailers_enabled_( t_trailers_enabled ) {};
 };
 
 #endif /* CHUNKED_BODY_PARSER_HH */

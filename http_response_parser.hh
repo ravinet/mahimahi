@@ -11,11 +11,12 @@ class HTTPResponseParser : public HTTPMessageSequence<HTTPResponse>
 {
 private:
     /* Need this to handle RFC 2616 section 4.4 rule 1 */
-    std::queue< bool > requests_were_head_ {};
+    std::queue< bool > requests_were_head_;
 
     void initialize_new_message( void );
 
 public:
+    HTTPResponseParser() : requests_were_head_() {}
     void new_request_arrived( const HTTPRequest & request );
 };
 

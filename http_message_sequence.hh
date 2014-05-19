@@ -15,7 +15,7 @@ private:
     class InternalBuffer
     {
     private:
-        std::string buffer_ {};
+        std::string buffer_;
     
     public:
         bool have_complete_line( void ) const;
@@ -29,13 +29,15 @@ private:
         void append( const std::string & str ) { buffer_.append( str ); }
 
         const std::string & str( void ) const { return buffer_; }
+
+        InternalBuffer() : buffer_() {}
     };
 
     /* bytes that haven't been parsed yet */
-    InternalBuffer buffer_ {};
+    InternalBuffer buffer_;
 
     /* complete messages ready to go */
-    std::queue< MessageType > complete_messages_ {};
+    std::queue< MessageType > complete_messages_;
 
     /* one loop through the parser */
     /* returns whether to continue */
@@ -47,10 +49,10 @@ private:
 
 protected:
     /* the current message we're working on */
-    MessageType message_in_progress_ {};
+    MessageType message_in_progress_;
 
 public:
-    HTTPMessageSequence() {}
+    HTTPMessageSequence() : buffer_(), complete_messages_(), message_in_progress_() {}
 
     /* must accept all of buf */
     void parse( const std::string & buf );

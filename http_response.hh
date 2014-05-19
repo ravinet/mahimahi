@@ -13,16 +13,17 @@ class HTTPResponse : public HTTPMessage
 private:
     std::string status_code( void ) const;
 
-    bool request_was_head_ { false };
+    bool request_was_head_;
 
     /* required methods */
     void calculate_expected_body_size( void );
     size_t read_in_complex_body( const std::string & str );
     bool eof_in_body( void );
 
-    std::unique_ptr< BodyParser > body_parser_ { nullptr };
+    std::unique_ptr< BodyParser > body_parser_;
 
 public:
+    HTTPResponse() : request_was_head_( false ), body_parser_( nullptr ) {};
     void set_request_was_head( void );
 };
 
