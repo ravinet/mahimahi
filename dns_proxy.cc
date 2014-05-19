@@ -35,7 +35,7 @@ void DNSProxy::handle_udp( void )
                 Poller poller;
 
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
-                                                   [&] () {
+                                                   [&] () -> ResultType {
                                                        udp_listener_.sendto( request.first,
                                                                              dns_server.read() );
                                                        return ResultType::Continue;
@@ -56,7 +56,7 @@ void DNSProxy::handle_udp( void )
 void DNSProxy::handle_tcp( void )
 {
     /* start a new thread to handle request/reply */
-    thread newthread( [&] ( Socket client ) {
+    thread newthread( [&] ( Socket client ) -> void {
             try {
                 /* connect to DNS server */
                 Socket dns_server( TCP );
@@ -76,11 +76,11 @@ void DNSProxy::handle_tcp( void )
                                                    from_client.space_available ) );
 
                 poller.add_action( Poller::Action( dns_server.fd(), Direction::Out,
-                                                   [&] () { from_client.pop( dns_server.fd() ); return ResultType::Continue; },
+                                                   [&] () -> ResultType { from_client.pop( dns_server.fd() ); return ResultType::Continue; },
                                                    from_client.non_empty ) );
 
                 poller.add_action( Poller::Action( client.fd(), Direction::Out,
-                                                   [&] () { from_server.pop( client.fd() ); return ResultType::Continue; },
+                                                   [&] () -> ResultType { from_server.pop( client.fd() ); return ResultType::Continue; },
                                                    from_server.non_empty ) );
 
                 while( true ) {

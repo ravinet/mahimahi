@@ -37,7 +37,7 @@ void run( const vector< string > & command )
     argv.push_back( 0 ); /* null-terminate */
 
     /* run with empty environment */
-    ChildProcess command_process( [&] () {
+    ChildProcess command_process( [&] () -> int {
             SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
             return EXIT_FAILURE;
         } );

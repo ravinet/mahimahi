@@ -79,7 +79,7 @@ int main( int argc, char *argv[] )
         DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );
 
         /* Fork */
-        ChildProcess container_process( [&]() {
+        ChildProcess container_process( [&]() -> int {
                 /* bring up localhost */
                 interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
                                  [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
@@ -92,7 +92,7 @@ int main( int argc, char *argv[] )
                 /* Fork again after dropping root privileges */
                 drop_privileges();
 
-                ChildProcess bash_process( [&]() {
+                ChildProcess bash_process( [&]() -> int {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
                         prepend_shell_prefix( "[record] " );
@@ -109,7 +109,7 @@ int main( int argc, char *argv[] )
         run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
 
         /* bring up ingress */
-        in_network_namespace( container_process.pid(), [&] () {
+        in_network_namespace( container_process.pid(), [&] () -> void {
                 /* bring up veth device */
                 assign_address( ingress_name, ingress_addr, egress_addr );
 
@@ -124,7 +124,7 @@ int main( int argc, char *argv[] )
                 SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
             } );
 
-        ChildProcess recordr_process( [&]() {
+        ChildProcess recordr_process( [&]() -> int {
                 drop_privileges();
 
                 /* check if user-specified storage folder exists, and if not, create it */
@@ -169,13 +169,13 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
 
     if ( dns_proxy ) {
         poller.add_action( Poller::Action( dns_proxy->udp_listener().fd(), Direction::In,
-                                           [&] () {
+                                           [&] () -> ResultType {
                                                dns_proxy->handle_udp();
                                                return ResultType::Continue;
                                            } ) );
 
         poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
+                                           [&] () -> ResultType {
                                                dns_proxy->handle_tcp();
                                                return ResultType::Continue;
                                            } ) );
@@ -183,7 +183,7 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
 
     if ( http_proxy ) {
         poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
+                                           [&] () -> ResultType {
                                                http_proxy->handle_tcp();
                                                return ResultType::Continue;
                                            } ) );

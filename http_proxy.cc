@@ -84,7 +84,7 @@ void HTTPProxy::handle_tcp( void )
                 /* poll on original connect socket and new connection socket to ferry packets */
                 /* responses from server go to response parser */
                 poller.add_action( Poller::Action( server_rw->fd(), Direction::In,
-                                                   [&] () {
+                                                   [&] () -> ResultType {
                                                        string buffer = server_rw->read();
                                                        response_parser.parse( buffer );
                                                        return ResultType::Continue;
@@ -93,7 +93,7 @@ void HTTPProxy::handle_tcp( void )
 
                 /* requests from client go to request parser */
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::In,
-                                                   [&] () {
+                                                   [&] () -> ResultType {
                                                        string buffer = client_rw->read();
                                                        request_parser.parse( buffer );
                                                        return ResultType::Continue;
@@ -102,7 +102,7 @@ void HTTPProxy::handle_tcp( void )
 
                 /* completed requests from client are serialized and sent to server */
                 poller.add_action( Poller::Action( server_rw->fd(), Direction::Out,
-                                                   [&] () {
+                                                   [&] () -> ResultType {
                                                        server_rw->write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
 
@@ -116,7 +116,7 @@ void HTTPProxy::handle_tcp( void )
 
                 /* completed responses from server are serialized and sent to client */
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
-                                                   [&] () {
+                                                   [&] () -> ResultType {
                                                        client_rw->write( response_parser.front().str() );
                                                        reqres_to_protobuf( current_pair, response_parser.front() );
                                                        response_parser.pop();

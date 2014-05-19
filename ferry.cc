@@ -39,21 +39,21 @@ int packet_ferry( FerryType & ferry,
 
     /* tun device gets datagram -> read it -> give to ferry */
     poller.add_action( Poller::Action( tun, Direction::In,
-                                       [&] () {
+                                       [&] () -> ResultType {
                                            ferry.read_packet( tun.read() );
                                            return ResultType::Continue;
                                        } ) );
 
     /* we get datagram from sibling process -> write it to tun device */
     poller.add_action( Poller::Action( sibling_fd, Direction::In,
-                                       [&] () {
+                                       [&] () -> ResultType {
                                            tun.write( sibling_fd.read() );
                                            return ResultType::Continue;
                                        } ) );
 
     /* ferry ready to write datagram -> send to sibling process */
     poller.add_action( Poller::Action( sibling_fd, Direction::Out,
-                                       [&] () {
+                                       [&] () -> ResultType {
                                            ferry.write_packets( sibling_fd );
                                            return ResultType::Continue;
                                        },
@@ -69,13 +69,13 @@ int packet_ferry( FerryType & ferry,
     /* add dns proxy TCP and UDP sockets */
     if ( dns_proxy ) {
         poller.add_action( Poller::Action( dns_proxy->udp_listener().fd(), Direction::In,
-                                           [&] () {
+                                           [&] () -> ResultType {
                                                dns_proxy->handle_udp();
                                                return ResultType::Continue;
                                            } ) );
 
         poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
+                                           [&] () -> ResultType {
                                                dns_proxy->handle_tcp();
                                                return ResultType::Continue;
                                            } ) );

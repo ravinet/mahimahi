@@ -47,7 +47,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                                   forward<Targs>( Fargs )... );
 
     /* Fork */
-    child_processes_.emplace_back( [&]() {
+    child_processes_.emplace_back( [&]() -> int {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -73,7 +73,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
             /* Fork again after dropping root privileges */
             drop_privileges();
 
-            ChildProcess bash_process( [&]() {
+            ChildProcess bash_process( [&]() -> int {
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
@@ -95,7 +95,7 @@ void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
     auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
                                   forward<Targs>( Fargs )... );
 
-    child_processes_.emplace_back( [&] () {
+    child_processes_.emplace_back( [&] () -> int {
             drop_privileges();
 
             FerryType downlink_queue = ferry_maker();

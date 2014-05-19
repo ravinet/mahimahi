@@ -153,14 +153,14 @@ int main( int argc, char *argv[] )
         }
 
         /* start dnsmasq to listen on 0.0.0.0:53 */
-        child_processes.emplace_back( [&] () {
+        child_processes.emplace_back( [&] () -> int {
                 SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
                                             "-H", dnsmasq_hosts.name().c_str(),
                                             static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
         }, false, SIGTERM );
 
-        child_processes.emplace_back( [&]() {
+        child_processes.emplace_back( [&]() -> int {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
