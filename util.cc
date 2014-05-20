@@ -25,7 +25,7 @@ string shell_path( void )
 {
     passwd *pw = getpwuid( getuid() );
     if ( pw == nullptr ) {
-        throw Exception( "getpwuid" );
+        throw Exception( annotate_exception( "getpwuid" ) );
     }
 
     string shell_path( pw->pw_shell );
@@ -44,24 +44,24 @@ void drop_privileges( void ) {
     /* change real group id if necessary */
     if ( real_gid != eff_gid ) {
         if ( setregid( real_gid, real_gid ) == -1 ) {
-            throw Exception( "setregid" );
+            throw Exception( annotate_exception( "setregid" ) );
         }
     }
 
     /* change real user id if necessary */
     if ( real_uid != eff_uid ) {
         if ( setreuid( real_uid, real_uid ) == -1 ) {
-            throw Exception( "setreuid" );
+            throw Exception( annotate_exception( "setreuid" ) );
         }
     }
 
     /* verify that the changes were successful. if not, abort */
     if ( real_gid != eff_gid && ( setegid( eff_gid ) != -1 || getegid( ) != real_gid ) ) {
-        throw Exception( "drop_privileges", "dropping gid failed" );
+        throw Exception( annotate_exception( "drop_privileges" ), "dropping gid failed" );
     }
 
     if ( real_uid != eff_uid && ( seteuid( eff_uid ) != -1 || geteuid( ) != real_uid ) ) {
-        throw Exception( "drop_privileges", "dropping uid failed" );
+        throw Exception( annotate_exception( "drop_privileges" ), "dropping uid failed" );
     }
 }
 
@@ -69,7 +69,7 @@ void check_requirements( const int argc, const char * const argv[] )
 {
     if ( argc <= 0 ) {
         /* really crazy user */
-        throw Exception( "missing argv[ 0 ]", "argc <= 0" );
+        throw Exception( annotate_exception( "missing argv[ 0 ]" ), "argc <= 0" );
     }
 
     /* verify normal fds are present (stderr hasn't been closed) */
@@ -77,18 +77,18 @@ void check_requirements( const int argc, const char * const argv[] )
 
     /* verify running as euid root, but not ruid root */
     if ( geteuid() != 0 ) {
-        throw Exception( argv[ 0 ], "needs to be installed setuid root" );
+        throw Exception( annotate_exception( argv[ 0 ] ), "needs to be installed setuid root" );
     }
 
     if ( (getuid() == 0) || (getgid() == 0) ) {
-        throw Exception( argv[ 0 ], "please run as non-root" );
+        throw Exception( annotate_exception( argv[ 0 ] ), "please run as non-root" );
     }
 
     /* verify IP forwarding is enabled */
     FileDescriptor ipf( SystemCall( "open /proc/sys/net/ipv4/ip_forward",
                                     open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ) ) );
     if ( ipf.read() != "1\n" ) {
-        throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
+        throw Exception( annotate_exception( argv[ 0 ] ), "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }
 }
 
@@ -100,7 +100,7 @@ bool check_folder_existence( const string & directory )
     if ( !stat( directory.c_str(), &sb ) == 0 or !S_ISDIR( sb.st_mode ) )
     {
         if ( errno != ENOENT ) { /* error is not that directory does not exist */
-            throw Exception( "stat" );
+            throw Exception( annotate_exception( "stat" ) );
         }
         return false;
     }
@@ -117,7 +117,7 @@ void check_storage_folder( const string & directory )
         /* make directory where user has all permissions */
         SystemCall( "mkdir", mkdir( directory.c_str(), 00700 ) );
     } else { /* directory already exists */
-        throw Exception( "recordshell", "directory already exists" );
+        throw Exception( annotate_exception( "recordshell" ), "directory already exists" );
     }
 }
 
@@ -180,7 +180,7 @@ Result handle_signal( const signalfd_siginfo & sig,
 
                     if ( x.terminated() ) {
                         if ( x.died_on_signal() ) {
-                            throw Exception( "process " + to_string( x.pid() ),
+                            throw Exception( annotate_exception( string( "process " + to_string( x.pid() ) ).c_str() ),
                                              "died on signal " + to_string( x.exit_status() ) );
                         } else {
                             return Result( ResultType::Exit, x.exit_status() );
@@ -195,7 +195,7 @@ Result handle_signal( const signalfd_siginfo & sig,
             }
 
             if ( not handled ) {
-                throw Exception( "SIGCHLD for unknown process" );
+                throw Exception( annotate_exception( "SIGCHLD for unknown process" ) );
             }
         }
 
@@ -206,7 +206,7 @@ Result handle_signal( const signalfd_siginfo & sig,
 
         return ResultType::Exit;
     default:
-        throw Exception( "unknown signal" );
+        throw Exception( annotate_exception( "unknown signal" ) );
     }
 
     return ResultType::Continue;
@@ -218,7 +218,7 @@ void list_files( const string & dir, vector< string > & files )
     struct dirent *dirp;
 
     if( ( dp  = opendir( dir.c_str() ) ) == NULL ) {
-        throw Exception( "opendir" );
+        throw Exception( annotate_exception( "opendir" ) );
     }
 
     while ( ( dirp = readdir( dp ) ) != NULL ) {
@@ -236,13 +236,13 @@ int SystemCall( const string & s_attempt, const int return_value )
     return return_value;
   }
 
-  throw Exception( s_attempt );
+  throw Exception( annotate_exception( s_attempt.c_str() ) );
 }
 
 void assert_not_root( void )
 {
     if ( ( getuid() == 0 ) or ( geteuid() == 0 )
          or ( getgid() == 0 ) or ( getegid() == 0 ) ) {
-        throw Exception( "BUG", "privileges not dropped in sensitive region" );
+        throw Exception( annotate_exception( "BUG" ), "privileges not dropped in sensitive region" );
     }
 }

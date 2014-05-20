@@ -70,7 +70,7 @@ void assign_address( const string & device_name, const Address & addr, const Add
 void name_check( const string & str )
 {
     if ( str.find( "veth-" ) != 0 ) {
-        throw Exception( str, "name of veth device must start with \"veth-\"" );
+        throw Exception( annotate_exception( str.c_str() ), "name of veth device must start with \"veth-\"" );
     }
 }
 

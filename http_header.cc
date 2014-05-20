@@ -19,7 +19,7 @@ HTTPHeader::HTTPHeader( const string & buf )
     size_t colon_location = buf.find( separator );
     if ( colon_location == std::string::npos ) {
         fprintf( stderr, "Buffer: %s\n", buf.c_str() );
-        throw Exception( "HTTPHeader", "buffer does not contain colon" ); 
+        throw Exception( annotate_exception( "HTTPHeader" ), "buffer does not contain colon" );
     }
 
     /* step 2: split buffer */

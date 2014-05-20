@@ -15,7 +15,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc != 3 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " uplink downlink" );
+            throw Exception( annotate_exception( "Usage" ), string( argv[ 0 ] ) + " uplink downlink" );
         }
 
         const std::string uplink_filename = argv[ 1 ];

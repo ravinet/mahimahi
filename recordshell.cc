@@ -40,7 +40,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
+            throw Exception( annotate_exception( "Usage" ), string( argv[ 0 ] ) + " folder_for_recorded_content" );
         }
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */

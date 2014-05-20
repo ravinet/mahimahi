@@ -75,7 +75,7 @@ string get_host( HTTP_Record::reqrespair & current_record )
             return current_header.value().substr( 0, current_header.value().find( "\r\n" ) );
         }
     }
-    throw Exception( "replayshell", "No Host Header in Recorded File" );
+    throw Exception( annotate_exception( "replayshell" ), "No Host Header in Recorded File" );
 }
 
 int main( int argc, char *argv[] )
@@ -89,7 +89,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
+            throw Exception( annotate_exception( "Usage" ), string( argv[ 0 ] ) + " folder_with_recorded_content" );
         }
 
         /* check if user-specified storage folder exists */
@@ -100,7 +100,7 @@ int main( int argc, char *argv[] )
         }
 
         if ( not check_folder_existence( directory ) ) { /* folder does not exist */
-            throw Exception( "replayshell", "folder with recorded content does not exist" );
+            throw Exception( annotate_exception( "replayshell" ), "folder with recorded content does not exist" );
         }
 
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );

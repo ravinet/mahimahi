@@ -158,10 +158,10 @@ void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, cons
         if ( current_pair.SerializeToString( &outputmessage ) ) {
             messages.write( outputmessage );
         } else {
-            throw Exception( "Protobuf", "Unable to serialize protobuf to string" );
+            throw Exception( annotate_exception( "Protobuf" ), "Unable to serialize protobuf to string" );
         }
     } else {
-        throw Exception( "Protobuf", "Response ready without Request" );
+        throw Exception( annotate_exception( "Protobuf" ), "Response ready without Request" );
     }
 
     /* clear current request/response pair */

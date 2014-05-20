@@ -23,28 +23,28 @@ SecureSocket::SecureSocket( Socket && sock, SSL_MODE type )
         ctx = SSL_CTX_new( TLSv1_server_method() );
 
         if ( SSL_CTX_use_certificate_ASN1( ctx, 678, certificate ) < 1 ) {
-            throw Exception( "SSL_CTX_use_certificate_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
+            throw Exception( annotate_exception( "SSL_CTX_use_certificate_ASN1" ), ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
         if ( SSL_CTX_use_RSAPrivateKey_ASN1( ctx, private_key, 1191 ) < 1 ) {
-            throw Exception( "SSL_CTX_use_RSAPrivateKey_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
+            throw Exception( annotate_exception( "SSL_CTX_use_RSAPrivateKey_ASN1" ), ERR_error_string( ERR_get_error(), nullptr ) );
         }
 
         /* check consistency of private key with loaded certificate */
         if ( SSL_CTX_check_private_key( ctx ) < 1 ) {
-            throw Exception( "SSL_CTX_check_private_key", ERR_error_string( ERR_get_error(), nullptr ) );
+            throw Exception( annotate_exception( "SSL_CTX_check_private_key" ), ERR_error_string( ERR_get_error(), nullptr ) );
         }
     }
     if ( ctx == NULL ) {
-        throw Exception( "SSL_CTX_new", ERR_error_string( ERR_get_error(), nullptr ) );
+        throw Exception( annotate_exception( "SSL_CTX_new" ), ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
     if ( (ssl_connection = SSL_new( ctx ) ) == NULL ) {
-        throw Exception( "SSL_new", ERR_error_string( ERR_get_error(), nullptr ) );
+        throw Exception( annotate_exception( "SSL_new" ), ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
     if ( SSL_set_fd( ssl_connection, underlying_socket.fd().num() ) < 1 ) {
-        throw Exception( "SSL_set_fd", ERR_error_string( ERR_get_error(), nullptr ) );
+        throw Exception( annotate_exception( "SSL_set_fd" ), ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
     /* enable read/write to return only after handshake/renegotiation and successful completion */
@@ -57,11 +57,11 @@ void SecureSocket::handshake( void )
 {
     if ( mode == CLIENT ) { /* client-initiate handshake */
         if ( SSL_connect( ssl_connection ) < 1 ) {
-            throw Exception( "SSL_connect", ERR_error_string( ERR_get_error(), nullptr ) );
+            throw Exception( annotate_exception( "SSL_connect" ), ERR_error_string( ERR_get_error(), nullptr ) );
         }
     } else { /* server-finish handshake */
         if ( SSL_accept( ssl_connection ) < 1 ) {
-            throw Exception( "SSL_accept", ERR_error_string( ERR_get_error(), nullptr ) );
+            throw Exception( annotate_exception( "SSL_accept" ), ERR_error_string( ERR_get_error(), nullptr ) );
         }
     }
 }
@@ -75,7 +75,7 @@ void SecureSocket::check_server_certificate( void )
     if ( SSL_get_verify_result( ssl_connection ) == X509_V_OK ) { /* verification succeeded of no certificate presented */
         X509_free( server_certificate );
     } else { /* verification failed */
-        throw Exception( "SSL_get_verify_result", ERR_error_string( SSL_get_verify_result( ssl_connection ), nullptr ) );
+        throw Exception( annotate_exception( "SSL_get_verify_result" ), ERR_error_string( SSL_get_verify_result( ssl_connection ), nullptr ) );
     }
 }
 
@@ -102,7 +102,7 @@ string SecureSocket::read( void )
         }
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
-        throw Exception( "SSL_read", ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
+        throw Exception( annotate_exception( "SSL_read" ), ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
     } else {
         /* success */
         return string( buffer, bytes_read );
@@ -115,6 +115,6 @@ void SecureSocket::write(const string & message )
     ssize_t bytes_written = SSL_write( ssl_connection, message.c_str(), message.length() );
 
     if ( bytes_written < 0 ) {
-        throw Exception( "SSL_write", ERR_error_string( SSL_get_error( ssl_connection, bytes_written ), nullptr ) );
+        throw Exception( annotate_exception( "SSL_write" ), ERR_error_string( SSL_get_error( ssl_connection, bytes_written ), nullptr ) );
     }
 }

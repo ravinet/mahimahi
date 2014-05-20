@@ -22,7 +22,7 @@ LinkQueue::LinkQueue( const std::string & filename )
     FileDescriptor trace_file( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
     FILE *f = fdopen( trace_file.num(), "r" );
     if ( f == nullptr ) {
-        throw Exception( "fopen" );
+        throw Exception( annotate_exception( "fopen" ) );
     }
 
     while ( true ) {
@@ -34,7 +34,7 @@ LinkQueue::LinkQueue( const std::string & filename )
 
         if ( not schedule_.empty() ) {
             if ( ms < schedule_.back() ) {
-                throw Exception( filename, "timestamps must be monotonically nondecreasing" );
+                throw Exception( annotate_exception( filename.c_str() ), "timestamps must be monotonically nondecreasing" );
             }
         }
 
@@ -42,7 +42,7 @@ LinkQueue::LinkQueue( const std::string & filename )
     }
 
     if ( schedule_.empty() ) {
-        throw Exception( filename, "no valid timestamps found" );
+        throw Exception( annotate_exception( filename.c_str() ), "no valid timestamps found" );
     }
 }
 
