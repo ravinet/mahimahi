@@ -48,7 +48,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
 
     /* Fork */
     child_processes_.emplace_back( [&]() -> int {
-            TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
+            TunDevice ingress_tun( "ingress", this->ingress_addr(), this->egress_addr() );
 
             /* bring up localhost */
             Socket ioctl_socket( UDP );
@@ -59,7 +59,7 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
             rtentry route;
             zero( route );
 
-            route.rt_gateway = egress_addr().raw_sockaddr();
+            route.rt_gateway = ( this->egress_addr() ).raw_sockaddr();
             route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
             route.rt_flags = RTF_UP | RTF_GATEWAY;
 
@@ -99,7 +99,7 @@ void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
             drop_privileges();
 
             FerryType downlink_queue = ferry_maker();
-            return packet_ferry( downlink_queue, egress_tun_.fd(),
+            return packet_ferry( downlink_queue, ( this->egress_tun_ ).fd(),
                                  pipe_.second, move( dns_outside_ ), {} );
         } );
 }
@@ -117,7 +117,7 @@ int PacketShell<FerryType>::wait_for_exit( void )
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {
                                            return handle_signal( signal_fd.read_signal(),
-                                                                 child_processes_ );
+                                                                 ( this->child_processes_ ) );
                                        } ) );
 
     while ( true ) {
