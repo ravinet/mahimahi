@@ -8,7 +8,7 @@ AC_CONFIG_SRCDIR([delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Add picky CXXFLAGS
-CPPFLAGS="-std=c++11 -pthread"
+CPPFLAGS="-std=c++0x -pthread"
 PICKY_CXXFLAGS="-pedantic -Wall -Wextra -Weffc++ -Werror -fno-default-inline"
 AC_SUBST([PICKY_CXXFLAGS])
 
