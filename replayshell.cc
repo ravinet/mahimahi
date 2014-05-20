@@ -128,7 +128,7 @@ int main( int argc, char *argv[] )
             HTTP_Record::reqrespair current_record;
             current_record.ParseFromFileDescriptor( response.num() );
             Address current_addr( current_record.ip(), current_record.port() );
-            auto result1 = unique_ips.emplace( current_addr.ip() );
+            auto result1 = unique_ips.insert( current_addr.ip() );
             if ( result1.second ) { /* new ip */
                 add_dummy_interface( "sharded" + to_string( interface_counter ), current_addr );
                 interface_counter++;
@@ -138,7 +138,7 @@ int main( int argc, char *argv[] )
             string entry_host = get_host( current_record );
             dnsmasq_hosts.write( current_addr.ip() + " " +entry_host + "\n" );
 
-            auto result2 = unique_addrs.emplace( current_addr );
+            auto result2 = unique_addrs.insert( current_addr );
             if ( result2.second ) { /* new address */
                 servers.emplace_back( current_addr, directory, user );
             }
