@@ -35,7 +35,7 @@ public:
     TempFile( TempFile && other );
 
     /* ... but not move assignment operator */
-    TempFile & operator=( TempFile && other ) = delete;
+    TempFile & operator=( TempFile && other );
 };
 
 #endif

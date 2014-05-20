@@ -30,7 +30,7 @@ public:
     WebServer( WebServer && other );
 
     /* ... but not move assignment operator */
-    WebServer & operator=( WebServer && other ) = delete;
+    WebServer & operator=( WebServer && other );
 };
 
 #endif

@@ -68,3 +68,13 @@ TempFile::TempFile( TempFile && other )
 {
     other.moved_away_ = true;
 }
+
+TempFile & TempFile::operator=( TempFile && other )
+{
+    mutable_temp_filename_ = other.mutable_temp_filename_;
+    fd_ = move( other.fd_ );
+    filename_ = other.filename_;
+    moved_away_ = false;
+    other.moved_away_ = true;
+    return *this;
+}

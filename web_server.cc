@@ -59,3 +59,13 @@ WebServer::WebServer( WebServer && other )
 {
     other.moved_away_ = true;
 }
+
+WebServer & WebServer::operator=( WebServer && other )
+{
+    config_file_ = move( other.config_file_ );
+    error_log_ = move( other.error_log_ );
+    access_log_ = move( other.access_log_ );
+    moved_away_ = false;
+    other.moved_away_ = true;
+    return *this;
+}

@@ -47,7 +47,7 @@ public:
     ChildProcess( ChildProcess && other );
 
     /* ... but not move assignment operator */
-    ChildProcess & operator=( ChildProcess && other ) = delete;
+    ChildProcess & operator=( ChildProcess && other );
 };
 
 #endif /* CHILD_PROCESS_HH */

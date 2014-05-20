@@ -24,6 +24,8 @@ private:
 
 public:
     HTTPResponse() : request_was_head_( false ), body_parser_( nullptr ) {};
+//    HTTPResponse( HTTPResponse && other ) : request_was_head_( other.request_was_head_ ), body_parser_( std::move( other.body_parser_ ) ) {}
+
     void set_request_was_head( void );
 };
 

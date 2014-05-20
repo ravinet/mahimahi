@@ -115,3 +115,18 @@ ChildProcess::ChildProcess( ChildProcess && other )
 
     other.moved_away_ = true;
 }
+
+/* move assignment */
+ChildProcess & ChildProcess::operator=( ChildProcess && other )
+{
+    pid_ = other.pid_;
+    running_ = other.running_;
+    terminated_ = other.terminated_;
+    exit_status_ = other.exit_status_;
+    died_on_signal_ = other.died_on_signal_;
+    graceful_termination_signal_ = other.graceful_termination_signal_;
+    moved_away_ = other.moved_away_;
+    assert( !other.moved_away_ );
+    other.moved_away_ = true;
+    return *this;
+}

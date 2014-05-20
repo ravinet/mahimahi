@@ -51,6 +51,15 @@ public:
         other.fd_ = -1; /* disable the other FileDescriptor */
     }
 
+    /* Move assignment */
+    FileDescriptor & operator=( FileDescriptor && other )
+    {
+        fd_ = other.fd_;
+        eof_ = other.eof_;
+        other.fd_ = -1; /* disable the other FileDescriptor */
+        return *this;
+    }
+
     void write( const std::string & buffer )
     {
         writeall( num(), buffer );
