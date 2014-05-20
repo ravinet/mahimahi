@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <thread>
+#include <future>
 #include <string>
 #include <iostream>
 #include <utility>
@@ -48,8 +49,15 @@ HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folde
 
 void HTTPProxy::handle_tcp( void )
 {
-    thread newthread( [&] ( Socket client ) {
+    /* For signaling */
+    std::promise<void> ready_promise;
+
+    thread newthread( [&] () {
             try {
+                /* Accept connection and signal that you are done */
+                Socket client( listener_socket_.accept() );
+                ready_promise.set_value();
+
                 /* get original destination for connection request */
                 Address original_destaddr = client.original_dest();
                 cout << "connection intended for: " << original_destaddr.ip() << endl;
@@ -135,7 +143,10 @@ void HTTPProxy::handle_tcp( void )
                 return;
             }
             return;
-        }, listener_socket_.accept() );
+        } );
+
+    /* block till you can accept */
+    ready_promise.get_future().wait();
 
     /* don't wait around for the reply */
     newthread.detach();

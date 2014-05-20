@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <thread>
+#include <future>
 
 #include "dns_proxy.hh"
 #include "poller.hh"
@@ -55,9 +56,16 @@ void DNSProxy::handle_udp( void )
 
 void DNSProxy::handle_tcp( void )
 {
+    /* For signaling */
+    std::promise<void> ready_promise;
+
     /* start a new thread to handle request/reply */
-    thread newthread( [&] ( Socket client ) -> void {
+    thread newthread( [&] () -> void {
             try {
+                /* Accept connection and signal that you are done */
+                Socket client( tcp_listener_.accept() );
+                ready_promise.set_value();
+
                 /* connect to DNS server */
                 Socket dns_server( TCP );
                 dns_server.connect( tcp_target_ );
@@ -93,7 +101,10 @@ void DNSProxy::handle_tcp( void )
                 return;
             }
             return;
-        }, tcp_listener_.accept() );
+        } );
+
+    /* block till you can accept */
+    ready_promise.get_future().wait();
 
     /* don't wait around for the reply */
     newthread.detach();
