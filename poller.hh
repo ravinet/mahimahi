@@ -26,7 +26,7 @@ public:
 
         typedef std::function<Result(void)> CallbackType;
 
-        FileDescriptor & fd;
+        std::reference_wrapper<FileDescriptor> fd;
         enum PollDirection : short { In = POLLIN, Out = POLLOUT } direction;
         CallbackType callback;
         std::function<bool(void)> when_interested;
