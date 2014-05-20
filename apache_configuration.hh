@@ -9,7 +9,7 @@
 
 std::string apache_main_config =
 "LoadModule dir_module " + std::string( MOD_DIR ) + "\n" +
-"LoadModule mpm_prefork_module " + std::string( MOD_MPM_PREFORK ) + "\n" +
+/* "LoadModule mpm_prefork_module " + std::string( MOD_MPM_PREFORK ) + "\n" + */
 "LoadModule mime_module " + std::string( MOD_MIME ) + "\n" +
 
 "<IfModule mod_mime.c>\n" +
@@ -17,13 +17,13 @@ std::string apache_main_config =
 "AddHandler cgi-script .cgi\n" +
 "</IfModule>\n" +
 
-"LoadModule authz_core_module " + std::string( MOD_AUTHZ_CORE ) + "\n" +
+/* "LoadModule authz_core_module " + std::string( MOD_AUTHZ_CORE ) + "\n" + */
 "LoadModule cgi_module " + std::string( MOD_CGI ) + "\n" +
 
 "<Directory " + std::string( EXEC_DIR ) + ">\n" +
 "AllowOverride None\n" +
 "Options +ExecCGI\n" +
-"Require all granted\n" +
+"Allow from all\n" +
 "</Directory>\n" +
 
 "LoadModule rewrite_module " + std::string( MOD_REWRITE ) + "\n" +

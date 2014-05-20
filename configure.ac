@@ -54,20 +54,10 @@ AC_CHECK_FILE([/usr/lib/apache2/modules/mod_dir.so], [],
 
 AC_DEFINE_UNQUOTED([MOD_DIR], ["/usr/lib/apache2/modules/mod_dir.so"], [path to apache2 mod_dir])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mpm_prefork.so], [],
-              [AC_MSG_ERROR([apache2 mod_mpm_prefork.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["/usr/lib/apache2/modules/mod_mpm_prefork.so"], [path to apache2 mod_mpm_prefork])
-
 AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mime.so], [],
               [AC_MSG_ERROR([apache2 mod_mime.so is required])])
 
 AC_DEFINE_UNQUOTED([MOD_MIME], ["/usr/lib/apache2/modules/mod_mime.so"], [path to apache2 mod_mime])
-
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_authz_core.so], [],
-              [AC_MSG_ERROR([apache2 mod_authz_core.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/apache2/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
 
 AC_CHECK_FILE([/usr/lib/apache2/modules/mod_cgi.so], [],
               [AC_MSG_ERROR([apache2 mod_cgi.so is required])])
