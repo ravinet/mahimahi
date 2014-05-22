@@ -1,0 +1,19 @@
+HTTP with no delay
+
+Back End: 15
+Front End: 39
+Network Latency (just before request to end of response): 7
+Page load after page is received from server: 35
+Send a request and receive response: 5
+Entire process (navigation and page load): 54
+
+
+
+HTTP with delay
+
+Back End: 470
+Front End: 163
+Network Latency (just before request to end of response): 611
+Page load after page is received from server: 10
+Send a request and receive response: 307
+Entire process (navigation and page load): 633

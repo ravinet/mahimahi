@@ -1,0 +1,358 @@
+PHTTP128.30.76.82"ü
+GET / HTTP/1.1
+Host: nms.csail.mit.edu
+Connection: keep-alive
+TAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+vUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36
+$Accept-Encoding: gzip,deflate,sdch
+!Accept-Language: en-US,en;q=0.8
+—Cookie: __utma=242276382.1982820219.1389999181.1391181027.1399137569.4; __utmz=242276382.1389999181.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
+
+*¥a
+HTTP/1.1 200 OK
+%Date: Thu, 22 May 2014 14:46:03 GMT
+Server: Apache/2.2.2 (Fedora)
+X-Powered-By: PHP/5.1.6
+Connection: close
+Transfer-Encoding: chunked
+(Content-Type: text/html; charset=UTF-8
+Ï_
+209a
+<HTML>
+
+<HEAD>
+<TITLE>Networks and Mobile Systems</TITLE>
+</HEAD>
+
+<body bgcolor="white">
+<center>
+<img src="nms_logo.jpg" height=167><br>
+</center>
+
+<center>
+<br><h1><font face = "Trebuchet MS"><font color="#FF0000">Networks</font> and <font color="#009900">Mobile</font> <font color="#3333FF">Systems</font></h1><br>
+</center>
+
+<center>
+<table align="center">
+   <tbody>
+	<tr>
+            <td align="Right"><font face = "Trebuchet MS"><a href="#overview"><b>overview</b></a></td>
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left" valign="Top"><font face = "Trebuchet MS">
+Elevator pitch<a href="papers.html"><br></a></td>
+        </tr>
+
+         <tr>
+            <td align="Right"><b><font face = "Trebuchet MS">
+<a href="#projects">projects</a></b></td>
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left"><font face = "Trebuchet MS">Projects</td>
+         </tr>
+
+	<tr>
+            <td align="Right"><font face = "Trebuchet MS">
+<a href="http://nms.csail.mit.edu/people/"><b>people</b></a></td>            
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left"><font face = "Trebuchet MS">
+Who are we?</td>
+         </tr>
+
+	<tr>
+            <td align="Right"><font face = "Trebuchet MS">
+<a href="papers/index.php"><b>publications</b></a></td>            
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left"><font face = "Trebuchet MS">
+NMS Papers</td>
+         </tr>
+
+         <tr>
+            <td align="Right"><b><font face = "Trebuchet MS">
+ <a href="software/index.php">software</a></b></td>
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left" width=50%><font face = "Trebuchet MS">
+Software and hardware releases from the NMS group</td>
+         </tr>
+
+         <tr>
+            <td align="Right"><font face = "Trebuchet MS">
+<b><a href="support/support.php">support</a></b></td>
+            <td align="Center"><font face = "Trebuchet MS">
+-</td>
+            <td align="Left"><font face = "Trebuchet MS">
+Who sponsors NMS?</td>            
+         </tr>
+        </tbody>  
+      </table>
+         
+</center>
+<hr>  
+
+<font face = "Trebuchet MS">
+<font color="black">
+
+<h3><a name="overview"></a>Overview</h3>
+
+The <b><font color="#FF0000">N</font><font
+color="#009900">M</font><font color="#3333FF">S</font></b> group at <a
+target=_top href="http://web.mit.edu/">MIT's</a> <a target=_top href="http://www.csail.mit.edu/">Computer Science
+and Artificial Intelligence Laboratory</a> conducts research in many
+areas of networking: wireless networks, Internet architecture and
+protocols, overlay and peer-to-peer networks, sensor networks, network
+security, and networked systems.  The group was formed in 1998.
+
+<br>
+
+<h3><a name="projects"></a>Current projects</h3> 
+
+<ul> 
+
+<li><b><a href="http://cartel.csail.mit.edu">CarTel</a></b>: a mobile
+sensor network system developing vehicular network protocols,
+software, and services.
+
+<li><b><a href="http://nms.csail.mit.edu/projects/softphy/">SoftPHY and its applications</b></a>: using cross-layer confidence information
+(SoftPHY) from the physical layer to design better higher-layer
+wireless network protocols.</li>
+
+<li><b><a href="http://www.aip-arch.net">AIP (Accountable Internet
+Protocol)</a></b>: self-certifying
+Internet addresses + new protocols to provide accountability and improve Internet security.</li>
+
+</ul>
+
+<i>Unfortunately, the above list might be a bit out-of-date. The <a
+href=http://nms.csail.mit.edu/papers/>NMS papers</a> page has a more
+current list of papers.</i>
+
+<h3>Some past projects</h4>
+
+<h4>Internet architecture, overlay and P2P networks</h4>
+
+<i>P2P and overlay networks</i>
+
+<ul>
+
+<li><b><a href=http://pdos.lcs.mit.edu/chord>Chord</a></b>: a scalable
+and robust distributed hash table (DHT) enabling key-value lookups.
+
+<li><b><a href=http://project-iris.net/>Project IRIS</a></b>: A
+multi-institution NSF ITR collaboration that developed the network and
+system infrastructure for resilient Internet services using DHTs.  Our
+work included:
+
+<ul>
+
+<li><b><a
+href=http://nms.csail.mit.edu/papers/index.php?detail=40>Dynamic
+evolution of P2P systems</a>:</b> The amount of work required to
+maintain good connectivity depends on the "half-life" of a P2P system.
+
+<li> <a href="http://nms.lcs.mit.edu/projects/sfr/"><b>SFR</b></a>
+(Semantic-Free Referencing), a reference (name) resolution service for
+linked systems.
+
+<li><a href=http://nms.csail.mit.edu/doa><b>DOA</b></a>
+(Delegation-Oriented Architecture), an extension to the Internet
+architecture that accommodates "middleboxes" in an architecturally
+coherent way using a new <i>delegation</i> primitive.
+
+<li><a href=http://nms.csail.mit.edu/dqe/><b>DQE</b></a> (Distributed Quota Enforcement), a spam control system.
+
+<li><a href=http://nms.lcs.mit.edu/papers/index.php?detail=148><b>Speak-up</b></a>, a defense against application-level DDoS attacks.
+
+</ul>
+
+<li><b><a href="http://nms.csail.mit.edu/projects/ron/">RON</a></b>
+(Resilient Overlay Networks): Improving availability and resilience of
+Internet paths using application-controlled overlay routing.
+
+<li><b><a href=http://nms.csail.mit.edu/ron/ronweb>MONET</a></b>:
+Multi-homed overlay network of web proxies to route around network
+failures for Web applications.
+
+</ul>
+
+<i>Congestion control, traffic engineering</i>
+
+<ul>
+
+<li><b><a href="http://ana.lcs.mit.edu/dina/XCP/">XCP</a></b>
+(eXplicit Congestion Control) and <b><a
+href=http://nms.csail.mit.edu/projects/texcp>TeXCP</a></b>: Congestion
+control for high bandwidth-delay product networks and responsive
+traffic engineering.
+
+<li><b><a href="http://nms.csail.mit.edu/projects/cm/">CM</a></b>
+(Congestion Manager), an integrated end-to-end congestion management
+architecture and <a
+href=http://nms.lcs.mit.edu/papers/binomial-infocom01.html>congestion
+control algorithms</a> for the future Internet.
+
+<li><a
+href=http://nms.csail.mit.edu/projects/oxygentv/><b>OxygenTV</b></a>:
+rate adaptation and error control for MPEG-4 delivery.
+
+</ul>
+
+<i>Internet routing</i>
+
+<ul>
+<li><b><a href=http://nms.csail.mit.edu/projects/bgp/rcc>rcc</a></b> and <a href=http://nms.csail.mit.edu/routing>correct
+Internet routing</a>: tools to improve routing correctness and
+experimental studies of Internet routing and failures.
+
+<li><b><a href=http://nms.lcs.mit.edu/papers/index.php?detail=167>R-BGP</a></b>: Improving Internet routing connectivity.</li>
+
+<li><b><a
+href=http://nms.csail.mit.edu/papers/index.php?detail=141>BGPSep</a>:</b> Constructing  correct and scalable iBGP configurations.
+
+</li>
+
+</ul>
+
+<i>Network measurement</i>
+
+<ul>
+<li><b><a href=http://nms.csail.mit.edu/projects/dns>DNS
+analysis</a></b>: trace-based analysis of DNS performance and caching.
+
+<li><b><a href=http://nms.lcs.mit.edu/~dina/MNM/mm.html>M&M
+tools</a>:</b> multiQ and mystery, passive measurement tools suitable
+for large scale studies of Internet path characteristics
+
+<li><b><a href=http://nms.csail.mit.edu/routing>Routing
+analysis</a></b>: BGP measurements.
+
+</ul>
+
+<h4>Wireless, mobile, and sensor networks</h4>
+
+<ul>
+<li><b><a href=http://cricket.csail.mit.edu/>Cricket</a></b>: An
+accurate indoor location system.  (Now commercially available.)
+
+<li><b><a href="http://smart.csail.mit.edu/">SMART</a></b> (Scalable
+Medical Alert and Response Technologies) and the <b><a
+href=projects/pcn>Patient-Centric Network</a></b>: networking and
+systems infrastructure for health-care facilities.</li>
+
+<li><b><a href=projects/ins>INS</a></b> is an <i>intentional naming
+system</i> for scalable and dynamic resource discovery.  <b><a
+href=projects/twine>Twine</a></b> aims to make INS scalable to large
+networks using peer-to-peer lookups, built on top of <b><a
+href=http://pdos.lcs.mit.edu/chord>Chord</a></b>.</li>
+
+<li><b><a href="projects/migrate/">Migrate</a></b>, an end-to-end
+architecture for Internet host mobility, support for suspend/resume
+operations for mobile network applications to handle disconnections,
+and server failover. </li>
+
+<li><i>Harnessing multiple radios and access points</i></li>
+
+<ul> 
+
+<li><b><a
+href=http://nms.lcs.mit.edu/~kandula/projects/fatvap/>FatVAP</a>:</b>
+Aggregating AP backhaul bandwidth.
+
+<li><b><a
+href="http://nms.csail.mit.edu/projects/h
+f1f
+orde">Horde</a></b>:
+networking software that allows an application to stripe data from
+multiple streams across a set of dissimilar wireless network channels.
+
+<li><b><a
+href=http://nms.csail.mit.edu/projects/divert>Divert</a></b>: a
+multi-radio, fine-grained path selection system for improving
+throughput in wireless LANs.
+
+<li><b><a
+href=http://nms.csail.mit.edu/projects/apware>APware</a></b>:
+improving performance and robustness for multi-rate wireless LANs.
+
+</ul>
+
+<li><b><a href=http://nms.lcs.mit.edu/fusion>Fusion</a>:</b>
+Mitigating congestion in wireless sensor networks.
+
+<li><b><a
+href=http://www.cag.lcs.mit.edu/~ronny/wireless_psm/>BSD</b></a> (<a
+href=http://nms.csail.mit.edu/papers/index.php?detail=37>Bounded
+SlowDown</a>), <b><a href=http://pdos.lcs.mit.edu/span>Span</a></b>,
+<b><a href=http://nms.lcs.mit.edu/projects/leach>LEACH</a></b> and
+<b><a href=http://nms.lcs.mit.edu/projects/leach>Spin</a></b>:
+energy-efficient protocols for wireless and sensor networks</li>
+
+<li><b><a
+href="http://nms.csail.mit.edu/projects/spectrumware/">Spectrumware</a></b>:
+new algorithms for radio and wireless physical layers for
+implementation on a flexible software platform.  (Now commercially
+available.)
+
+
+<li><b><a
+href=http://nms.csail.mit.edu/projects/Blueware>Blueware</a></b>,
+protocols for internetworking with Bluetooth.
+
+</ul>
+
+<h4>Network security</h4>
+
+<ul>
+<li><b><a
+href=http://nms.lcs.mit.edu/~kandula/projects/killbots/>Kill-Bots</b></a>:
+Surviving application-layer botnet attacks that mimic flash
+crowds.</li>
+
+<li><b><a href=http://nms.csail.mit.edu/projects/rad>Real-Time anomaly
+detection</b></a>: Improving network security with real-time scanning
+and worm detection.</li>
+
+<li><b><a
+href=http://nms.lcs.mit.edu/papers/index.php?detail=148>Speak-up</a></b>,
+a defense against application-level DDoS attacks using bandwidth as a
+"currency".
+
+<li><a href=http://nms.csail.mit.edu/dqe/><b>DQE</b></a> (Distributed Quota Enforcement), a spam control system.
+
+<li><b><a href=http://nms.csail.mit.edu/projects/ssh>Securing
+SSH</a></b> from address harvesting attacks.
+
+<li><b><a
+href=http://nms.csail.mit.edu/projects/infranet/>Infranet</a></b>:
+circumventing Web censorship and surveillance.
+
+<li><b><a href=http://nms.csail.mit.edu/papers/index.php?detail=178>RoboNorm: </a></b> Efficient and robust TCP stream normalization.
+
+</ul>
+
+<h4>Distributed data management, stream processing</h4> 
+
+<ul>
+
+<li><b><a
+href=http://nms.csail.mit.edu/projects/medusa/>Medusa:</a></b>
+Distributed data stream processing.
+
+<li><b><a href=http://nms.csail.mit.edu/projects/hrdb/>HRDB</a></b>:
+Database fault-tolerance with heterogeneous replication.
+
+</ul>
+
+
+
+<p>
+<center><hr noshade><p><font size="-1" face="ARIAL,GENEVA,HELVETICA,SANS-SERIF"><table align="center"><td width=100 align="center"><a href="http://nms.lcs.mit.edu/">NMS Home</a></td><td width=100 align="center"><a href="http://nms.lcs.mit.edu/#projects/">Projects</a></td><td width=100 align="center"><a href="http://nms.lcs.mit.edu/people/">People</a></td><td width=100 align="center"><a href="http://nms.lcs.mit.edu/papers/">Papers</a></td><td width=100 align="center"><a href="http://nms.lcs.mit.edu/software/">Software</a></td></table><p><center><table TEXT="white" border=0 CELLSPACING=0><tr align=center><td width=100 align="center"><a target=_top href="http://www.csail.mit.edu/">CSAIL</a></td><td width=100 align="center"><a target=_top href="http://www-eecs.mit.edu/">E E C S</a></td><td width=100 align="center"><a target=_top href="http://www.mit.edu/">M I T</a></td></table></center><center><p><font size="-1" face="ARIAL,GENEVA,HELVETICA,SANS-SERIF"><a href="http://www.csail.mit.edu/">M. I. T. Computer Science and Artificial Intelligence Laboratory</a> &middot; 32 Vassar Street &middot; Cambridge, MA 02139 &middot; USA</font></p></center><hr noshade>
+</font>
+</body>
+</html>
+
+0
+
