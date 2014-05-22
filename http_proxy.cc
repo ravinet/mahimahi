@@ -21,6 +21,7 @@
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
 #include "archive.hh"
+#include "timestamp.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -92,6 +93,7 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () {
                                                        string buffer = client_rw->read();
                                                        request_parser.parse( buffer );
+                                                       if ( buffer.find( "GET" ) != string::npos) { cout << "INCOMING REQUEST AT: " << timestamp() << endl;}
                                                        return ResultType::Continue;
                                                    },
                                                    [&] () { return not server_rw->fd().eof(); } ) );
@@ -103,6 +105,7 @@ void HTTPProxy::handle_tcp( void )
                                                        HTTP_Record::http_message complete_request = request_parser.front().toprotobuf();
                                                        /* check if request is GET / (will lead to bulk response) */
                                                        if ( complete_request.first_line() == "GET / HTTP/1.1\r\n" ) {
+                                                           cout << "WRITING FIRST REQUEST TO SERVER AT: " << timestamp() << endl;
                                                            server_rw->write( request_parser.front().str() );
                                                            bulk_thread = true;
                                                            response_parser.new_request_arrived( request_parser.front() );
@@ -111,13 +114,18 @@ void HTTPProxy::handle_tcp( void )
                                                        }
                                                        if ( Archive::request_pending( complete_request ) ) {
                                                            if ( bulk_thread ) { /* we are on thread with initial request so don't wait for pending request now */
+                                                               cout << "PENDING REQUEST ON BULK THREAD: " << complete_request.first_line() << " at: " << timestamp() << endl;
                                                                return ResultType::Continue;
                                                            }
+                                                           cout << "PENDING REQUEST NOT ON BULK THREAD: " << complete_request.first_line() << " at: " << timestamp() << endl;
                                                            Archive::wait();
+                                                           cout << "DONE PENDING NOT ON BULK FOR: " << complete_request.first_line() << " at: " << timestamp() << endl;
                                                            add_to_queue( from_destination, Archive::corresponding_response( complete_request ), already_sent, request_parser );
                                                        } else if ( Archive::have_response( complete_request ) ) { /* corresponding response already stored- send to client */
+                                                           cout << "REQUEST IN ARCHIVE: " << complete_request.first_line() << " at: " << timestamp() << endl;
                                                            add_to_queue( from_destination, Archive::corresponding_response( complete_request ), already_sent, request_parser );
                                                        } else { /* request not listed in archive- send request to server */
+                                                           cout << "REQUEST NOT IN ARCHIVE: " << complete_request.first_line() << " at: " << timestamp() << endl;
                                                            server_rw->write( request_parser.front().str() );
                                                            response_parser.new_request_arrived( request_parser.front() );
                                                            request_parser.pop();
@@ -129,6 +137,7 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
                                                    [&] () {
                                                        if ( from_destination.non_empty() ) {
+                                                           cout << "WRITING RESPONSE TO CLIENT FROM BYTESTREAM AT: " << timestamp() << endl;
                                                            if ( dst_port == 443 ) {
                                                                from_destination.pop_ssl( move( client_rw ) );
                                                            } else {
@@ -136,6 +145,7 @@ void HTTPProxy::handle_tcp( void )
                                                            }
                                                        }
                                                        if ( not response_parser.empty() ) {
+                                                           cout << "WRITING RESPONSE TO CLIENT FROM RESPONSE PARSER AT: " << timestamp() << endl;
                                                            client_rw->write( response_parser.front().str() );
                                                            response_parser.pop();
                                                        }

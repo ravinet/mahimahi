@@ -100,6 +100,7 @@ string::size_type BulkBodyParser::read( const std::string & input_buffer, ByteSt
                 if ( responses_left_ == 0 ) { /* entire bulk response is complete */
                     //return acked_so_far_;
                     first_response_sent_ = false;
+                    Archive::finished_parsing_bulk();
                     cout << "DONE PARSING BULK RESPONSE AT: " << timestamp() << endl;
                     Archive::notify();
                     return ( used_now - last_size_ );

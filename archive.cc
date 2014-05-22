@@ -21,6 +21,8 @@ mutex Archive::archive_mutex;
 
 condition_variable Archive::cv;
 
+bool Archive::bulk_parsed = false;
+
 string get_header_value( const string & header_to_find, const HTTP_Record::http_message & req )
 {
     for ( int i = 0; i < req.headers_size(); i++ ) { /* iterate through headers until match */
@@ -185,6 +187,9 @@ bool Archive::have_response( const HTTP_Record::http_message & new_req )
     unique_lock<mutex> archive_lck( Archive::archive_mutex );
     string res = get_corresponding_response( new_req );
     if ( res == "" or res == "pending" ) { /* either request not listed or response pending...either way no response */
+        if ( bulk_parsed ) { /* finished parsing bulk response so don't bother sending request to remote proxy */
+            return true;
+        }
         return false;
     }
     return true;
@@ -194,6 +199,10 @@ string Archive::corresponding_response( const HTTP_Record::http_message & new_re
 {
     unique_lock<mutex> archive_lck( Archive::archive_mutex );
     /* XXX should we assert that this is not pending or empty string since the flow user should follow is check if pending and if not, check if there is a response...for now, will assert */
+    if ( bulk_parsed ) { /* finished parsing bulk response so send back same response as remote proxy which also would not find request */
+        string no_match = "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
+        return no_match;
+    }
     string res = get_corresponding_response( new_req );
     assert( res != "" );
     assert( res != "pending" );
@@ -205,4 +214,9 @@ void Archive::wait( void )
 {
     unique_lock<mutex> pending_lock( Archive::archive_mutex );
     Archive::cv.wait( pending_lock );
+}
+
+void Archive::finished_parsing_bulk( void )
+{
+    bulk_parsed = true;
 }

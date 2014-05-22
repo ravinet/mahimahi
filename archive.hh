@@ -54,6 +54,10 @@ public:
     static void wait( void );
 
     static void notify( void ) { Archive::cv.notify_all(); }
+
+    static bool bulk_parsed;
+
+    static void finished_parsing_bulk( void );
 };
 
 #endif
