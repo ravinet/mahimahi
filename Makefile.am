@@ -15,20 +15,14 @@ packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.
 
 bin_PROGRAMS = delayshell
 delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
-	delay_queue.hh delay_queue.cc \
-	temp_file.hh temp_file.cc \
-	http_header.hh http_header.cc
+	delay_queue.hh delay_queue.cc
 delayshell_LDADD = -lrt
-delayshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 delayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += linkshell
 linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
-	link_queue.hh link_queue.cc \
-	temp_file.hh temp_file.cc \
-	http_header.hh http_header.cc
+	link_queue.hh link_queue.cc
 linkshell_LDADD = -lrt
-linkshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 linkshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += recordshell

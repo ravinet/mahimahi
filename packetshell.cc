@@ -24,19 +24,22 @@ PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
     : egress_ingress( two_unassigned_addresses() ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
+      dns_outside_( new DNSProxy( egress_addr(), nameserver_, nameserver_ ) ),
       nat_rule_( ingress_addr() ),
       pipe_( make_pipe() ),
       child_processes_()
 {
     /* make sure environment has been cleared */
     assert( environ == nullptr );
+
+    /* constructor will throw exception if it fails, so we should not be able to get nullptr */
+    assert( dns_outside_ );
 }
 
 template <class FerryType>
 template <typename... Targs>
 void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                                            char ** const user_environment,
-                                           string dns_file,
                                            Targs&&... Fargs )
 {
     /* g++ bug 55914 makes this hard before version 4.9 */
@@ -44,13 +47,6 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                                   forward<Targs>( Fargs )... );
 
     /* Fork */
-    /* start dnsmasq to listen on 0.0.0.0:53 */
-    child_processes_.emplace_back( [&] () {
-            SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
-                                        "-H", dns_file.c_str(),
-                                        static_cast<char *>( nullptr ) ) );
-            return EXIT_FAILURE;
-    }, false, SIGTERM );
     child_processes_.emplace_back( [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
@@ -69,6 +65,11 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
 
             SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
 
+            /* create DNS proxy if nameserver address is local */
+            auto dns_inside = DNSProxy::maybe_proxy( nameserver_,
+                                                     dns_outside_->udp_listener().local_addr(),
+                                                     dns_outside_->tcp_listener().local_addr() );
+
             /* Fork again after dropping root privileges */
             drop_privileges();
 
@@ -83,8 +84,8 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                 } );
 
             FerryType uplink_queue = ferry_maker();
-            return packet_ferry( uplink_queue, ingress_tun.fd(), pipe_.first,
-                                 {}, move( bash_process ) );
+            return packet_ferry( uplink_queue, ingress_tun.fd(), pipe_.first, move( dns_inside ),
+                                 move( bash_process ) );
         }, true );  /* new network namespace */
 }
 template <class FerryType>
@@ -99,7 +100,7 @@ void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
 
             FerryType downlink_queue = ferry_maker();
             return packet_ferry( downlink_queue, egress_tun_.fd(),
-                                 pipe_.second, {}, {} );
+                                 pipe_.second, move( dns_outside_ ), {} );
         } );
 }
 

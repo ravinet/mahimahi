@@ -19,6 +19,7 @@ private:
     std::pair<Address, Address> egress_ingress;
     Address nameserver_;
     TunDevice egress_tun_;
+    std::unique_ptr<DNSProxy> dns_outside_;
     NAT nat_rule_ {};
 
     std::pair<FileDescriptor, FileDescriptor> pipe_;
@@ -34,7 +35,6 @@ public:
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
                        char ** const user_environment,
-                       std::string dns_file,
                        Targs&&... Fargs );
 
     template <typename... Targs>
