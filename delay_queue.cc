@@ -19,7 +19,6 @@ void DelayQueue::write_packets( FileDescriptor & fd )
         fd.write( packet_queue_.front().second );
         packet_queue_.pop();
     }
-    cout << "JUST WROTE PACKETS FROM DELAY QUEUE AT: " << timestamp() << endl;
 }
 
 unsigned int DelayQueue::wait_time( void ) const
