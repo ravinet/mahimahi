@@ -5,6 +5,7 @@
 
 #include <string>
 #include <queue>
+#include <memory>
 
 #include "secure_socket.hh"
 #include "socket.hh"
@@ -12,6 +13,8 @@
 #include "http_response.hh"
 #include "bytestream_queue.hh"
 #include "http_request_parser.hh"
+#include "poller.hh"
+#include "http_response_parser.hh"
 
 class HTTPProxy
 {
@@ -20,6 +23,15 @@ private:
 
     /* Pick a random file name and store reqrespair as a serialized string */
     void add_to_queue( ByteStreamQueue & responses, std::string res, int & counter, HTTPRequestParser & req_parser );
+
+    void add_poller_actions( Poller & poller,
+                             std::unique_ptr<ReadWriteInterface> & client_rw,
+                             std::unique_ptr<ReadWriteInterface> & server_rw,
+                             HTTPResponseParser & response_parser,
+                             HTTPRequestParser & request_parser,
+                             bool & bulk_thread,
+                             ByteStreamQueue & from_destination,
+                             int & already_sent );
 
 public:
     static const std::string client_cert;
