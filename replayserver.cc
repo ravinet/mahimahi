@@ -158,7 +158,7 @@ int main()
         if ( i == files.size() ) { /* no exact matches for request */
             if ( possible_matches.size() == 0 ) { /* no potential matches */
                 cout << "HTTP/1.1 200 OK\r\n";
-                cout << "Content-Type: Text/html\r\nConnection: close\r\n";
+                cout << "Content-Type: text/html\r\nConnection: close\r\n";
                 cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
                 throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
             } else { /* return possible match with largest shared substring */
