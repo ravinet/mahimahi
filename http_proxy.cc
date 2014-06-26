@@ -52,7 +52,7 @@ void HTTPProxy::handle_tcp( void )
             try {
                 /* get original destination for connection request */
                 Address original_destaddr = client.original_dest();
-                cout << "connection intended for: " << original_destaddr.ip() << endl;
+                //                cout << "connection intended for: " << original_destaddr.ip() << endl;
 
                 /* create socket and connect to original destination and send original request */
                 Socket server( TCP );
