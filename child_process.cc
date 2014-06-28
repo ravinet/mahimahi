@@ -9,14 +9,23 @@
 
 #include "child_process.hh"
 #include "exception.hh"
+#include "signalfd.hh"
+
+static pid_t clone_syscall( const bool new_namespace, const bool want_sigchld )
+{
+    /* make sure SIGCHLD is blocked */
+    SignalMask( { SIGCHLD } ).block();
+
+    return SystemCall( "clone", syscall( SYS_clone,
+                                         (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
+                                         nullptr, nullptr, nullptr, nullptr ) );
+}
 
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
-                            const int termination_signal )
-    : pid_( SystemCall( "clone", syscall( SYS_clone,
-                                          SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
-                                          nullptr, nullptr, nullptr, nullptr ) ) ),
+                            const int termination_signal, const bool want_sigchld )
+    : pid_( clone_syscall( new_namespace, want_sigchld ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),
@@ -40,33 +49,24 @@ void ChildProcess::wait( void )
     assert( !moved_away_ );
     assert( !terminated_ );
 
-    siginfo_t infop;
-    SystemCall( "waitid", waitid( P_PID, pid_, &infop, WEXITED | WSTOPPED | WCONTINUED ) );
-    
-    assert( infop.si_pid == pid_ );
-    assert( infop.si_signo == SIGCHLD );    
+    int status;
+    int pid_returned = SystemCall( "waitpid", waitpid( pid_, &status, WUNTRACED | __WALL ) );
+    if ( pid_returned != pid_ ) {
+        throw Exception( "waitpid returned unknown pid", std::to_string( pid_returned ) );
+    }
 
     /* how did the process change state? */
-    switch ( infop.si_code ) {
-    case CLD_EXITED:
+    if ( WIFEXITED( status ) ) {
         terminated_ = true;
-        exit_status_ = infop.si_status;
-        break;
-    case CLD_KILLED:
-    case CLD_DUMPED:
+        exit_status_ = WEXITSTATUS( status );
+    } else if ( WIFSIGNALED( status ) ) {
         terminated_ = true;
-        exit_status_ = infop.si_status; /* died on signal */
+        exit_status_ = WTERMSIG( status );
         died_on_signal_ = true;
-        break;
-    case CLD_STOPPED:
+    } else if ( WIFSTOPPED( status ) ) {
         running_ = false;
-        break;
-    case CLD_CONTINUED:
+    } else if ( WIFCONTINUED( status ) ) {
         running_ = true;
-        break;
-    default:
-        /* do nothing */
-        break;
     }
 }
 
@@ -94,10 +94,14 @@ ChildProcess::~ChildProcess()
 {
     if ( moved_away_ ) { return; }
 
-    while ( !terminated_ ) {
-        resume();
-        signal( graceful_termination_signal_ );
-        wait();
+    try {
+        while ( !terminated_ ) {
+            resume();
+            signal( graceful_termination_signal_ );
+            wait();
+        }
+    } catch ( const Exception & e ) {
+        e.perror();
     }
 }
 
