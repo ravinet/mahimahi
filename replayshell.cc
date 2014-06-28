@@ -29,13 +29,12 @@
 using namespace std;
 using namespace PollerShortNames;
 
+static const SignalMask eventloop_signals_ = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
+
 int eventloop( vector<ChildProcess> && child_processes )
 {
     /* set up signal file descriptor */
-    SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
-    signals_to_listen_for.block(); /* don't let them interrupt us */
-
-    SignalFD signal_fd( signals_to_listen_for );
+    SignalFD signal_fd( eventloop_signals_ );
 
     Poller poller;
 
@@ -81,7 +80,7 @@ string get_host( HTTP_Record::reqrespair & current_record )
 int main( int argc, char *argv[] )
 {
     try {
-        string user( getenv( "USER" ) );
+        string user( getenv( "USER" ) ); /* XXX we need to fix this */
         /* clear environment */
         char **user_environment = environ;
         environ = nullptr;
@@ -91,6 +90,9 @@ int main( int argc, char *argv[] )
         if ( argc != 2 ) {
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
         }
+
+        /* block signals until eventloop is ready for them */
+        eventloop_signals_.block();
 
         /* check if user-specified storage folder exists */
         string directory = argv[1];

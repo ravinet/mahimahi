@@ -27,13 +27,17 @@ PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
       dns_outside_( new DNSProxy( egress_addr(), nameserver_, nameserver_ ) ),
       nat_rule_( ingress_addr() ),
       pipe_( make_pipe() ),
-      child_processes_()
+      child_processes_(),
+      eventloop_signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM } )
 {
     /* make sure environment has been cleared */
     assert( environ == nullptr );
 
     /* constructor will throw exception if it fails, so we should not be able to get nullptr */
     assert( dns_outside_ );
+
+    /* save signals for when the eventloop starts */
+    eventloop_signals_.block();
 }
 
 template <class FerryType>
@@ -109,10 +113,8 @@ int PacketShell<FerryType>::wait_for_exit( void )
 {
     /* wait for either child to finish */
     Poller poller;
-    SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
-    signals_to_listen_for.block(); /* don't let them interrupt us */
 
-    SignalFD signal_fd( signals_to_listen_for );
+    SignalFD signal_fd( eventloop_signals_ );
 
     poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
                                        [&] () {

@@ -26,6 +26,8 @@ private:
 
     std::vector<ChildProcess> child_processes_;
 
+    SignalMask eventloop_signals_;
+
     const Address & egress_addr( void ) { return egress_ingress.first; }
     const Address & ingress_addr( void ) { return egress_ingress.second; }
 

@@ -30,6 +30,8 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
                vector<ChildProcess> && child_processes,
                unique_ptr<HTTPProxy> && http_proxy );
 
+static const SignalMask eventloop_signals_ = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -42,6 +44,9 @@ int main( int argc, char *argv[] )
         if ( argc != 2 ) {
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
         }
+
+        /* block signals until eventloop is ready for them */
+        eventloop_signals_.block();
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
         string directory( argv[ 1 ] );
@@ -161,10 +166,7 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
                unique_ptr<HTTPProxy> && http_proxy )
 {
     /* set up signal file descriptor */
-    SignalMask signals_to_listen_for = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
-    signals_to_listen_for.block(); /* don't let them interrupt us */
-
-    SignalFD signal_fd( signals_to_listen_for );
+    SignalFD signal_fd( eventloop_signals_ );
 
     Poller poller;
 

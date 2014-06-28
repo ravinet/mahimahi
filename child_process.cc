@@ -11,21 +11,13 @@
 #include "exception.hh"
 #include "signalfd.hh"
 
-static pid_t clone_syscall( const bool new_namespace, const bool want_sigchld )
-{
-    /* make sure SIGCHLD is blocked */
-    SignalMask( { SIGCHLD } ).block();
-
-    return SystemCall( "clone", syscall( SYS_clone,
-                                         (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
-                                         nullptr, nullptr, nullptr, nullptr ) );
-}
-
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
                             const int termination_signal, const bool want_sigchld )
-    : pid_( clone_syscall( new_namespace, want_sigchld ) ),
+    : pid_( SystemCall( "clone", syscall( SYS_clone,
+                                          (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
+                                          nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),
