@@ -107,6 +107,7 @@ int main( int argc, char *argv[] )
 
         /* give ingress to container */
         run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
+        veth_devices.set_kernel_will_destroy();
 
         /* bring up ingress */
         in_network_namespace( container_process.pid(), [&] () {

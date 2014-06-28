@@ -32,11 +32,14 @@ public:
 class VirtualEthernetPair
 {
 private:
-    std::string name;
+    std::string name_;
+    bool kernel_will_destroy_;
 
 public:
     VirtualEthernetPair( const std::string & s_outside_name, const std::string & s_inside_name );
     ~VirtualEthernetPair();
+
+    void set_kernel_will_destroy( void ) { kernel_will_destroy_ = true; }
 };
 
 #endif /* NETDEVICE_HH */

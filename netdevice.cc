@@ -75,7 +75,8 @@ void name_check( const string & str )
 }
 
 VirtualEthernetPair::VirtualEthernetPair( const string & outside_name, const string & inside_name )
-    : name( outside_name )
+    : name_( outside_name ),
+      kernel_will_destroy_( false )
 {
     /* make pair of veth devices */
     name_check( outside_name );
@@ -86,6 +87,14 @@ VirtualEthernetPair::VirtualEthernetPair( const string & outside_name, const str
 
 VirtualEthernetPair::~VirtualEthernetPair()
 {
-    run( { IP, "link", "del", name } );
+    if ( kernel_will_destroy_ ) {
+        return;
+    }
+
+    try {
+        run( { IP, "link", "del", name_ } );
+    } catch ( const Exception & e ) {
+        e.perror();
+    }
     /* deleting one is sufficient to delete both */
 }
