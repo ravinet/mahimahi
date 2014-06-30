@@ -9,7 +9,6 @@
 #include "file_descriptor.hh"
 #include "signalfd.hh"
 #include "child_process.hh"
-#include "util.hh"
 
 class EventLoop
 {
@@ -17,6 +16,7 @@ private:
     SignalMask signals_;
     Poller poller_;
     std::vector<ChildProcess> child_processes_;
+    PollerShortNames::Result handle_signal( const signalfd_siginfo & sig );
 
 protected:
     void add_action( Poller::Action action ) { poller_.add_action( action ); }
@@ -35,10 +35,7 @@ protected:
 
         /* we get signal -> main screen turn on */
         add_simple_input_handler( signal_fd.fd(),
-                                  [&] () {
-                                      return handle_signal( signal_fd.read_signal(),
-                                                            child_processes_ );
-                                  } );
+                                  [&] () { return handle_signal( signal_fd.read_signal() ); } );
 
         while ( true ) {
             const auto poll_result = poller_.poll( wait_time() );

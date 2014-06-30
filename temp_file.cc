@@ -1,8 +1,9 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
+#include <cassert>
 
 #include "temp_file.hh"
 #include "exception.hh"

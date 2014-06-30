@@ -8,9 +8,6 @@
 #include <vector>
 
 #include "address.hh"
-#include "poller.hh"
-#include "signalfd.hh"
-#include "child_process.hh"
 
 std::string shell_path( void );
 void drop_privileges( void );
@@ -22,9 +19,6 @@ std::vector< Address > all_nameservers( void );
 void list_files( const std::string & dir, std::vector< std::string > & files );
 void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
-
-PollerShortNames::Result handle_signal( const signalfd_siginfo & sig,
-                                        std::vector<ChildProcess> & child_processes );
 
 void assert_not_root( void );
 
