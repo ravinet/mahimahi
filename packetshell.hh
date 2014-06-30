@@ -11,22 +11,21 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "dns_proxy.hh"
+#include "event_loop.hh"
 
-template <class FerryType>
+template <class FerryQueueType>
 class PacketShell
 {
 private:
     std::pair<Address, Address> egress_ingress;
     Address nameserver_;
     TunDevice egress_tun_;
-    std::unique_ptr<DNSProxy> dns_outside_;
+    DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
     std::pair<FileDescriptor, FileDescriptor> pipe_;
 
-    std::vector<ChildProcess> child_processes_;
-
-    SignalMask eventloop_signals_;
+    EventLoop event_loop_;
 
     const Address & egress_addr( void ) { return egress_ingress.first; }
     const Address & ingress_addr( void ) { return egress_ingress.second; }

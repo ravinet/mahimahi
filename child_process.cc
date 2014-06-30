@@ -27,6 +27,7 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool 
 {
     if ( pid_ == 0 ) { /* child */
         try {
+            SignalMask( {} ).set_as_mask();
             _exit( child_procedure() );
         } catch ( const Exception & e ) {
             e.perror();

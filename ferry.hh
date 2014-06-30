@@ -6,29 +6,17 @@
 /* convey delayed packets between a file descriptor (probably a tap device)
    and a sibling fd.
 
-   watch for events on a child_process and respond appropriately.
+   watch for events on a child_process and respond appropriately. */
 
-   the ferry() routine loops until exit. */
+#include "event_loop.hh"
 
-#include <memory>
-
-#include "file_descriptor.hh"
-#include "child_process.hh"
-#include "dns_proxy.hh"
-#include "http_proxy.hh"
-
-template <class FerryType>
-int packet_ferry( FerryType & ferry,
-                  FileDescriptor & tun,
-                  FileDescriptor & sibling_fd,
-                  std::unique_ptr<DNSProxy> && dns_proxy,
-                  std::vector<ChildProcess> && child_processes );
-
-template <class FerryType>
-int packet_ferry( FerryType & ferry,
-                  FileDescriptor & tun,
-                  FileDescriptor & sibling_fd,
-                  std::unique_ptr<DNSProxy> && dns_proxy,
-                  ChildProcess && child_process );
+class Ferry : public EventLoop
+{
+public:
+    template <class FerryQueueType>
+    int loop( FerryQueueType & ferry_queue,
+              FileDescriptor & tun,
+              FileDescriptor & sibling_fd );
+};
 
 #endif /* FERRY_HH */

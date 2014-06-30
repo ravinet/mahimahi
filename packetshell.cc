@@ -19,39 +19,35 @@
 using namespace std;
 using namespace PollerShortNames;
 
-template <class FerryType>
-PacketShell<FerryType>::PacketShell( const std::string & device_prefix )
+template <class FerryQueueType>
+PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix )
     : egress_ingress( two_unassigned_addresses() ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
-      dns_outside_( new DNSProxy( egress_addr(), nameserver_, nameserver_ ) ),
+      dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       pipe_( make_pipe() ),
-      child_processes_(),
-      eventloop_signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM } )
+      event_loop_()
 {
     /* make sure environment has been cleared */
-    assert( environ == nullptr );
-
-    /* constructor will throw exception if it fails, so we should not be able to get nullptr */
-    assert( dns_outside_ );
-
-    /* save signals for when the eventloop starts */
-    eventloop_signals_.block();
+    if ( environ != nullptr ) {
+        throw Exception( "PacketShell", "environment was not cleared" );
+    }
 }
 
-template <class FerryType>
+template <class FerryQueueType>
 template <typename... Targs>
-void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
-                                           char ** const user_environment,
-                                           Targs&&... Fargs )
+void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
+                                                char ** const user_environment,
+                                                Targs&&... Fargs )
 {
     /* g++ bug 55914 makes this hard before version 4.9 */
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
-                                  forward<Targs>( Fargs )... );
+    auto ferry_maker = std::bind( []( Targs&&... Fargs ) {
+            return FerryQueueType( forward<Targs>( Fargs )... );
+        }, forward<Targs>( Fargs )... );
 
     /* Fork */
-    child_processes_.emplace_back( [&]() {
+    event_loop_.add_child_process( [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -71,13 +67,15 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
 
             /* create DNS proxy if nameserver address is local */
             auto dns_inside = DNSProxy::maybe_proxy( nameserver_,
-                                                     dns_outside_->udp_listener().local_addr(),
-                                                     dns_outside_->tcp_listener().local_addr() );
+                                                     dns_outside_.udp_listener().local_addr(),
+                                                     dns_outside_.tcp_listener().local_addr() );
 
             /* Fork again after dropping root privileges */
             drop_privileges();
 
-            ChildProcess bash_process( [&]() {
+            Ferry inner_ferry;
+
+            inner_ferry.add_child_process( [&]() {
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
@@ -87,46 +85,37 @@ void PacketShell<FerryType>::start_uplink( const string & shell_prefix,
                     return EXIT_FAILURE;
                 } );
 
-            FerryType uplink_queue = ferry_maker();
-            return packet_ferry( uplink_queue, ingress_tun.fd(), pipe_.first, move( dns_inside ),
-                                 move( bash_process ) );
+            if ( dns_inside ) {
+                dns_inside->register_handlers( inner_ferry );
+            }
+
+            FerryQueueType uplink_queue = ferry_maker();
+            return inner_ferry.loop( uplink_queue, ingress_tun.fd(), pipe_.first );
         }, true );  /* new network namespace */
 }
-template <class FerryType>
-template <typename... Targs>
-void PacketShell<FerryType>::start_downlink( Targs&&... Fargs )
-{
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) { return FerryType( forward<Targs>( Fargs )... ); },
-                                  forward<Targs>( Fargs )... );
 
-    child_processes_.emplace_back( [&] () {
+template <class FerryQueueType>
+template <typename... Targs>
+void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
+{
+    auto ferry_maker = std::bind( []( Targs&&... Fargs ) {
+            return FerryQueueType( forward<Targs>( Fargs )... );
+        }, forward<Targs>( Fargs )... );
+
+    event_loop_.add_child_process( [&] () {
             drop_privileges();
 
-            FerryType downlink_queue = ferry_maker();
-            return packet_ferry( downlink_queue, egress_tun_.fd(),
-                                 pipe_.second, move( dns_outside_ ), {} );
+            Ferry outer_ferry;
+
+            dns_outside_.register_handlers( outer_ferry );
+
+            FerryQueueType downlink_queue = ferry_maker();
+            return outer_ferry.loop( downlink_queue, egress_tun_.fd(), pipe_.second );
         } );
 }
 
-template <class FerryType>
-int PacketShell<FerryType>::wait_for_exit( void )
+template <class FerryQueueType>
+int PacketShell<FerryQueueType>::wait_for_exit( void )
 {
-    /* wait for either child to finish */
-    Poller poller;
-
-    SignalFD signal_fd( eventloop_signals_ );
-
-    poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
-                                       [&] () {
-                                           return handle_signal( signal_fd.read_signal(),
-                                                                 child_processes_ );
-                                       } ) );
-
-    while ( true ) {
-        auto poll_result = poller.poll( -1 );
-
-        if ( poll_result.result == Poller::Result::Type::Exit ) {
-            return poll_result.exit_status;
-        }
-    }
+    return event_loop_.loop();
 }

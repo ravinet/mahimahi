@@ -39,13 +39,8 @@ bool SignalMask::operator==( const SignalMask & other ) const
     return true;
 }
 
-/* block these signals from interrupting our process */
+/* mask these signals from interrupting our process */
 /* (because we'll use a signalfd instead to read them */
-void SignalMask::block( void ) const
-{
-    SystemCall( "sigprocmask", sigprocmask( SIG_BLOCK, &mask_, nullptr ) );
-}
-
 void SignalMask::set_as_mask( void ) const
 {
     SystemCall( "sigprocmask", sigprocmask( SIG_SETMASK, &mask_, nullptr ) );

@@ -46,7 +46,7 @@ int main( int argc, char *argv[] )
         }
 
         /* block signals until eventloop is ready for them */
-        eventloop_signals_.block();
+        eventloop_signals_.set_as_mask();
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
         string directory( argv[ 1 ] );
