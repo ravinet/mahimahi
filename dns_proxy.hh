@@ -4,6 +4,7 @@
 #define DNS_PROXY_HH
 
 #include "socket.hh"
+#include "event_loop.hh"
 
 class DNSProxy
 {
@@ -21,6 +22,8 @@ public:
     void handle_tcp( void );
 
     static std::unique_ptr<DNSProxy> maybe_proxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target );
+
+    void register_handlers( EventLoop & event_loop );
 };
 
 #endif /* DNS_PROXY_HH */

@@ -111,3 +111,11 @@ unique_ptr<DNSProxy> DNSProxy::maybe_proxy( const Address & listen_address, cons
         }
     }
 }
+
+void DNSProxy::register_handlers( EventLoop & event_loop )
+{
+    event_loop.add_simple_input_handler( udp_listener().fd(),
+                                         [&] () { handle_udp(); return ResultType::Continue; } );
+    event_loop.add_simple_input_handler( tcp_listener().fd(),
+                                         [&] () { handle_tcp(); return ResultType::Continue; } );
+}

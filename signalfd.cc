@@ -17,11 +17,38 @@ SignalMask::SignalMask( const initializer_list< int > signals )
     }
 }
 
+/* get the current mask */
+SignalMask SignalMask::current_mask( void )
+{
+    SignalMask mask = {};
+
+    SystemCall( "sigprocmask", sigprocmask( SIG_BLOCK, nullptr, &mask.mask_ ) );
+
+    return mask;
+}
+
+/* challenging to compare two sigset_t's for equality */
+bool SignalMask::operator==( const SignalMask & other ) const
+{
+    for ( int signum = 0; signum < SIGRTMAX; signum++ ) {
+        if ( sigismember( &mask_, signum ) != sigismember( &other.mask_, signum ) ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /* block these signals from interrupting our process */
 /* (because we'll use a signalfd instead to read them */
 void SignalMask::block( void ) const
 {
-    SystemCall( "sigprocmask", sigprocmask( SIG_BLOCK, &mask(), NULL ) );
+    SystemCall( "sigprocmask", sigprocmask( SIG_BLOCK, &mask_, nullptr ) );
+}
+
+void SignalMask::set_as_mask( void ) const
+{
+    SystemCall( "sigprocmask", sigprocmask( SIG_SETMASK, &mask_, nullptr ) );
 }
 
 SignalFD::SignalFD( const SignalMask & signals )

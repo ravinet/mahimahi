@@ -19,6 +19,10 @@ public:
     SignalMask( const std::initializer_list< int > signals );
     const sigset_t & mask( void ) const { return mask_; }
     void block( void ) const;
+    void set_as_mask( void ) const;
+
+    static SignalMask current_mask( void );
+    bool operator==( const SignalMask & other ) const;
 };
 
 class SignalFD
