@@ -10,13 +10,24 @@
 #include "exception.hh"
 #include "signalfd.hh"
 
+pid_t checked_clone( const bool new_namespace, const bool want_sigchld )
+{
+    const auto current_mask = SignalMask::current_mask();
+
+    if ( want_sigchld and (not sigismember( &current_mask.mask(), SIGCHLD )) ) {
+        throw Exception( "ChildProcess", "caller asked for SIGCHLD without masking SIGCHLD" );
+    }
+
+    return SystemCall( "clone", syscall( SYS_clone,
+                                         (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
+                                         nullptr, nullptr, nullptr, nullptr ) );
+}
+
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
                             const int termination_signal, const bool want_sigchld )
-    : pid_( SystemCall( "clone", syscall( SYS_clone,
-                                          (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
-                                          nullptr, nullptr, nullptr, nullptr ) ) ),
+    : pid_( checked_clone( new_namespace, want_sigchld ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),

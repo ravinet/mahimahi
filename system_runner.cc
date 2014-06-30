@@ -10,6 +10,7 @@
 #include "child_process.hh"
 #include "exception.hh"
 #include "file_descriptor.hh"
+#include "signalfd.hh"
 
 using namespace std;
 
@@ -39,6 +40,8 @@ void run( const vector< string > & command )
     /* double-fork so the outer process doesn't raise SIGCHLD
        and catches the SIGCHLD from the inner process */
     ChildProcess waiter_process( [&] () {
+            SignalMask( { SIGCHLD } ).set_as_mask();
+
             ChildProcess command_process( [&] () {
                     SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
                     return EXIT_FAILURE;
