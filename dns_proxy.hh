@@ -6,7 +6,8 @@
 #include <memory>
 
 #include "socket.hh"
-#include "event_loop.hh"
+
+class EventLoop;
 
 class DNSProxy
 {

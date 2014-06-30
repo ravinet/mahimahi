@@ -9,7 +9,9 @@
 #include "secure_socket.hh"
 #include "socket.hh"
 #include "http_record.pb.h"
-#include "http_response.hh"
+
+class EventLoop;
+class HTTPResponse;
 
 class HTTPProxy
 {
@@ -28,6 +30,8 @@ public:
     Socket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp( void );
+
+    void register_handlers( EventLoop & event_loop );
 };
 
 #endif /* HTTP_PROXY_HH */

@@ -23,6 +23,7 @@
 #include "http_request_parser.hh"
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
+#include "event_loop.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -167,4 +168,10 @@ void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, cons
     /* clear current request/response pair */
     current_pair.clear_req();
     current_pair.clear_res();
+}
+
+void HTTPProxy::register_handlers( EventLoop & event_loop )
+{
+    event_loop.add_simple_input_handler( tcp_listener().fd(),
+                                         [&] () { handle_tcp(); return ResultType::Continue; } );
 }

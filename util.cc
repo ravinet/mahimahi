@@ -80,11 +80,9 @@ void check_requirements( const int argc, const char * const argv[] )
         throw Exception( argv[ 0 ], "needs to be installed setuid root" );
     }
 
-    /*
     if ( (getuid() == 0) || (getgid() == 0) ) {
         throw Exception( argv[ 0 ], "please run as non-root" );
     }
-    */
 
     /* verify IP forwarding is enabled */
     FileDescriptor ipf( SystemCall( "open /proc/sys/net/ipv4/ip_forward",

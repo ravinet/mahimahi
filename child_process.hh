@@ -6,7 +6,7 @@
 #include <functional>
 #include <unistd.h>
 #include <cassert>
-#include <signal.h>
+#include <csignal>
 
 /* object-oriented wrapper for handling Unix child processes */
 
@@ -29,7 +29,7 @@ public:
     void signal( const int sig ); /* send signal */
     void resume( void ); /* send SIGCONT */
 
-    pid_t pid( void ) const { return pid_; }
+    pid_t pid( void ) const { assert( not moved_away_ ); assert( not terminated_ ); return pid_; }
     bool running( void ) const { return running_; }
     bool terminated( void ) const { return terminated_; }
 

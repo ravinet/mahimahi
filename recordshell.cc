@@ -1,8 +1,5 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <memory>
-#include <csignal>
-
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
@@ -12,25 +9,12 @@
 #include "util.hh"
 #include "interfaces.hh"
 #include "address.hh"
-#include "signalfd.hh"
 #include "dns_proxy.hh"
 #include "http_proxy.hh"
 #include "netdevice.hh"
-
-#include "config.h"
+#include "event_loop.hh"
 
 using namespace std;
-using namespace PollerShortNames;
-
-int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               ChildProcess && child_process,
-               unique_ptr<HTTPProxy> && http_proxy );
-
-int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               vector<ChildProcess> && child_processes,
-               unique_ptr<HTTPProxy> && http_proxy );
-
-static const SignalMask eventloop_signals_ = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
 
 int main( int argc, char *argv[] )
 {
@@ -44,9 +28,6 @@ int main( int argc, char *argv[] )
         if ( argc != 2 ) {
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
         }
-
-        /* block signals until eventloop is ready for them */
-        eventloop_signals_.set_as_mask();
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
         string directory( argv[ 1 ] );
@@ -72,77 +53,94 @@ int main( int argc, char *argv[] )
         assign_address( egress_name, egress_addr, ingress_addr );
 
         /* create DNS proxy */
-        unique_ptr<DNSProxy> dns_outside( new DNSProxy( egress_addr, nameserver, nameserver ) );
+        DNSProxy dns_outside( egress_addr, nameserver, nameserver );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr, directory ) );
+        HTTPProxy http_proxy( egress_addr, directory );
 
         /* set up dnat */
-        DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );
+        DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
+
+        /* prepare event loop */
+        EventLoop outer_event_loop;
 
         /* Fork */
-        ChildProcess container_process( [&]() {
-                /* bring up localhost */
-                interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
-                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+        {
+            ChildProcess container_process( [&]() {
+                    /* bring up localhost */
+                    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+                                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
-                /* create DNS proxy if nameserver address is local */
-                auto dns_inside = DNSProxy::maybe_proxy( nameserver,
-                                                         dns_outside->udp_listener().local_addr(),
-                                                         dns_outside->tcp_listener().local_addr() );
+                    /* create DNS proxy if nameserver address is local */
+                    auto dns_inside = DNSProxy::maybe_proxy( nameserver,
+                                                             dns_outside.udp_listener().local_addr(),
+                                                             dns_outside.tcp_listener().local_addr() );
 
-                /* Fork again after dropping root privileges */
-                drop_privileges();
+                    /* Fork again after dropping root privileges */
+                    drop_privileges();
 
-                ChildProcess bash_process( [&]() {
-                        /* restore environment and tweak bash prompt */
-                        environ = user_environment;
-                        prepend_shell_prefix( "[record] " );
+                    /* prepare child's event loop */
+                    EventLoop shell_event_loop;
 
-                        const string shell = shell_path();
-                        SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
-                        return EXIT_FAILURE;
-                    } );
+                    shell_event_loop.add_child_process( [&]() {
+                            /* restore environment and tweak prompt */
+                            environ = user_environment;
+                            prepend_shell_prefix( "[record] " );
 
-                return eventloop( move( dns_inside ), move( bash_process ), nullptr );
-            }, true ); /* new network namespace */
+                            const string shell = shell_path();
+                            SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
+                            return EXIT_FAILURE;
+                        } );
 
-        /* give ingress to container */
-        run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
-        veth_devices.set_kernel_will_destroy();
+                    if ( dns_inside ) {
+                        dns_inside->register_handlers( shell_event_loop );
+                    }
 
-        /* bring up ingress */
-        in_network_namespace( container_process.pid(), [&] () {
-                /* bring up veth device */
-                assign_address( ingress_name, ingress_addr, egress_addr );
+                    return shell_event_loop.loop();
+                }, true ); /* new network namespace */
 
-                /* create default route */
-                rtentry route;
-                zero( route );
+            /* give ingress to container */
+            run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
+            veth_devices.set_kernel_will_destroy();
 
-                route.rt_gateway = egress_addr.raw_sockaddr();
-                route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
-                route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
-            } );
+            /* bring up ingress */
+            in_network_namespace( container_process.pid(), [&] () {
+                    /* bring up veth device */
+                    assign_address( ingress_name, ingress_addr, egress_addr );
 
-        ChildProcess recordr_process( [&]() {
+                    /* create default route */
+                    rtentry route;
+                    zero( route );
+
+                    route.rt_gateway = egress_addr.raw_sockaddr();
+                    route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                    route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
+                } );
+
+            /* now that we have its pid, move container process to event loop */
+            outer_event_loop.add_child_process( move( container_process ) );
+        }
+
+        /* do the actual recording in a different unprivileged child */
+        outer_event_loop.add_child_process( [&]() {
                 drop_privileges();
 
                 /* check if user-specified storage folder exists, and if not, create it */
                 check_storage_folder( directory );
-                return eventloop( move( dns_outside ), {}, move( http_proxy ) );
+
+                EventLoop recordr_event_loop;
+                dns_outside.register_handlers( recordr_event_loop );
+                http_proxy.register_handlers( recordr_event_loop );
+                return recordr_event_loop.loop();
             } );
 
-        vector<ChildProcess> child_processes;
-        child_processes.emplace_back( move( container_process ) );
-        child_processes.emplace_back( move( recordr_process ) );
-
-        return eventloop( nullptr, move( child_processes ), nullptr );
+        return outer_event_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
@@ -150,60 +148,3 @@ int main( int argc, char *argv[] )
 
     return EXIT_SUCCESS;
 }
-
-int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               ChildProcess && child_process,
-               unique_ptr<HTTPProxy> && http_proxy )
-{
-    vector<ChildProcess> children;
-    children.emplace_back( move( child_process ) );
-
-    return eventloop( move( dns_proxy ), move( children ), move( http_proxy ) );
-}
-
-int eventloop( unique_ptr<DNSProxy> && dns_proxy,
-               vector<ChildProcess> && child_processes,
-               unique_ptr<HTTPProxy> && http_proxy )
-{
-    /* set up signal file descriptor */
-    SignalFD signal_fd( eventloop_signals_ );
-
-    Poller poller;
-
-    if ( dns_proxy ) {
-        poller.add_action( Poller::Action( dns_proxy->udp_listener().fd(), Direction::In,
-                                           [&] () {
-                                               dns_proxy->handle_udp();
-                                               return ResultType::Continue;
-                                           } ) );
-
-        poller.add_action( Poller::Action( dns_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
-                                               dns_proxy->handle_tcp();
-                                               return ResultType::Continue;
-                                           } ) );
-    }
-
-    if ( http_proxy ) {
-        poller.add_action( Poller::Action( http_proxy->tcp_listener().fd(), Direction::In,
-                                           [&] () {
-                                               http_proxy->handle_tcp();
-                                               return ResultType::Continue;
-                                           } ) );
-    }
-
-    /* we get signal -> main screen turn on -> handle signal */
-    poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
-                                       [&] () {
-                                           return handle_signal( signal_fd.read_signal(),
-                                                                 child_processes );
-                                       } ) );
-
-    while ( true ) {
-        auto poll_result = poller.poll( 60000 );
-        if ( poll_result.result == Poller::Result::Type::Exit ) {
-            return poll_result.exit_status;
-        }
-    }
-}
-
