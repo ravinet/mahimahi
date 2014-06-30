@@ -14,8 +14,6 @@
 #include "address.hh"
 #include "make_pipe.hh"
 
-#include "ferry.cc"
-
 using namespace std;
 using namespace PollerShortNames;
 
@@ -118,4 +116,34 @@ template <class FerryQueueType>
 int PacketShell<FerryQueueType>::wait_for_exit( void )
 {
     return event_loop_.loop();
+}
+
+template <class FerryQueueType>
+int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
+                                              FileDescriptor & tun,
+                                              FileDescriptor & sibling )
+{
+    /* tun device gets datagram -> read it -> give to ferry */
+    add_simple_input_handler( tun, 
+                              [&] () {
+                                  ferry_queue.read_packet( tun.read() );
+                                  return ResultType::Continue;
+                              } );
+
+    /* we get datagram from sibling process -> write it to tun device */
+    add_simple_input_handler( sibling,
+                              [&] () {
+                                  tun.write( sibling.read() );
+                                  return ResultType::Continue;
+                              } );
+
+    /* ferry ready to write datagram -> send to sibling process */
+    add_action( Poller::Action( sibling, Direction::Out,
+                                [&] () {
+                                    ferry_queue.write_packets( sibling );
+                                    return ResultType::Continue;
+                                },
+                                [&] () { return ferry_queue.wait_time() <= 0; } ) );
+
+    return internal_loop( [&] () { return ferry_queue.wait_time(); } );
 }

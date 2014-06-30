@@ -3,6 +3,8 @@
 #ifndef DNS_PROXY_HH
 #define DNS_PROXY_HH
 
+#include <memory>
+
 #include "socket.hh"
 #include "event_loop.hh"
 

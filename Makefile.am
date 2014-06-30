@@ -11,7 +11,7 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
 	read_write_interface.hh event_loop.hh event_loop.cc
 
-packet_shell_source = ferry.hh ferry.cc packetshell.cc packetshell.hh make_pipe.hh
+packet_shell_source = packetshell.cc packetshell.hh make_pipe.hh
 
 bin_PROGRAMS = delayshell
 delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \

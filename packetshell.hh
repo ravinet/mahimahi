@@ -3,12 +3,9 @@
 #ifndef PACKETSHELL_HH
 #define PACKETSHELL_HH
 
-#include <memory>
-
 #include "netdevice.hh"
 #include "nat.hh"
 #include "util.hh"
-#include "interfaces.hh"
 #include "address.hh"
 #include "dns_proxy.hh"
 #include "event_loop.hh"
@@ -29,6 +26,12 @@ private:
 
     const Address & egress_addr( void ) { return egress_ingress.first; }
     const Address & ingress_addr( void ) { return egress_ingress.second; }
+
+    class Ferry : public EventLoop
+    {
+    public:
+        int loop( FerryQueueType & ferry_queue, FileDescriptor & tun, FileDescriptor & sibling );
+    };
 
 public:
     PacketShell( const std::string & device_prefix );
