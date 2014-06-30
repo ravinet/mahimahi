@@ -1,8 +1,5 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <memory>
-#include <csignal>
-
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
@@ -21,7 +18,7 @@
 #include "config.h"
 #include "socket.hh"
 #include "config.h"
-#include "poller.hh"
+#include "event_loop.hh"
 #include "http_record.pb.h"
 #include "temp_file.hh"
 #include "http_header.hh"
@@ -29,40 +26,14 @@
 using namespace std;
 using namespace PollerShortNames;
 
-static const SignalMask eventloop_signals_ = { SIGCHLD, SIGCONT, SIGHUP, SIGTERM };
-
-int eventloop( vector<ChildProcess> && child_processes )
-{
-    /* set up signal file descriptor */
-    SignalFD signal_fd( eventloop_signals_ );
-
-    Poller poller;
-
-    poller.add_action( Poller::Action( signal_fd.fd(), Direction::In,
-                                       [&] () {
-                                           return handle_signal( signal_fd.read_signal(),
-                                                                 child_processes );
-                                       } ) );
-
-    while ( true ) {
-        auto poll_result = poller.poll( 60000 );
-        if ( poll_result.result == Poller::Result::Type::Exit ) {
-            /* call destructor for each web server created */
-            return poll_result.exit_status;
-        }
-    }
-}
-
 void add_dummy_interface( const string & name, const Address & addr )
 {
+    run( { IP, "link", "add", name, "type", "dummy" } );
 
-    run( { IP, "link", "add", name.c_str(), "type", "dummy" } );
-
-    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, name.c_str(),
-             [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-    interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name.c_str(),
-         [&] ( ifreq &ifr )
-         { ifr.ifr_addr = addr.raw_sockaddr(); } );
+    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, name,
+                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+    interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name,
+                     [&] ( ifreq &ifr ) { ifr.ifr_addr = addr.raw_sockaddr(); } );
 }
 
 /* return hostname by iterating through headers */
@@ -74,6 +45,7 @@ string get_host( HTTP_Record::reqrespair & current_record )
             return current_header.value().substr( 0, current_header.value().find( "\r\n" ) );
         }
     }
+
     throw Exception( "replayshell", "No Host Header in Recorded File" );
 }
 
@@ -90,9 +62,6 @@ int main( int argc, char *argv[] )
         if ( argc != 2 ) {
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
         }
-
-        /* block signals until eventloop is ready for them */
-        eventloop_signals_.set_as_mask();
 
         /* check if user-specified storage folder exists */
         string directory = argv[1];
@@ -146,7 +115,8 @@ int main( int argc, char *argv[] )
             }
         }
 
-        vector<ChildProcess> child_processes;
+        /* initialize event loop */
+        EventLoop event_loop;
 
         /* create dummy interface for each nameserver */
         vector< Address > nameservers = all_nameservers();
@@ -155,14 +125,15 @@ int main( int argc, char *argv[] )
         }
 
         /* start dnsmasq to listen on 0.0.0.0:53 */
-        child_processes.emplace_back( [&] () {
+        event_loop.add_child_process( [&] () {
                 SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
                                             "-H", dnsmasq_hosts.name().c_str(),
                                             static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
         }, false, SIGTERM );
 
-        child_processes.emplace_back( [&]() {
+        /* start shell */
+        event_loop.add_child_process( [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
@@ -173,7 +144,8 @@ int main( int argc, char *argv[] )
 
                 return EXIT_FAILURE;
         } );
-        return eventloop( move( child_processes ) );
+
+        return event_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

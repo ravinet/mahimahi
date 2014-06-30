@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <cassert>
-#include <csignal>
 #include <cstdlib>
 #include <sys/syscall.h>
 
