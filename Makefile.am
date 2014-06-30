@@ -25,8 +25,8 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) recordshell.cc \
+bin_PROGRAMS += localproxy
+localproxy_SOURCES = $(common_source) localproxy.cc \
 	http_proxy.hh http_proxy.cc \
 	http_request_parser.hh \
 	http_request.hh http_request.cc \
@@ -42,10 +42,10 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	certificate.hh \
     bulk_parser.hh bulk_parser.cc \
     archive.hh archive.cc
-recordshell_LDADD = -lrt
-recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
-recordshell_LDADD += -lssl -lcrypto -ldl
-recordshell_LDFLAGS = -pthread
+localproxy_LDADD = -lrt
+localproxy_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+localproxy_LDADD += -lssl -lcrypto -ldl
+localproxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) replayshell.cc \
@@ -77,7 +77,7 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
 	chown root $(DESTDIR)$(bindir)/linkshell
 	chmod u+s $(DESTDIR)$(bindir)/linkshell
-	chown root $(DESTDIR)$(bindir)/recordshell
-	chmod u+s $(DESTDIR)$(bindir)/recordshell
+	chown root $(DESTDIR)$(bindir)/localproxy
+	chmod u+s $(DESTDIR)$(bindir)/localproxy
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
