@@ -42,7 +42,7 @@ void ChildProcess::wait( void )
     assert( !terminated_ );
 
     int status;
-    int pid_returned = SystemCall( "waitpid", waitpid( pid_, &status, WUNTRACED | __WALL ) );
+    int pid_returned = SystemCall( "waitpid", waitpid( pid_, &status, WUNTRACED | WCONTINUED | __WALL ) );
     if ( pid_returned != pid_ ) {
         throw Exception( "waitpid returned unknown pid", std::to_string( pid_returned ) );
     }
