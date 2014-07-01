@@ -3,7 +3,7 @@
 #ifndef HTTP_REQUEST_HH
 #define HTTP_REQUEST_HH
 
-#include "http_message.hh"
+#include "local_http_message.hh"
 
 class HTTPRequest : public HTTPMessage
 {
@@ -12,13 +12,15 @@ private:
     void calculate_expected_body_size( void ) override;
 
     /* we have no complex bodies */
-    size_t read_in_complex_body( const std::string & str ) override;
+    size_t read_in_complex_body( const std::string & str );
 
     /* connection closed while body was pending */
     bool eof_in_body( void ) override;
 
 public:
     bool is_head( void ) const;
+
+    size_t read_in_body( const std::string & str );
 };
 
 #endif /* HTTP_REQUEST_HH */

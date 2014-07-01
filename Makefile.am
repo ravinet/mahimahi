@@ -25,19 +25,39 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += recordshell
+recordshell_SOURCES = $(common_source) recordshell.cc \
+    http_proxy.hh http_proxy.cc \
+    http_request_parser.hh \
+    http_request.hh http_request.cc \
+    http_response.hh http_response.cc \
+    http_header.hh http_header.cc \
+    http_response_parser.hh http_response_parser.cc \
+    tokenize.hh mime_type.hh mime_type.cc \
+    body_parser.hh \
+    chunked_parser.hh chunked_parser.cc \
+    http_message.hh http_message.cc \
+    http_message_sequence.hh \
+    secure_socket.hh secure_socket.cc \
+    certificate.hh
+recordshell_LDADD = -lrt
+recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+recordshell_LDADD += -lssl -lcrypto -ldl
+recordshell_LDFLAGS = -pthread
+
 bin_PROGRAMS += localproxy
 localproxy_SOURCES = $(common_source) localproxy.cc \
-	http_proxy.hh http_proxy.cc \
-	http_request_parser.hh \
-	http_request.hh http_request.cc \
-	http_response.hh http_response.cc \
+	local_http_proxy.hh local_http_proxy.cc \
+	local_http_request_parser.hh \
+	local_http_request.hh local_http_request.cc \
+	local_http_response.hh local_http_response.cc \
 	http_header.hh http_header.cc \
-	http_response_parser.hh http_response_parser.cc \
+	local_http_response_parser.hh local_http_response_parser.cc \
 	tokenize.hh mime_type.hh mime_type.cc \
-	body_parser.hh \
-	chunked_parser.hh chunked_parser.cc \
-	http_message.hh http_message.cc \
-	http_message_sequence.hh \
+	local_body_parser.hh \
+	local_chunked_parser.hh local_chunked_parser.cc \
+	local_http_message.hh local_http_message.cc \
+	local_http_message_sequence.hh \
 	secure_socket.hh secure_socket.cc \
 	certificate.hh \
     bulk_parser.hh bulk_parser.cc \
@@ -77,6 +97,8 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
 	chown root $(DESTDIR)$(bindir)/linkshell
 	chmod u+s $(DESTDIR)$(bindir)/linkshell
+	chown root $(DESTDIR)$(bindir)/recordshell
+	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/localproxy
 	chmod u+s $(DESTDIR)$(bindir)/localproxy
 	chown root $(DESTDIR)$(bindir)/replayshell

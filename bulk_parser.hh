@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include "body_parser.hh"
+#include "local_body_parser.hh"
 #include "exception.hh"
 #include "http_record.pb.h"
 

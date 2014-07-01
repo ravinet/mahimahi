@@ -3,9 +3,10 @@
 #ifndef HTTP_RESPONSE_PARSER_HH
 #define HTTP_RESPONSE_PARSER_HH
 
-#include "http_message_sequence.hh"
-#include "http_response.hh"
-#include "http_request.hh"
+#include "local_http_message_sequence.hh"
+#include "local_http_response.hh"
+#include "local_http_request.hh"
+#include "bytestream_queue.hh"
 
 class HTTPResponseParser : public HTTPMessageSequence<HTTPResponse>
 {
@@ -17,6 +18,10 @@ private:
 
 public:
     void new_request_arrived( const HTTPRequest & request );
+
+    void parse( const std::string & buf, ByteStreamQueue & from_dest );
+
+    bool parsing_step( ByteStreamQueue & from_dest );
 };
 
 #endif /* HTTP_RESPONSE_PARSER_HH */

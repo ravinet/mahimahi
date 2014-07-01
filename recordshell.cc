@@ -14,7 +14,7 @@
 #include "address.hh"
 #include "signalfd.hh"
 #include "dns_proxy.hh"
-#include "local_http_proxy.hh"
+#include "http_proxy.hh"
 #include "netdevice.hh"
 
 #include "config.h"
@@ -39,8 +39,14 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 1 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) );
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
+        }
+
+        /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
+        string directory( argv[ 1 ] );
+        if ( directory.back() != '/' ) {
+            directory.append( "/" );
         }
 
         const Address nameserver = first_nameserver();
@@ -67,7 +73,7 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
+        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr, directory ) );
 
         /* set up dnat */
         DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );
@@ -122,6 +128,7 @@ int main( int argc, char *argv[] )
                 drop_privileges();
 
                 /* check if user-specified storage folder exists, and if not, create it */
+                check_storage_folder( directory );
                 return eventloop( move( dns_outside ), {}, move( http_proxy ) );
             } );
 
@@ -196,3 +203,4 @@ int eventloop( unique_ptr<DNSProxy> && dns_proxy,
         }
     }
 }
+

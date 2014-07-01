@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "ezio.hh"
-#include "chunked_parser.hh"
+#include "local_chunked_parser.hh"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ uint32_t ChunkedBodyParser::get_chunk_size( const string & chunk_hdr ) const
     return myatoi( hex_string, 16 );
 }
 
-string::size_type ChunkedBodyParser::read( const std::string & input_buffer )
+string::size_type ChunkedBodyParser::read( const std::string & input_buffer, __attribute__( ( unused ) ) ByteStreamQueue & from_dest )
 {
     parser_buffer_ += input_buffer;
 

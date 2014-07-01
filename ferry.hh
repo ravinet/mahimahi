@@ -11,11 +11,11 @@
    the ferry() routine loops until exit. */
 
 #include <memory>
+#include <vector>
 
 #include "file_descriptor.hh"
 #include "child_process.hh"
 #include "dns_proxy.hh"
-#include "http_proxy.hh"
 
 template <class FerryType>
 int packet_ferry( FerryType & ferry,

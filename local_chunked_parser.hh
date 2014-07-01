@@ -3,7 +3,7 @@
 #ifndef CHUNKED_BODY_PARSER_HH
 #define CHUNKED_BODY_PARSER_HH
 
-#include "body_parser.hh"
+#include "local_body_parser.hh"
 #include "exception.hh"
 
 class ChunkedBodyParser : public BodyParser
@@ -21,7 +21,7 @@ private:
     const bool trailers_enabled_ {false};
 
 public:
-    std::string::size_type read( const std::string & ) override;
+    std::string::size_type read( const std::string &, ByteStreamQueue & from_dest ) override;
 
     /* Follow item 2, Section 4.4 of RFC 2616 */
     bool eof( void ) override { return true; };

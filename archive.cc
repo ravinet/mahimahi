@@ -10,7 +10,7 @@
 #include "exception.hh"
 #include "util.hh"
 #include "http_header.hh"
-#include "http_message.hh"
+#include "local_http_message.hh"
 #include "timestamp.hh"
 
 using namespace std;

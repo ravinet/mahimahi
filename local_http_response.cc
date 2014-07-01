@@ -1,12 +1,13 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include "tokenize.hh"
-#include "http_response.hh"
+#include "local_http_response.hh"
 #include "exception.hh"
 #include "ezio.hh"
 #include "mime_type.hh"
 
-#include "chunked_parser.hh"
+#include "local_chunked_parser.hh"
+#include "bulk_parser.hh"
 
 using namespace std;
 
@@ -57,6 +58,17 @@ void HTTPResponse::calculate_expected_body_size( void )
         /* Rule 4 */
         set_expected_body_size( false );
         throw Exception( "HTTPResponse", "unsupported multipart/byteranges without Content-Length" );
+    } else if ( has_header( "Content-Type" )
+                and equivalent_strings( get_header_value( "Content-Type" ), "application/x-bulkreply" ) ) {
+
+        /* Bulk Response from Remote Proxy */
+        set_expected_body_size( false );
+
+        /* Create body_parser_ for bulk response */
+        body_parser_ = unique_ptr< BodyParser >( new BulkBodyParser( ) );
+
+        /* set response to bulk so we don't store it in completed responses */
+        is_bulk_ = true;
     } else {
         /* Rule 5 */
         set_expected_body_size( false );
@@ -65,12 +77,35 @@ void HTTPResponse::calculate_expected_body_size( void )
     }
 }
 
-size_t HTTPResponse::read_in_complex_body( const std::string & str )
+size_t HTTPResponse::read_in_body( const std::string & str, ByteStreamQueue & from_dest )
+{
+    assert( state_ == BODY_PENDING );
+
+    if ( body_size_is_known() ) {
+        /* body size known in advance */
+
+        assert( body_.size() <= expected_body_size() );
+        const size_t amount_to_append = min( expected_body_size() - body_.size(),
+                                             str.size() );
+
+        body_.append( str.substr( 0, amount_to_append ) );
+        if ( body_.size() == expected_body_size() ) {
+            state_ = COMPLETE;
+        }
+
+        return amount_to_append;
+    } else {
+        /* body size not known in advance */
+        return read_in_complex_body( str, from_dest );
+    }
+}
+
+size_t HTTPResponse::read_in_complex_body( const std::string & str, ByteStreamQueue & from_dest )
 {
     assert( state_ == BODY_PENDING );
     assert( body_parser_ );
 
-    auto amount_parsed = body_parser_->read( str );
+    auto amount_parsed = body_parser_->read( str, from_dest );
     if ( amount_parsed == std::string::npos ) {
         /* all of it belongs to the body */
         body_.append( str );

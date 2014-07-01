@@ -5,8 +5,8 @@
 
 #include <memory>
 
-#include "http_message.hh"
-#include "body_parser.hh"
+#include "local_http_message.hh"
+#include "local_body_parser.hh"
 
 class HTTPResponse : public HTTPMessage
 {
@@ -17,13 +17,19 @@ private:
 
     /* required methods */
     void calculate_expected_body_size( void ) override;
-    size_t read_in_complex_body( const std::string & str ) override;
+    size_t read_in_complex_body( const std::string & str, ByteStreamQueue & from_dest );
     bool eof_in_body( void ) override;
 
     std::unique_ptr< BodyParser > body_parser_ { nullptr };
 
+    bool is_bulk_ { false };
+
 public:
     void set_request_was_head( void );
+
+    size_t read_in_body( const std::string & str, ByteStreamQueue & from_dest );
+
+    bool is_bulk( void ) { return is_bulk_; }
 };
 
 #endif /* HTTP_RESPONSE_HH */

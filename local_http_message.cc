@@ -1,6 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include "http_message.hh"
+#include "local_http_message.hh"
 #include "exception.hh"
 #include "http_record.pb.h"
 
@@ -33,29 +33,6 @@ void HTTPMessage::set_expected_body_size( const bool is_known, const size_t valu
     assert( state_ == BODY_PENDING );
     
     expected_body_size_ = make_pair( is_known, value );
-}
-
-size_t HTTPMessage::read_in_body( const std::string & str )
-{
-    assert( state_ == BODY_PENDING );
-
-    if ( body_size_is_known() ) {
-        /* body size known in advance */
-
-        assert( body_.size() <= expected_body_size() );
-        const size_t amount_to_append = min( expected_body_size() - body_.size(),
-                                             str.size() );
-
-        body_.append( str.substr( 0, amount_to_append ) );
-        if ( body_.size() == expected_body_size() ) {
-            state_ = COMPLETE;
-        }
-
-        return amount_to_append;
-    } else {
-        /* body size not known in advance */
-        return read_in_complex_body( str );
-    }
 }
 
 void HTTPMessage::eof( void )
