@@ -32,7 +32,8 @@ int main( int argc, char *argv[] )
 
         /* first write number of request/response pairs to the bulk response */
         uint32_t num_files = files.size();
-        FileDescriptor bulkreply = SystemCall( "open", open( "bulkreply.proto", O_WRONLY | O_CREAT, 00700 ) );
+        string bulk_file_name = directory + "bulkreply.proto";
+        FileDescriptor bulkreply = SystemCall( "open", open( bulk_file_name.c_str(), O_WRONLY | O_CREAT, 00700 ) );
         SystemCall( "write", write( bulkreply.num(), &num_files, 4 ) );
 
         unsigned int i;
