@@ -143,6 +143,7 @@ int main()
         /* first check if it is initial request- if so, return bulk.proto */
         string incoming_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) );
         if ( incoming_req == "GET /" ) {
+            run( { "/usr/local/bin/makebulkreply", string( getenv( "RECORD_FOLDER" ) ), string( getenv( "HTTP_HOST" ) ) } );
             string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
             std::ifstream is(bulk_file_name, std::ifstream::binary);
             string str;
