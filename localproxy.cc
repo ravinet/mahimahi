@@ -89,7 +89,7 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        prepend_shell_prefix( "[record] " );
+                        prepend_shell_prefix( "[local] " );
 
                         const string shell = shell_path();
                         SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
