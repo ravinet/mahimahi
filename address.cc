@@ -62,14 +62,13 @@ Address Address::cgnat( const uint8_t last_octet )
     return Address( "100.64.0." + to_string( last_octet ), 0 );
 }
 
-Address::Address( const string & hostname, const string & service, const SocketType & socket_type )
+Address::Address( const string & hostname, const string & service )
   : addr_()
 {
   /* give hints to resolver */
   addrinfo hints;
   zero( hints );
   hints.ai_family = AF_INET;
-  hints.ai_socktype = socket_type;
 
   /* prepare for the answer */
   addrinfo *res;
@@ -85,7 +84,6 @@ Address::Address( const string & hostname, const string & service, const SocketT
   
   /* should match our request */
   assert( res->ai_family == AF_INET );
-  assert( res->ai_socktype == socket_type );
   assert( res->ai_addrlen == sizeof( addr_ ) );
 
   /* assign to our private member variable */
