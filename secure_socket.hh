@@ -27,11 +27,9 @@ private:
 public:
     SecureSocket( Socket && sock, SSL_MODE type );
 
-    /* copy constructor */
-    SecureSocket( const SecureSocket & );
-
-    /* override assignment operator */
-    SecureSocket & operator = ( const SecureSocket & );
+    /* forbid copying or assignment */
+    SecureSocket( const SecureSocket & ) = delete;
+    SecureSocket & operator=( const SecureSocket & ) = delete;
 
     void handshake( void );
 
