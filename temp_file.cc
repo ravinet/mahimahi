@@ -22,28 +22,9 @@ vector<char> to_mutable( const string & str )
     return ret;
 }
 
-string from_mutable( const vector<char> & vec )
-{
-    string ret;
-
-    for ( const auto & ch : vec ) {
-        if ( ch == 0 ) {
-            break;
-        }
-        ret.push_back( ch );
-    }
-
-    if ( ret.size() + 1 != vec.size() ) {
-        throw Exception( "from_mutable", "bad null-terminated vector<char> => string conversion" );
-    }
-
-    return ret;
-}
-
 TempFile::TempFile( const string & filename_template )
     : mutable_temp_filename_( to_mutable( "/tmp/" + filename_template + ".XXXXXX" ) ),
       fd_( SystemCall( "mkstemp", mkstemp( &mutable_temp_filename_[ 0 ] ) ) ),
-      filename_( from_mutable( mutable_temp_filename_ ) ),
       moved_away_( false )
 {}
 
@@ -64,8 +45,13 @@ void TempFile::write( const string & contents )
 TempFile::TempFile( TempFile && other )
     : mutable_temp_filename_( other.mutable_temp_filename_ ),
       fd_( move( other.fd_ ) ),
-      filename_( other.filename_ ),
       moved_away_( false )
 {
     other.moved_away_ = true;
+}
+
+string TempFile::name( void ) const
+{
+    assert( mutable_temp_filename_.size() > 1 );
+    return string( mutable_temp_filename_.begin(), mutable_temp_filename_.end() - 1 );
 }

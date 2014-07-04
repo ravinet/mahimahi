@@ -13,7 +13,6 @@ class TempFile
 private:
     std::vector<char> mutable_temp_filename_;
     FileDescriptor fd_;
-    std::string filename_;
 
     bool moved_away_;
 
@@ -21,7 +20,7 @@ public:
     TempFile( const std::string & filename_template );
     ~TempFile();
 
-    const std::string & name( void ) { return filename_; }
+    std::string name( void ) const;
 
     void write( const std::string & contents );
 
