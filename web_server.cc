@@ -12,7 +12,7 @@
 using namespace std;
 
 WebServer::WebServer( const Address & addr, const string & record_folder, const string & user )
-    : config_file_(),
+    : config_file_( "apache_config" ),
       error_log_( "error" ),
       access_log_( "access" ),
       moved_away_( false )
