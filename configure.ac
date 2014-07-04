@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([mahimahi], [0.1], [ravinet@mit.edu])
+AC_INIT([mahimahi], [0.1], [mahimahi@mit.edu])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
@@ -108,12 +108,26 @@ AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with insta
 
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
+PKG_CHECK_MODULES([libssl], [libssl])
 
 # Checks for header files.
+AC_HEADER_RESOLV
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h paths.h sys/ioctl.h sys/socket.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+AC_TYPE_UID_T
+AC_C_INLINE
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
 
 # Checks for library functions.
+AC_CHECK_FUNCS([clock_gettime inet_ntoa memset mkdir setenv socket strerror strtol])
 
 AC_CONFIG_FILES([Makefile protobufs/Makefile man_pages/Makefile])
 AC_OUTPUT

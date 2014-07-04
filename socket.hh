@@ -3,7 +3,7 @@
 #ifndef SOCKET_HH
 #define SOCKET_HH
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <sys/types.h>
