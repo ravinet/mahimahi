@@ -23,9 +23,10 @@ private:
 
 public:
     ChildProcess( std::function<int()> && child_procedure, const bool new_namespace = false,
-                  const int termination_signal = SIGHUP, const bool want_sigchld = true );
+                  const int termination_signal = SIGHUP );
 
-    void wait( void ); /* wait for process to change state */
+    bool waitable( void ) const; /* is process in a waitable state? */
+    void wait( const bool nonblocking = false ); /* wait for process to change state */
     void signal( const int sig ); /* send signal */
     void resume( void ); /* send SIGCONT */
 

@@ -37,39 +37,23 @@ void run( const vector< string > & command )
     }
     argv.push_back( 0 ); /* null-terminate */
 
-    /* double-fork so the outer process doesn't raise SIGCHLD
-       and catches the SIGCHLD from the inner process */
-    ChildProcess waiter_process( [&] () {
-            SignalMask( { SIGCHLD } ).set_as_mask();
+    ChildProcess command_process( [&] () {
+            SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
+            return EXIT_FAILURE;
+        } );
 
-            ChildProcess command_process( [&] () {
-                    SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
-                    return EXIT_FAILURE;
-                } );
-
-            while ( !command_process.terminated() ) {
-                command_process.wait();
-            }
-
-            if ( command_process.died_on_signal() ) {
-                SystemCall( "raise", raise( command_process.exit_status() ) );
-            }
-
-            return command_process.exit_status();
-        }, false, SIGHUP, false ); /* don't raise SIGCHLD */
-
-    while ( !waiter_process.terminated() ) {
-        waiter_process.wait();
+    while ( !command_process.terminated() ) {
+        command_process.wait();
     }
 
-    if ( waiter_process.exit_status() != 0 ) {
-        string command_str = accumulate( command.begin() + 1, command.end(),
-                                         command.front(),
-                                         []( const string & a, const string & b )
-                                         { return a + " " + b; } );
+    if ( command_process.exit_status() != 0 ) {
+        const string command_str = accumulate( command.begin() + 1, command.end(),
+                                               command.front(),
+                                               []( const string & a, const string & b )
+                                               { return a + " " + b; } );
         throw Exception( "`" + command_str + "'", "command "
-                         + (waiter_process.died_on_signal() ? string("died on signal ") : string("returned "))
-                         + to_string( waiter_process.exit_status() ) );
+                         + (command_process.died_on_signal() ? string("died on signal ") : string("returned "))
+                         + to_string( command_process.exit_status() ) );
     }
 }
 

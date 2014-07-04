@@ -6,7 +6,7 @@ using namespace std;
 using namespace PollerShortNames;
 
 EventLoop::EventLoop()
-    : signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM } ),
+    : signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM, SIGQUIT, SIGINT } ),
       poller_(),
       child_processes_()
 {
@@ -31,16 +31,11 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
 
     case SIGCHLD:
         {
-            /* make sure it's from the child process */
-            /* unfortunately sig.ssi_pid is a uint32_t instead of pid_t, so need to cast */
-            bool handled = false;
-
+            /* find which children are waitable */
+            /* we can't count on getting exactly one SIGCHLD per waitable event, so search */
             for ( auto & x : child_processes_ ) {
-                if ( sig.ssi_pid == static_cast<decltype(sig.ssi_pid)>( x.pid() ) ) {
-                    handled = true;
-
-                    /* figure out what happened to it */
-                    x.wait();
+                if ( x.waitable() ) {
+                    x.wait( true ); /* nonblocking */
 
                     if ( x.terminated() ) {
                         if ( x.died_on_signal() ) {
@@ -57,20 +52,17 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
                     break;
                 }
             }
-
-            if ( not handled ) {
-                throw Exception( "SIGCHLD for unknown process" );
-            }
         }
 
         break;
 
     case SIGHUP:
     case SIGTERM:
-
+    case SIGQUIT:
+    case SIGINT:
         return ResultType::Exit;
     default:
-        throw Exception( "unknown signal" );
+        throw Exception( "EventLoop", "unknown signal" );
     }
 
     return ResultType::Continue;

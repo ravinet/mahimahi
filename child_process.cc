@@ -9,25 +9,15 @@
 #include "child_process.hh"
 #include "exception.hh"
 #include "signalfd.hh"
-
-pid_t checked_clone( const bool new_namespace, const bool want_sigchld )
-{
-    const auto current_mask = SignalMask::current_mask();
-
-    if ( want_sigchld and (not sigismember( &current_mask.mask(), SIGCHLD )) ) {
-        throw Exception( "ChildProcess", "caller asked for SIGCHLD without masking SIGCHLD" );
-    }
-
-    return SystemCall( "clone", syscall( SYS_clone,
-                                         (want_sigchld ? SIGCHLD : 0) | (new_namespace ? CLONE_NEWNET : 0),
-                                         nullptr, nullptr, nullptr, nullptr ) );
-}
+#include "util.hh"
 
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
-                            const int termination_signal, const bool want_sigchld )
-    : pid_( checked_clone( new_namespace, want_sigchld ) ),
+                            const int termination_signal )
+    : pid_( SystemCall( "clone", syscall( SYS_clone,
+                                          SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
+                                          nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),
@@ -46,30 +36,69 @@ ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool 
     }
 }
 
-/* wait for process to change state */
-void ChildProcess::wait( void )
+/* is process in a waitable state? */
+bool ChildProcess::waitable( void ) const
 {
     assert( !moved_away_ );
     assert( !terminated_ );
 
-    int status;
-    int pid_returned = SystemCall( "waitpid", waitpid( pid_, &status, WUNTRACED | WCONTINUED | __WALL ) );
-    if ( pid_returned != pid_ ) {
-        throw Exception( "waitpid returned unknown pid", std::to_string( pid_returned ) );
+    siginfo_t infop;
+    zero( infop );
+    SystemCall( "waitid", waitid( P_PID, pid_, &infop,
+                                  WEXITED | WSTOPPED | WCONTINUED | WNOHANG | WNOWAIT ) );
+
+    if ( infop.si_pid == 0 ) {
+        return false;
+    } else if ( infop.si_pid == pid_ ) {
+        return true;
+    } else {
+        throw Exception( "waitid", "unexpected value in siginfo_t si_pid field (not 0 or pid)" );
+    }
+}
+
+/* wait for process to change state */
+void ChildProcess::wait( const bool nonblocking )
+{
+    assert( !moved_away_ );
+    assert( !terminated_ );
+
+    siginfo_t infop;
+    zero( infop );
+    SystemCall( "waitid", waitid( P_PID, pid_, &infop,
+                                  WEXITED | WSTOPPED | WCONTINUED | (nonblocking ? WNOHANG : 0) ) );
+
+    if ( nonblocking and (infop.si_pid == 0) ) {
+        throw Exception( "nonblocking wait", "process was not waitable" );
+    }
+
+    if ( infop.si_pid != pid_ ) {
+        throw Exception( "waitid", "unexpected value in siginfo_t si_pid field" );
+    }
+
+    if ( infop.si_signo != SIGCHLD ) {
+        throw Exception( "waitid", "unexpected value in siginfo_t si_signo field (not SIGCHLD)" );
     }
 
     /* how did the process change state? */
-    if ( WIFEXITED( status ) ) {
+    switch ( infop.si_code ) {
+    case CLD_EXITED:
         terminated_ = true;
-        exit_status_ = WEXITSTATUS( status );
-    } else if ( WIFSIGNALED( status ) ) {
+        exit_status_ = infop.si_status;
+        break;
+    case CLD_KILLED:
+    case CLD_DUMPED:
         terminated_ = true;
-        exit_status_ = WTERMSIG( status );
+        exit_status_ = infop.si_status;
         died_on_signal_ = true;
-    } else if ( WIFSTOPPED( status ) ) {
+        break;
+    case CLD_STOPPED:
         running_ = false;
-    } else if ( WIFCONTINUED( status ) ) {
+        break;
+    case CLD_CONTINUED:
         running_ = true;
+        break;
+    default:
+        throw Exception( "waitid", "unexpected siginfo_t si_code" );
     }
 }
 
