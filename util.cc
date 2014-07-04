@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <arpa/inet.h>
+#include <memory>
 
 #include "util.hh"
 #include "exception.hh"
@@ -187,4 +188,28 @@ void assert_not_root( void )
          or ( getgid() == 0 ) or ( getegid() == 0 ) ) {
         throw Exception( "BUG", "privileges not dropped in sensitive region" );
     }
+}
+
+string username( void )
+{
+    const auto passwd_size = sysconf( _SC_GETPW_R_SIZE_MAX );
+    if ( passwd_size <= 0 ) {
+        throw Exception( "sysconf _SC_GETPW_R_SIZE_MAX", "bad size" );
+    }
+
+    unique_ptr<char[]> buffer( new char[ passwd_size ] );
+    passwd passwd_entry;
+    passwd *result;
+
+    SystemCall( "getpwuid_r", getpwuid_r( getuid(), &passwd_entry, buffer.get(), passwd_size, &result ) );
+
+    if ( result == nullptr ) {
+        throw Exception( "getpwuid_r", "no matching password record was found" );
+    }
+
+    if ( result != &passwd_entry ) {
+        throw Exception( "getpwuid_r", "BUG: unexpected result" );
+    }
+
+    return passwd_entry.pw_name;
 }

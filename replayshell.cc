@@ -126,11 +126,11 @@ int main( int argc, char *argv[] )
 
         /* start dnsmasq to listen on 0.0.0.0:53 */
         event_loop.add_child_process( [&] () {
-                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "-k", "--no-hosts",
-                                            "-H", dnsmasq_hosts.name().c_str(),
-                                            static_cast<char *>( nullptr ) ) );
+                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground", "--no-resolv",
+                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                                            "-C", "/dev/null", static_cast<char *>( nullptr ) ) );
                 return EXIT_FAILURE;
-        }, false, SIGTERM );
+            }, false, SIGTERM );
 
         /* start shell */
         event_loop.add_child_process( [&]() {

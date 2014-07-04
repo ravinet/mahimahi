@@ -23,7 +23,7 @@ public:
 
     std::string ip( void ) const;
     uint16_t port( void ) const;
-    std::string str( void ) const;
+    std::string str( const std::string port_separator = ":" ) const;
 
     const sockaddr_in & raw_sockaddr_in( void ) const { return addr_; }
     const sockaddr & raw_sockaddr( void ) const

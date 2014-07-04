@@ -94,9 +94,9 @@ Address::Address( const string & hostname, const string & service, const SocketT
   freeaddrinfo( res );
 }
 
-string Address::str( void ) const
+string Address::str( const string port_separator ) const
 {
-  return ip() + ":" + to_string( port() );
+  return ip() + port_separator + to_string( port() );
 }
 
 uint16_t Address::port( void ) const

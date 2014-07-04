@@ -63,15 +63,19 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
             SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
 
-            /* create DNS proxy if nameserver address is local */
-            auto dns_inside = DNSProxy::maybe_proxy( nameserver_,
-                                                     dns_outside_.udp_listener().local_addr(),
-                                                     dns_outside_.tcp_listener().local_addr() );
+            Ferry inner_ferry;
+
+            /* run dnsmasq as local caching nameserver */
+            inner_ferry.add_child_process( [&]() {
+                    SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground",
+                                                "--no-resolv", "-S",
+                                                dns_outside_.udp_listener().local_addr().str( "#" ).c_str(),
+                                                "-C", "/dev/null", "-u", username().c_str(), static_cast<char *>( nullptr ) ) );
+                    return EXIT_FAILURE;
+                }, false, SIGTERM );
 
             /* Fork again after dropping root privileges */
             drop_privileges();
-
-            Ferry inner_ferry;
 
             inner_ferry.add_child_process( [&]() {
                     /* restore environment and tweak bash prompt */
@@ -82,10 +86,6 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                     SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
                     return EXIT_FAILURE;
                 } );
-
-            if ( dns_inside ) {
-                dns_inside->register_handlers( inner_ferry );
-            }
 
             FerryQueueType uplink_queue = ferry_maker();
             return inner_ferry.loop( uplink_queue, ingress_tun.fd(), pipe_.first );
