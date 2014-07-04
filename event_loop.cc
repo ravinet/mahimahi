@@ -38,11 +38,14 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
                     x.wait( true ); /* nonblocking */
 
                     if ( x.terminated() ) {
-                        if ( x.died_on_signal() ) {
+                        if ( x.exit_status() != 0 ) {
                             throw Exception( "process " + to_string( x.pid() ),
-                                             "died on signal " + to_string( x.exit_status() ) );
+                                             (x.died_on_signal()
+                                              ? string("died on signal ")
+                                              : string("exited with failure status "))
+                                             + to_string( x.exit_status() ) );
                         } else {
-                            return Result( ResultType::Exit, x.exit_status() );
+                            return ResultType::Exit;
                         }
                     } else if ( !x.running() ) {
                         /* suspend parent too */

@@ -52,7 +52,9 @@ void run( const vector< string > & command )
                                                []( const string & a, const string & b )
                                                { return a + " " + b; } );
         throw Exception( "`" + command_str + "'", "command "
-                         + (command_process.died_on_signal() ? string("died on signal ") : string("returned "))
+                         + (command_process.died_on_signal()
+                            ? string("died on signal ")
+                            : string("exited with failure status "))
                          + to_string( command_process.exit_status() ) );
     }
 }
