@@ -131,8 +131,7 @@ int main( int argc, char *argv[] )
         outer_event_loop.add_child_process( [&]() {
                 drop_privileges();
 
-                /* check if user-specified storage folder exists, and if not, create it */
-                check_storage_folder( directory );
+                make_directory( directory );
 
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );

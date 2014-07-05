@@ -12,8 +12,7 @@
 std::string shell_path( void );
 void drop_privileges( void );
 void check_requirements( const int argc, const char * const argv[] );
-bool check_folder_existence( const std::string & directory );
-void check_storage_folder( const std::string & directory );
+void make_directory( const std::string & directory );
 Address first_nameserver( void );
 std::vector< Address > all_nameservers( void );
 std::vector< std::string > list_directory_contents( const std::string & dir );

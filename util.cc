@@ -93,33 +93,12 @@ void check_requirements( const int argc, const char * const argv[] )
     }
 }
 
-bool check_folder_existence( const string & directory )
-{
-    struct stat sb;
-
-    /* check if directory already exists */
-    if ( !stat( directory.c_str(), &sb ) == 0 or !S_ISDIR( sb.st_mode ) )
-    {
-        if ( errno != ENOENT ) { /* error is not that directory does not exist */
-            throw Exception( "stat" );
-        }
-        return false;
-    }
-
-    return true;
-}
-
-void check_storage_folder( const string & directory )
+void make_directory( const string & directory )
 {
     /* assert that directory ends with '/' */
     assert( directory.back() == '/' );
 
-    if ( not check_folder_existence( directory ) ) { /* directory does not exist */
-        /* make directory where user has all permissions */
-        SystemCall( "mkdir", mkdir( directory.c_str(), 00700 ) );
-    } else { /* directory already exists */
-        throw Exception( "recordshell", "directory already exists" );
-    }
+    SystemCall( "mkdir " + directory, mkdir( directory.c_str(), 00700 ) );
 }
 
 Address first_nameserver( void )
@@ -163,7 +142,7 @@ vector< string > list_directory_contents( const string & dir )
 
     unique_ptr< DIR, Closedir > dp( opendir( dir.c_str() ) );
     if ( not dp ) {
-        throw Exception( "opendir" );
+        throw Exception( "opendir " + dir );
     }
 
     vector< string > ret;

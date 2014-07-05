@@ -69,10 +69,6 @@ int main( int argc, char *argv[] )
             directory.append( "/" );
         }
 
-        if ( not check_folder_existence( directory ) ) { /* folder does not exist */
-            throw Exception( "replayshell", "folder with recorded content does not exist" );
-        }
-
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
