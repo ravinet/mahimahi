@@ -12,9 +12,9 @@
 using namespace std;
 
 WebServer::WebServer( const Address & addr, const string & record_folder, const string & user )
-    : config_file_( "apache_config" ),
-      error_log_( "error" ),
-      access_log_( "access" ),
+    : config_file_( "/tmp/replayshell_apache_config" ),
+      error_log_( "/tmp/replayshell_apache_error" ),
+      access_log_( "/tmp/replayshell_apache_access" ),
       moved_away_( false )
 {
     config_file_.write( apache_main_config + record_folder + "\n" );
@@ -25,7 +25,7 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
     }
 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
-    config_file_.write( "PidFile /tmp/replayshell.apache.pid." + to_string( random() ) + "\n" );
+    config_file_.write( "PidFile /tmp/replayshell_apache_pid." + to_string( getpid() ) + "." + to_string( random() ) + "\n" );
     /* Apache will check if this file exists before clobbering it,
        so we think it's ok for Apache to write here as root */
 

@@ -8,31 +8,44 @@
 
 #include "file_descriptor.hh"
 
-class TempFile
+class UniqueFile
 {
 private:
     std::vector<char> mutable_temp_filename_;
     FileDescriptor fd_;
 
+protected:
     bool moved_away_;
 
 public:
-    TempFile( const std::string & filename_template );
-    ~TempFile();
+    UniqueFile( const std::string & filename_template );
+    virtual ~UniqueFile() {}
 
     std::string name( void ) const;
 
     void write( const std::string & contents );
 
     /* ban copying */
-    TempFile( const TempFile & other ) = delete;
-    TempFile & operator=( const TempFile & other ) = delete;
+    UniqueFile( const UniqueFile & other ) = delete;
+    UniqueFile & operator=( const UniqueFile & other ) = delete;
 
     /* allow move constructor */
-    TempFile( TempFile && other );
+    UniqueFile( UniqueFile && other );
 
     /* ... but not move assignment operator */
-    TempFile & operator=( TempFile && other ) = delete;
+    UniqueFile & operator=( UniqueFile && other ) = delete;
+};
+
+/* TempFile is deleted when object destroyed */
+class TempFile : public UniqueFile
+{
+public:
+    using UniqueFile::UniqueFile;
+
+    /* allow move constructor */
+    TempFile( TempFile && other ) : UniqueFile( std::move( other ) ) {}
+
+    ~TempFile();
 };
 
 #endif

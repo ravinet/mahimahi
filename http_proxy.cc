@@ -24,6 +24,7 @@
 #include "http_response_parser.hh"
 #include "file_descriptor.hh"
 #include "event_loop.hh"
+#include "temp_file.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -34,9 +35,6 @@ HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folde
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
-
-    /* set starting seed for random number file names */
-    srandom( time( NULL ) );
 
     /* SSL initialization: Needs to be done exactly once */
     /* load algorithms/ciphers */
@@ -147,11 +145,8 @@ void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, cons
     /* output string for current request/response pair */
     string outputmessage;
 
-    /* Use random number generator to create output filename (number between 0 and 99999) */
-    string filename = record_folder_ + to_string( random() );
-
-    /* FileDescriptor for output file to write current request/response pair protobuf (user has all permissions) */
-    FileDescriptor messages( SystemCall( "open request/response protobuf " + filename + "\n", open(filename.c_str(), O_WRONLY | O_CREAT, 00700 ) ) );
+    /* output file to write current request/response pair protobuf (user has all permissions) */
+    UniqueFile messages( record_folder_ + "save" );
 
     /* if request is present in current request/response pair, add response and write to file */
     if ( current_pair.has_req() ) {

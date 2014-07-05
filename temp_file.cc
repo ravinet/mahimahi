@@ -22,12 +22,14 @@ vector<char> to_mutable( const string & str )
     return ret;
 }
 
-TempFile::TempFile( const string & filename_template )
-    : mutable_temp_filename_( to_mutable( "/tmp/" + filename_template + ".XXXXXX" ) ),
+UniqueFile::UniqueFile( const string & filename_template )
+    : mutable_temp_filename_( to_mutable( filename_template + ".XXXXXX" ) ),
       fd_( SystemCall( "mkstemp", mkstemp( &mutable_temp_filename_[ 0 ] ) ) ),
       moved_away_( false )
-{}
+{
+}
 
+/* unlike UniqueFile, a TempFile is deleted when object destroyed */
 TempFile::~TempFile()
 {
     if ( not moved_away_ ) {
@@ -35,14 +37,14 @@ TempFile::~TempFile()
     }
 }
 
-void TempFile::write( const string & contents )
+void UniqueFile::write( const string & contents )
 {
     assert( not moved_away_ );
 
     fd_.write( contents );
 }
 
-TempFile::TempFile( TempFile && other )
+UniqueFile::UniqueFile( UniqueFile && other )
     : mutable_temp_filename_( other.mutable_temp_filename_ ),
       fd_( move( other.fd_ ) ),
       moved_away_( false )
@@ -50,7 +52,7 @@ TempFile::TempFile( TempFile && other )
     other.moved_away_ = true;
 }
 
-string TempFile::name( void ) const
+string UniqueFile::name( void ) const
 {
     assert( mutable_temp_filename_.size() > 1 );
     return string( mutable_temp_filename_.begin(), mutable_temp_filename_.end() - 1 );
