@@ -4,10 +4,8 @@
 #include <string>
 #include <iostream>
 #include <utility>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
-#include <signal.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
@@ -15,8 +13,6 @@
 #include "socket.hh"
 #include "timestamp.hh"
 #include "system_runner.hh"
-#include "config.h"
-#include "signalfd.hh"
 #include "http_proxy.hh"
 #include "poller.hh"
 #include "bytestream_queue.hh"

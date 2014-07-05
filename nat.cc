@@ -10,6 +10,7 @@
 
 #include "nat.hh"
 #include "exception.hh"
+#include "config.h"
 
 using namespace std;
 

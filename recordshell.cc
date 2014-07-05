@@ -13,6 +13,7 @@
 #include "http_proxy.hh"
 #include "netdevice.hh"
 #include "event_loop.hh"
+#include "config.h"
 
 using namespace std;
 

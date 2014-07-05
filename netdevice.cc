@@ -14,7 +14,6 @@
 #include "socket.hh"
 #include "util.hh"
 #include "system_runner.hh"
-
 #include "config.h"
 
 using namespace std;

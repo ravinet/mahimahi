@@ -7,7 +7,6 @@
 
 #include <string>
 
-#include "config.h"
 #include "system_runner.hh"
 #include "address.hh"
 

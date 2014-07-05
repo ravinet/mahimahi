@@ -4,7 +4,6 @@
 
 #include <sys/socket.h>
 #include <net/route.h>
-#include <signal.h>
 
 #include "packetshell.hh"
 #include "netdevice.hh"
@@ -13,6 +12,7 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "make_pipe.hh"
+#include "config.h"
 
 using namespace std;
 using namespace PollerShortNames;
