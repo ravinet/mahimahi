@@ -51,6 +51,19 @@ bool compare_requests( HTTP_Record::reqrespair & saved_record, vector< HTTP_Reco
 {
     HTTP_Record::http_message saved_req = saved_record.req();
 
+    /* match HTTP/HTTPS */
+    if ( saved_record.protocol() == "HTTP" ) {
+        if ( getenv( "HTTPS" ) ) {
+            return false;
+        }
+    } else if ( saved_record.protocol() == "HTTPS" ) {
+        if ( not getenv( "HTTPS" ) ) {
+            return false;
+        }
+    } else {
+        throw Exception( "unknown URL scheme", saved_record.protocol() );
+    }
+
     /* request line */
     string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) ) + "\r\n";
 
