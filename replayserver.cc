@@ -5,18 +5,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <memory>
-#include <csignal>
-#include <algorithm>
 #include <iostream>
 #include <vector>
 
 #include "util.hh"
-#include "system_runner.hh"
 #include "http_record.pb.h"
 #include "http_header.hh"
 #include "exception.hh"
 #include "http_message.hh"
+#include "file_descriptor.hh"
 
 using namespace std;
 
@@ -163,15 +160,13 @@ int main()
         possible_matches.reserve( files.size() );
         unsigned int i;
         for ( i = 0; i < files.size(); i++ ) { /* iterate through recorded files and compare requests to incoming req*/
-            int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
+            FileDescriptor fd( SystemCall( "open", open( files[i].c_str(), O_RDONLY ) ) );
             HTTP_Record::reqrespair current_record;
-            current_record.ParseFromFileDescriptor( fd );
+            current_record.ParseFromFileDescriptor( fd.num() );
             if ( compare_requests( current_record, possible_matches ) ) { /* requests match */
                 return_message( current_record );
-                SystemCall( "close", close( fd ) );
                 break;
             }
-            SystemCall( "close", close( fd ) );
         }
         if ( i == files.size() ) { /* no exact matches for request */
             if ( possible_matches.size() == 0 ) { /* no potential matches */
