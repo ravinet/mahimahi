@@ -155,21 +155,25 @@ void prepend_shell_prefix( const string & str )
     SystemCall( "setenv", setenv( "PROMPT_COMMAND", "PS1=\"$MAHIMAHI_SHELL_PREFIX$PS1\" PROMPT_COMMAND=", true ) );
 }
 
-void list_files( const string & dir, vector< string > & files )
+vector< string > list_directory_contents( const string & dir )
 {
-    DIR *dp;
-    struct dirent *dirp;
+    struct Closedir {
+        void operator()( DIR *x ) const { SystemCall( "closedir", closedir( x ) ); }
+    };
 
-    if( ( dp  = opendir( dir.c_str() ) ) == NULL ) {
+    unique_ptr< DIR, Closedir > dp( opendir( dir.c_str() ) );
+    if ( not dp ) {
         throw Exception( "opendir" );
     }
 
-    while ( ( dirp = readdir( dp ) ) != NULL ) {
+    vector< string > ret;
+    while ( const dirent *dirp = readdir( dp.get() ) ) {
         if ( string( dirp->d_name ) != "." and string( dirp->d_name ) != ".." ) {
-            files.push_back( dir + string( dirp->d_name ) );
+            ret.push_back( dir + dirp->d_name );
         }
     }
-    SystemCall( "closedir", closedir( dp ) );
+
+    return ret;
 }
 
 /* error-checking wrapper for most syscalls */

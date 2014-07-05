@@ -86,8 +86,7 @@ int main( int argc, char *argv[] )
         /* dnsmasq host mapping file */
         TempFile dnsmasq_hosts( "hosts" );
 
-        vector< string > files;
-        list_files( directory, files );
+        vector< string > files = list_directory_contents( directory  );
         set< Address > unique_addrs;
         set< string > unique_ips;
         vector< WebServer > servers;

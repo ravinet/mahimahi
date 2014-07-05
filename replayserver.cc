@@ -154,8 +154,7 @@ void return_message( const HTTP_Record::reqrespair & record )
 int main()
 {
     try {
-        vector< string > files;
-        list_files( getenv( "RECORD_FOLDER" ), files );
+        vector< string > files = list_directory_contents( getenv( "RECORD_FOLDER" ) );
         vector< HTTP_Record::reqrespair > possible_matches;
         possible_matches.reserve( files.size() );
         unsigned int i;
