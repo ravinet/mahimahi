@@ -31,6 +31,4 @@ int main( int argc, char *argv[] )
         e.perror();
         return EXIT_FAILURE;
     }
-
-    return EXIT_SUCCESS;
 }
