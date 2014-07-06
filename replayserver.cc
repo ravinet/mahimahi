@@ -32,14 +32,16 @@ bool header_match( const string & env_var_name,
                    const string & header_name,
                    const HTTPRequest & saved_response )
 {
+    const char * const env_value = getenv( env_var_name.c_str() );
+
     /* case 1: neither header exists (OK) */
-    if ( (not getenv( env_var_name.c_str() )) and (not saved_response.has_header( header_name )) ) {
+    if ( (not env_value) and (not saved_response.has_header( header_name )) ) {
         return true;
     }
 
     /* case 2: headers both exist (OK if values match) */
-    if ( getenv( env_var_name.c_str() ) and saved_response.has_header( header_name ) ) {
-        return saved_response.get_header_value( header_name ) == string( getenv( env_var_name.c_str() ) );
+    if ( env_value and saved_response.has_header( header_name ) ) {
+        return saved_response.get_header_value( header_name ) == string( env_value );
     }
 
     /* case 3: one exists but the other doesn't (failure) */
