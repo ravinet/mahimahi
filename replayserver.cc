@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <vector>
+#include <limits>
 
 #include "util.hh"
 #include "http_record.pb.h"
@@ -48,39 +49,56 @@ bool header_match( const string & env_var_name,
     return false;
 }
 
+string strip_query( const string & request_line )
+{
+    const auto index = request_line.find( "?" );
+    if ( index == string::npos ) {
+        return request_line;
+    } else {
+        return request_line.substr( 0, index );
+    }
+}
+
 /* compare request_line and certain headers of incoming request and stored request */
-bool request_matches( const MahimahiProtobufs::RequestResponse & saved_record,
-                      const string & request_line,
-                      const bool is_https )
+unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_record,
+                          const string & request_line,
+                          const bool is_https )
 {
     const HTTPRequest saved_request( saved_record.request() );
 
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
-        return false;
+        return 0;
     }
 
     if ( (not is_https) and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTP) ) {
-        return false;
-    }
-
-    /* match first line */
-    if ( request_line != saved_request.first_line() ) {
-        return false;
+        return 0;
     }
 
     /* match host header */
     if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
-        return false;
+        return 0;
     }
 
     /* match user agent */
     if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
-        return false;
+        return 0;
     }
 
-    /* success! */
-    return true;
+    /* must match first line up to "?" at least */
+    if ( strip_query( request_line ) != strip_query( saved_request.first_line() ) ) {
+        return 0;
+    }
+
+    /* success! return size of common prefix */
+    const auto max_match = min( request_line.size(), saved_request.first_line().size() );
+    for ( unsigned int i = 0; i < max_match; i++ ) {
+        if ( request_line.at( i ) != saved_request.first_line().at( i ) ) {
+            return i;
+        }
+    }
+
+    return max_match;
 }
 
 int main( void )
@@ -94,6 +112,9 @@ int main( void )
 
         const vector< string > files = list_directory_contents( recording_directory );
 
+        unsigned int best_score = 0;
+        MahimahiProtobufs::RequestResponse best_match;
+
         for ( const auto filename : files ) {
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
@@ -101,17 +122,22 @@ int main( void )
                 throw Exception( filename, "invalid HTTP request/response" );
             }
 
-            if ( request_matches( current_record, request_line, is_https ) ) { /* requests match */
-                cout << HTTPResponse( current_record.response() ).str();
-                return EXIT_SUCCESS;
+            unsigned int score = match_score( current_record, request_line, is_https );
+            if ( score > best_score ) {
+                best_match = current_record;
+                best_score = score;
             }
         }
 
-        /* no exact matches for request */
-        cout << "HTTP/1.1 404 Not Found" << CRLF;
-        cout << "Content-Type: text/plain" << CRLF << CRLF;
-        cout << "replayshell: could not find a match for " << request_line << CRLF;
-        throw Exception( "replayserver", "Can't find: " + request_line );
+        if ( best_score > 0 ) { /* give client the best match */
+            cout << HTTPResponse( best_match.response() ).str();
+            return EXIT_SUCCESS;
+        } else {                /* no acceptable matches for request */
+            cout << "HTTP/1.1 404 Not Found" << CRLF;
+            cout << "Content-Type: text/plain" << CRLF << CRLF;
+            cout << "replayshell: could not find a match for " << request_line << CRLF;
+            throw Exception( "replayserver", "Could not find match for request: " + request_line );
+        }
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
