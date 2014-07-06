@@ -14,9 +14,11 @@
 
 using namespace std;
 
-void run( const vector< string > & command )
+void ezexec( const vector< string > & command )
 {
-    assert( !command.empty() );
+    if ( command.empty() ) {
+        throw Exception( "ezexec", "empty command" );
+    }
 
     /* copy the arguments to mutable structures */
     vector<char *> argv;
@@ -37,13 +39,19 @@ void run( const vector< string > & command )
     }
     argv.push_back( 0 ); /* null-terminate */
 
+    SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
+    throw Exception( "execve", "failed" );
+}
+
+void run( const vector< string > & command )
+{
     const string command_str = accumulate( command.begin() + 1, command.end(),
                                            command.front(),
                                            []( const string & a, const string & b )
                                            { return a + " " + b; } );
 
     ChildProcess command_process( command_str, [&] () {
-            SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
+            ezexec( command );
             return EXIT_FAILURE;
         } );
 
