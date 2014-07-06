@@ -73,30 +73,3 @@ void run( const vector< string > & command )
         command_process.throw_exception();
     }
 }
-
-void in_network_namespace( pid_t pid, function<void(void)> && procedure )
-{
-    exception_ptr inner_exception;
-
-    thread newthread( [&] () {
-            try {
-                /* change to desired network namespace */
-                const string filename = "/proc/" + to_string( pid ) + "/ns/net";
-                FileDescriptor namespace_fd( SystemCall( "open " + filename,
-                                                         open( filename.c_str(), O_RDONLY ) ) );
-                SystemCall( "setns", setns( namespace_fd.num(), CLONE_NEWNET ) );
-
-                /* run the caller-supplied procedure */
-                procedure();
-            } catch ( ... )  {
-                inner_exception = current_exception();
-            }
-        } );
-
-    /* wait for completion */
-    newthread.join();
-
-    if ( inner_exception != exception_ptr() ) {
-        rethrow_exception( inner_exception );
-    }
-}

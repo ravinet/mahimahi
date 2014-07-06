@@ -13,6 +13,7 @@
 #include "http_proxy.hh"
 #include "netdevice.hh"
 #include "event_loop.hh"
+#include "make_pipe.hh"
 #include "config.h"
 
 using namespace std;
@@ -85,10 +86,29 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         {
+            /* Make pipe for start signal */
+            pair< FileDescriptor, FileDescriptor > pipe = make_pipe();
+
             ChildProcess container_process( "recordshell container", [&]() {
+                    /* wait for the go signal */
+                    pipe.second.read();
+
                     /* bring up localhost */
                     interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
                                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+                    /* bring up veth device */
+                    assign_address( ingress_name, ingress_addr, egress_addr );
+
+                    /* create default route */
+                    rtentry route;
+                    zero( route );
+
+                    route.rt_gateway = egress_addr.raw_sockaddr();
+                    route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                    route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
 
                     /* create DNS proxy if nameserver address is local */
                     auto dns_inside = DNSProxy::maybe_proxy( nameserver,
@@ -120,21 +140,8 @@ int main( int argc, char *argv[] )
             run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
             veth_devices.set_kernel_will_destroy();
 
-            /* bring up ingress */
-            in_network_namespace( container_process.pid(), [&] () {
-                    /* bring up veth device */
-                    assign_address( ingress_name, ingress_addr, egress_addr );
-
-                    /* create default route */
-                    rtentry route;
-                    zero( route );
-
-                    route.rt_gateway = egress_addr.raw_sockaddr();
-                    route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
-                    route.rt_flags = RTF_UP | RTF_GATEWAY;
-
-                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
-                } );
+            /* tell ChildProcess it's ok to proceed */
+            pipe.first.write( "x" );
 
             /* now that we have its pid, move container process to event loop */
             outer_event_loop.add_child_process( move( container_process ) );
