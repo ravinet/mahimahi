@@ -26,14 +26,29 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
+        if ( argc < 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " directory [command...]" );
         }
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
         string directory( argv[ 1 ] );
+
+        if ( directory.empty() ) {
+            throw Exception( argv[ 0 ], "directory name must be non-empty" );
+        }
+
         if ( directory.back() != '/' ) {
             directory.append( "/" );
+        }
+
+        /* what command will we run inside the container? */
+        vector < string > command;
+        if ( argc == 2 ) {
+            command.push_back( shell_path() );
+        } else {
+            for ( int i = 2; i < argc; i++ ) {
+                command.push_back( argv[ i ] );
+            }
         }
 
         const Address nameserver = first_nameserver();
@@ -91,7 +106,7 @@ int main( int argc, char *argv[] )
                             environ = user_environment;
                             prepend_shell_prefix( "[record] " );
 
-                            return ezexec( { shell_path() } );
+                            return ezexec( command, true );
                         } );
 
                     if ( dns_inside ) {
@@ -104,7 +119,6 @@ int main( int argc, char *argv[] )
             /* give ingress to container */
             run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
             veth_devices.set_kernel_will_destroy();
-
 
             /* bring up ingress */
             in_network_namespace( container_process.pid(), [&] () {

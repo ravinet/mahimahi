@@ -14,7 +14,7 @@
 
 using namespace std;
 
-int ezexec( const vector< string > & command )
+int ezexec( const vector< string > & command, const bool path_search )
 {
     if ( command.empty() ) {
         throw Exception( "ezexec", "empty command" );
@@ -22,7 +22,11 @@ int ezexec( const vector< string > & command )
 
     if ( geteuid() == 0 or getegid() == 0 ) {
         if ( environ ) {
-            throw Exception( "ezexec", "root's environment not cleared" );
+            throw Exception( "BUG", "root's environment not cleared" );
+        }
+
+        if ( path_search ) {
+            throw Exception( "BUG", "root should not search PATH" );
         }
     }
 
@@ -45,7 +49,8 @@ int ezexec( const vector< string > & command )
     }
     argv.push_back( 0 ); /* null-terminate */
 
-    SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], environ ) );
+    SystemCall( path_search ? "execvpe" : "execve",
+                (path_search ? execvpe : execve )( &argv[ 0 ][ 0 ], &argv[ 0 ], environ ) );
     throw Exception( "execve", "failed" );
 }
 

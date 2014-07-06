@@ -82,7 +82,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
 
-                    return ezexec( command );
+                    return ezexec( command, true );
                 } );
 
             FerryQueueType uplink_queue = ferry_maker();

@@ -45,18 +45,9 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
+        if ( argc < 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " directory [command...]" );
         }
-
-        SystemCall( "unshare", unshare( CLONE_NEWNET ) );
-
-        /* bring up localhost */
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
-                         [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-
-        /* provide seed for random number generator used to create apache pid files */
-        srandom( time( NULL ) );
 
         /* clean directory name */
         string directory = argv[ 1 ];
@@ -69,6 +60,26 @@ int main( int argc, char *argv[] )
         if ( directory.back() != '/' ) {
             directory.append( "/" );
         }
+
+        /* what command will we run inside the container? */
+        vector< string > command;
+        if ( argc == 2 ) {
+            command.push_back( shell_path() );
+        } else {
+            for ( int i = 2; i < argc; i++ ) {
+                command.push_back( argv[ i ] );
+            }
+        }
+
+        /* create a new network namespace */
+        SystemCall( "unshare", unshare( CLONE_NEWNET ) );
+
+        /* bring up localhost */
+        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+                         [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+        /* provide seed for random number generator used to create apache pid files */
+        srandom( time( NULL ) );
 
         /* collect the IPs, IPs and ports, and hostnames we'll need to serve */
         set< Address > unique_ip;
@@ -130,7 +141,8 @@ int main( int argc, char *argv[] )
         /* start dnsmasq to listen on 0.0.0.0:53 */
         event_loop.add_child_process( "dnsmasq", [&] () {
                 return ezexec( { DNSMASQ, "--keep-in-foreground", "--no-resolv",
-                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                            "--no-hosts", "-i", "lo", "--bind-interfaces",
+                            "-H", dnsmasq_hosts.name().c_str(),
                             "-C", "/dev/null" } );
             }, false, SIGTERM );
 
@@ -142,7 +154,7 @@ int main( int argc, char *argv[] )
                 environ = user_environment;
                 prepend_shell_prefix( "[replayshell] " );
 
-                return ezexec( { shell_path() } );
+                return ezexec( command, true );
         } );
 
         return event_loop.loop();
