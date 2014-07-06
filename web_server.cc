@@ -46,8 +46,12 @@ WebServer::WebServer( const Address & addr, const string & record_folder, const 
 
 WebServer::~WebServer()
 {
-    if ( not moved_away_ ) {
+    if ( moved_away_ ) { return; }
+
+    try {
         run( { APACHE2, "-f", config_file_.name(), "-k", "graceful-stop" } );
+    } catch ( const Exception & e ) { /* don't throw from destructor */
+        e.perror();
     }
 }
 

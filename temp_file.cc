@@ -32,8 +32,12 @@ UniqueFile::UniqueFile( const string & filename_template )
 /* unlike UniqueFile, a TempFile is deleted when object destroyed */
 TempFile::~TempFile()
 {
-    if ( not moved_away_ ) {
+    if ( moved_away_ ) { return; }
+
+    try {
         SystemCall( "unlink " + name(), unlink( name().c_str() ) );
+    } catch ( const Exception & e ) {
+        e.perror();
     }
 }
 
