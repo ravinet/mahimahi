@@ -37,7 +37,12 @@ void run( const vector< string > & command )
     }
     argv.push_back( 0 ); /* null-terminate */
 
-    ChildProcess command_process( [&] () {
+    const string command_str = accumulate( command.begin() + 1, command.end(),
+                                           command.front(),
+                                           []( const string & a, const string & b )
+                                           { return a + " " + b; } );
+
+    ChildProcess command_process( command_str, [&] () {
             SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
             return EXIT_FAILURE;
         } );
@@ -47,15 +52,7 @@ void run( const vector< string > & command )
     }
 
     if ( command_process.exit_status() != 0 ) {
-        const string command_str = accumulate( command.begin() + 1, command.end(),
-                                               command.front(),
-                                               []( const string & a, const string & b )
-                                               { return a + " " + b; } );
-        throw Exception( "`" + command_str + "'", "command "
-                         + (command_process.died_on_signal()
-                            ? string("died on signal ")
-                            : string("exited with failure status "))
-                         + to_string( command_process.exit_status() ) );
+        command_process.throw_exception();
     }
 }
 

@@ -128,7 +128,7 @@ int main( int argc, char *argv[] )
         }
 
         /* start dnsmasq to listen on 0.0.0.0:53 */
-        event_loop.add_child_process( [&] () {
+        event_loop.add_child_process( "dnsmasq", [&] () {
                 SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground", "--no-resolv",
                                             "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
                                             "-C", "/dev/null", static_cast<char *>( nullptr ) ) );
@@ -136,7 +136,7 @@ int main( int argc, char *argv[] )
             }, false, SIGTERM );
 
         /* start shell */
-        event_loop.add_child_process( [&]() {
+        event_loop.add_child_process( "replayshell", [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */

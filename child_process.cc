@@ -5,17 +5,22 @@
 #include <cassert>
 #include <cstdlib>
 #include <sys/syscall.h>
+#include <string>
 
 #include "child_process.hh"
 #include "exception.hh"
 #include "signalfd.hh"
 #include "util.hh"
 
+using namespace std;
+
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
-ChildProcess::ChildProcess( std::function<int()> && child_procedure, const bool new_namespace,
+ChildProcess::ChildProcess( const string & name,
+                            function<int()> && child_procedure, const bool new_namespace,
                             const int termination_signal )
-    : pid_( SystemCall( "clone", syscall( SYS_clone,
+    : name_( name ),
+      pid_( SystemCall( "clone", syscall( SYS_clone,
                                           SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
                                           nullptr, nullptr, nullptr, nullptr ) ) ),
       running_( true ),
@@ -139,7 +144,8 @@ ChildProcess::~ChildProcess()
 
 /* move constructor */
 ChildProcess::ChildProcess( ChildProcess && other )
-    : pid_( other.pid_ ),
+    : name_( other.name_ ),
+      pid_( other.pid_ ),
       running_( other.running_ ),
       terminated_( other.terminated_ ),
       exit_status_( other.exit_status_ ),
@@ -150,4 +156,13 @@ ChildProcess::ChildProcess( ChildProcess && other )
     assert( !other.moved_away_ );
 
     other.moved_away_ = true;
+}
+
+void ChildProcess::throw_exception( void ) const
+{
+    throw Exception( "`" + name() + "'", "command "
+                     + (died_on_signal()
+                        ? string("died on signal ")
+                        : string("exited with failure status "))
+                     + to_string( exit_status() ) );
 }

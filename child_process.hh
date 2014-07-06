@@ -13,6 +13,7 @@
 class ChildProcess
 {
 private:
+    std::string name_;
     pid_t pid_;
     bool running_, terminated_;
     int exit_status_;
@@ -22,7 +23,8 @@ private:
     bool moved_away_;
 
 public:
-    ChildProcess( std::function<int()> && child_procedure, const bool new_namespace = false,
+    ChildProcess( const std::string & name,
+                  std::function<int()> && child_procedure, const bool new_namespace = false,
                   const int termination_signal = SIGHUP );
 
     bool waitable( void ) const; /* is process in a waitable state? */
@@ -30,6 +32,7 @@ public:
     void signal( const int sig ); /* send signal */
     void resume( void ); /* send SIGCONT */
 
+    const std::string & name( void ) const { assert( not moved_away_ ); return name_; }
     pid_t pid( void ) const { assert( not moved_away_ ); return pid_; }
     bool running( void ) const { assert( not moved_away_ ); return running_; }
     bool terminated( void ) const { assert( not moved_away_ ); return terminated_; }
@@ -37,6 +40,7 @@ public:
     /* Return exit status or signal that killed process */
     bool died_on_signal( void ) const { assert( not moved_away_ ); assert( terminated_ ); return died_on_signal_; }
     int exit_status( void ) const { assert( not moved_away_ ); assert( terminated_ ); return exit_status_; }
+    void throw_exception( void ) const;
 
     ~ChildProcess();
 

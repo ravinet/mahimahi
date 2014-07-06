@@ -39,11 +39,7 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
 
                     if ( x.terminated() ) {
                         if ( x.exit_status() != 0 ) {
-                            throw Exception( "process " + to_string( x.pid() ),
-                                             (x.died_on_signal()
-                                              ? string("died on signal ")
-                                              : string("exited with failure status "))
-                                             + to_string( x.exit_status() ) );
+                            x.throw_exception();
                         } else {
                             return ResultType::Exit;
                         }

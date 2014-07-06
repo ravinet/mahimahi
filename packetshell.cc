@@ -45,7 +45,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
         }, forward<Targs>( Fargs )... );
 
     /* Fork */
-    event_loop_.add_child_process( [&]() {
+    event_loop_.add_child_process( "packetshell container", [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -66,7 +66,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             Ferry inner_ferry;
 
             /* run dnsmasq as local caching nameserver */
-            inner_ferry.add_child_process( [&]() {
+            inner_ferry.add_child_process( "dnsmasq", [&]() {
                     SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground",
                                                 "--no-resolv", "-S",
                                                 dns_outside_.udp_listener().local_addr().str( "#" ).c_str(),
@@ -77,7 +77,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             /* Fork again after dropping root privileges */
             drop_privileges();
 
-            inner_ferry.add_child_process( [&]() {
+            inner_ferry.add_child_process( "packetshell", [&]() {
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
@@ -100,7 +100,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
             return FerryQueueType( forward<Targs>( Fargs )... );
         }, forward<Targs>( Fargs )... );
 
-    event_loop_.add_child_process( [&] () {
+    event_loop_.add_child_process( "downlink", [&] () {
             drop_privileges();
 
             Ferry outer_ferry;

@@ -70,7 +70,7 @@ int main( int argc, char *argv[] )
 
         /* Fork */
         {
-            ChildProcess container_process( [&]() {
+            ChildProcess container_process( "recordshell container", [&]() {
                     /* bring up localhost */
                     interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
                                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )
                     /* prepare child's event loop */
                     EventLoop shell_event_loop;
 
-                    shell_event_loop.add_child_process( [&]() {
+                    shell_event_loop.add_child_process( "recordshell", [&]() {
                             /* restore environment and tweak prompt */
                             environ = user_environment;
                             prepend_shell_prefix( "[record] " );
@@ -129,7 +129,7 @@ int main( int argc, char *argv[] )
         }
 
         /* do the actual recording in a different unprivileged child */
-        outer_event_loop.add_child_process( [&]() {
+        outer_event_loop.add_child_process( "recorder", [&]() {
                 drop_privileges();
 
                 make_directory( directory );
