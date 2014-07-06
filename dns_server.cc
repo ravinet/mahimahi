@@ -32,7 +32,7 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
     /* busy-wait for dnsmasq to start answering DNS queries */
     unsigned int attempts = 0;
     while ( true ) {
-        if ( attempts++ > 100 ) {
+        if ( ++attempts >= 100 ) {
             throw Exception( "dnsmasq", "did not start after " + to_string( attempts ) + " attempts" );
         }
 
