@@ -177,7 +177,7 @@ void assert_not_root( void )
 template <typename entry_type, typename numeric_type>
 static string nssname( const int property,
                        const function<numeric_type(void)> & get_numeric,
-                       const function<int(numeric_type, entry_type *, char *, size_t, entry_type **) > & retrieve_entry,
+                       const function<int(numeric_type, entry_type *, char *, size_t, entry_type **)> & retrieve_entry,
                        const function<string(const entry_type &)> & get_name )
 {
     const long entry_size = sysconf( property );
