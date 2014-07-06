@@ -34,7 +34,11 @@ public:
             return;
         }
 
-        SystemCall( "close", close( fd_ ) );
+        try {
+            SystemCall( "close", close( fd_ ) );
+        } catch ( const Exception & e ) { /* don't throw from destructor */
+            e.perror();
+        }
     }
 
     const int & num( void ) { return fd_; }
