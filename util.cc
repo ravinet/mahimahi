@@ -173,48 +173,6 @@ void assert_not_root( void )
     }
 }
 
-/* general function for uid->username or gid->groupname */
-template <typename entry_type, typename numeric_type>
-static string nssname( const int property,
-                       const function<numeric_type(void)> & get_numeric,
-                       const function<int(numeric_type, entry_type *, char *, size_t, entry_type **)> & retrieve_entry,
-                       const function<string(const entry_type &)> & get_name )
-{
-    const long entry_size = sysconf( property );
-    if ( entry_size <= 0 ) {
-        throw Exception( "sysconf", "bad size" );
-    }
-
-    unique_ptr<char[]> buffer( new char[ entry_size ] );
-    entry_type entry;
-    entry_type *result;
-
-    SystemCall( "nssname retrieve_entry",
-                retrieve_entry( get_numeric(), &entry, buffer.get(), entry_size, &result ) );
-
-    if ( result == nullptr ) {
-        throw Exception( "nssname", "no matching record was found" );
-    }
-
-    if ( result != &entry ) {
-        throw Exception( "nssname", "BUG: unexpected result" );
-    }
-
-    return get_name( entry );
-}
-
-string username( void )
-{
-    return nssname<passwd, uid_t>( _SC_GETPW_R_SIZE_MAX, getuid, getpwuid_r,
-                                   [] ( const passwd & x ) { return x.pw_name; } );
-}
-
-string groupname( void )
-{
-    return nssname<group, gid_t>( _SC_GETGR_R_SIZE_MAX, getgid, getgrgid_r,
-                                  [] ( const group & x ) { return x.gr_name; } );
-}
-
 TemporarilyUnprivileged::TemporarilyUnprivileged()
     : orig_euid( geteuid() ),
       orig_egid( getegid() )

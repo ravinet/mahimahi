@@ -11,8 +11,7 @@
 
 using namespace std;
 
-WebServer::WebServer( const Address & addr, const string & record_folder,
-                      const string & user, const string & group )
+WebServer::WebServer( const Address & addr, const string & record_folder )
     : config_file_( "/tmp/replayshell_apache_config" ),
       error_log_( "/tmp/replayshell_apache_error" ),
       access_log_( "/tmp/replayshell_apache_access" ),
@@ -36,9 +35,9 @@ WebServer::WebServer( const Address & addr, const string & record_folder,
 
     config_file_.write( "CustomLog " + access_log_.name() + " common" + "\n" );
 
-    config_file_.write( "User " + user + "\n" );
+    config_file_.write( "User #" + to_string( getuid() ) + "\n" );
 
-    config_file_.write( "Group " + group + "\n" );
+    config_file_.write( "Group #" + to_string( getgid() ) + "\n" );
 
     config_file_.write( "Listen " + addr.str() );
 

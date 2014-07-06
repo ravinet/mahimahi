@@ -19,8 +19,7 @@ private:
     bool moved_away_;
 
 public:
-    WebServer( const Address & addr, const std::string & record_folder,
-               const std::string & user, const std::string & group );
+    WebServer( const Address & addr, const std::string & record_folder );
     ~WebServer();
 
     /* ban copying */

@@ -70,7 +70,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                     SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground",
                                                 "--no-resolv", "-S",
                                                 dns_outside_.udp_listener().local_addr().str( "#" ).c_str(),
-                                                "-C", "/dev/null", "-u", username().c_str(), static_cast<char *>( nullptr ) ) );
+                                                "-C", "/dev/null", static_cast<char *>( nullptr ) ) );
                     return EXIT_FAILURE;
                 }, false, SIGTERM );
 
