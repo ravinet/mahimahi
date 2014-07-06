@@ -21,9 +21,13 @@ LinkQueue::LinkQueue( const std::string & filename )
     /* open filename and load schedule */
     ifstream trace_file( filename );
 
+    if ( not trace_file.good() ) {
+        throw Exception( filename, "error opening for reading" );
+    }
+
     string line;
 
-    while ( getline( trace_file, line ) ) {
+    while ( trace_file.good() and getline( trace_file, line ) ) {
         if ( line.empty() ) {
             throw Exception( filename, "invalid empty line" );
         }
