@@ -7,6 +7,8 @@
 #include <cstring>
 #include <vector>
 
+#include <sys/types.h>
+
 #include "address.hh"
 
 std::string shell_path( void );
@@ -19,6 +21,16 @@ std::vector< std::string > list_directory_contents( const std::string & dir );
 void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
 std::string username( void );
+
+class TemporarilyUnprivileged {
+private:
+    const uid_t orig_euid;
+    const gid_t orig_egid;
+
+public:
+    TemporarilyUnprivileged();
+    ~TemporarilyUnprivileged();
+};
 
 void assert_not_root( void );
 

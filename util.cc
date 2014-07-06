@@ -196,3 +196,19 @@ string username( void )
 
     return passwd_entry.pw_name;
 }
+
+TemporarilyUnprivileged::TemporarilyUnprivileged()
+    : orig_euid( geteuid() ),
+      orig_egid( getegid() )
+{
+    SystemCall( "setegid", setegid( getgid() ) );
+    SystemCall( "seteuid", seteuid( getuid() ) );
+
+    assert_not_root();
+}
+
+TemporarilyUnprivileged::~TemporarilyUnprivileged()
+{
+    SystemCall( "seteuid", seteuid( orig_euid ) );
+    SystemCall( "setegid", setegid( orig_egid ) );
+}

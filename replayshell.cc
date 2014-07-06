@@ -69,30 +69,28 @@ int main( int argc, char *argv[] )
         set< Address > unique_ip_and_port;
         vector< pair< string, Address > > hostname_to_ip;
 
-        SystemCall( "seteuid", seteuid( getuid() ) );
-        SystemCall( "setegid", setegid( getgid() ) );
+        {
+            TemporarilyUnprivileged tu;
 
-        const vector< string > files = list_directory_contents( directory  );
+            const vector< string > files = list_directory_contents( directory  );
 
-        for ( const auto filename : files ) {
-            FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
+            for ( const auto filename : files ) {
+                FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
 
-            MahimahiProtobufs::RequestResponse protobuf;
-            if ( not protobuf.ParseFromFileDescriptor( fd.num() ) ) {
-                throw Exception( filename, "invalid HTTP request/response" );
+                MahimahiProtobufs::RequestResponse protobuf;
+                if ( not protobuf.ParseFromFileDescriptor( fd.num() ) ) {
+                    throw Exception( filename, "invalid HTTP request/response" );
+                }
+
+                const Address address( protobuf.ip(), protobuf.port() );
+
+                unique_ip.emplace( address.ip(), 0 );
+                unique_ip_and_port.emplace( address );
+
+                hostname_to_ip.emplace_back( HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
+                                             address );
             }
-
-            const Address address( protobuf.ip(), protobuf.port() );
-
-            unique_ip.emplace( address.ip(), 0 );
-            unique_ip_and_port.emplace( address );
-
-            hostname_to_ip.emplace_back( HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
-                                         address );
         }
-
-        SystemCall( "seteuid", seteuid( 0 ) );
-        SystemCall( "setegid", setegid( 0 ) );
 
         /* set up dummy interfaces */
         unsigned int interface_counter = 0;
