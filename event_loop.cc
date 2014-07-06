@@ -70,3 +70,28 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
 
     return ResultType::Continue;
 }
+
+int EventLoop::internal_loop( const std::function<int(void)> & wait_time )
+{
+    TemporarilyUnprivileged tu;
+
+    /* verify that signal mask is intact */
+    SignalMask current_mask = SignalMask::current_mask();
+
+    if ( !( signals_ == current_mask ) ) {
+        throw Exception( "EventLoop", "signal mask has been altered" );
+    }
+
+    SignalFD signal_fd( signals_ );
+
+    /* we get signal -> main screen turn on */
+    add_simple_input_handler( signal_fd.fd(),
+                              [&] () { return handle_signal( signal_fd.read_signal() ); } );
+
+    while ( true ) {
+        const auto poll_result = poller_.poll( wait_time() );
+        if ( poll_result.result == Poller::Result::Type::Exit ) {
+            return poll_result.exit_status;
+        }
+    }
+}
