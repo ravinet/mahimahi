@@ -49,5 +49,5 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
         }
     }
 
-    return move( dnsmasq );
+    return dnsmasq;
 }
