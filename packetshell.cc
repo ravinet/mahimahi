@@ -69,7 +69,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             /* run dnsmasq as local caching nameserver */
             inner_ferry.add_child_process( "dnsmasq", [&]() {
                     return ezexec( { DNSMASQ, "--keep-in-foreground",
-                                "--no-resolv", "-S",
+                                "--no-resolv", "-i", "lo", "--bind-interfaces", "-S",
                                 dns_outside_.udp_listener().local_addr().str( "#" ),
                                 "-C", "/dev/null" } );
                 }, false, SIGTERM );
