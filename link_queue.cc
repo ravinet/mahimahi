@@ -46,6 +46,10 @@ LinkQueue::LinkQueue( const std::string & filename )
     if ( schedule_.empty() ) {
         throw Exception( filename, "no valid timestamps found" );
     }
+
+    if ( schedule_.back() == 0 ) {
+        throw Exception( filename, "trace must last for a nonzero amount of time" );
+    }
 }
 
 LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
