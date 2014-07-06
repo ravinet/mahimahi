@@ -1,31 +1,25 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <linux/if.h>
 #include <net/route.h>
-#include <iostream>
+
 #include <vector>
 #include <set>
 
 #include "util.hh"
-#include "interfaces.hh"
-#include "address.hh"
-#include "signalfd.hh"
 #include "netdevice.hh"
 #include "web_server.hh"
 #include "system_runner.hh"
-#include "config.h"
 #include "socket.hh"
-#include "config.h"
 #include "event_loop.hh"
-#include "http_record.pb.h"
 #include "temp_file.hh"
 #include "http_response.hh"
 #include "dns_server.hh"
 
+#include "http_record.pb.h"
+
+#include "config.h"
+
 using namespace std;
-using namespace PollerShortNames;
 
 void add_dummy_interface( const string & name, const Address & addr )
 {
