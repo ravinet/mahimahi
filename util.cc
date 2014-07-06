@@ -83,6 +83,11 @@ void check_requirements( const int argc, const char * const argv[] )
         throw Exception( argv[ 0 ], "please run as non-root" );
     }
 
+    /* verify environment has been cleared */
+    if ( environ ) {
+        throw Exception( "BUG", "environment not cleared in sensitive region" );
+    }
+
     /* verify IP forwarding is enabled */
     FileDescriptor ipf( SystemCall( "open /proc/sys/net/ipv4/ip_forward",
                                     open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ) ) );
