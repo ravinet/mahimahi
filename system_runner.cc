@@ -14,10 +14,16 @@
 
 using namespace std;
 
-void ezexec( const vector< string > & command )
+int ezexec( const vector< string > & command )
 {
     if ( command.empty() ) {
         throw Exception( "ezexec", "empty command" );
+    }
+
+    if ( geteuid() == 0 or getegid() == 0 ) {
+        if ( environ ) {
+            throw Exception( "ezexec", "root's environment not cleared" );
+        }
     }
 
     /* copy the arguments to mutable structures */
@@ -39,7 +45,7 @@ void ezexec( const vector< string > & command )
     }
     argv.push_back( 0 ); /* null-terminate */
 
-    SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], nullptr ) );
+    SystemCall( "execve", execve( &argv[ 0 ][ 0 ], &argv[ 0 ], environ ) );
     throw Exception( "execve", "failed" );
 }
 
@@ -51,8 +57,7 @@ void run( const vector< string > & command )
                                            { return a + " " + b; } );
 
     ChildProcess command_process( command_str, [&] () {
-            ezexec( command );
-            return EXIT_FAILURE;
+            return ezexec( command );
         } );
 
     while ( !command_process.terminated() ) {

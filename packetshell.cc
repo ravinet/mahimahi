@@ -67,11 +67,10 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
             /* run dnsmasq as local caching nameserver */
             inner_ferry.add_child_process( "dnsmasq", [&]() {
-                    SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground",
-                                                "--no-resolv", "-S",
-                                                dns_outside_.udp_listener().local_addr().str( "#" ).c_str(),
-                                                "-C", "/dev/null", static_cast<char *>( nullptr ) ) );
-                    return EXIT_FAILURE;
+                    return ezexec( { DNSMASQ, "--keep-in-foreground",
+                                "--no-resolv", "-S",
+                                dns_outside_.udp_listener().local_addr().str( "#" ),
+                                "-C", "/dev/null" } );
                 }, false, SIGTERM );
 
             /* Fork again after dropping root privileges */
@@ -82,9 +81,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
 
-                    const string shell = shell_path();
-                    SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
-                    return EXIT_FAILURE;
+                    return ezexec( { shell_path() } );
                 } );
 
             FerryQueueType uplink_queue = ferry_maker();

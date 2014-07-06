@@ -91,9 +91,7 @@ int main( int argc, char *argv[] )
                             environ = user_environment;
                             prepend_shell_prefix( "[record] " );
 
-                            const string shell = shell_path();
-                            SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
-                            return EXIT_FAILURE;
+                            return ezexec( { shell_path() } );
                         } );
 
                     if ( dns_inside ) {

@@ -129,10 +129,9 @@ int main( int argc, char *argv[] )
 
         /* start dnsmasq to listen on 0.0.0.0:53 */
         event_loop.add_child_process( "dnsmasq", [&] () {
-                SystemCall( "execl", execl( DNSMASQ, "dnsmasq", "--keep-in-foreground", "--no-resolv",
-                                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
-                                            "-C", "/dev/null", static_cast<char *>( nullptr ) ) );
-                return EXIT_FAILURE;
+                return ezexec( { DNSMASQ, "--keep-in-foreground", "--no-resolv",
+                            "--no-hosts", "-H", dnsmasq_hosts.name().c_str(),
+                            "-C", "/dev/null" } );
             }, false, SIGTERM );
 
         /* start shell */
@@ -142,10 +141,8 @@ int main( int argc, char *argv[] )
                 /* restore environment and tweak bash prompt */
                 environ = user_environment;
                 prepend_shell_prefix( "[replayshell] " );
-                const string shell = shell_path();
-                SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
 
-                return EXIT_FAILURE;
+                return ezexec( { shell_path() } );
         } );
 
         return event_loop.loop();
