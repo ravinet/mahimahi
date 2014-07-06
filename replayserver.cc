@@ -27,21 +27,21 @@ string safe_getenv( const string & key )
     return value;
 }
 
-/* compare specific env header value and stored header value (if either does not exist, return true) */
+/* does the actual HTTP header match this stored request? */
 bool header_match( const string & env_var_name,
                    const string & header_name,
-                   const HTTPRequest & saved_response )
+                   const HTTPRequest & saved_request )
 {
     const char * const env_value = getenv( env_var_name.c_str() );
 
     /* case 1: neither header exists (OK) */
-    if ( (not env_value) and (not saved_response.has_header( header_name )) ) {
+    if ( (not env_value) and (not saved_request.has_header( header_name )) ) {
         return true;
     }
 
     /* case 2: headers both exist (OK if values match) */
-    if ( env_value and saved_response.has_header( header_name ) ) {
-        return saved_response.get_header_value( header_name ) == string( env_value );
+    if ( env_value and saved_request.has_header( header_name ) ) {
+        return saved_request.get_header_value( header_name ) == string( env_value );
     }
 
     /* case 3: one exists but the other doesn't (failure) */
