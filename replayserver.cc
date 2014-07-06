@@ -18,6 +18,15 @@
 
 using namespace std;
 
+string safe_getenv( const string & key )
+{
+    const char * const value = getenv( key.c_str() );
+    if ( not value ) {
+        throw Exception( "missing environment variable", key );
+    }
+    return value;
+}
+
 /* compare specific env header value and stored header value (if either does not exist, return true) */
 bool header_match( const string & env_var_name,
                    const string & header_name,
@@ -38,54 +47,60 @@ bool header_match( const string & env_var_name,
 }
 
 /* compare request_line and certain headers of incoming request and stored request */
-bool request_matches( const MahimahiProtobufs::RequestResponse & saved_record )
+bool request_matches( const MahimahiProtobufs::RequestResponse & saved_record,
+                      const string & request_line,
+                      const bool is_https )
 {
-    /* match HTTP/HTTPS */
-    switch ( saved_record.scheme() ) {
-    case MahimahiProtobufs::RequestResponse_Scheme_HTTP:
-        if ( getenv( "HTTPS" ) ) {
-            return false;
-        }
-        break;
-    case MahimahiProtobufs::RequestResponse_Scheme_HTTPS:
-        if ( not getenv( "HTTPS" ) ) {
-            return false;
-        }
-        break;
-    default:
-        throw Exception( "MahimahiProtobufs::RequestResponse", "unknown URL scheme" );
-    }
-
     const HTTPRequest saved_request( saved_record.request() );
 
-    /* request line */
-    const string new_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) + " " + string ( getenv( "SERVER_PROTOCOL" ) );
-
-    if ( new_req != saved_request.first_line() ) {
-        cerr << "failed comparison: " << new_req << " vs. " << saved_request.first_line() << endl;
+    /* match HTTP/HTTPS */
+    if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
         return false;
     }
 
-    /* compare existing environment variables for request to stored header values */
-    if ( not header_match( "HTTP_ACCEPT_ENCODING", "Accept_Encoding", saved_request ) ) { return false; }
-    if ( not header_match( "HTTP_ACCEPT_LANGUAGE", "Accept_Language", saved_request ) ) { return false; }
-    if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) { return false; }
+    if ( (not is_https) and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTP) ) {
+        return false;
+    }
 
-    /* all compared fields match */
+    /* match first line */
+    if ( request_line != saved_request.first_line() ) {
+        return false;
+    }
+
+    /* match host header */
+    if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
+        return false;
+    }
+
+    /* match user agent */
+    if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
+        return false;
+    }
+
+    /* success! */
     return true;
 }
 
 int main( void )
 {
     try {
-        const vector< string > files = list_directory_contents( getenv( "RECORD_FOLDER" ) );
+        const string recording_directory = safe_getenv( "RECORD_FOLDER" );
+        const string request_line = safe_getenv( "REQUEST_METHOD" )
+            + " " + safe_getenv( "REQUEST_URI" )
+            + " " + safe_getenv( "SERVER_PROTOCOL" );
+        const bool is_https = getenv( "HTTPS" );
+
+        const vector< string > files = list_directory_contents( recording_directory );
         vector< MahimahiProtobufs::RequestResponse > possible_matches;
 
-        for ( const auto filename : files ) { /* iterate through recorded files and compare requests to incoming req*/
+        for ( const auto filename : files ) {
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
-            current_record.ParseFromFileDescriptor( fd.num() );
-            if ( request_matches( current_record ) ) { /* requests match */
+            if ( not current_record.ParseFromFileDescriptor( fd.num() ) ) {
+                throw Exception( filename, "invalid HTTP request/response" );
+            }
+
+            if ( request_matches( current_record, request_line, is_https ) ) { /* requests match */
                 cout << HTTPResponse( current_record.response() ).str();
                 return EXIT_SUCCESS;
             }
@@ -93,9 +108,9 @@ int main( void )
 
         /* no exact matches for request */
         cout << "HTTP/1.1 200 OK\r\n";
-        cout << "Content-Type: text/html\r\nConnection: close\r\n";
+        cout << "Content-Type: text/plain\r\nConnection: close\r\n";
         cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
-        throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
+        throw Exception( "replayserver", "Can't find: " + request_line );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
