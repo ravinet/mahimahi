@@ -49,13 +49,6 @@ int main( int argc, char *argv[] )
             throw Exception( "Usage", string( argv[ 0 ] ) + " folder_with_recorded_content" );
         }
 
-        /* check if user-specified storage folder exists */
-        string directory = argv[1];
-        /* make sure directory ends with '/' so we can prepend directory to file name for storage */
-        if ( directory.back() != '/' ) {
-            directory.append( "/" );
-        }
-
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
@@ -65,12 +58,26 @@ int main( int argc, char *argv[] )
         /* provide seed for random number generator used to create apache pid files */
         srandom( time( NULL ) );
 
+        /* clean directory name */
+        string directory = argv[ 1 ];
+
+        if ( directory.empty() ) {
+            throw Exception( argv[ 0 ], "directory name must be non-empty" );
+        }
+
+        /* make sure directory ends with '/' so we can prepend directory to file name for storage */
+        if ( directory.back() != '/' ) {
+            directory.append( "/" );
+        }
+
+        /* collect the IPs, IPs and ports, and hostnames we'll need to serve */
         set< Address > unique_ip;
         set< Address > unique_ip_and_port;
         vector< pair< string, Address > > hostname_to_ip;
 
         {
             TemporarilyUnprivileged tu;
+            /* would be privilege escalation if we let the user read directories or open files as root */
 
             const vector< string > files = list_directory_contents( directory  );
 
