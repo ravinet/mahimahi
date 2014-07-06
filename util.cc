@@ -95,7 +95,8 @@ void check_requirements( const int argc, const char * const argv[] )
 
 void make_directory( const string & directory )
 {
-    /* assert that directory ends with '/' */
+    assert_not_root();
+    assert( not directory.empty() );
     assert( directory.back() == '/' );
 
     SystemCall( "mkdir " + directory, mkdir( directory.c_str(), 00700 ) );
@@ -136,13 +137,15 @@ void prepend_shell_prefix( const string & str )
 
 vector< string > list_directory_contents( const string & dir )
 {
+    assert_not_root();
+
     struct Closedir {
         void operator()( DIR *x ) const { SystemCall( "closedir", closedir( x ) ); }
     };
 
     unique_ptr< DIR, Closedir > dp( opendir( dir.c_str() ) );
     if ( not dp ) {
-        throw Exception( "opendir " + dir );
+        throw Exception( "opendir (" + dir + ")" );
     }
 
     vector< string > ret;
@@ -167,8 +170,7 @@ int SystemCall( const string & s_attempt, const int return_value )
 
 void assert_not_root( void )
 {
-    if ( ( getuid() == 0 ) or ( geteuid() == 0 )
-         or ( getgid() == 0 ) or ( getegid() == 0 ) ) {
+    if ( ( geteuid() == 0 ) or ( getegid() == 0 ) ) {
         throw Exception( "BUG", "privileges not dropped in sensitive region" );
     }
 }

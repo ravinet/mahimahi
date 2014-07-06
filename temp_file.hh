@@ -25,6 +25,8 @@ public:
 
     void write( const std::string & contents );
 
+    FileDescriptor & fd( void ) { return fd_; }
+
     /* ban copying */
     UniqueFile( const UniqueFile & other ) = delete;
     UniqueFile & operator=( const UniqueFile & other ) = delete;

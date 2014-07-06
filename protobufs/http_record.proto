@@ -1,15 +1,29 @@
-package HTTP_Record;
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-message http_message {
-    required bytes first_line = 1;
-    repeated bytes headers = 2;
+package MahimahiProtobufs;
+
+message HTTPMessage {
+    optional bytes first_line = 1;
+    repeated HTTPHeader header = 2;
     optional bytes body = 3;
 }
 
-message reqrespair {
-    required uint32 port = 1;
-    required string protocol = 2;
-    required string ip = 3;
-    required http_message req = 4;
-    required http_message res = 5;
+message HTTPHeader {
+    optional bytes key = 1;
+    optional bytes value = 2;
+}
+
+message RequestResponse {
+    optional string ip = 1;
+    optional uint32 port = 2;
+
+    enum Scheme {
+        HTTP = 1;
+        HTTPS = 2;
+    }
+
+    optional Scheme scheme = 3;
+
+    optional HTTPMessage request = 4;
+    optional HTTPMessage response = 5;
 }

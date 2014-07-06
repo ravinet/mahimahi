@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <cassert>
 
 #include "http_header.hh"
 #include "http_record.pb.h"
@@ -30,7 +29,7 @@ private:
     virtual size_t read_in_complex_body( const std::string & str ) = 0;
 
     /* does message become complete upon EOF in body? */
-    virtual bool eof_in_body( void ) = 0;
+    virtual bool eof_in_body( void ) const = 0;
 
 protected:
     /* request line or status line */
@@ -62,6 +61,7 @@ public:
     bool body_size_is_known( void ) const;
     size_t expected_body_size( void ) const;
     const HTTPMessageState & state( void ) const { return state_; }
+    const std::string & first_line( void ) const { return first_line_; }
 
     /* troll through the headers */
     bool has_header( const std::string & header_name ) const;
@@ -71,11 +71,14 @@ public:
     std::string str( void ) const;
 
     /* return complete request or response as http_message protobuf */
-    HTTP_Record::http_message toprotobuf( void ) const;
+    MahimahiProtobufs::HTTPMessage toprotobuf( void ) const;
 
     /* compare two strings for (case-insensitive) equality,
        in ASCII without sensitivity to locale */
     static bool equivalent_strings( const std::string & a, const std::string & b );
+
+    /* construct from protobuf */
+    HTTPMessage( const MahimahiProtobufs::HTTPMessage & proto );
 };
 
 #endif /* HTTP_MESSAGE_HH */

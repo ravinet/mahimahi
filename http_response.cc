@@ -30,7 +30,7 @@ void HTTPResponse::calculate_expected_body_size( void )
     if ( status_code().at( 0 ) == '1'
          or status_code() == "204"
          or status_code() == "304"
-         or request_was_head_ ) {
+         or request_.is_head() ) {
 
         /* Rule 1: size known to be zero */
         set_expected_body_size( true, 0 );
@@ -83,7 +83,7 @@ size_t HTTPResponse::read_in_complex_body( const std::string & str )
     }
 }
 
-bool HTTPResponse::eof_in_body( void )
+bool HTTPResponse::eof_in_body( void ) const
 {
     /* complex bodies sometimes allow an EOF to terminate the body */
     if ( body_parser_ ) {
@@ -93,9 +93,9 @@ bool HTTPResponse::eof_in_body( void )
     }
 }
 
-void HTTPResponse::set_request_was_head( void )
+void HTTPResponse::set_request( const HTTPRequest & request )
 {
     assert( state_ == FIRST_LINE_PENDING );
 
-    request_was_head_ = true;
+    request_ = request;
 }

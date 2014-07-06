@@ -30,7 +30,7 @@ size_t HTTPRequest::read_in_complex_body( const std::string & )
     throw Exception( "HTTPRequest", "does not support chunked requests" );
 }
 
-bool HTTPRequest::eof_in_body( void )
+bool HTTPRequest::eof_in_body( void ) const
 {
     throw Exception( "HTTPRequest", "got EOF in middle of body" );
 }

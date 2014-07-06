@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include "http_record.pb.h"
+
 class HTTPHeader
 {
 private:
@@ -17,6 +19,9 @@ public:
     const std::string & value( void ) const { return value_; }
 
     std::string str( void ) const { return key_ + ": " + value_; }
+
+    HTTPHeader( const MahimahiProtobufs::HTTPHeader & proto );
+    MahimahiProtobufs::HTTPHeader toprotobuf( void ) const;
 };
 
 #endif /* HTTP_HEADER_HH */

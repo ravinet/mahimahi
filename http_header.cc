@@ -39,3 +39,18 @@ HTTPHeader::HTTPHeader( const string & buf )
              key_.c_str(), value_.c_str() );
     */
 }
+
+HTTPHeader::HTTPHeader( const MahimahiProtobufs::HTTPHeader & proto )
+    : key_( proto.key() ), value_( proto.value() )
+{
+}
+
+MahimahiProtobufs::HTTPHeader HTTPHeader::toprotobuf( void ) const
+{
+    MahimahiProtobufs::HTTPHeader ret;
+
+    ret.set_key( key_ );
+    ret.set_value( value_ );
+
+    return ret;
+}

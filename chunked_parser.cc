@@ -1,4 +1,5 @@
-#include <assert.h>
+#include <cassert>
+
 #include "ezio.hh"
 #include "chunked_parser.hh"
 

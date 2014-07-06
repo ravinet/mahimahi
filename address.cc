@@ -51,7 +51,7 @@ Address::Address( const string & ip, const uint16_t port )
     addr_.sin_family = AF_INET;
 
     if ( 1 != inet_pton( AF_INET, ip.c_str(), &addr_.sin_addr ) ) {
-        throw Exception( "inet_pton" );
+        throw Exception( "inet_pton (" + ip + ")" );
     }
 
     addr_.sin_port = htons( port );

@@ -9,7 +9,8 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	socket_type.hh util.hh util.cc dns_proxy.hh dns_proxy.cc               \
 	interfaces.hh interfaces.cc                                            \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
-	read_write_interface.hh event_loop.hh event_loop.cc
+	read_write_interface.hh event_loop.hh event_loop.cc \
+	temp_file.hh temp_file.cc
 
 packet_shell_source = packetshell.cc packetshell.hh make_pipe.hh
 
@@ -25,10 +26,7 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) recordshell.cc \
-	http_proxy.hh http_proxy.cc \
-	http_request_parser.hh \
+http_source = http_request_parser.hh \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
 	http_header.hh http_header.cc \
@@ -37,30 +35,23 @@ recordshell_SOURCES = $(common_source) recordshell.cc \
 	body_parser.hh \
 	chunked_parser.hh chunked_parser.cc \
 	http_message.hh http_message.cc \
-	http_message_sequence.hh \
-	secure_socket.hh secure_socket.cc \
-	certificate.hh temp_file.hh temp_file.cc
-recordshell_LDADD = -lrt
-recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
-recordshell_LDADD += -lssl -lcrypto -ldl
+	http_message_sequence.hh
+
+http_server_source = http_proxy.hh http_proxy.cc secure_socket.hh secure_socket.cc certificate.hh
+
+bin_PROGRAMS += recordshell
+recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) recordshell.cc
+recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 recordshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += replayshell
-replayshell_SOURCES = $(common_source) replayshell.cc \
-	temp_file.hh temp_file.cc \
-	web_server.hh web_server.cc \
-	apache_configuration.hh \
-	http_header.cc http_header.hh
-replayshell_LDADD = -lrt
-replayshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
+replayshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
 replayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += nph-replayserver.cgi
-nph_replayserver_cgi_SOURCES = $(common_source) replayserver.cc \
-	http_header.cc http_header.hh \
-	http_message.cc http_message.hh
-nph_replayserver_cgi_LDADD = -lrt
-nph_replayserver_cgi_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+nph_replayserver_cgi_SOURCES = $(common_source) $(http_source) replayserver.cc
+nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 install-exec-hook:

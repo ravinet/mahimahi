@@ -21,6 +21,7 @@
 #include "file_descriptor.hh"
 #include "event_loop.hh"
 #include "temp_file.hh"
+#include "secure_socket.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -56,23 +57,13 @@ void HTTPProxy::handle_tcp( void )
                 Poller poller;
 
                 HTTPRequestParser request_parser;
-
                 HTTPResponseParser response_parser;
 
-                HTTP_Record::reqrespair current_pair;
-
-                auto dst_port = original_destaddr.port();
-
-                /* Set destination ip, port and protocol in current request/response pair */
-                current_pair.set_ip( original_destaddr.ip() );
-                current_pair.set_port( dst_port );
-                ( dst_port == 443 ) ? current_pair.set_protocol( "HTTPS" ) : current_pair.set_protocol( "HTTP" );
-
                 /* Create Read/Write Interfaces for server and client */
-                std::unique_ptr<ReadWriteInterface> server_rw  = (dst_port == 443) ?
+                std::unique_ptr<ReadWriteInterface> server_rw  = (original_destaddr.port() == 443) ?
                                                                  static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
                                                                  static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
-                std::unique_ptr<ReadWriteInterface> client_rw  = (dst_port == 443) ?
+                std::unique_ptr<ReadWriteInterface> client_rw  = (original_destaddr.port() == 443) ?
                                                                  static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER ) ) :
                                                                  static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
 
@@ -100,10 +91,6 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () {
                                                        server_rw->write( request_parser.front().str() );
                                                        response_parser.new_request_arrived( request_parser.front() );
-
-                                                       /* add request to current request/response pair */
-                                                       current_pair.mutable_req()->CopyFrom( request_parser.front().toprotobuf() );
-
                                                        request_parser.pop();
                                                        return ResultType::Continue;
                                                    },
@@ -113,7 +100,7 @@ void HTTPProxy::handle_tcp( void )
                 poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
                                                    [&] () {
                                                        client_rw->write( response_parser.front().str() );
-                                                       reqres_to_protobuf( current_pair, response_parser.front() );
+                                                       save_to_disk( response_parser.front(), original_destaddr );
                                                        response_parser.pop();
                                                        return ResultType::Continue;
                                                    },
@@ -136,29 +123,25 @@ void HTTPProxy::handle_tcp( void )
     newthread.detach();
 }
 
-void HTTPProxy::reqres_to_protobuf( HTTP_Record::reqrespair & current_pair, const HTTPResponse & response )
+void HTTPProxy::save_to_disk( const HTTPResponse & response, const Address & server_address )
 {
-    /* output string for current request/response pair */
-    string outputmessage;
-
     /* output file to write current request/response pair protobuf (user has all permissions) */
-    UniqueFile messages( record_folder_ + "save" );
+    UniqueFile file( record_folder_ + "save" );
 
-    /* if request is present in current request/response pair, add response and write to file */
-    if ( current_pair.has_req() ) {
-        current_pair.mutable_res()->CopyFrom( response.toprotobuf() );
-        if ( current_pair.SerializeToString( &outputmessage ) ) {
-            messages.write( outputmessage );
-        } else {
-            throw Exception( "Protobuf", "Unable to serialize protobuf to string" );
-        }
-    } else {
-        throw Exception( "Protobuf", "Response ready without Request" );
+    /* construct protocol buffer */
+    MahimahiProtobufs::RequestResponse output;
+
+    output.set_ip( server_address.ip() );
+    output.set_port( server_address.port() );
+    output.set_scheme( server_address.port() == 443
+                       ? MahimahiProtobufs::RequestResponse_Scheme_HTTPS
+                       : MahimahiProtobufs::RequestResponse_Scheme_HTTP );
+    output.mutable_request()->CopyFrom( response.request().toprotobuf() );
+    output.mutable_response()->CopyFrom( response.toprotobuf() );
+
+    if ( not output.SerializeToFileDescriptor( file.fd().num() ) ) {
+        throw Exception( "save_to_disk", "failure to serialize HTTP request/response pair" );
     }
-
-    /* clear current request/response pair */
-    current_pair.clear_req();
-    current_pair.clear_res();
 }
 
 void HTTPProxy::register_handlers( EventLoop & event_loop )

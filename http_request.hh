@@ -15,10 +15,12 @@ private:
     size_t read_in_complex_body( const std::string & str ) override;
 
     /* connection closed while body was pending */
-    bool eof_in_body( void ) override;
+    bool eof_in_body( void ) const override;
 
 public:
     bool is_head( void ) const;
+
+    using HTTPMessage::HTTPMessage;
 };
 
 #endif /* HTTP_REQUEST_HH */

@@ -11,7 +11,9 @@ public:
         - only some of string (0 bytes to n bytes) belongs to body */
 
     virtual std::string::size_type read( const std::string & str ) = 0;
-    virtual bool eof( void ) = 0;
+
+    /* does message become complete upon EOF in body? */
+    virtual bool eof( void ) const = 0;
 };
 
 /* used for RFC 2616 4.4 "rule 5" responses -- terminated only by EOF */
@@ -26,7 +28,7 @@ public:
 
     /* does message become complete upon EOF in body? */
     /* when there was no content-length header on a response, answer is yes */
-    bool eof( void ) override
+    bool eof( void ) const override
     {
         return true;
     }

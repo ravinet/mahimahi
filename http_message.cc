@@ -173,22 +173,29 @@ std::string HTTPMessage::str( void ) const
     return ret;
 }
 
-HTTP_Record::http_message HTTPMessage::toprotobuf( void ) const
+MahimahiProtobufs::HTTPMessage HTTPMessage::toprotobuf( void ) const
 {
     assert( state_ == COMPLETE );
 
-    HTTP_Record::http_message message;
+    MahimahiProtobufs::HTTPMessage ret;
 
-    /* add first line to protobuf http_message */
-    message.set_first_line( first_line_ + CRLF );
+    ret.set_first_line( first_line_ );
 
-    /* iterate through headers and add "key: value\r\n" to protobuf */
     for ( const auto & header : headers_ ) {
-        message.add_headers( header.str() + CRLF );
+        ret.add_header()->CopyFrom( header.toprotobuf() );
     }
 
-    /* add blank line to separate headers and body, and then add body */
-    message.set_body( CRLF + body_ );
+    ret.set_body( body_ );
 
-    return message;
+    return ret;
+}
+
+HTTPMessage::HTTPMessage( const MahimahiProtobufs::HTTPMessage & proto )
+    : first_line_( proto.first_line() ),
+      body_( proto.body() ),
+      state_( COMPLETE )
+{
+    for ( const auto header : proto.header() ) {
+        headers_.emplace_back( header );
+    }
 }

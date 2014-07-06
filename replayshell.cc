@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <thread>
 
 #include "util.hh"
 #include "interfaces.hh"
@@ -21,7 +22,7 @@
 #include "event_loop.hh"
 #include "http_record.pb.h"
 #include "temp_file.hh"
-#include "http_header.hh"
+#include "http_response.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -34,19 +35,6 @@ void add_dummy_interface( const string & name, const Address & addr )
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
     interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name,
                      [&] ( ifreq &ifr ) { ifr.ifr_addr = addr.raw_sockaddr(); } );
-}
-
-/* return hostname by iterating through headers */
-string get_host( HTTP_Record::reqrespair & current_record )
-{
-    for ( int i = 0; i < current_record.req().headers_size(); i++ ) {
-        HTTPHeader current_header( current_record.req().headers(i) );
-        if ( current_header.key() == "Host" ) {
-            return current_header.value().substr( 0, current_header.value().find( "\r\n" ) );
-        }
-    }
-
-    throw Exception( "replayshell", "No Host Header in Recorded File" );
 }
 
 int main( int argc, char *argv[] )
@@ -78,35 +66,53 @@ int main( int argc, char *argv[] )
         /* provide seed for random number generator used to create apache pid files */
         srandom( time( NULL ) );
 
-        /* dnsmasq host mapping file */
-        TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
+        set< Address > unique_ip;
+        set< Address > unique_ip_and_port;
+        vector< pair< string, Address > > hostname_to_ip;
 
-        vector< string > files = list_directory_contents( directory  );
-        set< Address > unique_addrs;
-        set< string > unique_ips;
-        vector< WebServer > servers;
+        SystemCall( "seteuid", seteuid( getuid() ) );
+        SystemCall( "setegid", setegid( getgid() ) );
 
+        const vector< string > files = list_directory_contents( directory  );
+
+        for ( const auto filename : files ) {
+            FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
+
+            MahimahiProtobufs::RequestResponse protobuf;
+            if ( not protobuf.ParseFromFileDescriptor( fd.num() ) ) {
+                throw Exception( filename, "invalid HTTP request/response" );
+            }
+
+            const Address address( protobuf.ip(), protobuf.port() );
+
+            unique_ip.emplace( address.ip(), 0 );
+            unique_ip_and_port.emplace( address );
+
+            hostname_to_ip.emplace_back( HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
+                                         address );
+        }
+
+        SystemCall( "seteuid", seteuid( 0 ) );
+        SystemCall( "setegid", setegid( 0 ) );
+
+        /* set up dummy interfaces */
         unsigned int interface_counter = 0;
+        for ( const auto ip : unique_ip ) {
+            add_dummy_interface( "sharded" + to_string( interface_counter ), ip );
+            interface_counter++;
+        }
 
-        for ( unsigned int i = 0; i < files.size(); i++ ) {
-            FileDescriptor response( SystemCall( "open", open( files[i].c_str(), O_RDONLY ) ) );
-            HTTP_Record::reqrespair current_record;
-            current_record.ParseFromFileDescriptor( response.num() );
-            Address current_addr( current_record.ip(), current_record.port() );
-            auto result1 = unique_ips.emplace( current_addr.ip() );
-            if ( result1.second ) { /* new ip */
-                add_dummy_interface( "sharded" + to_string( interface_counter ), current_addr );
-                interface_counter++;
-            }
+        /* set up web servers */
+        vector< WebServer > servers;
+        const string user = username();
+        for ( const auto ip_port : unique_ip_and_port ) {
+            servers.emplace_back( ip_port, directory, user );
+        }
 
-            /* add entry to dnsmasq host mapping file */
-            string entry_host = get_host( current_record );
-            dnsmasq_hosts.write( current_addr.ip() + " " +entry_host + "\n" );
-
-            auto result2 = unique_addrs.emplace( current_addr );
-            if ( result2.second ) { /* new address */
-                servers.emplace_back( current_addr, directory, username() );
-            }
+        /* set up DNS server */
+        TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
+        for ( const auto mapping : hostname_to_ip ) {
+            dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
         }
 
         /* initialize event loop */

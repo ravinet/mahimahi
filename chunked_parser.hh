@@ -24,9 +24,9 @@ public:
     std::string::size_type read( const std::string & ) override;
 
     /* Follow item 2, Section 4.4 of RFC 2616 */
-    bool eof( void ) override { return true; };
+    bool eof( void ) const override { return true; }
 
-    ChunkedBodyParser(bool t_trailers_enabled) : trailers_enabled_( t_trailers_enabled ) {};
+    ChunkedBodyParser(bool t_trailers_enabled) : trailers_enabled_( t_trailers_enabled ) {}
 };
 
 #endif /* CHUNKED_BODY_PARSER_HH */
