@@ -197,6 +197,30 @@ string username( void )
     return passwd_entry.pw_name;
 }
 
+string groupname( void )
+{
+    const auto group_size = sysconf( _SC_GETGR_R_SIZE_MAX );
+    if ( group_size <= 0 ) {
+        throw Exception( "sysconf _SC_GETGR_R_SIZE_MAX", "bad size" );
+    }
+
+    unique_ptr<char[]> buffer( new char[ group_size ] );
+    group group_entry;
+    group *result;
+
+    SystemCall( "getgrgid_r", getgrgid_r( getgid(), &group_entry, buffer.get(), group_size, &result ) );
+
+    if ( result == nullptr ) {
+        throw Exception( "getgrgid_r", "no matching group record was found" );
+    }
+
+    if ( result != &group_entry ) {
+        throw Exception( "getpwuid_r", "BUG: unexpected result" );
+    }
+
+    return group_entry.gr_name;
+}
+
 TemporarilyUnprivileged::TemporarilyUnprivileged()
     : orig_euid( geteuid() ),
       orig_egid( getegid() )

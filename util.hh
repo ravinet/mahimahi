@@ -21,6 +21,7 @@ std::vector< std::string > list_directory_contents( const std::string & dir );
 void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
 std::string username( void );
+std::string groupname( void );
 
 class TemporarilyUnprivileged {
 private:

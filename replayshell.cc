@@ -108,9 +108,10 @@ int main( int argc, char *argv[] )
 
         /* set up web servers */
         vector< WebServer > servers;
-        const string user = username();
+        const string user_name = username();
+        const string group_name = groupname();
         for ( const auto ip_port : unique_ip_and_port ) {
-            servers.emplace_back( ip_port, directory, user );
+            servers.emplace_back( ip_port, directory, user_name, group_name );
         }
 
         /* set up DNS server */
