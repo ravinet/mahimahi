@@ -1,6 +1,8 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <utility>
+#include <thread>
+#include <chrono>
 
 #include <sys/socket.h>
 #include <net/route.h>
@@ -12,6 +14,7 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "make_pipe.hh"
+#include "dns_server.hh"
 #include "config.h"
 
 using namespace std;
@@ -67,12 +70,8 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             Ferry inner_ferry;
 
             /* run dnsmasq as local caching nameserver */
-            inner_ferry.add_child_process( "dnsmasq", [&]() {
-                    return ezexec( { DNSMASQ, "--keep-in-foreground",
-                                "--no-resolv", "-i", "lo", "--bind-interfaces", "-S",
-                                dns_outside_.udp_listener().local_addr().str( "#" ),
-                                "-C", "/dev/null" } );
-                }, false, SIGTERM );
+            inner_ferry.add_child_process( start_dnsmasq( {
+                        "-S", dns_outside_.udp_listener().local_addr().str( "#" ) } ) );
 
             /* Fork again after dropping root privileges */
             drop_privileges();

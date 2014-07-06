@@ -22,6 +22,7 @@
 #include "http_record.pb.h"
 #include "temp_file.hh"
 #include "http_response.hh"
+#include "dns_server.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -138,13 +139,8 @@ int main( int argc, char *argv[] )
             add_dummy_interface( "nameserver" + to_string( server_num ), nameservers.at( server_num ) );
         }
 
-        /* start dnsmasq to listen on 0.0.0.0:53 */
-        event_loop.add_child_process( "dnsmasq", [&] () {
-                return ezexec( { DNSMASQ, "--keep-in-foreground", "--no-resolv",
-                            "--no-hosts", "-i", "lo", "--bind-interfaces",
-                            "-H", dnsmasq_hosts.name().c_str(),
-                            "-C", "/dev/null" } );
-            }, false, SIGTERM );
+        /* start dnsmasq */
+        event_loop.add_child_process( start_dnsmasq( { "-H", dnsmasq_hosts.name() } ) );
 
         /* start shell */
         event_loop.add_child_process( "replayshell", [&]() {
