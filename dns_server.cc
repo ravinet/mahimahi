@@ -9,20 +9,16 @@
 #include "system_runner.hh"
 #include "util.hh"
 #include "exception.hh"
+#include "socket.hh"
 
 #include "config.h"
 
 using namespace std;
 
-static const string example_ip = "127.3.1.4";
-
 ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
 {
-    const string random_name = "mahimahi-test-host-" + to_string( random_device()() );
-
     vector< string > args = { DNSMASQ, "--keep-in-foreground", "--no-resolv",
                               "--no-hosts", "-i", "lo", "--bind-interfaces",
-                              "--host-record=" + random_name + "," + example_ip,
                               "-C", "/dev/null" };
 
     args.insert( args.end(), extra_arguments.begin(), extra_arguments.end() );
@@ -30,19 +26,23 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
     ChildProcess dnsmasq( "dnsmasq", [&] () { return ezexec( args ); }, false, SIGTERM );
 
     /* busy-wait for dnsmasq to start answering DNS queries */
+    Socket server( UDP );
+    server.connect( Address( "0", "domain" ) );
+
     unsigned int attempts = 0;
     while ( true ) {
-        if ( ++attempts >= 100 ) {
+        if ( ++attempts >= 20 ) {
             throw Exception( "dnsmasq", "did not start after " + to_string( attempts ) + " attempts" );
         }
 
         try {
-            Address lookup( random_name, "domain" );
-            if ( lookup.ip() == example_ip ) {
-                break;
-            }
+            /* write will throw an exception if the prior UDP datagram got a bad ICMP reply */
+            server.write( "x" );
+            this_thread::sleep_for( chrono::milliseconds( 10 ) );
+            server.write( "x" );
+            break;
         } catch ( const Exception & e ) {
-            if ( e.attempt() != "getaddrinfo" ) {
+            if ( e.attempt() != "write" ) {
                 throw;
             }
             this_thread::sleep_for( chrono::milliseconds( 10 ) );
