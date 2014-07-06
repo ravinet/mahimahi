@@ -3,6 +3,8 @@
 #ifndef PACKETSHELL_HH
 #define PACKETSHELL_HH
 
+#include <string>
+
 #include "netdevice.hh"
 #include "nat.hh"
 #include "util.hh"
@@ -39,6 +41,7 @@ public:
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
                        char ** const user_environment,
+                       const std::vector< std::string > & command,
                        Targs&&... Fargs );
 
     template <typename... Targs>

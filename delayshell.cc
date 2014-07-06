@@ -22,7 +22,10 @@ int main( int argc, char *argv[] )
 
         PacketShell<DelayQueue> delay_shell_app( "delay" );
 
-        delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ", user_environment, delay_ms );
+        delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ",
+                                      user_environment,
+                                      { shell_path() },
+                                      delay_ms );
         delay_shell_app.start_downlink( delay_ms );
         return delay_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {

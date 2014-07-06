@@ -37,6 +37,7 @@ template <class FerryQueueType>
 template <typename... Targs>
 void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                                                 char ** const user_environment,
+                                                const vector< string > & command,
                                                 Targs&&... Fargs )
 {
     /* g++ bug 55914 makes this hard before version 4.9 */
@@ -81,7 +82,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
 
-                    return ezexec( { shell_path() } );
+                    return ezexec( command );
                 } );
 
             FerryQueueType uplink_queue = ferry_maker();

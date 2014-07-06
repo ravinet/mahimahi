@@ -24,7 +24,9 @@ int main( int argc, char *argv[] )
         PacketShell<LinkQueue> link_shell_app( "link" );
 
         link_shell_app.start_uplink( "[link, up=" + uplink_filename + ", down=" + downlink_filename + "] ",
-                                     user_environment, uplink_filename );
+                                     user_environment,
+                                     { shell_path() },
+                                     uplink_filename );
         link_shell_app.start_downlink( downlink_filename );
         return link_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
