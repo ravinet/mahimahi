@@ -1,6 +1,10 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <vector>
+#include <string>
+
 #include "delay_queue.hh"
+#include "util.hh"
 #include "packetshell.cc"
 
 using namespace std;
@@ -14,17 +18,27 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " propagation-delay [in milliseconds]" );
+        if ( argc < 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " delay-milliseconds [command...]" );
         }
 
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
+
+        vector< string > command;
+
+        if ( argc == 2 ) {
+            command.push_back( shell_path() );
+        } else {
+            for ( int i = 2; i < argc; i++ ) {
+                command.push_back( argv[ i ] );
+            }
+        }
 
         PacketShell<DelayQueue> delay_shell_app( "delay" );
 
         delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ",
                                       user_environment,
-                                      { shell_path() },
+                                      command,
                                       delay_ms );
         delay_shell_app.start_downlink( delay_ms );
         return delay_shell_app.wait_for_exit();

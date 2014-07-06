@@ -14,18 +14,28 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 3 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " uplink downlink" );
+        if ( argc < 3 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " uplink-file downlink-file [command...]" );
         }
 
         const std::string uplink_filename = argv[ 1 ];
         const std::string downlink_filename = argv[ 2 ];
 
+        vector< string > command;
+
+        if ( argc == 3 ) {
+            command.push_back( shell_path() );
+        } else {
+            for ( int i = 3; i < argc; i++ ) {
+                command.push_back( argv[ i ] );
+            }
+        }
+
         PacketShell<LinkQueue> link_shell_app( "link" );
 
         link_shell_app.start_uplink( "[link, up=" + uplink_filename + ", down=" + downlink_filename + "] ",
                                      user_environment,
-                                     { shell_path() },
+                                     command,
                                      uplink_filename );
         link_shell_app.start_downlink( downlink_filename );
         return link_shell_app.wait_for_exit();
