@@ -1,12 +1,12 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <limits>
-#include <cinttypes>
-#include <cstdio>
+#include <fstream>
 
 #include "link_queue.hh"
 #include "timestamp.hh"
 #include "util.hh"
+#include "ezio.hh"
 
 using namespace std;
 
@@ -19,18 +19,16 @@ LinkQueue::LinkQueue( const std::string & filename )
     assert_not_root();
 
     /* open filename and load schedule */
-    FileDescriptor trace_file( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
-    FILE *f = fdopen( trace_file.num(), "r" );
-    if ( f == nullptr ) {
-        throw Exception( "fopen" );
-    }
+    ifstream trace_file( filename );
 
-    while ( true ) {
-        uint64_t ms;
-        int num_matched = fscanf( f, "%" PRIu64 "\n", &ms );
-        if ( num_matched != 1 ) {
-            break;
+    string line;
+
+    while ( getline( trace_file, line ) ) {
+        if ( line.empty() ) {
+            throw Exception( filename, "invalid empty line" );
         }
+
+        const uint64_t ms = myatoi( line );
 
         if ( not schedule_.empty() ) {
             if ( ms < schedule_.back() ) {
