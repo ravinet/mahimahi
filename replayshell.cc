@@ -129,12 +129,17 @@ int main( int argc, char *argv[] )
 
         /* create dummy interface for each nameserver */
         vector< Address > nameservers = all_nameservers();
+        vector< string > dnsmasq_args = { "-H", dnsmasq_hosts.name() };
+
         for ( uint server_num = 0; server_num < nameservers.size(); server_num++ ) {
+            const string interface_name = "nameserver" + to_string( server_num );
             add_dummy_interface( "nameserver" + to_string( server_num ), nameservers.at( server_num ) );
+            dnsmasq_args.push_back( "-i" );
+            dnsmasq_args.push_back( interface_name );
         }
 
         /* start dnsmasq */
-        event_loop.add_child_process( start_dnsmasq( { "-H", dnsmasq_hosts.name() } ) );
+        event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
         /* start shell */
         event_loop.add_child_process( "replayshell", [&]() {
