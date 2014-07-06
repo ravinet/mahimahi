@@ -51,6 +51,7 @@ protected:
 
 public:
     HTTPMessageSequence() {}
+    virtual ~HTTPMessageSequence() {}
 
     /* must accept all of buf */
     void parse( const std::string & buf );

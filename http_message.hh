@@ -49,6 +49,7 @@ protected:
 
 public:
     HTTPMessage() {}
+    virtual ~HTTPMessage() {}
 
     /* methods called by an external parser */
     void set_first_line( const std::string & str );

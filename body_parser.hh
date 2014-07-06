@@ -14,6 +14,8 @@ public:
 
     /* does message become complete upon EOF in body? */
     virtual bool eof( void ) const = 0;
+
+    virtual ~BodyParser() {}
 };
 
 /* used for RFC 2616 4.4 "rule 5" responses -- terminated only by EOF */
