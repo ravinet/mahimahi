@@ -44,25 +44,23 @@ void drop_privileges( void ) {
 
     /* change real group id if necessary */
     if ( real_gid != eff_gid ) {
-        if ( setregid( real_gid, real_gid ) == -1 ) {
-            throw Exception( "setregid" );
-        }
+        SystemCall( "setregid", setregid( real_gid, real_gid ) );
     }
 
     /* change real user id if necessary */
     if ( real_uid != eff_uid ) {
-        if ( setreuid( real_uid, real_uid ) == -1 ) {
-            throw Exception( "setreuid" );
-        }
+        SystemCall( "setreuid", setreuid( real_uid, real_uid ) );
     }
 
     /* verify that the changes were successful. if not, abort */
     if ( real_gid != eff_gid && ( setegid( eff_gid ) != -1 || getegid( ) != real_gid ) ) {
-        throw Exception( "drop_privileges", "dropping gid failed" );
+        cerr << "BUG: dropping privileged gid failed" << endl;
+        _exit( EXIT_FAILURE );
     }
 
     if ( real_uid != eff_uid && ( seteuid( eff_uid ) != -1 || geteuid( ) != real_uid ) ) {
-        throw Exception( "drop_privileges", "dropping uid failed" );
+        cerr << "BUG: dropping privileged uid failed" << endl;
+        _exit( EXIT_FAILURE );
     }
 }
 
