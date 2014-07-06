@@ -91,7 +91,6 @@ int main( void )
         const bool is_https = getenv( "HTTPS" );
 
         const vector< string > files = list_directory_contents( recording_directory );
-        vector< MahimahiProtobufs::RequestResponse > possible_matches;
 
         for ( const auto filename : files ) {
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
@@ -107,9 +106,9 @@ int main( void )
         }
 
         /* no exact matches for request */
-        cout << "HTTP/1.1 200 OK\r\n";
-        cout << "Content-Type: text/plain\r\nConnection: close\r\n";
-        cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
+        cout << "HTTP/1.1 404 Not Found" << CRLF;
+        cout << "Content-Type: text/plain" << CRLF << CRLF;
+        cout << "replayshell: could not find a match for " << request_line << CRLF;
         throw Exception( "replayserver", "Can't find: " + request_line );
     } catch ( const Exception & e ) {
         e.perror();
