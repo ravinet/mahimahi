@@ -173,52 +173,60 @@ void assert_not_root( void )
     }
 }
 
-string username( void )
+template <typename entry_type>
+static string nssname( const int property,
+                       const function<void(entry_type *,
+                                           unique_ptr<char[]> &,
+                                           const long size,
+                                           entry_type **)> & retriever,
+                       const function<string(const entry_type &)> & getter )
 {
-    const auto passwd_size = sysconf( _SC_GETPW_R_SIZE_MAX );
-    if ( passwd_size <= 0 ) {
-        throw Exception( "sysconf _SC_GETPW_R_SIZE_MAX", "bad size" );
+    const long entry_size = sysconf( property );
+    if ( entry_size <= 0 ) {
+        throw Exception( "sysconf", "bad size" );
     }
 
-    unique_ptr<char[]> buffer( new char[ passwd_size ] );
-    passwd passwd_entry;
-    passwd *result;
+    unique_ptr<char[]> buffer( new char[ entry_size ] );
+    entry_type entry;
+    entry_type *result;
 
-    SystemCall( "getpwuid_r", getpwuid_r( getuid(), &passwd_entry, buffer.get(), passwd_size, &result ) );
+    retriever( &entry, buffer, entry_size, &result );
 
     if ( result == nullptr ) {
-        throw Exception( "getpwuid_r", "no matching password record was found" );
+        throw Exception( "nssname", "no matching record was found" );
     }
 
-    if ( result != &passwd_entry ) {
-        throw Exception( "getpwuid_r", "BUG: unexpected result" );
+    if ( result != &entry ) {
+        throw Exception( "nssname", "BUG: unexpected result" );
     }
 
-    return passwd_entry.pw_name;
+    return getter( entry );
+}
+
+string username( void )
+{
+    return nssname<passwd>( _SC_GETPW_R_SIZE_MAX,
+                            [] ( passwd * entry,
+                                 unique_ptr<char[]> & buffer,
+                                 const long size,
+                                 passwd ** result ) {
+                                SystemCall( "getpwuid_r",
+                                            getpwuid_r( getuid(), entry, buffer.get(), size, result ) );
+                            },
+                            [] ( const passwd & x ) { return x.pw_name; } );
 }
 
 string groupname( void )
 {
-    const auto group_size = sysconf( _SC_GETGR_R_SIZE_MAX );
-    if ( group_size <= 0 ) {
-        throw Exception( "sysconf _SC_GETGR_R_SIZE_MAX", "bad size" );
-    }
-
-    unique_ptr<char[]> buffer( new char[ group_size ] );
-    group group_entry;
-    group *result;
-
-    SystemCall( "getgrgid_r", getgrgid_r( getgid(), &group_entry, buffer.get(), group_size, &result ) );
-
-    if ( result == nullptr ) {
-        throw Exception( "getgrgid_r", "no matching group record was found" );
-    }
-
-    if ( result != &group_entry ) {
-        throw Exception( "getpwuid_r", "BUG: unexpected result" );
-    }
-
-    return group_entry.gr_name;
+    return nssname<group>( _SC_GETGR_R_SIZE_MAX,
+                           [] ( group * entry,
+                                unique_ptr<char[]> & buffer,
+                                const long size,
+                                group ** result ) {
+                               SystemCall( "getgrgid_r",
+                                           getgrgid_r( getgid(), entry, buffer.get(), size, result ) );
+                           },
+                           [] ( const group & x ) { return x.gr_name; } );
 }
 
 TemporarilyUnprivileged::TemporarilyUnprivileged()
