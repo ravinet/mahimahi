@@ -89,7 +89,7 @@ int main( int argc, char *argv[] )
             /* Make pipe for start signal */
             pair< FileDescriptor, FileDescriptor > pipe = make_pipe();
 
-            ChildProcess container_process( "recordshell container", [&]() {
+            ChildProcess container_process( "recordshell", [&]() {
                     /* wait for the go signal */
                     pipe.second.read();
 
@@ -121,7 +121,7 @@ int main( int argc, char *argv[] )
                     /* prepare child's event loop */
                     EventLoop shell_event_loop;
 
-                    shell_event_loop.add_child_process( "recordshell", [&]() {
+                    shell_event_loop.add_child_process( join( command ), [&]() {
                             /* restore environment and tweak prompt */
                             environ = user_environment;
                             prepend_shell_prefix( "[record] " );

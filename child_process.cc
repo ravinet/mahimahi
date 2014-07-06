@@ -160,7 +160,7 @@ ChildProcess::ChildProcess( ChildProcess && other )
 
 void ChildProcess::throw_exception( void ) const
 {
-    throw Exception( "`" + name() + "'", "command "
+    throw Exception( "`" + name() + "'", "process "
                      + (died_on_signal()
                         ? string("died on signal ")
                         : string("exited with failure status "))

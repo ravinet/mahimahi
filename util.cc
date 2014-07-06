@@ -4,7 +4,6 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <paths.h>
-#include <grp.h>
 #include <cstdlib>
 #include <fstream>
 #include <resolv.h>
@@ -12,6 +11,7 @@
 #include <dirent.h>
 #include <arpa/inet.h>
 #include <memory>
+#include <numeric>
 
 #include "util.hh"
 #include "exception.hh"
@@ -192,4 +192,12 @@ TemporarilyUnprivileged::~TemporarilyUnprivileged()
 {
     SystemCall( "seteuid", seteuid( orig_euid ) );
     SystemCall( "setegid", setegid( orig_egid ) );
+}
+
+const string join( const vector< string > & command )
+{
+    return accumulate( command.begin() + 1, command.end(),
+                       command.front(),
+                       []( const string & a, const string & b )
+                       { return a + " " + b; } );
 }

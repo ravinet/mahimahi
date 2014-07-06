@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <unistd.h>
-#include <numeric>
 #include <thread>
 #include <exception>
 
@@ -11,6 +10,7 @@
 #include "exception.hh"
 #include "file_descriptor.hh"
 #include "signalfd.hh"
+#include "util.hh"
 
 using namespace std;
 
@@ -56,12 +56,7 @@ int ezexec( const vector< string > & command, const bool path_search )
 
 void run( const vector< string > & command )
 {
-    const string command_str = accumulate( command.begin() + 1, command.end(),
-                                           command.front(),
-                                           []( const string & a, const string & b )
-                                           { return a + " " + b; } );
-
-    ChildProcess command_process( command_str, [&] () {
+    ChildProcess command_process( join( command ), [&] () {
             return ezexec( command );
         } );
 

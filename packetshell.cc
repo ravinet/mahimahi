@@ -49,7 +49,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
         }, forward<Targs>( Fargs )... );
 
     /* Fork */
-    event_loop_.add_child_process( "packetshell container", [&]() {
+    event_loop_.add_child_process( "packetshell", [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -76,7 +76,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             /* Fork again after dropping root privileges */
             drop_privileges();
 
-            inner_ferry.add_child_process( "packetshell", [&]() {
+            inner_ferry.add_child_process( join( command ), [&]() {
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );

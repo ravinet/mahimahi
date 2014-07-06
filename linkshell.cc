@@ -33,7 +33,7 @@ int main( int argc, char *argv[] )
 
         PacketShell<LinkQueue> link_shell_app( "link" );
 
-        link_shell_app.start_uplink( "[link, up=" + uplink_filename + ", down=" + downlink_filename + "] ",
+        link_shell_app.start_uplink( "[link] ",
                                      user_environment,
                                      command,
                                      uplink_filename );

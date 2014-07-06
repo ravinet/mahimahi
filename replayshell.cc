@@ -142,12 +142,12 @@ int main( int argc, char *argv[] )
         event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
         /* start shell */
-        event_loop.add_child_process( "replayshell", [&]() {
+        event_loop.add_child_process( join( command ), [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
                 environ = user_environment;
-                prepend_shell_prefix( "[replayshell] " );
+                prepend_shell_prefix( "[replay] " );
 
                 return ezexec( command, true );
         } );
