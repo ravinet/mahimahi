@@ -107,8 +107,7 @@ void HTTPProxy::handle_tcp( void )
                                                    [&] () { return not response_parser.empty(); } ) );
 
                 while( true ) {
-                    auto poll_result = poller.poll( 60000 );
-                    if ( poll_result.result == Poller::Result::Type::Exit ) {
+                    if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
                         return;
                     }
                 }
