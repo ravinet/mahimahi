@@ -42,75 +42,81 @@ HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folde
     SSL_load_error_strings();
 }
 
+template <class SocketType>
+void HTTPProxy::loop( SocketType & server, SocketType & client )
+{
+    Poller poller;
+
+    HTTPRequestParser request_parser;
+    HTTPResponseParser response_parser;
+
+    const Address server_addr = client.original_dest();
+
+    /* poll on original connect socket and new connection socket to ferry packets */
+    /* responses from server go to response parser */
+    poller.add_action( Poller::Action( server.fd(), Direction::In,
+                                       [&] () {
+                                           string buffer = server.read();
+                                           response_parser.parse( buffer );
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not client.fd().eof(); } ) );
+
+    /* requests from client go to request parser */
+    poller.add_action( Poller::Action( client.fd(), Direction::In,
+                                       [&] () {
+                                           string buffer = client.read();
+                                           request_parser.parse( buffer );
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not server.fd().eof(); } ) );
+
+    /* completed requests from client are serialized and sent to server */
+    poller.add_action( Poller::Action( server.fd(), Direction::Out,
+                                       [&] () {
+                                           server.write( request_parser.front().str() );
+                                           response_parser.new_request_arrived( request_parser.front() );
+                                           request_parser.pop();
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not request_parser.empty(); } ) );
+
+    /* completed responses from server are serialized and sent to client */
+    poller.add_action( Poller::Action( client.fd(), Direction::Out,
+                                       [&] () {
+                                           client.write( response_parser.front().str() );
+                                           save_to_disk( response_parser.front(), server_addr );
+                                           response_parser.pop();
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not response_parser.empty(); } ) );
+
+    while ( true ) {
+        if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
+            return;
+        }
+    }
+}
+
 void HTTPProxy::handle_tcp( void )
 {
     thread newthread( [&] ( Socket client ) {
             try {
                 /* get original destination for connection request */
-                Address original_destaddr = client.original_dest();
-                //                cout << "connection intended for: " << original_destaddr.ip() << endl;
+                Address server_addr = client.original_dest();
 
                 /* create socket and connect to original destination and send original request */
                 Socket server( TCP );
-                server.connect( original_destaddr );
+                server.connect( server_addr );
 
-                Poller poller;
-
-                HTTPRequestParser request_parser;
-                HTTPResponseParser response_parser;
-
-                /* Create Read/Write Interfaces for server and client */
-                std::unique_ptr<ReadWriteInterface> server_rw  = (original_destaddr.port() == 443) ?
-                                                                 static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
-                                                                 static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
-                std::unique_ptr<ReadWriteInterface> client_rw  = (original_destaddr.port() == 443) ?
-                                                                 static_cast<decltype( client_rw )>( new SecureSocket( move( client ), SERVER ) ) :
-                                                                 static_cast<decltype( client_rw )>( new Socket( move( client ) ) );
-
-                /* poll on original connect socket and new connection socket to ferry packets */
-                /* responses from server go to response parser */
-                poller.add_action( Poller::Action( server_rw->fd(), Direction::In,
-                                                   [&] () {
-                                                       string buffer = server_rw->read();
-                                                       response_parser.parse( buffer );
-                                                       return ResultType::Continue;
-                                                   },
-                                                   [&] () { return not client_rw->fd().eof(); } ) );
-
-                /* requests from client go to request parser */
-                poller.add_action( Poller::Action( client_rw->fd(), Direction::In,
-                                                   [&] () {
-                                                       string buffer = client_rw->read();
-                                                       request_parser.parse( buffer );
-                                                       return ResultType::Continue;
-                                                   },
-                                                   [&] () { return not server_rw->fd().eof(); } ) );
-
-                /* completed requests from client are serialized and sent to server */
-                poller.add_action( Poller::Action( server_rw->fd(), Direction::Out,
-                                                   [&] () {
-                                                       server_rw->write( request_parser.front().str() );
-                                                       response_parser.new_request_arrived( request_parser.front() );
-                                                       request_parser.pop();
-                                                       return ResultType::Continue;
-                                                   },
-                                                   [&] () { return not request_parser.empty(); } ) );
-
-                /* completed responses from server are serialized and sent to client */
-                poller.add_action( Poller::Action( client_rw->fd(), Direction::Out,
-                                                   [&] () {
-                                                       client_rw->write( response_parser.front().str() );
-                                                       save_to_disk( response_parser.front(), original_destaddr );
-                                                       response_parser.pop();
-                                                       return ResultType::Continue;
-                                                   },
-                                                   [&] () { return not response_parser.empty(); } ) );
-
-                while( true ) {
-                    if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
-                        return;
-                    }
+                if ( server_addr.port() != 443 ) { /* normal HTTP */
+                    return loop( server, client );
                 }
+
+                /* handle TLS */
+                SecureSocket tls_server( move( server ), CLIENT );
+                SecureSocket tls_client( move( client ), SERVER );
+                return loop( tls_server, tls_client );
             } catch ( const Exception & e ) {
                 e.perror();
                 return;

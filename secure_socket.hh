@@ -8,12 +8,11 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "read_write_interface.hh"
 #include "socket.hh"
 
 enum SSL_MODE { CLIENT, SERVER };
 
-class SecureSocket : public ReadWriteInterface
+class SecureSocket
 {
 private:
     Socket underlying_socket;
@@ -35,13 +34,13 @@ public:
 
     void check_server_certificate( void );
 
-    std::string read( void ) override;
+    std::string read( void );
 
-    void write( const std::string & message ) override;
+    void write( const std::string & message );
 
-    FileDescriptor & fd( void ) override { return underlying_socket.fd(); }
+    FileDescriptor & fd( void ) { return underlying_socket.fd(); }
 
-    Socket & sock( void ) { return underlying_socket; }
+    Address original_dest( void ) const { return underlying_socket.original_dest(); }
 };
 
 #endif

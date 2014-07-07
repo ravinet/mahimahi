@@ -9,6 +9,9 @@
 #include "http_response.hh"
 
 class EventLoop;
+class Poller;
+class HTTPRequestParser;
+class HTTPResponseParser;
 
 class HTTPProxy
 {
@@ -29,6 +32,9 @@ public:
     void handle_tcp( void );
 
     void register_handlers( EventLoop & event_loop );
+
+    template <class SocketType>
+    void loop( SocketType & server, SocketType & client );
 };
 
 #endif /* HTTP_PROXY_HH */
