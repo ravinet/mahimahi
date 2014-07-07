@@ -161,16 +161,6 @@ vector< string > list_directory_contents( const string & dir )
     return ret;
 }
 
-/* error-checking wrapper for most syscalls */
-int SystemCall( const string & s_attempt, const int return_value )
-{
-  if ( return_value >= 0 ) {
-    return return_value;
-  }
-
-  throw Exception( s_attempt );
-}
-
 void assert_not_root( void )
 {
     if ( ( geteuid() == 0 ) or ( getegid() == 0 ) ) {
