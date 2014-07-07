@@ -18,3 +18,12 @@ Makefile.in
 /missing
 /mahimahi-*.tar.gz
 /stamp-h1
+
+compile
+delayshell
+linkshell
+nph-replayserver.cgi
+protobufs/http_record.pb.cc
+protobufs/http_record.pb.h
+recordshell
+replayshell
