@@ -7,7 +7,7 @@
 #include <vector>
 #include <cassert>
 
-#include <poll.h>
+#include <sys/epoll.h>
 
 #include "file_descriptor.hh"
 
@@ -27,7 +27,7 @@ public:
         typedef std::function<Result(void)> CallbackType;
 
         FileDescriptor & fd;
-        enum PollDirection : short { In = POLLIN, Out = POLLOUT } direction;
+        enum PollDirection : short { In = EPOLLIN, Out = EPOLLOUT } direction;
         CallbackType callback;
         std::function<bool(void)> when_interested;
         bool active;
@@ -38,11 +38,15 @@ public:
                 const std::function<bool(void)> & s_when_interested = [] () { return true; } )
             : fd( s_fd ), direction( s_direction ), callback( s_callback ),
               when_interested( s_when_interested ), active( true ) {}
+
+        epoll_event to_epoll_event( const uint32_t index ) const;
     };
 
 private:
+    FileDescriptor epoll_fd_;
+
     std::vector< Action > actions_;
-    std::vector< pollfd > pollfds_;
+    std::vector< epoll_event > events_;
 
 public:
     struct Result
@@ -53,7 +57,7 @@ public:
             : result( s_result ), exit_status( s_status ) {}
     };
 
-    Poller() : actions_(), pollfds_() {}
+    Poller();
     void add_action( Action action );
     Result poll( const int & timeout_ms );
 };

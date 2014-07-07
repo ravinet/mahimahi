@@ -84,6 +84,13 @@ public:
     {
         eof_ = true;
     }
+
+    FileDescriptor dup( void )
+    {
+        FileDescriptor ret( SystemCall( "dup", ::dup( num() ) ) );
+        ret.eof_ = eof_;
+        return ret;
+    }
 };
 
 #endif /* FILE_DESCRIPTOR_HH */

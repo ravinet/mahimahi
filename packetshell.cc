@@ -133,8 +133,10 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                   return ResultType::Continue;
                               } );
 
+    FileDescriptor sibling_dup = sibling.dup();
+
     /* ferry ready to write datagram -> send to sibling process */
-    add_action( Poller::Action( sibling, Direction::Out,
+    add_action( Poller::Action( sibling_dup, Direction::Out,
                                 [&] () {
                                     ferry_queue.write_packets( sibling );
                                     return ResultType::Continue;
