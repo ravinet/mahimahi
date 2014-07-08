@@ -140,12 +140,16 @@ void return_message( const HTTP_Record::reqrespair & record )
 int main()
 {
     try {
+        string record_folder = string( getenv( "RECORD_FOLDER" ) );
+        if ( check_folder_existence( record_folder ) ) {
+            delete_directory( record_folder );
+        }
         /* Load incoming request in recordshell with phantomjs */
         run( { "/usr/local/bin/recordshell", "/home/ravi/mahimahi/scriptphantom/", "/usr/bin/phantomjs",
                "--ignore-ssl-errors=true", "--ssl-protocol=TLSv1", "/home/ravi/mahimahi/headlessload.js", getenv( "SCRIPT_URI" ) } );
         /* Make bulk reply inside recorded folder */
         run( { "/usr/local/bin/makebulkreply", "/home/ravi/mahimahi/scriptphantom/", getenv( "HTTP_HOST" ) } );
-        string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
+        string bulk_file_name = record_folder + "bulkreply.proto";
         std::ifstream is(bulk_file_name, std::ifstream::binary);
         string str;
         if (is) {

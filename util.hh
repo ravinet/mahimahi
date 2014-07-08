@@ -20,6 +20,7 @@ void check_storage_folder( const std::string & directory );
 Address first_nameserver( void );
 std::vector< Address > all_nameservers( void );
 void list_files( const std::string & dir, std::vector< std::string > & files );
+void delete_directory( const std::string & dir );
 void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
 

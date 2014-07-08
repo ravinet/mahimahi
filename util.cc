@@ -229,6 +229,19 @@ void list_files( const string & dir, vector< string > & files )
     SystemCall( "closedir", closedir( dp ) );
 }
 
+void delete_directory( const string & dir )
+{
+    vector< string > files;
+    list_files( dir.c_str(), files );
+    unsigned int i;
+    /* delete all files in specified directory */
+    for ( i = 0; i < files.size(); i++ ) {i
+        SystemCall( "remove", remove( files[i].c_str() ) );
+    }
+    /* delete empty directory */
+    SystemCall( "rmdir", rmdir( dir.c_str() ) );
+}
+
 /* error-checking wrapper for most syscalls */
 int SystemCall( const string & s_attempt, const int return_value )
 {
