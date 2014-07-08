@@ -1,0 +1,30 @@
+LoadModule dir_module /usr/lib/apache2/modules/mod_dir.so
+LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so
+LoadModule mime_module /usr/lib/apache2/modules/mod_mime.so
+<IfModule mod_mime.c>
+TypesConfig /etc/mime.types
+AddHandler cgi-script .cgi
+</IfModule>
+LoadModule authz_core_module /usr/lib/apache2/modules/mod_authz_core.so
+LoadModule cgi_module /usr/lib/apache2/modules/mod_cgi.so
+<Directory /usr/local/bin/>
+AllowOverride None
+Options +ExecCGI
+Require all granted
+</Directory>
+LoadModule rewrite_module /usr/lib/apache2/modules/mod_rewrite.so
+RewriteEngine On
+RewriteRule ^(.*)$ /usr/local/bin/nph-replayserver.cgi
+LoadModule env_module /usr/lib/apache2/modules/mod_env.so
+SetEnv RECORD_FOLDER /home/ravi/mahimahi/scriptphantom/
+PidFile /tmp/replayshell.apache.pid.659900380
+ServerName mahimahi.
+ErrorLog /tmp/error.G9R8uG
+CustomLog /tmp/access.RTgYIV common
+User ravi
+Group ravi
+LoadModule ssl_module /usr/lib/apache2/modules/mod_ssl.so
+SSLEngine on
+SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem
+SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+Listen 128.30.76.55:5678
