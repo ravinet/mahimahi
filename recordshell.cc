@@ -39,8 +39,13 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content" );
+        if ( argc < 3 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " folder_for_recorded_content program_to_execute" );
+        }
+
+        vector< string > program_to_run;
+        for ( int num_args = 2; num_args < argc; num_args++ ) {
+            program_to_run.emplace_back( string( argv[ num_args ] ) );
         }
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
@@ -95,11 +100,8 @@ int main( int argc, char *argv[] )
                 ChildProcess bash_process( [&]() {
                         /* restore environment and tweak bash prompt */
                         environ = user_environment;
-                        prepend_shell_prefix( "[record] " );
-
-                        const string shell = shell_path();
-                        SystemCall( "execl", execl( shell.c_str(), shell.c_str(), static_cast<char *>( nullptr ) ) );
-                        return EXIT_FAILURE;
+                        run( program_to_run, user_environment );
+                        return EXIT_SUCCESS;
                     } );
 
                 return eventloop( move( dns_inside ), move( bash_process ), nullptr );
