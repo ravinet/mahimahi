@@ -140,63 +140,31 @@ void return_message( const HTTP_Record::reqrespair & record )
 int main()
 {
     try {
-        /* first check if it is initial request- if so, return bulk.proto */
-        string incoming_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) );
-        if ( incoming_req == "GET /" ) {
-            /* Load incoming request in recordshell with phantomjs */
-            run( { "/usr/local/bin/recordshell", "/home/ravi/mahimahi/scriptphantom/", "/usr/bin/phantomjs",
-                   "--ignore-ssl-errors=true", "--ssl-protocol=TLSv1", "/home/ravi/mahimahi/headlessload.js", getenv( "SCRIPT_URI" ) } );
-            /* Make bulk reply inside recorded folder */
-            run( { "/usr/local/bin/makebulkreply", "/home/ravi/mahimahi/scriptphantom/", getenv( "HTTP_HOST" ) } );
-            string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
-            std::ifstream is(bulk_file_name, std::ifstream::binary);
-            string str;
-            if (is) {
-                // get length of file:
-                is.seekg(0, is.end);
-                int length = is.tellg();
-                is.seekg(0, is.beg);
+        /* Load incoming request in recordshell with phantomjs */
+        run( { "/usr/local/bin/recordshell", "/home/ravi/mahimahi/scriptphantom/", "/usr/bin/phantomjs",
+               "--ignore-ssl-errors=true", "--ssl-protocol=TLSv1", "/home/ravi/mahimahi/headlessload.js", getenv( "SCRIPT_URI" ) } );
+        /* Make bulk reply inside recorded folder */
+        run( { "/usr/local/bin/makebulkreply", "/home/ravi/mahimahi/scriptphantom/", getenv( "HTTP_HOST" ) } );
+        string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
+        std::ifstream is(bulk_file_name, std::ifstream::binary);
+        string str;
+        if (is) {
+            // get length of file:
+            is.seekg(0, is.end);
+            int length = is.tellg();
+            is.seekg(0, is.beg);
 
-                str.resize(length, ' '); // reserve space
-                char* begin = &*str.begin();
+            str.resize(length, ' '); // reserve space
+            char* begin = &*str.begin();
 
-                is.read(begin, length);
-                is.close();
-            }
-            cout << "HTTP/1.1 200 OK\r\n";
-            cout << "Content-Type: application/x-bulkreply\r\n\r\n";
-            cout << str;
-
-            return EXIT_SUCCESS;
+            is.read(begin, length);
+            is.close();
         }
+        cout << "HTTP/1.1 200 OK\r\n";
+        cout << "Content-Type: application/x-bulkreply\r\n\r\n";
+        cout << str;
 
-        /* not initial request, so ony send corresponding response back */
-        vector< string > files;
-        list_files( getenv( "RECORD_FOLDER" ), files );
-        vector< HTTP_Record::reqrespair > possible_matches;
-        possible_matches.reserve( files.size() );
-        unsigned int i;
-        for ( i = 0; i < files.size(); i++ ) { /* iterate through recorded files and compare requests to incoming req*/
-            int fd = SystemCall( "open", open( files[i].c_str(), O_RDONLY ) );
-            HTTP_Record::reqrespair current_record;
-            current_record.ParseFromFileDescriptor( fd );
-            if ( compare_requests( current_record, possible_matches ) ) { /* requests match */
-                return_message( current_record );
-                SystemCall( "close", close( fd ) );
-                break;
-            }
-            SystemCall( "close", close( fd ) );
-        }
-        if ( i == files.size() ) { /* no exact matches for request */
-            if ( possible_matches.size() == 0 ) { /* no potential matches */
-                cout << "HTTP/1.1 200 OK\r\n";
-                cout << "Content-Type: Text/html\r\nConnection: close\r\n";
-                cout << "Content-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
-                throw Exception( "replayserver", "Can't find: " + string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) ) );
-            } else { /* return possible match with largest shared substring */
-                return_message( possible_matches.at( closest_match( possible_matches ) ) );
-            }
-        }
+       return EXIT_SUCCESS;
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
