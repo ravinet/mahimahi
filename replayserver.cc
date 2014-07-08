@@ -143,7 +143,11 @@ int main()
         /* first check if it is initial request- if so, return bulk.proto */
         string incoming_req = string( getenv( "REQUEST_METHOD" ) ) + " " + string( getenv( "REQUEST_URI" ) );
         if ( incoming_req == "GET /" ) {
-            run( { "/usr/local/bin/makebulkreply", string( getenv( "RECORD_FOLDER" ) ), string( getenv( "HTTP_HOST" ) ) } );
+            /* Load incoming request in recordshell with phantomjs */
+            run( { "/usr/local/bin/recordshell", "/home/ravi/mahimahi/scriptphantom/", "/usr/bin/phantomjs",
+                   "--ignore-ssl-errors=true", "--ssl-protocol=TLSv1", "/home/ravi/mahimahi/headlessload.js", getenv( "SCRIPT_URI" ) } );
+            /* Make bulk reply inside recorded folder */
+            run( { "/usr/local/bin/makebulkreply", "/home/ravi/mahimahi/scriptphantom/", getenv( "HTTP_HOST" ) } );
             string bulk_file_name = string( getenv( "RECORD_FOLDER" ) ) + "bulkreply.proto";
             std::ifstream is(bulk_file_name, std::ifstream::binary);
             string str;

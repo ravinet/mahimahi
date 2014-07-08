@@ -184,7 +184,10 @@ void HTTPProxy::handle_tcp( void )
                         /* check if request is GET / (will lead to bulk response) */
                         if ( first_line == "GET / HTTP/1.1\r\n" ) {
                             cout << "WRITING FIRST REQUEST TO SERVER AT: " << timestamp() << endl;
-                            server.connect( original_destaddr );
+                            int remote_port = 4567;
+                            if ( dst_port == 443 ) { remote_port = 5678; }
+                            Address remote_proxy_addr( "128.30.76.55", remote_port );
+                            server.connect( remote_proxy_addr );
                             server_rw  = (dst_port == 443) ?
                                          static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
                                          static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
@@ -209,7 +212,10 @@ void HTTPProxy::handle_tcp( void )
                                           already_sent, request_parser );
                         } else { /* request not in archive->send request to server */
                             cout << "REQUEST NOT IN ARCHIVE: " << first_line << " at: " << timestamp() << endl;
-                            server.connect( original_destaddr );
+                            int remote_port = 4567;
+                            if ( dst_port == 443 ) { remote_port = 5678; }
+                            Address remote_proxy_addr( "128.30.76.55", remote_port );
+                            server.connect( remote_proxy_addr );
                             server_rw  = (dst_port == 443) ?
                                          static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
                                          static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
