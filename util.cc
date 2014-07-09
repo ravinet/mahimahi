@@ -235,7 +235,7 @@ void delete_directory( const string & dir )
     list_files( dir.c_str(), files );
     unsigned int i;
     /* delete all files in specified directory */
-    for ( i = 0; i < files.size(); i++ ) {i
+    for ( i = 0; i < files.size(); i++ ) {
         SystemCall( "remove", remove( files[i].c_str() ) );
     }
     /* delete empty directory */
