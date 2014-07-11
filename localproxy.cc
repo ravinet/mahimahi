@@ -39,9 +39,12 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 1 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) );
+        if ( argc != 4 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " remote_proxy_ip_proxy remote_proxy_http_port remote_proxy_https_port" );
         }
+
+        Address remote_proxy_http( argv[1], atoi( argv[2] ) );
+        Address remote_proxy_https( argv[1], atoi( argv[3] ) );
 
         const Address nameserver = first_nameserver();
 
@@ -67,7 +70,7 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr ) );
+        unique_ptr<HTTPProxy> http_proxy( new HTTPProxy( egress_addr, remote_proxy_http, remote_proxy_https ) );
 
         /* set up dnat */
         DNAT dnat( http_proxy->tcp_listener().local_addr(), egress_name );

@@ -21,6 +21,10 @@ class HTTPProxy
 private:
     Socket listener_socket_;
 
+    const Address http_remote_proxy_;
+
+    const Address https_remote_proxy_;
+
     /* Pick a random file name and store reqrespair as a serialized string */
     void add_to_queue( ByteStreamQueue & responses, std::string res, int & counter, HTTPRequestParser & req_parser );
 
@@ -36,7 +40,7 @@ private:
 public:
     static const std::string client_cert;
     static const std::string server_cert;
-    HTTPProxy( const Address & listener_addr );
+    HTTPProxy( const Address & listener_addr, const Address & http_addr, const Address & https_addr );
     Socket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp( );
