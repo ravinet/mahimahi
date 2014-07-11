@@ -45,6 +45,15 @@ recordshell_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 recordshell_LDADD += -lssl -lcrypto -ldl
 recordshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += remoteproxy
+remoteproxy_SOURCES = $(common_source) remote_proxy.cc \
+    remote_proxy_server.hh remote_proxy_server.cc \
+    temp_file.hh temp_file.cc \
+    apache_configuration.hh
+remoteproxy_LDADD = -lrt
+remoteproxy_LDADD += -lssl -lcrypto -ldl
+remoteproxy_LDFLAGS = -pthread
+
 bin_PROGRAMS += localproxy
 localproxy_SOURCES = $(common_source) localproxy.cc \
 	local_http_proxy.hh local_http_proxy.cc \
@@ -85,6 +94,14 @@ nph_replayserver_cgi_LDADD = -lrt
 nph_replayserver_cgi_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
+bin_PROGRAMS += nph-remoteproxyserver.cgi
+nph_remoteproxyserver_cgi_SOURCES = $(common_source) remoteproxyserver.cc \
+    http_header.cc http_header.hh \
+    http_message.cc http_message.hh
+nph_remoteproxyserver_cgi_LDADD = -lrt
+nph_remoteproxyserver_cgi_LDADD += protobufs/libhttprecordprotos.a -lm $(protobuf_LIBS)
+nph_remoteproxyserver_cgi_LDFLAGS = -pthread
+
 bin_PROGRAMS += makebulkreply
 makebulkreply_SOURCES = $(common_source) makebulkreply.cc http_message.cc http_message.hh \
     http_header.cc http_header.hh
@@ -99,6 +116,8 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/linkshell
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
+	chown root $(DESTDIR)$(bindir)/remoteproxy
+	chmod u+s $(DESTDIR)$(bindir)/remoteproxy
 	chown root $(DESTDIR)$(bindir)/localproxy
 	chmod u+s $(DESTDIR)$(bindir)/localproxy
 	chown root $(DESTDIR)$(bindir)/replayshell

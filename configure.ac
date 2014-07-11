@@ -103,6 +103,8 @@ if test "${prefix}" = "NONE"; then
 fi
 AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/nph-replayserver.cgi"], [path to nph-replayserver.cgi])
 
+AC_DEFINE_UNQUOTED([REMOTEPROXYSERVER], ["${prefix}/bin/nph-remoteproxyserver.cgi"], [path to nph-remoteproxyserver.cgi])
+
 # Set path to directory with installed executable programs
 AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with installed executable programs])
 
