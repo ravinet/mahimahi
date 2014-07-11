@@ -186,7 +186,7 @@ void HTTPProxy::handle_tcp( void )
                             cout << "WRITING FIRST REQUEST TO SERVER AT: " << timestamp() << endl;
                             int remote_port = 4567;
                             if ( dst_port == 443 ) { remote_port = 5678; }
-                            Address remote_proxy_addr( "128.30.76.55", remote_port );
+                            Address remote_proxy_addr( "54.210.12.57", remote_port );
                             server.connect( remote_proxy_addr );
                             server_rw  = (dst_port == 443) ?
                                          static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
@@ -214,7 +214,7 @@ void HTTPProxy::handle_tcp( void )
                             cout << "REQUEST NOT IN ARCHIVE: " << first_line << " at: " << timestamp() << endl;
                             int remote_port = 4567;
                             if ( dst_port == 443 ) { remote_port = 5678; }
-                            Address remote_proxy_addr( "128.30.76.55", remote_port );
+                            Address remote_proxy_addr( "54.210.12.57", remote_port );
                             server.connect( remote_proxy_addr );
                             server_rw  = (dst_port == 443) ?
                                          static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
