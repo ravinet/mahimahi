@@ -13,7 +13,7 @@
 #include "http_proxy.hh"
 #include "netdevice.hh"
 #include "event_loop.hh"
-#include "make_pipe.hh"
+#include "socketpair.hh"
 #include "config.h"
 
 using namespace std;
