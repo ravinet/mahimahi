@@ -12,11 +12,9 @@
 
 enum SSL_MODE { CLIENT, SERVER };
 
-class SecureSocket
+class SecureSocket : public Socket
 {
 private:
-    Socket underlying_socket;
-
     SSL_CTX* ctx;
 
     SSL* ssl_connection;
@@ -38,9 +36,7 @@ public:
 
     void write( const std::string & message );
 
-    FileDescriptor & fd( void ) { return underlying_socket.fd(); }
-
-    Address original_dest( void ) const { return underlying_socket.original_dest(); }
+    Address original_dest( void ) const { return Socket::original_dest(); }
 };
 
 #endif

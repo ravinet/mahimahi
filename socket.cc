@@ -14,14 +14,14 @@
 using namespace std;
 
 Socket::Socket( const SocketType & socket_type )
-    : fd_( SystemCall( "socket", socket( AF_INET, socket_type, 0 ) ) ),
+    : FileDescriptor( SystemCall( "socket", socket( AF_INET, socket_type, 0 ) ) ),
       local_addr_(),
       peer_addr_()
 {
 }
 
 Socket::Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr )
-  : fd_( move( s_fd ) ),
+  : FileDescriptor( move( s_fd ) ),
     local_addr_( s_local_addr ),
     peer_addr_( s_peer_addr )
 {
@@ -33,7 +33,7 @@ void Socket::bind( const Address & addr )
     local_addr_ = addr;
  
     /* bind the socket to listen_addr */
-    SystemCall( "bind", ::bind( fd_.num(),
+    SystemCall( "bind", ::bind( num(),
                                 &local_addr_.raw_sockaddr(),
                                 sizeof( local_addr_.raw_sockaddr() ) ) );
 
@@ -41,7 +41,7 @@ void Socket::bind( const Address & addr )
     sockaddr_in new_local_addr;
     socklen_t new_local_addr_len = sizeof( new_local_addr );
 
-    SystemCall( "getsockname", ::getsockname( fd_.num(),
+    SystemCall( "getsockname", ::getsockname( num(),
                                               reinterpret_cast<sockaddr *>( &new_local_addr ),
                                               &new_local_addr_len ) );
 
@@ -52,7 +52,7 @@ static const int listen_backlog_ = 16;
 
 void Socket::listen( void )
 {
-    SystemCall( "listen", ::listen( fd_.num(), listen_backlog_ ) );
+    SystemCall( "listen", ::listen( num(), listen_backlog_ ) );
 }
 
 Socket Socket::accept( void )
@@ -63,7 +63,7 @@ Socket Socket::accept( void )
 
   /* wait for client connection */
   FileDescriptor new_fd( SystemCall( "accept",
-                                     ::accept( fd_.num(),
+                                     ::accept( num(),
                                                reinterpret_cast<sockaddr *>( &new_connection_addr ),
                                                &new_connection_addr_size ) ) );
 
@@ -75,34 +75,13 @@ Socket Socket::accept( void )
   return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
 }
 
-string Socket::read( void )
-{
-    return fd_.read();
-}
-
-string Socket::read ( const size_t limit )
-{
-    return fd_.read( limit );
-}
-
 void Socket::connect( const Address & addr )
 {
     peer_addr_ = addr;
 
-    SystemCall( "connect", ::connect( fd_.num(),
+    SystemCall( "connect", ::connect( num(),
                                       &peer_addr_.raw_sockaddr(),
                                       sizeof( peer_addr_.raw_sockaddr() ) ) );
-}
-
-void Socket::write( const string & str )
-{
-    fd_.write( str );
-}
-
-string::const_iterator Socket::write_some( const string::const_iterator & begin,
-                                           const string::const_iterator & end )
-{
-    return fd_.write_some( begin, end );
 }
 
 pair< Address, string > Socket::recvfrom( void )
@@ -115,7 +94,7 @@ pair< Address, string > Socket::recvfrom( void )
 
     socklen_t fromlen = sizeof( packet_remote_addr );
 
-    ssize_t recv_len = ::recvfrom( fd_.num(),
+    ssize_t recv_len = ::recvfrom( num(),
                                    buf,
                                    sizeof( buf ),
                                    MSG_TRUNC,
@@ -134,7 +113,7 @@ pair< Address, string > Socket::recvfrom( void )
 
 void Socket::sendto( const Address & destination, const string & payload )
 {
-    SystemCall( "sendto", ::sendto( fd_.num(),
+    SystemCall( "sendto", ::sendto( num(),
                                     payload.data(),
                                     payload.size(),
                                     0,
@@ -145,7 +124,7 @@ void Socket::sendto( const Address & destination, const string & payload )
 void Socket::getsockopt( const int level, const int optname,
                         void *optval, socklen_t *optlen ) const
 {
-    SystemCall( "getsockopt", ::getsockopt( const_cast<FileDescriptor &>( fd_ ).num(), level, optname, optval, optlen ) );
+    SystemCall( "getsockopt", ::getsockopt( const_cast<Socket &>( *this ).num(), level, optname, optval, optlen ) );
 }
 
 Address Socket::original_dest( void ) const
@@ -158,6 +137,6 @@ Address Socket::original_dest( void ) const
 }
 
 Socket::Socket( Socket && other )
-   : fd_( std::move( other.fd_ ) ),
-     local_addr_( other.local_addr_),
-     peer_addr_( other.peer_addr_ ) {}
+    : FileDescriptor( move( other ) ),
+      local_addr_( other.local_addr_),
+      peer_addr_( other.peer_addr_ ) {}

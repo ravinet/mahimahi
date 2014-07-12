@@ -94,7 +94,7 @@ int main( int argc, char *argv[] )
                     pipe.second.read();
 
                     /* bring up localhost */
-                    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+                    interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
                                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                     /* bring up veth device */
@@ -108,7 +108,7 @@ int main( int argc, char *argv[] )
                     route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
                     route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).fd().num(), SIOCADDRT, &route ) );
+                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
 
                     /* create DNS proxy if nameserver address is local */
                     auto dns_inside = DNSProxy::maybe_proxy( nameserver,

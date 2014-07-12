@@ -17,16 +17,16 @@ void interface_ioctl( FileDescriptor & fd, const int request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 
+void interface_ioctl( FileDescriptor && fd, const int request,
+                      const std::string & name,
+                      std::function<void( ifreq &ifr )> ifr_adjustment);
+
 void assign_address( const std::string & device_name, const Address & addr, const Address & peer );
 
-class TunDevice
+class TunDevice : public FileDescriptor
 {
-private:
-    FileDescriptor fd_;
 public:
     TunDevice( const std::string & name, const Address & addr, const Address & peer );
-
-    FileDescriptor & fd( void ) { return fd_; }
 };
 
 class VirtualEthernetPair

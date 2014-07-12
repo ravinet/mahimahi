@@ -51,8 +51,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
-            Socket ioctl_socket( UDP );
-            interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, "lo",
+            interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
                              [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
             /* create default route */
@@ -63,7 +62,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
             route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-            SystemCall( "ioctl SIOCADDRT", ioctl( ioctl_socket.fd().num(), SIOCADDRT, &route ) );
+            SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
 
             Ferry inner_ferry;
 
@@ -83,7 +82,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                 } );
 
             FerryQueueType uplink_queue = ferry_maker();
-            return inner_ferry.loop( uplink_queue, ingress_tun.fd(), pipe_.first );
+            return inner_ferry.loop( uplink_queue, ingress_tun, pipe_.first );
         }, true );  /* new network namespace */
 }
 
@@ -103,7 +102,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
             dns_outside_.register_handlers( outer_ferry );
 
             FerryQueueType downlink_queue = ferry_maker();
-            return outer_ferry.loop( downlink_queue, egress_tun_.fd(), pipe_.second );
+            return outer_ferry.loop( downlink_queue, egress_tun_, pipe_.second );
         } );
 }
 

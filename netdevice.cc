@@ -21,9 +21,9 @@ using namespace std;
 TunDevice::TunDevice( const string & name,
                       const Address & addr,
                       const Address & peer )
-    : fd_( SystemCall( "open /dev/net/tun", open( "/dev/net/tun", O_RDWR ) ) )
+    : FileDescriptor( SystemCall( "open /dev/net/tun", open( "/dev/net/tun", O_RDWR ) ) )
 {
-    interface_ioctl( fd_, TUNSETIFF, name,
+    interface_ioctl( *this, TUNSETIFF, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_TUN; } );
 
     assign_address( name, addr, peer );
@@ -42,27 +42,34 @@ void interface_ioctl( FileDescriptor & fd, const int request,
     SystemCall( "ioctl " + name, ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) );
 }
 
+void interface_ioctl( FileDescriptor && fd, const int request,
+                      const string & name,
+                      function<void( ifreq &ifr )> ifr_adjustment)
+{
+    interface_ioctl( fd, request, name, ifr_adjustment );
+}
+
 void assign_address( const string & device_name, const Address & addr, const Address & peer )
 {
     Socket ioctl_socket( UDP );
 
     /* assign address */
-    interface_ioctl( ioctl_socket.fd(), SIOCSIFADDR, device_name,
+    interface_ioctl( ioctl_socket, SIOCSIFADDR, device_name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_addr = addr.raw_sockaddr(); } );
 
     /* destination */
-    interface_ioctl( ioctl_socket.fd(), SIOCSIFDSTADDR, device_name,
+    interface_ioctl( ioctl_socket, SIOCSIFDSTADDR, device_name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_addr = peer.raw_sockaddr(); } );
 
     /* netmask */
-    interface_ioctl( ioctl_socket.fd(), SIOCSIFNETMASK, device_name,
+    interface_ioctl( ioctl_socket, SIOCSIFNETMASK, device_name,
                      [&] ( ifreq &ifr )
                      { ifr.ifr_netmask = Address( "255.255.255.255", 0 ).raw_sockaddr(); } );
 
     /* bring interface up */
-    interface_ioctl( ioctl_socket.fd(), SIOCSIFFLAGS, device_name,
+    interface_ioctl( ioctl_socket, SIOCSIFFLAGS, device_name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 }
 

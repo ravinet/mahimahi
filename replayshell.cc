@@ -25,9 +25,11 @@ void add_dummy_interface( const string & name, const Address & addr )
 {
     run( { IP, "link", "add", name, "type", "dummy" } );
 
-    interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, name,
+    Socket ioctl_socket( UDP );
+
+    interface_ioctl( ioctl_socket, SIOCSIFFLAGS, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-    interface_ioctl( Socket( UDP ).fd(), SIOCSIFADDR, name,
+    interface_ioctl( ioctl_socket, SIOCSIFADDR, name,
                      [&] ( ifreq &ifr ) { ifr.ifr_addr = addr.raw_sockaddr(); } );
 }
 
@@ -70,7 +72,7 @@ int main( int argc, char *argv[] )
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
-        interface_ioctl( Socket( UDP ).fd(), SIOCSIFFLAGS, "lo",
+        interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
                          [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
         /* provide seed for random number generator used to create apache pid files */

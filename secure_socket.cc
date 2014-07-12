@@ -11,7 +11,7 @@
 using namespace std;
 
 SecureSocket::SecureSocket( Socket && sock, SSL_MODE type )
-    : underlying_socket( move( sock ) ),
+    : Socket( move( sock ) ),
       ctx(),
       ssl_connection(),
       mode( type )
@@ -43,7 +43,7 @@ SecureSocket::SecureSocket( Socket && sock, SSL_MODE type )
         throw Exception( "SSL_new", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
-    if ( SSL_set_fd( ssl_connection, underlying_socket.fd().num() ) < 1 ) {
+    if ( SSL_set_fd( ssl_connection, num() ) < 1 ) {
         throw Exception( "SSL_set_fd", ERR_error_string( ERR_get_error(), nullptr ) );
     }
 
@@ -94,11 +94,11 @@ string SecureSocket::read( void )
     if ( bytes_read == 0 ) {
         int error_return = SSL_get_error( ssl_connection, bytes_read );
         if ( SSL_ERROR_ZERO_RETURN == error_return ) { /* Clean SSL close */
-            underlying_socket.fd().set_eof();
+            set_eof();
         } else if ( SSL_ERROR_SYSCALL == error_return ) { /* Underlying TCP connection close */
             /* Verify error queue is empty so we can conclude it is EOF */
             assert( ERR_get_error() == 0 );
-            underlying_socket.fd().set_eof();
+            set_eof();
         }
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {

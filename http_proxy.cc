@@ -53,25 +53,25 @@ void HTTPProxy::loop( SocketType & server, SocketType & client )
 
     /* poll on original connect socket and new connection socket to ferry packets */
     /* responses from server go to response parser */
-    poller.add_action( Poller::Action( server.fd(), Direction::In,
+    poller.add_action( Poller::Action( server, Direction::In,
                                        [&] () {
                                            string buffer = server.read();
                                            response_parser.parse( buffer );
                                            return ResultType::Continue;
                                        },
-                                       [&] () { return not client.fd().eof(); } ) );
+                                       [&] () { return not client.eof(); } ) );
 
     /* requests from client go to request parser */
-    poller.add_action( Poller::Action( client.fd(), Direction::In,
+    poller.add_action( Poller::Action( client, Direction::In,
                                        [&] () {
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
                                            return ResultType::Continue;
                                        },
-                                       [&] () { return not server.fd().eof(); } ) );
+                                       [&] () { return not server.eof(); } ) );
 
     /* completed requests from client are serialized and sent to server */
-    poller.add_action( Poller::Action( server.fd(), Direction::Out,
+    poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
                                            server.write( request_parser.front().str() );
                                            response_parser.new_request_arrived( request_parser.front() );
@@ -81,7 +81,7 @@ void HTTPProxy::loop( SocketType & server, SocketType & client )
                                        [&] () { return not request_parser.empty(); } ) );
 
     /* completed responses from server are serialized and sent to client */
-    poller.add_action( Poller::Action( client.fd(), Direction::Out,
+    poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
                                            client.write( response_parser.front().str() );
                                            save_to_disk( response_parser.front(), server_addr );
@@ -150,6 +150,6 @@ void HTTPProxy::save_to_disk( const HTTPResponse & response, const Address & ser
 
 void HTTPProxy::register_handlers( EventLoop & event_loop )
 {
-    event_loop.add_simple_input_handler( tcp_listener().fd(),
+    event_loop.add_simple_input_handler( tcp_listener(),
                                          [&] () { handle_tcp(); return ResultType::Continue; } );
 }

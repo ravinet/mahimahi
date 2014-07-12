@@ -35,7 +35,7 @@ void DNSProxy::handle_udp( void )
                 /* wait up to 60 seconds for a reply */
                 Poller poller;
 
-                poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
+                poller.add_action( Poller::Action( dns_server, Direction::In,
                                                    [&] () {
                                                        udp_listener_.sendto( request.first,
                                                                              dns_server.read() );
@@ -68,20 +68,20 @@ void DNSProxy::handle_tcp( void )
                 /* Make bytestreams */
                 ByteStreamQueue from_client( ezio::read_chunk_size ), from_server( ezio::read_chunk_size );
 
-                poller.add_action( Poller::Action( dns_server.fd(), Direction::In,
-                                                   [&] () { return eof( from_server.push( dns_server.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
+                poller.add_action( Poller::Action( dns_server, Direction::In,
+                                                   [&] () { return eof( from_server.push( dns_server ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_server.space_available ) );
 
-                poller.add_action( Poller::Action( client.fd(), Direction::In,
-                                                   [&] () { return eof( from_client.push( client.fd() ) ) ? ResultType::Cancel : ResultType::Continue; },
+                poller.add_action( Poller::Action( client, Direction::In,
+                                                   [&] () { return eof( from_client.push( client ) ) ? ResultType::Cancel : ResultType::Continue; },
                                                    from_client.space_available ) );
 
-                poller.add_action( Poller::Action( dns_server.fd(), Direction::Out,
-                                                   [&] () { from_client.pop( dns_server.fd() ); return ResultType::Continue; },
+                poller.add_action( Poller::Action( dns_server, Direction::Out,
+                                                   [&] () { from_client.pop( dns_server ); return ResultType::Continue; },
                                                    from_client.non_empty ) );
 
-                poller.add_action( Poller::Action( client.fd(), Direction::Out,
-                                                   [&] () { from_server.pop( client.fd() ); return ResultType::Continue; },
+                poller.add_action( Poller::Action( client, Direction::Out,
+                                                   [&] () { from_server.pop( client ); return ResultType::Continue; },
                                                    from_server.non_empty ) );
 
                 while( true ) {
@@ -115,8 +115,8 @@ unique_ptr<DNSProxy> DNSProxy::maybe_proxy( const Address & listen_address, cons
 
 void DNSProxy::register_handlers( EventLoop & event_loop )
 {
-    event_loop.add_simple_input_handler( udp_listener().fd(),
+    event_loop.add_simple_input_handler( udp_listener(),
                                          [&] () { handle_udp(); return ResultType::Continue; } );
-    event_loop.add_simple_input_handler( tcp_listener().fd(),
+    event_loop.add_simple_input_handler( tcp_listener(),
                                          [&] () { handle_tcp(); return ResultType::Continue; } );
 }
