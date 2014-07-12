@@ -28,7 +28,7 @@ public:
         SystemCall( "fcntl FD_CLOEXEC", fcntl( fd_, F_SETFD, FD_CLOEXEC ) );
     }
 
-    ~FileDescriptor()
+    virtual ~FileDescriptor()
     {
         if ( fd_ < 0 ) { /* has already been moved away */
             return;
