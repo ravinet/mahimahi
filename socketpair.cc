@@ -38,7 +38,7 @@ void UnixDomainSocket::send_fd( FileDescriptor & fd )
     control_message->cmsg_type = SCM_RIGHTS;
     control_message->cmsg_len = CMSG_LEN( sizeof( fd.num() ) );
     *reinterpret_cast<int *>( CMSG_DATA( control_message ) ) = fd.num();
-    message_header.msg_controllen = CMSG_SPACE( control_message->cmsg_len );
+    message_header.msg_controllen = control_message->cmsg_len;
 
     if ( 1 != SystemCall( "sendmsg", sendmsg( num(), &message_header, 0 ) ) ) {
         throw Exception( "send_fd", "sendmsg did not send expected number of bytes" );
