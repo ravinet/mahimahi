@@ -13,7 +13,7 @@ private:
     UnixDomainSocket( const int s_fd ) : FileDescriptor( s_fd ) {}
 
 public:
-    void send_fd( void );
+    void send_fd( FileDescriptor & fd );
     FileDescriptor recv_fd( void );
 
     static std::pair<UnixDomainSocket, UnixDomainSocket> make_pair( void );
