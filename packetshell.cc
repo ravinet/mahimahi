@@ -12,7 +12,6 @@
 #include "util.hh"
 #include "interfaces.hh"
 #include "address.hh"
-#include "socketpair.hh"
 #include "dns_server.hh"
 #include "config.h"
 

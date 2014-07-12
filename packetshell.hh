@@ -11,6 +11,7 @@
 #include "address.hh"
 #include "dns_proxy.hh"
 #include "event_loop.hh"
+#include "socketpair.hh"
 
 template <class FerryQueueType>
 class PacketShell
@@ -22,7 +23,7 @@ private:
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
-    std::pair<FileDescriptor, FileDescriptor> pipe_;
+    std::pair<UnixDomainSocket, UnixDomainSocket> pipe_;
 
     EventLoop event_loop_;
 
