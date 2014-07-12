@@ -16,20 +16,12 @@ pair<UnixDomainSocket, UnixDomainSocket> UnixDomainSocket::make_pair( void )
     return ::make_pair( UnixDomainSocket( pipe[ 0 ] ), UnixDomainSocket( pipe[ 1 ] ) );
 }
 
-static const char fd_signal = '#';
-
 void UnixDomainSocket::send_fd( FileDescriptor & fd )
 {
-    char mutable_char_to_send = fd_signal;
-    iovec msg_iovec = { &mutable_char_to_send, sizeof( mutable_char_to_send ) };
-
-    char control_buffer[ CMSG_SPACE( sizeof( fd.num() ) ) ];
-
     msghdr message_header;
     zero( message_header );
 
-    message_header.msg_iov = &msg_iovec;
-    message_header.msg_iovlen = 1;
+    char control_buffer[ CMSG_SPACE( sizeof( fd.num() ) ) ];
     message_header.msg_control = control_buffer;
     message_header.msg_controllen = sizeof( control_buffer );
 
@@ -40,32 +32,22 @@ void UnixDomainSocket::send_fd( FileDescriptor & fd )
     *reinterpret_cast<int *>( CMSG_DATA( control_message ) ) = fd.num();
     message_header.msg_controllen = control_message->cmsg_len;
 
-    if ( 1 != SystemCall( "sendmsg", sendmsg( num(), &message_header, 0 ) ) ) {
-        throw Exception( "send_fd", "sendmsg did not send expected number of bytes" );
+    if ( 0 != SystemCall( "sendmsg", sendmsg( num(), &message_header, 0 ) ) ) {
+        throw Exception( "send_fd", "sendmsg unexpectedly sent data" );
     }
 }
 
 FileDescriptor UnixDomainSocket::recv_fd( void )
 {
-    char mutable_char_to_receive;
-    iovec msg_iovec = { &mutable_char_to_receive, sizeof( mutable_char_to_receive ) };
-
-    char control_buffer[ CMSG_SPACE( sizeof( int ) ) ];
-
     msghdr message_header;
     zero( message_header );
 
-    message_header.msg_iov = &msg_iovec;
-    message_header.msg_iovlen = 1;
+    char control_buffer[ CMSG_SPACE( sizeof( int ) ) ];
     message_header.msg_control = control_buffer;
     message_header.msg_controllen = sizeof( control_buffer );
 
-    if ( 1 != SystemCall( "recvmsg", recvmsg( num(), &message_header, 0 ) ) ) {
-        throw Exception( "recv_fd", "recvmsg did not receive expected number of bytes" );
-    }
-
-    if ( mutable_char_to_receive != fd_signal ) {
-        throw Exception( "recv_fd", "did not get expected fd signal byte" );
+    if ( 0 != SystemCall( "recvmsg", recvmsg( num(), &message_header, 0 ) ) ) {
+        throw Exception( "recv_fd", "recvmsg unexpectedly received data" );
     }
 
     if ( message_header.msg_flags & MSG_CTRUNC ) {
