@@ -9,9 +9,10 @@
 
 class UnixDomainSocket : public FileDescriptor
 {
-public:
-    using FileDescriptor::FileDescriptor;
+private:
+    UnixDomainSocket( const int s_fd ) : FileDescriptor( s_fd ) {}
 
+public:
     void send_fd( void );
     FileDescriptor recv_fd( void );
 
