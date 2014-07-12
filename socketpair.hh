@@ -1,13 +1,21 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 #ifndef SOCKETPAIR_HH
 #define SOCKETPAIR_HH
 
 #include <utility>
 
-static std::pair<FileDescriptor, FileDescriptor> make_pipe( void )
+#include "file_descriptor.hh"
+
+class UnixDomainSocket : public FileDescriptor
 {
-  int pipe[ 2 ];
-  SystemCall( "socketpair", socketpair( AF_UNIX, SOCK_DGRAM, 0, pipe ) );
-  return std::make_pair( pipe[ 0 ], pipe[ 1 ] );
-}
+public:
+    using FileDescriptor::FileDescriptor;
+
+    void send_fd( void );
+    FileDescriptor recv_fd( void );
+
+    static std::pair<UnixDomainSocket, UnixDomainSocket> make_pipe( void );
+};
 
 #endif /* SOCKETPAIR_HH */

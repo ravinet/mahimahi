@@ -10,9 +10,10 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	interfaces.hh interfaces.cc                                            \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
 	event_loop.hh event_loop.cc \
-	temp_file.hh temp_file.cc dns_server.hh dns_server.cc
+	temp_file.hh temp_file.cc dns_server.hh dns_server.cc \
+	socketpair.hh socketpair.cc
 
-packet_shell_source = packetshell.cc packetshell.hh socketpair.hh
+packet_shell_source = packetshell.cc packetshell.hh
 
 bin_PROGRAMS = delayshell
 delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
