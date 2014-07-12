@@ -15,7 +15,7 @@ public:
     void send_fd( void );
     FileDescriptor recv_fd( void );
 
-    static std::pair<UnixDomainSocket, UnixDomainSocket> make_pipe( void );
+    static std::pair<UnixDomainSocket, UnixDomainSocket> make_pair( void );
 };
 
 #endif /* SOCKETPAIR_HH */

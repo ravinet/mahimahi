@@ -87,7 +87,7 @@ int main( int argc, char *argv[] )
         /* Fork */
         {
             /* Make pipe for start signal */
-            auto pipe = UnixDomainSocket::make_pipe();
+            auto pipe = UnixDomainSocket::make_pair();
 
             ChildProcess container_process( "recordshell", [&]() {
                     /* wait for the go signal */

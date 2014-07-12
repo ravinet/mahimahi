@@ -26,7 +26,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix )
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( Address( egress_addr().ip(), "domain" ), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
-      pipe_( UnixDomainSocket::make_pipe() ),
+      pipe_( UnixDomainSocket::make_pair() ),
       event_loop_()
 {
     /* make sure environment has been cleared */
