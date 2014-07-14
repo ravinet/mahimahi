@@ -144,7 +144,12 @@ void SecureSocket::connect( void )
 
 void SecureSocket::accept( void )
 {
-    if ( not SSL_accept( ssl_ ) ) {
+    const auto ret = SSL_accept( ssl_ );
+    if ( ret == 1 ) {
+        return;
+    } else if ( ret == 0 ) {
+        throw Exception( "SSL_accept", ERR_error_string( SSL_get_error( ssl_, ret ), nullptr ) );
+    } else {
         throw SSLException( "SSL_accept" );
     }
 
