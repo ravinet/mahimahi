@@ -85,13 +85,14 @@ void HTTPProxy::add_poller_actions( Poller & poller,
                                                         HTTP_Record::http_message complete_request = request_parser.front().toprotobuf();
                                                         string first_line = complete_request.first_line();
                                                         /* check if request is GET / (will lead to bulk response) */
-                                                        if ( first_line == "GET / HTTP/1.1\r\n" ) {
+                                                        /*if ( first_line == "GET / HTTP/1.1\r\n" ) {
                                                             cout << "WRITING FIRST REQUEST TO SERVER AT: " << timestamp() << endl;
                                                             server_rw->write( request_parser.front().str() );
                                                             bulk_thread = true;
                                                             response_parser.new_request_arrived( request_parser.front() );
                                                             request_parser.pop();
-                                                        } else if ( Archive::request_pending( complete_request ) ) {
+                                                        */
+                                                        if ( Archive::request_pending( complete_request ) ) {
                                                             cout << "PENDING REQUEST: " << first_line << " at: " << timestamp() << endl;
                                                             if ( bulk_thread ) { /* don't wait so we can keep parsing bulk response */
                                                                 return ResultType::Continue;
@@ -107,6 +108,7 @@ void HTTPProxy::add_poller_actions( Poller & poller,
                                                         } else { /* request not in archive->send request to server */
                                                             cout << "REQUEST NOT IN ARCHIVE: " << first_line << " at: " << timestamp() << endl;
                                                             server_rw->write( request_parser.front().str() );
+                                                            bulk_thread = true;
                                                             response_parser.new_request_arrived( request_parser.front() );
                                                             request_parser.pop();
                                                         }
@@ -184,7 +186,7 @@ void HTTPProxy::handle_tcp( void )
                         HTTP_Record::http_message complete_request = request_parser.front().toprotobuf();
                         string first_line = complete_request.first_line();
                         /* check if request is GET / (will lead to bulk response) */
-                        if ( first_line == "GET / HTTP/1.1\r\n" ) {
+                        /*if ( first_line == "GET / HTTP/1.1\r\n" ) {
                             cout << "WRITING FIRST REQUEST TO SERVER AT: " << timestamp() << endl;
                             if ( dst_port == 443 ) {
                                 server.connect( https_remote_proxy_ );
@@ -200,9 +202,10 @@ void HTTPProxy::handle_tcp( void )
                             request_parser.pop();
                             add_poller_actions( poller, client_rw, server_rw, response_parser,
                                                 request_parser, bulk_thread, from_destination, already_sent );
-                            /* We have connected to the server and added poller actions for that */
+                            // We have connected to the server and added poller actions for that
                             connected = true;
-                        } else if ( Archive::request_pending( complete_request ) ) { /* request pending->wait */
+                        */
+                        if ( Archive::request_pending( complete_request ) ) { /* request pending->wait */
                             assert ( not bulk_thread ); /* should never be on bulk thread here b/c we would have already connected */
                             cout << "PENDING REQUEST: " << first_line << " at: " << timestamp() << endl;
                             Archive::wait();
@@ -224,6 +227,7 @@ void HTTPProxy::handle_tcp( void )
                                          static_cast<decltype( server_rw )>( new SecureSocket( move( server ), CLIENT ) ) :
                                          static_cast<decltype( server_rw )>( new Socket( move( server ) ) );
                             server_rw->write( request_parser.front().str() );
+                            bulk_thread = true;
                             response_parser.new_request_arrived( request_parser.front() );
                             request_parser.pop();
                             add_poller_actions( poller, client_rw, server_rw, response_parser,
