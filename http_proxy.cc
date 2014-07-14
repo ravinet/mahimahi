@@ -19,15 +19,16 @@
 #include "event_loop.hh"
 #include "temp_file.hh"
 #include "secure_socket.hh"
+#include "backing_store.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
+HTTPProxy::HTTPProxy( const Address & listener_addr, HTTPBackingStore & backing_store )
     : listener_socket_( TCP ),
-      record_folder_( record_folder ),
       server_context_( SERVER ),
-      client_context_( CLIENT )
+      client_context_( CLIENT ),
+      backing_store_( backing_store )
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -76,7 +77,7 @@ void HTTPProxy::loop( SocketType & server, SocketType & client )
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
                                            client.write( response_parser.front().str() );
-                                           save_to_disk( response_parser.front(), server_addr );
+                                           backing_store_.save( response_parser.front(), server_addr );
                                            response_parser.pop();
                                            return ResultType::Continue;
                                        },
@@ -121,27 +122,6 @@ void HTTPProxy::handle_tcp( void )
 
     /* don't wait around for the reply */
     newthread.detach();
-}
-
-void HTTPProxy::save_to_disk( const HTTPResponse & response, const Address & server_address )
-{
-    /* output file to write current request/response pair protobuf (user has all permissions) */
-    UniqueFile file( record_folder_ + "save" );
-
-    /* construct protocol buffer */
-    MahimahiProtobufs::RequestResponse output;
-
-    output.set_ip( server_address.ip() );
-    output.set_port( server_address.port() );
-    output.set_scheme( server_address.port() == 443
-                       ? MahimahiProtobufs::RequestResponse_Scheme_HTTPS
-                       : MahimahiProtobufs::RequestResponse_Scheme_HTTP );
-    output.mutable_request()->CopyFrom( response.request().toprotobuf() );
-    output.mutable_response()->CopyFrom( response.toprotobuf() );
-
-    if ( not output.SerializeToFileDescriptor( file.fd().num() ) ) {
-        throw Exception( "save_to_disk", "failure to serialize HTTP request/response pair" );
-    }
 }
 
 void HTTPProxy::register_handlers( EventLoop & event_loop )

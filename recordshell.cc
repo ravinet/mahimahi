@@ -15,6 +15,7 @@
 #include "event_loop.hh"
 #include "socketpair.hh"
 #include "config.h"
+#include "backing_store.hh"
 
 using namespace std;
 
@@ -76,7 +77,8 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        HTTPProxy http_proxy( egress_addr, directory );
+        HTTPDiskStore disk_backing_store( directory );
+        HTTPProxy http_proxy( egress_addr, disk_backing_store );
 
         /* set up dnat */
         DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
