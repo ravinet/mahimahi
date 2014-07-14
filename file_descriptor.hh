@@ -15,9 +15,16 @@ private:
     int fd_;
     bool eof_;
 
+    unsigned int read_count_, write_count_;
+
+protected:
+    void register_read( void ) { read_count_++; }
+    void register_write( void ) { write_count_++; }
+
 public:
     FileDescriptor( const int s_fd )
-    : fd_( s_fd ), eof_( false )
+        : fd_( s_fd ), eof_( false ),
+          read_count_(), write_count_()
     {
         if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
             throw Exception( "FileDescriptor", "fd <= 2" );
@@ -50,7 +57,9 @@ public:
 
     /* allow moving FileDescriptor objects */
     FileDescriptor( FileDescriptor && other )
-    : fd_( other.fd_ ), eof_( other.eof_ )
+        : fd_( other.fd_ ), eof_( other.eof_ ),
+          read_count_( other.read_count_ ),
+          write_count_( other.write_count_)
     {
         other.fd_ = -1; /* disable the other FileDescriptor */
     }
@@ -58,6 +67,8 @@ public:
     void write( const std::string & buffer )
     {
         writeall( num(), buffer );
+
+        register_write();
     }
 
     std::string::const_iterator write_some( const std::string::const_iterator & begin,
@@ -70,6 +81,9 @@ public:
     {
         auto ret = readall( num() );
         if ( ret.empty() ) { eof_ = true; }
+
+        register_read();
+
         return ret;
     }
 
@@ -77,6 +91,9 @@ public:
     {
         auto ret = readall( num(), limit );
         if ( ret.empty() ) { eof_ = true; }
+
+        register_read();
+
         return ret;
     }
 
@@ -84,6 +101,9 @@ public:
     {
         eof_ = true;
     }
+
+    unsigned int read_count( void ) const { return read_count_; }
+    unsigned int write_count( void ) const { return write_count_; }
 };
 
 #endif /* FILE_DESCRIPTOR_HH */

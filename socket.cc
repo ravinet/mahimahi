@@ -71,6 +71,8 @@ Socket Socket::accept( void )
   if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
     throw Exception( "sockaddr size mismatch" );
   }
+
+  register_read();
   
   return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
 }
@@ -107,6 +109,8 @@ pair< Address, string > Socket::recvfrom( void )
         throw Exception( "oversized datagram" );
     }
 
+    register_read();
+
     return make_pair( Address( packet_remote_addr ),
                       string( buf, recv_len ) );
 }
@@ -119,6 +123,8 @@ void Socket::sendto( const Address & destination, const string & payload )
                                     0,
                                     &destination.raw_sockaddr(),
                                     sizeof( destination.raw_sockaddr() ) ) );
+
+    register_write();
 }
 
 void Socket::getsockopt( const int level, const int optname,

@@ -147,6 +147,8 @@ void SecureSocket::accept( void )
     if ( not SSL_accept( ssl_ ) ) {
         throw SSLException( "SSL_accept" );
     }
+
+    register_read();
 }
 
 string SecureSocket::read( void )
@@ -170,11 +172,13 @@ string SecureSocket::read( void )
             assert( ERR_get_error() == 0 );
             set_eof();
         }
+        register_read();
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
         throw SSLException( "SSL_read" );
     } else {
         /* success */
+        register_read();
         return string( buffer, bytes_read );
     }
 }
@@ -187,4 +191,6 @@ void SecureSocket::write(const string & message )
     if ( bytes_written < 0 ) {
         throw SSLException( "SSL_write" );
     }
+
+    register_write();
 }

@@ -35,6 +35,8 @@ void UnixDomainSocket::send_fd( FileDescriptor & fd )
     if ( 0 != SystemCall( "sendmsg", sendmsg( num(), &message_header, 0 ) ) ) {
         throw Exception( "send_fd", "sendmsg unexpectedly sent data" );
     }
+
+    register_write();
 }
 
 FileDescriptor UnixDomainSocket::recv_fd( void )
@@ -64,6 +66,8 @@ FileDescriptor UnixDomainSocket::recv_fd( void )
     if ( control_message->cmsg_len != CMSG_LEN( sizeof( int ) ) ) {
         throw Exception( "recvmsg", "unexpected control message length" );
     }
+
+    register_read();
 
     return *reinterpret_cast<int *>( CMSG_DATA( control_message ) );
 }
