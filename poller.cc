@@ -13,6 +13,11 @@ void Poller::add_action( Poller::Action action )
     pollfds_.push_back( { action.fd.num(), 0, 0 } );
 }
 
+unsigned int Poller::Action::service_count( void ) const
+{
+    return direction == Direction::In ? fd.read_count() : fd.write_count();
+}
+
 Poller::Result Poller::poll( const int & timeout_ms )
 {
     assert( pollfds_.size() == actions_.size() );
@@ -49,7 +54,12 @@ Poller::Result Poller::poll( const int & timeout_ms )
         if ( pollfds_[ i ].revents & pollfds_[ i ].events ) {
             /* we only want to call callback if revents includes
                the event we asked for */
+            const auto count_before = actions_.at( i ).service_count();
             auto result = actions_.at( i ).callback();
+
+            if ( count_before == actions_.at( i ).service_count() ) {
+                throw Exception( "Poller", "busy wait detected: callback did not read/write fd" );
+            }
 
             switch ( result.result ) {
             case ResultType::Exit:
