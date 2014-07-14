@@ -1,81 +1,151 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <cassert>
+#include <vector>
+#include <thread>
+#include <mutex>
+
 #include "secure_socket.hh"
 #include "certificate.hh"
-
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <cassert>
+#include "exception.hh"
 
 using namespace std;
 
-SecureSocket::SecureSocket( Socket && sock, SSL_MODE type )
-    : Socket( move( sock ) ),
-      ctx(),
-      ssl_connection(),
-      mode( type )
+Exception SSLException( const string & s_attempt )
 {
-    /* create client/server supporting TLS version 1 */
-    if ( mode == CLIENT ) { /* client */
-        ctx = SSL_CTX_new( TLSv1_client_method() );
-    } else { /* server */
-        ctx = SSL_CTX_new( TLSv1_server_method() );
+    return Exception( s_attempt, ERR_error_string( ERR_get_error(), nullptr ) );
+}
 
-        if ( SSL_CTX_use_certificate_ASN1( ctx, 678, certificate ) < 1 ) {
-            throw Exception( "SSL_CTX_use_certificate_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
+class OpenSSL
+{
+private:
+    vector<mutex> locks_;
+
+    static void locking_function( int mode, int n, const char *, int )
+    {
+        if ( mode & CRYPTO_LOCK ) {
+            OpenSSL::global_context().locks_.at( n ).lock();
+        } else {
+            OpenSSL::global_context().locks_.at( n ).unlock();
+        }
+    }
+
+    static unsigned long id_function( void )
+    {
+        return pthread_self();
+    }
+
+public:
+    OpenSSL()
+        : locks_( CRYPTO_num_locks() )
+    {
+        /* SSL initialization: Needs to be done exactly once */
+        /* load algorithms/ciphers */
+        SSL_library_init();
+        OpenSSL_add_all_algorithms();
+
+        /* load error messages */
+        SSL_load_error_strings();
+
+        /* set thread-safe callbacks */
+        CRYPTO_set_locking_callback( locking_function );
+        CRYPTO_set_id_callback( id_function );
+    }
+
+    static OpenSSL & global_context( void )
+    {
+        static OpenSSL os;
+        return os;
+    }
+};
+
+SSLContext::SSLContext( const SSL_MODE type )
+    : ctx_()
+{
+    OpenSSL::global_context();
+
+    ctx_ = SSL_CTX_new( type == CLIENT ? TLSv1_client_method() : TLSv1_server_method() );
+
+    if ( not ctx_ ) {
+        throw SSLException( "SSL_CTX_new" );
+    }
+
+    if ( type == SERVER ) {
+        if ( not SSL_CTX_use_certificate_ASN1( ctx_, 678, certificate ) ) {
+            throw SSLException( "SSL_CTX_use_certificate_ASN1" );
         }
 
-        if ( SSL_CTX_use_RSAPrivateKey_ASN1( ctx, private_key, 1191 ) < 1 ) {
-            throw Exception( "SSL_CTX_use_RSAPrivateKey_ASN1", ERR_error_string( ERR_get_error(), nullptr ) );
+        if ( not SSL_CTX_use_RSAPrivateKey_ASN1( ctx_, private_key, 1191 ) ) {
+            throw SSLException( "SSL_CTX_use_RSAPrivateKey_ASN1" );
         }
 
         /* check consistency of private key with loaded certificate */
-        if ( SSL_CTX_check_private_key( ctx ) < 1 ) {
-            throw Exception( "SSL_CTX_check_private_key", ERR_error_string( ERR_get_error(), nullptr ) );
+        if ( not SSL_CTX_check_private_key( ctx_ ) ) {
+            throw SSLException( "SSL_CTX_check_private_key" );
         }
     }
-    if ( ctx == NULL ) {
-        throw Exception( "SSL_CTX_new", ERR_error_string( ERR_get_error(), nullptr ) );
+}
+
+SSLContext::~SSLContext()
+{
+    if ( ctx_ ) {
+        SSL_CTX_free( ctx_ );
+    }
+}
+
+SecureSocket::SecureSocket( Socket && sock, SSL *ssl )
+    : Socket( move( sock ) ),
+      ssl_( ssl )
+{
+    if ( not ssl_ ) {
+        throw Exception( "SecureSocket", "constructor must be passed valid SSL structure" );
     }
 
-    if ( (ssl_connection = SSL_new( ctx ) ) == NULL ) {
-        throw Exception( "SSL_new", ERR_error_string( ERR_get_error(), nullptr ) );
-    }
-
-    if ( SSL_set_fd( ssl_connection, num() ) < 1 ) {
-        throw Exception( "SSL_set_fd", ERR_error_string( ERR_get_error(), nullptr ) );
+    if ( not SSL_set_fd( ssl_, num() ) ) {
+        throw SSLException( "SSL_set_fd" );
     }
 
     /* enable read/write to return only after handshake/renegotiation and successful completion */
-    SSL_set_mode( ssl_connection, SSL_MODE_AUTO_RETRY );
-
-    handshake();
+    SSL_set_mode( ssl_, SSL_MODE_AUTO_RETRY );
 }
 
-void SecureSocket::handshake( void )
+SecureSocket::~SecureSocket()
 {
-    if ( mode == CLIENT ) { /* client-initiate handshake */
-        if ( SSL_connect( ssl_connection ) < 1 ) {
-            throw Exception( "SSL_connect", ERR_error_string( ERR_get_error(), nullptr ) );
-        }
-    } else { /* server-finish handshake */
-        if ( SSL_accept( ssl_connection ) < 1 ) {
-            throw Exception( "SSL_accept", ERR_error_string( ERR_get_error(), nullptr ) );
-        }
+    if ( not ssl_ ) { return; }
+
+    /* calling SSL_shutdown seems to raise SIGPIPE */
+
+    SSL_free( ssl_ );
+}
+
+SecureSocket::SecureSocket( SecureSocket && other )
+    : Socket( move( other ) ),
+      ssl_( other.ssl_ )
+{
+    other.ssl_ = nullptr;
+}
+
+SecureSocket SSLContext::new_secure_socket( Socket && sock )
+{
+    SSL *ssl = SSL_new( ctx_ );
+    if ( not ssl ) {
+        throw SSLException( "SSL_new" );
+    }
+
+    return SecureSocket( move( sock ), ssl );
+}
+
+void SecureSocket::connect( void )
+{
+    if ( not SSL_connect( ssl_ ) ) {
+        throw SSLException( "SSL_connect" );
     }
 }
 
-void SecureSocket::check_server_certificate( void )
+void SecureSocket::accept( void )
 {
-    X509 *server_certificate;
-
-    server_certificate = SSL_get_peer_certificate( ssl_connection );
-
-    if ( SSL_get_verify_result( ssl_connection ) == X509_V_OK ) { /* verification succeeded of no certificate presented */
-        X509_free( server_certificate );
-    } else { /* verification failed */
-        throw Exception( "SSL_get_verify_result", ERR_error_string( SSL_get_verify_result( ssl_connection ), nullptr ) );
+    if ( not SSL_accept( ssl_ ) ) {
+        throw SSLException( "SSL_accept" );
     }
 }
 
@@ -86,13 +156,13 @@ string SecureSocket::read( void )
 
     char buffer[ SSL_max_record_length ];
 
-    ssize_t bytes_read = SSL_read( ssl_connection, &buffer, SSL_max_record_length );
+    ssize_t bytes_read = SSL_read( ssl_, buffer, SSL_max_record_length );
 
     /* Make sure that we really are reading from the underlying fd */
-    assert( 0 == SSL_pending( ssl_connection ) );
+    assert( 0 == SSL_pending( ssl_ ) );
 
     if ( bytes_read == 0 ) {
-        int error_return = SSL_get_error( ssl_connection, bytes_read );
+        int error_return = SSL_get_error( ssl_, bytes_read );
         if ( SSL_ERROR_ZERO_RETURN == error_return ) { /* Clean SSL close */
             set_eof();
         } else if ( SSL_ERROR_SYSCALL == error_return ) { /* Underlying TCP connection close */
@@ -102,7 +172,7 @@ string SecureSocket::read( void )
         }
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
-        throw Exception( "SSL_read", ERR_error_string( SSL_get_error( ssl_connection, bytes_read ), nullptr ) );
+        throw SSLException( "SSL_read" );
     } else {
         /* success */
         return string( buffer, bytes_read );
@@ -112,9 +182,9 @@ string SecureSocket::read( void )
 void SecureSocket::write(const string & message )
 {
     /* SSL_write returns with success if complete contents of message are written */
-    ssize_t bytes_written = SSL_write( ssl_connection, message.c_str(), message.length() );
+    ssize_t bytes_written = SSL_write( ssl_, message.c_str(), message.length() );
 
     if ( bytes_written < 0 ) {
-        throw Exception( "SSL_write", ERR_error_string( SSL_get_error( ssl_connection, bytes_written ), nullptr ) );
+        throw SSLException( "SSL_write" );
     }
 }

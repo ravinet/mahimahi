@@ -6,6 +6,7 @@
 #include <string>
 
 #include "socket.hh"
+#include "secure_socket.hh"
 #include "http_response.hh"
 
 class EventLoop;
@@ -23,6 +24,8 @@ private:
 
     /* Pick a random file name and store reqrespair as a serialized string */
     void save_to_disk( const HTTPResponse & response, const Address & server_address );
+
+    SSLContext server_context_, client_context_;
 
 public:
     HTTPProxy( const Address & listener_addr, const std::string & record_folder );

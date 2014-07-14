@@ -5,8 +5,6 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 
 #include "address.hh"
 #include "socket.hh"
@@ -27,18 +25,12 @@ using namespace PollerShortNames;
 
 HTTPProxy::HTTPProxy( const Address & listener_addr, const string & record_folder )
     : listener_socket_( TCP ),
-      record_folder_( record_folder)
+      record_folder_( record_folder ),
+      server_context_( SERVER ),
+      client_context_( CLIENT )
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
-
-    /* SSL initialization: Needs to be done exactly once */
-    /* load algorithms/ciphers */
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-
-    /* load error messages */
-    SSL_load_error_strings();
 }
 
 template <class SocketType>
@@ -113,8 +105,12 @@ void HTTPProxy::handle_tcp( void )
                 }
 
                 /* handle TLS */
-                SecureSocket tls_server( move( server ), CLIENT );
-                SecureSocket tls_client( move( client ), SERVER );
+                SecureSocket tls_server( client_context_.new_secure_socket( move( server ) ) );
+                tls_server.connect();
+
+                SecureSocket tls_client( server_context_.new_secure_socket( move( client ) ) );
+                tls_client.accept();
+
                 return loop( tls_server, tls_client );
             } catch ( const Exception & e ) {
                 e.perror();
