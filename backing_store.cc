@@ -7,11 +7,14 @@
 using namespace std;
 
 HTTPDiskStore::HTTPDiskStore( const string & record_folder )
-    : record_folder_( record_folder )
+    : record_folder_( record_folder ),
+      mutex_()
 {}
 
 void HTTPDiskStore::save( const HTTPResponse & response, const Address & server_address )
 {
+    unique_lock<mutex> ul( mutex_ );
+
     /* output file to write current request/response pair protobuf (user has all permissions) */
     UniqueFile file( record_folder_ + "save" );
 

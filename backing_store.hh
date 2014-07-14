@@ -4,6 +4,7 @@
 #define BACKING_STORE_HH
 
 #include <string>
+#include <mutex>
 
 #include "http_request.hh"
 #include "http_response.hh"
@@ -20,6 +21,7 @@ class HTTPDiskStore : public HTTPBackingStore
 {
 private:
     std::string record_folder_;
+    std::mutex mutex_;
 
 public:
     HTTPDiskStore( const std::string & record_folder );
