@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <limits>
+#include <cassert>
 
 #include "link_queue.hh"
 #include "timestamp.hh"
@@ -70,6 +71,12 @@ void LinkQueue::read_packet( const string & contents )
 {
     const uint64_t now = timestamp();
 
+    /* pop wasted PDOs */
+    while ( next_delivery_time() <= now
+            and (packet_queue_.empty() or packet_queue_.front().arrival_time > next_delivery_time()) ) {
+        use_a_delivery_opportunity();
+    }
+
     packet_queue_.emplace( contents, now );
 
     /* log it */
@@ -85,6 +92,11 @@ uint64_t LinkQueue::next_delivery_time( void ) const
 
 void LinkQueue::use_a_delivery_opportunity( void )
 {
+    /* log the delivery opportunity */
+    if ( log_ ) {
+        *log_ << next_delivery_time() << " # " << PACKET_SIZE << endl;
+    }
+
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
 
     /* wraparound */
@@ -97,17 +109,16 @@ void LinkQueue::write_packets( FileDescriptor & fd )
 {
     uint64_t now = timestamp();
 
+    if ( not packet_queue_.empty() ) {
+        assert( packet_queue_.front().arrival_time <= next_delivery_time() );
+    }
+
     while ( next_delivery_time() <= now ) {
         const uint64_t this_delivery_time = next_delivery_time();
 
         /* burn a delivery opportunity */
         unsigned int bytes_left_in_this_delivery = PACKET_SIZE;
         use_a_delivery_opportunity();
-
-        /* log the delivery opportunity */
-        if ( log_ ) {
-            *log_ << this_delivery_time << " # " << PACKET_SIZE << endl;
-        }
 
         while ( (bytes_left_in_this_delivery > 0)
                 and (not packet_queue_.empty())
