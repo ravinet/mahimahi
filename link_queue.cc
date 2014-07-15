@@ -121,7 +121,8 @@ void LinkQueue::write_packets( FileDescriptor & fd )
 
                 /* log the delivery */
                 if ( log_ ) {
-                    *log_ << this_delivery_time << " - " << packet_queue_.front().contents.size() << endl;
+                    *log_ << this_delivery_time << " - " << packet_queue_.front().contents.size()
+                          << " " << this_delivery_time - packet_queue_.front().arrival_time << endl;
                 }
 
                 /* this packet is ready to go */
