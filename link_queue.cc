@@ -1,7 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <limits>
-#include <fstream>
 
 #include "link_queue.hh"
 #include "timestamp.hh"
@@ -10,11 +9,12 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const std::string & filename )
+LinkQueue::LinkQueue( const string & filename, const string & logfile )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
-      packet_queue_()
+      packet_queue_(),
+      log_()
 {
     assert_not_root();
 
@@ -49,6 +49,14 @@ LinkQueue::LinkQueue( const std::string & filename )
 
     if ( schedule_.back() == 0 ) {
         throw Exception( filename, "trace must last for a nonzero amount of time" );
+    }
+
+    /* open logfile if called for */
+    if ( not logfile.empty() ) {
+        log_.reset( new ofstream( logfile ) );
+        if ( not log_->good() ) {
+            throw Exception( logfile, "error opening for writing" );
+        }
     }
 }
 

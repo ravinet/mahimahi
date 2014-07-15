@@ -6,6 +6,8 @@
 #include <queue>
 #include <cstdint>
 #include <string>
+#include <fstream>
+#include <memory>
 
 #include "file_descriptor.hh"
 
@@ -28,12 +30,14 @@ private:
 
     std::queue< QueuedPacket > packet_queue_;
 
+    std::unique_ptr<std::ofstream> log_;
+
     uint64_t next_delivery_time( void ) const;
 
     void use_a_delivery_opportunity( void );
 
 public:
-    LinkQueue( const std::string & filename );
+    LinkQueue( const std::string & filename, const std::string & logfile );
 
     void read_packet( const std::string & contents );
 
