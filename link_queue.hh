@@ -20,8 +20,9 @@ private:
     {
         int bytes_to_transmit;
         std::string contents;
+        uint64_t arrival_time;
 
-        QueuedPacket( const std::string & s_contents );
+        QueuedPacket( const std::string & s_contents, const uint64_t s_arrival_time );
     };
 
     unsigned int next_delivery_;

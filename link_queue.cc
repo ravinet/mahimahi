@@ -60,18 +60,21 @@ LinkQueue::LinkQueue( const string & filename, const string & logfile )
     }
 }
 
-LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
+LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents, const uint64_t s_arrival_time )
     : bytes_to_transmit( s_contents.size() ),
-      contents( s_contents )
+      contents( s_contents ),
+      arrival_time( s_arrival_time )
 {}
 
 void LinkQueue::read_packet( const string & contents )
 {
-    packet_queue_.emplace( contents );
+    const uint64_t now = timestamp();
+
+    packet_queue_.emplace( contents, now );
 
     /* log it */
     if ( log_ ) {
-        *log_ << timestamp() << " + " << contents.size() << endl;
+        *log_ << now << " + " << contents.size() << endl;
     }
 }
 
@@ -107,7 +110,8 @@ void LinkQueue::write_packets( FileDescriptor & fd )
         }
 
         while ( (bytes_left_in_this_delivery > 0)
-                and (not packet_queue_.empty()) ) {
+                and (not packet_queue_.empty())
+                and (packet_queue_.front().arrival_time <= this_delivery_time) ) {
             packet_queue_.front().bytes_to_transmit -= bytes_left_in_this_delivery;
             bytes_left_in_this_delivery = 0;
 
