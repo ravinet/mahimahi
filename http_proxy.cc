@@ -112,12 +112,10 @@ void HTTPProxy::handle_tcp( void )
                 SecureSocket tls_client( server_context_.new_secure_socket( move( client ) ) );
                 tls_client.accept();
 
-                return loop( tls_server, tls_client );
+                loop( tls_server, tls_client );
             } catch ( const Exception & e ) {
                 e.perror();
-                return;
             }
-            return;
         }, listener_socket_.accept() );
 
     /* don't wait around for the reply */
