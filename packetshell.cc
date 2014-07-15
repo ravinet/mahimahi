@@ -13,6 +13,7 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "dns_server.hh"
+#include "timestamp.hh"
 #include "config.h"
 
 using namespace std;
@@ -32,6 +33,9 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix )
     if ( environ != nullptr ) {
         throw Exception( "PacketShell", "environment was not cleared" );
     }
+
+    /* initialize base timestamp value before any forking */
+    initial_timestamp();
 }
 
 template <class FerryQueueType>

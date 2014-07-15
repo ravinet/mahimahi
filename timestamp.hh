@@ -6,5 +6,6 @@
 #include <cstdint>
 
 uint64_t timestamp( void );
+uint64_t initial_timestamp( void );
 
 #endif /* TIMESTAMP_HH */

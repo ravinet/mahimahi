@@ -8,7 +8,6 @@
 
 #include "address.hh"
 #include "socket.hh"
-#include "timestamp.hh"
 #include "system_runner.hh"
 #include "http_proxy.hh"
 #include "poller.hh"
