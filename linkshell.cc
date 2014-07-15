@@ -9,7 +9,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw Exception( "Usage", program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] UPLINK DOWNLINK [COMMAND...]" );
+    throw Exception( "Usage", program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 int main( int argc, char *argv[] )
@@ -26,12 +26,14 @@ int main( int argc, char *argv[] )
         }
 
         const option command_line_options[] = {
-            { "uplink-log", required_argument, nullptr, 'u' },
+            { "uplink-log",   required_argument, nullptr, 'u' },
             { "downlink-log", required_argument, nullptr, 'd' },
-            { 0,         0,                 nullptr, 0 }
+            { "once",         no_argument,       nullptr, 'o' },
+            { 0,              0,                 nullptr, 0 }
         };
 
         string uplink_logfile, downlink_logfile;
+        bool repeat = true;
 
         while ( true ) {
             const int opt = getopt_long( argc, argv, "u:d:", command_line_options, nullptr );
@@ -45,6 +47,9 @@ int main( int argc, char *argv[] )
                 break;
             case 'd':
                 downlink_logfile = optarg;
+                break;
+            case 'o':
+                repeat = false;
                 break;
             case '?':
                 usage_error( argv[ 0 ] );
@@ -74,8 +79,8 @@ int main( int argc, char *argv[] )
         PacketShell<LinkQueue> link_shell_app( "link" );
 
         link_shell_app.start_uplink( "[link] ", user_environment, command,
-                                     uplink_filename, uplink_logfile );
-        link_shell_app.start_downlink( downlink_filename, downlink_logfile );
+                                     uplink_filename, uplink_logfile, repeat );
+        link_shell_app.start_downlink( downlink_filename, downlink_logfile, repeat );
         return link_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
         e.perror();

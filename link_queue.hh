@@ -33,12 +33,14 @@ private:
 
     std::unique_ptr<std::ofstream> log_;
 
+    bool repeat_;
+
     uint64_t next_delivery_time( void ) const;
 
     void use_a_delivery_opportunity( void );
 
 public:
-    LinkQueue( const std::string & filename, const std::string & logfile );
+    LinkQueue( const std::string & filename, const std::string & logfile, const bool repeat );
 
     void read_packet( const std::string & contents );
 

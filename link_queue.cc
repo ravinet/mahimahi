@@ -10,12 +10,13 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const string & filename, const string & logfile )
+LinkQueue::LinkQueue( const string & filename, const string & logfile, const bool repeat )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_(),
-      log_()
+      log_(),
+      repeat_( repeat )
 {
     assert_not_root();
 
@@ -101,7 +102,11 @@ void LinkQueue::use_a_delivery_opportunity( void )
 
     /* wraparound */
     if ( next_delivery_ == 0 ) {
-        base_timestamp_ += schedule_.back();
+        if ( repeat_ ) {
+            base_timestamp_ += schedule_.back();
+        } else {
+            throw Exception( "LinkQueue", "reached end of link recording" );
+        }
     }
 }
 
