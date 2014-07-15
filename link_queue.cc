@@ -68,6 +68,11 @@ LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents )
 void LinkQueue::read_packet( const string & contents )
 {
     packet_queue_.emplace( contents );
+
+    /* log it */
+    if ( log_ ) {
+        *log_ << timestamp() << " + " << contents.size() << endl;
+    }
 }
 
 uint64_t LinkQueue::next_delivery_time( void ) const
@@ -90,9 +95,16 @@ void LinkQueue::write_packets( FileDescriptor & fd )
     uint64_t now = timestamp();
 
     while ( next_delivery_time() <= now ) {
+        const uint64_t this_delivery_time = next_delivery_time();
+
         /* burn a delivery opportunity */
         unsigned int bytes_left_in_this_delivery = PACKET_SIZE;
         use_a_delivery_opportunity();
+
+        /* log the delivery opportunity */
+        if ( log_ ) {
+            *log_ << this_delivery_time << " # " << PACKET_SIZE << endl;
+        }
 
         while ( (bytes_left_in_this_delivery > 0)
                 and (not packet_queue_.empty()) ) {
@@ -102,6 +114,11 @@ void LinkQueue::write_packets( FileDescriptor & fd )
             if ( packet_queue_.front().bytes_to_transmit <= 0 ) {
                 /* restore the surplus bytes beyond what the packet requires */
                 bytes_left_in_this_delivery += (- packet_queue_.front().bytes_to_transmit);
+
+                /* log the delivery */
+                if ( log_ ) {
+                    *log_ << this_delivery_time << " - " << packet_queue_.front().contents.size() << endl;
+                }
 
                 /* this packet is ready to go */
                 fd.write( packet_queue_.front().contents );
