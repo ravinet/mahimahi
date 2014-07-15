@@ -24,18 +24,17 @@
 using namespace std;
 using namespace PollerShortNames;
 
-HTTPProxy::HTTPProxy( const Address & listener_addr, HTTPBackingStore & backing_store )
+HTTPProxy::HTTPProxy( const Address & listener_addr )
     : listener_socket_( TCP ),
       server_context_( SERVER ),
-      client_context_( CLIENT ),
-      backing_store_( backing_store )
+      client_context_( CLIENT )
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
 }
 
 template <class SocketType>
-void HTTPProxy::loop( SocketType & server, SocketType & client )
+void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore & backing_store )
 {
     Poller poller;
 
@@ -77,7 +76,7 @@ void HTTPProxy::loop( SocketType & server, SocketType & client )
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
                                            client.write( response_parser.front().str() );
-                                           backing_store_.save( response_parser.front(), server_addr );
+                                           backing_store.save( response_parser.front(), server_addr );
                                            response_parser.pop();
                                            return ResultType::Continue;
                                        },
@@ -90,7 +89,7 @@ void HTTPProxy::loop( SocketType & server, SocketType & client )
     }
 }
 
-void HTTPProxy::handle_tcp( void )
+void HTTPProxy::handle_tcp( HTTPBackingStore & backing_store )
 {
     thread newthread( [&] ( Socket client ) {
             try {
@@ -102,7 +101,7 @@ void HTTPProxy::handle_tcp( void )
                 server.connect( server_addr );
 
                 if ( server_addr.port() != 443 ) { /* normal HTTP */
-                    return loop( server, client );
+                    return loop( server, client, backing_store );
                 }
 
                 /* handle TLS */
@@ -112,7 +111,7 @@ void HTTPProxy::handle_tcp( void )
                 SecureSocket tls_client( server_context_.new_secure_socket( move( client ) ) );
                 tls_client.accept();
 
-                loop( tls_server, tls_client );
+                loop( tls_server, tls_client, backing_store );
             } catch ( const Exception & e ) {
                 e.perror();
             }
@@ -122,8 +121,14 @@ void HTTPProxy::handle_tcp( void )
     newthread.detach();
 }
 
-void HTTPProxy::register_handlers( EventLoop & event_loop )
+/* register this HTTPProxy's TCP listener socket to handle events with
+   the given event_loop, saving request-response pairs to the given
+   backing_store (which is captured and must continue to persist) */
+void HTTPProxy::register_handlers( EventLoop & event_loop, HTTPBackingStore & backing_store )
 {
     event_loop.add_simple_input_handler( tcp_listener(),
-                                         [&] () { handle_tcp(); return ResultType::Continue; } );
+                                         [&] () {
+                                             handle_tcp( backing_store );
+                                             return ResultType::Continue;
+                                         } );
 }

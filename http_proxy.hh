@@ -21,20 +21,21 @@ private:
     Socket listener_socket_;
 
     template <class SocketType>
-    void loop( SocketType & server, SocketType & client );
+    void loop( SocketType & server, SocketType & client, HTTPBackingStore & backing_store );
 
     SSLContext server_context_, client_context_;
 
-    HTTPBackingStore & backing_store_;
-
 public:
-    HTTPProxy( const Address & listener_addr, HTTPBackingStore & backing_store );
+    HTTPProxy( const Address & listener_addr );
 
     Socket & tcp_listener( void ) { return listener_socket_; }
 
-    void handle_tcp( void );
+    void handle_tcp( HTTPBackingStore & backing_store );
 
-    void register_handlers( EventLoop & event_loop );
+    /* register this HTTPProxy's TCP listener socket to handle events with
+       the given event_loop, saving request-response pairs to the given
+       backing_store (which is captured and must continue to persist) */
+    void register_handlers( EventLoop & event_loop, HTTPBackingStore & backing_store );
 };
 
 #endif /* HTTP_PROXY_HH */

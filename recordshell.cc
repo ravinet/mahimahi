@@ -77,8 +77,7 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        HTTPDiskStore disk_backing_store( directory );
-        HTTPProxy http_proxy( egress_addr, disk_backing_store );
+        HTTPProxy http_proxy( egress_addr );
 
         /* set up dnat */
         DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
@@ -155,9 +154,12 @@ int main( int argc, char *argv[] )
 
                 make_directory( directory );
 
+                /* set up backing store to save to disk */
+                HTTPDiskStore disk_backing_store( directory );
+
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );
-                http_proxy.register_handlers( recordr_event_loop );
+                http_proxy.register_handlers( recordr_event_loop, disk_backing_store );
                 return recordr_event_loop.loop();
             } );
 
