@@ -35,12 +35,6 @@ int main( int argc, char *argv[] )
 
         string url( argv[1] );
 
-        vector < string > command;
-        command.push_back( "/usr/bin/phantomjs" );
-        command.push_back( "--ignore-ssl-errors=true" );
-        command.push_back( "--ssl-protocol=TLSv1" );
-        command.push_back( "/dev/stdin" );
-
         const Address nameserver = first_nameserver();
 
         /* set egress and ingress ip addresses */
@@ -115,9 +109,10 @@ int main( int argc, char *argv[] )
                         SystemCall( "pipe", pipe( pipefd ) );
                         FileDescriptor read_end = pipefd[ 0 ], write_end = pipefd[ 1 ];
 
-                        shell_event_loop.add_child_process( join( command ), [&]() {
+                        shell_event_loop.add_child_process( "phantomjs", [&]() {
                                 SystemCall( "dup2", dup2( read_end.num(), STDIN_FILENO ) );
-                                return ezexec( command, true );
+                                return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
+                                                 "--ssl-protocol=TLSv1", "/dev/stdin" } );
                             } );
 
                         /* Phantomjs command to load provided url */
