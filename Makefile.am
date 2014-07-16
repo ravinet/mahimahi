@@ -59,7 +59,7 @@ nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIB
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 bin_PROGRAMS += loadurl
-loadurl_SOURCES = $(common_source) $(http_server_source) $(http_source) loadurl.cc phantomjs_configuration.hh
+loadurl_SOURCES = $(common_source) $(http_server_source) $(http_source) loadurl.cc phantomjs_configuration.hh url_loader.hh url_loader.cc
 loadurl_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 loadurl_LDFLAGS = -pthread
 
