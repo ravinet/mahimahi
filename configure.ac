@@ -37,6 +37,13 @@ if test "$APACHE2" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([APACHE2], ["$APACHE2"], [path to apache2])
 
+AC_ARG_VAR([PHANTOMJS], [path to phantomjs])
+AC_PATH_PROG([PHANTOMJS], [phantomjs], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$PHANTOMJS" = "no"; then
+  AC_MSG_ERROR([phantomjs is required])
+fi
+AC_DEFINE_UNQUOTED([PHANTOMJS], ["$PHANTOMJS"], [path to phantomjs])
+
 AC_ARG_VAR([DNSMASQ], [path to dnsmasq])
 AC_PATH_PROG([DNSMASQ], [dnsmasq], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
 if test "$DNSMASQ" = "no"; then
