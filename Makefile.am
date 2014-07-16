@@ -37,7 +37,8 @@ http_source = http_request_parser.hh \
 	chunked_parser.hh chunked_parser.cc \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh \
-	backing_store.hh backing_store.cc
+	backing_store.hh backing_store.cc \
+	http_bulk_response.hh http_bulk_response.cc
 
 http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
@@ -57,6 +58,11 @@ nph_replayserver_cgi_SOURCES = $(common_source) $(http_source) replayserver.cc
 nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
+bin_PROGRAMS += loadurl
+loadurl_SOURCES = $(common_source) $(http_server_source) $(http_source) loadurl.cc phantomjs_configuration.hh
+loadurl_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+loadurl_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
@@ -66,3 +72,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
+	chown root $(DESTDIR)$(bindir)/loadurl
+	chmod u+s $(DESTDIR)$(bindir)/loadurl
