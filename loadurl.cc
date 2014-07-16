@@ -59,8 +59,7 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up http proxy for tcp */
-        HTTPBulkResponse bulk_response_store;
-        HTTPProxy http_proxy( egress_addr, bulk_response_store );
+        HTTPProxy http_proxy( egress_addr );
 
         /* set up dnat */
         DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
@@ -142,9 +141,12 @@ int main( int argc, char *argv[] )
         outer_event_loop.add_child_process( "recorder", [&]() {
                 drop_privileges();
 
+                /* set up bulk response storage */
+                HTTPBulkResponse bulk_response_store;
+
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );
-                http_proxy.register_handlers( recordr_event_loop );
+                http_proxy.register_handlers( recordr_event_loop, bulk_response_store );
                 return recordr_event_loop.loop();
             } );
 
