@@ -6,6 +6,7 @@
 #include "util.hh"
 #include "url_loader.hh"
 #include "exception.hh"
+#include "event_loop.hh"
 
 using namespace std;
 
@@ -21,10 +22,15 @@ int main( int argc, char *argv[] )
             throw Exception( "Usage", string( argv[ 0 ] ) + " url" );
         }
 
-        URLLoader load_page;
+        EventLoop pageload_loop;
 
-        load_page.get_all_resources( string( argv[1] ) );
+        pageload_loop.add_child_process( "url", [&] () {
+                URLLoader load_page;
+                load_page.get_all_resources( string( argv[1] ) );
+                return EXIT_SUCCESS;
+            } );
 
+        return pageload_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
