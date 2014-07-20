@@ -7,8 +7,13 @@
 #include "url_loader.hh"
 #include "exception.hh"
 #include "event_loop.hh"
+#include "socket.hh"
+#include "address.hh"
+#include "http_request_parser.hh"
+#include "poller.hh"
 
 using namespace std;
+using namespace PollerShortNames;
 
 int main( int argc, char *argv[] )
 {
@@ -18,19 +23,49 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " url" );
+        if ( argc != 1 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) );
         }
+
+        Socket listener_socket( TCP );
+        listener_socket.bind( Address( "10.0.0.2", 335 ) );
+        listener_socket.listen();
+
+        Socket client = listener_socket.accept();
+
+        Poller poller;
+
+        HTTPRequestParser request_parser;
+
+        /* completed requests from client are serialized and sent to server */
+        poller.add_action( Poller::Action( client, Direction::In,
+                                           [&] () {
+                                               string buffer = client.read();
+                                               request_parser.parse( buffer );
+                                               return ResultType::Continue;
+                                           },
+                                           [&] () { return true; } ) );
 
         EventLoop pageload_loop;
 
-        pageload_loop.add_child_process( "url", [&] () {
-                URLLoader load_page;
-                load_page.get_all_resources( string( argv[1] ) );
+        while ( true ) {
+            if ( not request_parser.empty() )  { /* we have a complete request */
+                string url;
+                HTTPRequest incoming_request = request_parser.front();
+                request_parser.pop();
+                if ( incoming_request.has_header( "Host" ) ) {
+                    url = "http://" + incoming_request.get_header_value( "Host" );
+                }
+                pageload_loop.add_child_process( "url", [&] () {
+                    URLLoader load_page;
+                    load_page.get_all_resources( url );
+                    return EXIT_SUCCESS;
+                } );
+            }
+            if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
                 return EXIT_SUCCESS;
-            } );
-
-        return pageload_loop.loop();
+            }
+        }
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
