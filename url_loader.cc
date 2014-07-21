@@ -16,7 +16,7 @@
 #include "socketpair.hh"
 #include "config.h"
 #include "backing_store.hh"
-#include "http_bulk_response.hh"
+#include "http_console_store.hh"
 #include "phantomjs_configuration.hh"
 #include "url_loader.hh"
 
@@ -134,7 +134,7 @@ int URLLoader::get_all_resources( const string & url )
                 drop_privileges();
 
                 /* set up bulk response storage */
-                HTTPBulkResponse bulk_response_store;
+                HTTPConsoleStore bulk_response_store;
 
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );
