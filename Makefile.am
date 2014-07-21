@@ -38,7 +38,7 @@ http_source = http_request_parser.hh \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh \
 	backing_store.hh backing_store.cc \
-	http_bulk_response.hh http_bulk_response.cc
+	http_console_store.hh http_console_store.cc
 
 http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
