@@ -23,6 +23,7 @@ void HTTPMemoryStore::save( const HTTPResponse & response, const Address & serve
 
 string HTTPMemoryStore::serialize_to_string( void )
 {
+    unique_lock<mutex> ul( mutex_ );
     /* make sure there is a 1 to 1 matching of requests and responses */
     assert( bulk_requests.size() == bulk_responses.size() );
 
