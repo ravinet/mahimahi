@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "int32.hh"
 #include "http_memory_store.hh"
 #include "http_record.pb.h"
 
@@ -30,14 +31,14 @@ string HTTPMemoryStore::serialize_to_string( void )
     string bulk_message;
 
     /* bulk response starts with total number of request/response pairs */
-    bulk_message.append( to_string( bulk_requests.size() ) );
+    bulk_message.append( static_cast<string>( Integer32( bulk_requests.size() ) ) );
 
     /* append each request to bulk response (list request size before each request) */
     for ( unsigned int i = 0; i < bulk_requests.size(); i++ ) {
         string current_request;
         bulk_requests.at( i ).SerializeToString( &current_request );
         /* must make this only be a certain number of bytes so we can parse? */
-        bulk_message.append( to_string( current_request.size() ) );
+        bulk_message.append( static_cast<string>( Integer32( current_request.size() ) ) );
         bulk_message.append( current_request );
     }
 
@@ -46,7 +47,7 @@ string HTTPMemoryStore::serialize_to_string( void )
         string current_response;
         bulk_responses.at( i ).SerializeToString( &current_response );
         /* must make this only be a certain number of bytes so we can parse? */
-        bulk_message.append( to_string( current_response.size() ) );
+        bulk_message.append( static_cast<string>( Integer32( current_response.size() ) ) );
         bulk_message.append( current_response );
     }
 
