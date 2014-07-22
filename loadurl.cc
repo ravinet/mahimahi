@@ -28,7 +28,7 @@ int main( int argc, char *argv[] )
         }
 
         Socket listener_socket( TCP );
-        listener_socket.bind( Address( "10.0.0.2", 335 ) );
+        listener_socket.bind( Address( "0.0.0.0", 5555 ) );
         listener_socket.listen();
 
         Socket client = listener_socket.accept();
@@ -52,9 +52,10 @@ int main( int argc, char *argv[] )
             if ( not request_parser.empty() )  { /* we have a complete request */
                 string url;
                 HTTPRequest incoming_request = request_parser.front();
+                cout << incoming_request.str();
                 request_parser.pop();
                 if ( incoming_request.has_header( "Host" ) ) {
-                    url = "http://" + incoming_request.get_header_value( "Host" );
+                    url = incoming_request.get_header_value( "Host" );
                 }
                 pageload_loop.add_child_process( "url", [&] () {
                     URLLoader load_page;

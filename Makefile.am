@@ -63,6 +63,11 @@ loadurl_SOURCES = $(common_source) $(http_server_source) $(http_source) loadurl.
 loadurl_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 loadurl_LDFLAGS = -pthread
 
+bin_PROGRAMS += testclient
+testclient_SOURCES = $(common_source) $(http_server_source) $(http_source) testclient.cc
+testclient_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+testclient_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
