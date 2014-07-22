@@ -28,7 +28,7 @@ int main( int argc, char *argv[] )
         }
 
         Socket listener_socket( TCP );
-        listener_socket.bind( Address( "10.0.0.2", 335 ) );
+        listener_socket.bind( Address( "0.0.0.0", 5555 ) );
         listener_socket.listen();
 
         Socket client = listener_socket.accept();
