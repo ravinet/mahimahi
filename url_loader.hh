@@ -11,7 +11,7 @@ class URLLoader
 {
 public:
     URLLoader();
-    int get_all_resources( const std::string & url );
+    int get_all_resources( const std::string & url, const int & veth_counter );
 };
 
 #endif /* URL_LOADER_HH */

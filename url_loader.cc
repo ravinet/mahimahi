@@ -25,7 +25,7 @@ using namespace std;
 URLLoader::URLLoader()
 {}
 
-int URLLoader::get_all_resources( const string & url )
+int URLLoader::get_all_resources( const string & url, const int & veth_counter )
 {
     const Address nameserver = first_nameserver();
 
@@ -38,7 +38,8 @@ int URLLoader::get_all_resources( const string & url )
     Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
     /* make pair of devices */
-    string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
+    //string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
+    string egress_name = "veth-" + to_string( veth_counter ), ingress_name = "veth-i" + to_string( veth_counter );
     VirtualEthernetPair veth_devices( egress_name, ingress_name );
 
     /* bring up egress */
