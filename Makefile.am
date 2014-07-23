@@ -63,10 +63,10 @@ remoteproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) remo
 remoteproxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remoteproxy_LDFLAGS = -pthread
 
-bin_PROGRAMS += testclient
-testclient_SOURCES = $(common_source) $(http_server_source) $(http_source) testclient.cc
-testclient_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-testclient_LDFLAGS = -pthread
+bin_PROGRAMS += remote_proxy_test_client
+remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc
+remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+remote_proxy_test_client_LDFLAGS = -pthread
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
