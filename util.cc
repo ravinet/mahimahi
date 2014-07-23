@@ -39,6 +39,8 @@ string shell_path( void )
 
 /* Adapted from "Secure Programming Cookbook for C and C++: Recipes for Cryptography, Authentication, Input Validation & More" - John Viega and Matt Messier */
 void drop_privileges( void ) {
+    cerr << "dropping privileges" << endl;
+
     gid_t real_gid = getgid( ), eff_gid = getegid( );
     uid_t real_uid = getuid( ), eff_uid = geteuid( );
 
@@ -182,6 +184,21 @@ TemporarilyUnprivileged::~TemporarilyUnprivileged()
 {
     SystemCall( "seteuid", seteuid( orig_euid ) );
     SystemCall( "setegid", setegid( orig_egid ) );
+}
+
+TemporarilyRoot::TemporarilyRoot()
+    : orig_euid( geteuid() )
+{
+    SystemCall( "seteuid", seteuid( 0 ) );
+
+    const char *fake_argv[] = { "progname", nullptr };
+
+    check_requirements( 1, fake_argv );
+}
+
+TemporarilyRoot::~TemporarilyRoot()
+{
+    SystemCall( "seteuid", seteuid( orig_euid ) );
 }
 
 const string join( const vector< string > & command )

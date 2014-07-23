@@ -12,12 +12,15 @@
 #include "address.hh"
 #include "http_request_parser.hh"
 #include "poller.hh"
+#include "system_runner.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-void handle_client( Socket & client, const int & veth_counter )
+void handle_client( Socket && client, const int & veth_counter )
 {
+    run( { "/usr/bin/id", "-a" } );
+
     HTTPRequestParser request_parser;
 
     Poller poller;
@@ -67,39 +70,36 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc != 1 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) );
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " port" );
         }
 
         /* Use this as part of veth interface name because pid is same for different clients */
         int veth_counter = 0;
 
         Socket listener_socket( TCP );
-        listener_socket.bind( Address( "0.0.0.0", 5555 ) );
+        listener_socket.bind( Address( "0", argv[ 1 ] ) );
         listener_socket.listen();
 
-        Poller poll_for_clients;
-
-        EventLoop pageload_loop;
+        EventLoop event_loop;
 
         /* listen for new clients */
-        poll_for_clients.add_action( Poller::Action( listener_socket, Direction::In,
-                                                     [&] () {
-                                                         Socket client = listener_socket.accept();
-                                                         pageload_loop.add_child_process( "new_client", [&] () {
-                                                             handle_client( client, veth_counter );
-                                                             return EXIT_SUCCESS;
-                                                         } );
-                                                         veth_counter++;
-                                                         return ResultType::Continue;
-                                                     },
-                                                     [&] () { return true; } ) );
+        event_loop.add_simple_input_handler( listener_socket,
+                                             [&] () {
+                                                 cerr << "got client" << endl;
+                                                 run( { "/usr/bin/id", "-a" } );
+                                                 Socket client = listener_socket.accept();
+                                                 event_loop.add_child_process( "new_client", [&] () {
+                                                         handle_client( move( client ), veth_counter );
+                                                         return EXIT_SUCCESS;
+                                                     } );
+                                                 veth_counter++;
+                                                 return ResultType::Continue;
+                                             } );
+        cerr << "pre loop" << endl;
+        run( { "/usr/bin/id", "-a" } );
 
-        while ( true ) {
-            if ( poll_for_clients.poll( -1 ).result == Poller::Result::Type::Exit ) {
-                return EXIT_SUCCESS;
-            }
-        }
+        return event_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

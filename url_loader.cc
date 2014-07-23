@@ -27,6 +27,8 @@ URLLoader::URLLoader()
 
 int URLLoader::get_all_resources( const string & url, const int & veth_counter )
 {
+    TemporarilyRoot tr;
+
     const Address nameserver = first_nameserver();
 
     /* set egress and ingress ip addresses */
@@ -38,8 +40,9 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
     Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
     /* make pair of devices */
-    //string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
-    string egress_name = "veth-" + to_string( veth_counter ), ingress_name = "veth-i" + to_string( veth_counter );
+    const string unique_id = to_string( getpid() ) + "-" + to_string( veth_counter );
+    string egress_name = "veth-" + unique_id, ingress_name = "veth-i" + unique_id;
+
     VirtualEthernetPair veth_devices( egress_name, ingress_name );
 
     /* bring up egress */
