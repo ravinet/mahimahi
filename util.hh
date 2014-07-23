@@ -32,6 +32,15 @@ public:
     ~TemporarilyUnprivileged();
 };
 
+class TemporarilyRoot {
+private:
+    const uid_t orig_euid;
+
+public:
+    TemporarilyRoot();
+    ~TemporarilyRoot();
+};
+
 void assert_not_root( void );
 
 #endif /* UTIL_HH */
