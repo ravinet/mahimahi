@@ -60,91 +60,91 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
     /* set up dnat */
     DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
 
-        /* prepare event loop */
-        EventLoop outer_event_loop;
+    /* prepare event loop */
+    EventLoop outer_event_loop;
 
-        /* Fork */
-        {
-            /* Make pipe for start signal */
-            auto signal_pipe = UnixDomainSocket::make_pair();
+    /* Fork */
+    {
+        /* Make pipe for start signal */
+        auto signal_pipe = UnixDomainSocket::make_pair();
 
-            ChildProcess container_process( "recordshell", [&]() {
-                    /* wait for the go signal */
-                    signal_pipe.second.read();
+        ChildProcess container_process( "recordshell", [&]() {
+                /* wait for the go signal */
+                signal_pipe.second.read();
 
-                    /* bring up localhost */
-                    interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
-                                     [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+                /* bring up localhost */
+                interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
+                                 [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
-                    /* bring up veth device */
-                    assign_address( ingress_name, ingress_addr, egress_addr );
+                /* bring up veth device */
+                assign_address( ingress_name, ingress_addr, egress_addr );
 
-                    /* create default route */
-                    rtentry route;
-                    zero( route );
+                /* create default route */
+                rtentry route;
+                zero( route );
 
-                    route.rt_gateway = egress_addr.raw_sockaddr();
-                    route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
-                    route.rt_flags = RTF_UP | RTF_GATEWAY;
+                route.rt_gateway = egress_addr.raw_sockaddr();
+                route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
+                SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
 
-                    /* create DNS proxy if nameserver address is local */
-                    auto dns_inside = DNSProxy::maybe_proxy( nameserver,
-                                                             dns_outside.udp_listener().local_addr(),
-                                                             dns_outside.tcp_listener().local_addr() );
+                /* create DNS proxy if nameserver address is local */
+                auto dns_inside = DNSProxy::maybe_proxy( nameserver,
+                                                         dns_outside.udp_listener().local_addr(),
+                                                         dns_outside.tcp_listener().local_addr() );
 
-                    /* Fork again after dropping root privileges */
-                    drop_privileges();
-
-                    /* prepare child's event loop */
-                    EventLoop shell_event_loop;
-                    {
-                        int pipefd[2];
-                        SystemCall( "pipe", pipe( pipefd ) );
-                        FileDescriptor read_end = pipefd[ 0 ], write_end = pipefd[ 1 ];
-
-                        shell_event_loop.add_child_process( ChildProcess( "phantomjs", [&]() {
-                                SystemCall( "dup2", dup2( read_end.num(), STDIN_FILENO ) );
-                                return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
-                                                 "--ssl-protocol=TLSv1", "/dev/stdin" } );
-                            } ) );
-
-                        /* Phantomjs command to load provided url */
-                        string phantom_command = "url = \"" + url + phantomjs_config;
-                        write_end.write( phantom_command );
-                        /* pipe endpoint gets closed when FileDescriptor goes out of scope,
-                           giving phantomjs EOF and telling it that the script is over */
-                    }
-                    if ( dns_inside ) {
-                        dns_inside->register_handlers( shell_event_loop );
-                    }
-                    return shell_event_loop.loop();
-                }, true ); /* new network namespace */
-
-            /* give ingress to container */
-            run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
-            veth_devices.set_kernel_will_destroy();
-
-            /* tell ChildProcess it's ok to proceed */
-            signal_pipe.first.write( "x" );
-
-            /* now that we have its pid, move container process to event loop */
-            outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
-        }
-
-        /* do the actual recording in a different unprivileged child */
-        outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
+                /* Fork again after dropping root privileges */
                 drop_privileges();
 
-                /* set up bulk response storage */
-                HTTPConsoleStore bulk_response_store;
+                /* prepare child's event loop */
+                EventLoop shell_event_loop;
+                {
+                    int pipefd[2];
+                    SystemCall( "pipe", pipe( pipefd ) );
+                    FileDescriptor read_end = pipefd[ 0 ], write_end = pipefd[ 1 ];
 
-                EventLoop recordr_event_loop;
-                dns_outside.register_handlers( recordr_event_loop );
-                http_proxy.register_handlers( recordr_event_loop, bulk_response_store );
-                return recordr_event_loop.loop();
-            } ) );
+                    shell_event_loop.add_child_process( ChildProcess( "phantomjs", [&]() {
+                            SystemCall( "dup2", dup2( read_end.num(), STDIN_FILENO ) );
+                            return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
+                                             "--ssl-protocol=TLSv1", "/dev/stdin" } );
+                        } ) );
 
-        return outer_event_loop.loop();
+                    /* Phantomjs command to load provided url */
+                    string phantom_command = "url = \"" + url + phantomjs_config;
+                    write_end.write( phantom_command );
+                    /* pipe endpoint gets closed when FileDescriptor goes out of scope,
+                       giving phantomjs EOF and telling it that the script is over */
+                }
+                if ( dns_inside ) {
+                    dns_inside->register_handlers( shell_event_loop );
+                }
+                return shell_event_loop.loop();
+            }, true ); /* new network namespace */
+
+        /* give ingress to container */
+        run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
+        veth_devices.set_kernel_will_destroy();
+
+        /* tell ChildProcess it's ok to proceed */
+        signal_pipe.first.write( "x" );
+
+        /* now that we have its pid, move container process to event loop */
+        outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
+    }
+
+    /* do the actual recording in a different unprivileged child */
+    outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
+            drop_privileges();
+
+            /* set up bulk response storage */
+            HTTPConsoleStore bulk_response_store;
+
+            EventLoop recordr_event_loop;
+            dns_outside.register_handlers( recordr_event_loop );
+            http_proxy.register_handlers( recordr_event_loop, bulk_response_store );
+            return recordr_event_loop.loop();
+        } ) );
+
+    return outer_event_loop.loop();
 }
