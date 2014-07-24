@@ -38,7 +38,8 @@ http_source = http_request_parser.hh \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh \
 	backing_store.hh backing_store.cc \
-	http_console_store.hh http_console_store.cc
+	http_console_store.hh http_console_store.cc \
+	http_memory_store.hh http_memory_store.cc
 
 http_recorder_source =	process_recorder.hh process_recorder.cc
 

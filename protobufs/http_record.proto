@@ -27,3 +27,9 @@ message RequestResponse {
     optional HTTPMessage request = 4;
     optional HTTPMessage response = 5;
 }
+
+/* header should include content-type: bulk_response */
+message BulkMessage {
+    repeated HTTPHeader header = 1;
+    repeated HTTPMessage msg = 2;
+}
