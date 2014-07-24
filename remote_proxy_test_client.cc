@@ -18,16 +18,9 @@ int main( int argc, char *argv[] )
 
         server.write( "GET / HTTP/1.1\r\nHost: " + string( argv[ 3 ] ) + "\r\n\r\n" );
 
-        EventLoop event_loop;
-
-        /* read messages from server and print to screen */
-        event_loop.add_simple_input_handler( server,
-                                             [&] () {
-                                                 cout << server.read() << endl;
-                                                 return ResultType::Continue;
-                                             } );
-
-        return event_loop.loop();
+        while ( not server.eof() ) {
+            cout << server.read() << endl;
+        }
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
