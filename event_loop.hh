@@ -3,9 +3,9 @@
 #ifndef EVENT_LOOP_HH
 #define EVENT_LOOP_HH
 
-#include <vector>
 #include <functional>
 #include <utility>
+#include <list>
 
 #include "poller.hh"
 #include "file_descriptor.hh"
@@ -18,7 +18,7 @@ class EventLoop
 private:
     SignalMask signals_;
     Poller poller_;
-    std::vector<std::pair<ChildProcess, bool>> child_processes_;
+    std::list<std::pair<ChildProcess, bool>> child_processes_;
     PollerShortNames::Result handle_signal( const signalfd_siginfo & sig );
 
 protected:

@@ -33,27 +33,29 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
         {
             /* find which children are waitable */
             /* we can't count on getting exactly one SIGCHLD per waitable event, so search */
-            for ( auto & x : child_processes_ ) {
-                if ( x.first.waitable() ) {
-                    x.first.wait( true ); /* nonblocking */
-
-                    if ( x.first.terminated() ) {
-                        if ( x.first.exit_status() != 0 ) {
-                            x.first.throw_exception();
-                        } else {
-                            if ( x.second ) {
+            list<pair<ChildProcess, bool>>::iterator x = child_processes_.begin();
+            while ( x != child_processes_.end() ) {
+                if ( x->first.waitable() ) {
+                    x->first.wait( true ); /* nonblocking */
+                    if ( x->first.terminated() ) {
+                        if ( x->first.exit_status() != 0 ) {
+                            x->first.throw_exception();
+                        } else { /* exit event loop */
+                            if ( x->second ) {
                                 return ResultType::Exit;
-                            } else {
+                            } else { /* remove child process but don't exit eventloop */
+                                x = child_processes_.erase( x );
                                 return ResultType::Continue;
                             }
                         }
-                    } else if ( !x.first.running() ) {
+                    } else if ( !x->first.running() ) {
                         /* suspend parent too */
                         SystemCall( "raise", raise( SIGSTOP ) );
                     }
 
                     break;
                 }
+                x++;
             }
         }
 
