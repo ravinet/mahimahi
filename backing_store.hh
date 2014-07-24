@@ -15,6 +15,7 @@ class HTTPBackingStore
 {
 public:
     virtual void save( const HTTPResponse & response, const Address & server_address ) = 0;
+    virtual ~HTTPBackingStore() {}
 };
 
 class HTTPDiskStore : public HTTPBackingStore
