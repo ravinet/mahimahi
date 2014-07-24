@@ -19,8 +19,6 @@ using namespace PollerShortNames;
 
 void handle_client( Socket && client, const int & veth_counter )
 {
-    run( { "/usr/bin/id", "-a" } );
-
     HTTPRequestParser request_parser;
 
     Poller poller;
@@ -86,8 +84,6 @@ int main( int argc, char *argv[] )
         /* listen for new clients */
         event_loop.add_simple_input_handler( listener_socket,
                                              [&] () {
-                                                 cerr << "got client" << endl;
-                                                 run( { "/usr/bin/id", "-a" } );
                                                  Socket client = listener_socket.accept();
                                                  event_loop.add_child_process( ChildProcess( "new_client", [&] () {
                                                          handle_client( move( client ), veth_counter );
@@ -96,9 +92,6 @@ int main( int argc, char *argv[] )
                                                  veth_counter++;
                                                  return ResultType::Continue;
                                              } );
-        cerr << "pre loop" << endl;
-        run( { "/usr/bin/id", "-a" } );
-
         return event_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
