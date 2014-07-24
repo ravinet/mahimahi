@@ -39,8 +39,6 @@ string shell_path( void )
 
 /* Adapted from "Secure Programming Cookbook for C and C++: Recipes for Cryptography, Authentication, Input Validation & More" - John Viega and Matt Messier */
 void drop_privileges( void ) {
-    cerr << "dropping privileges" << endl;
-
     gid_t real_gid = getgid( ), eff_gid = getegid( );
     uid_t real_uid = getuid( ), eff_uid = geteuid( );
 
