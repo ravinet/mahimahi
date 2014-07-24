@@ -47,7 +47,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
         }, forward<Targs>( Fargs )... );
 
     /* Fork */
-    event_loop_.add_child_process( "packetshell", [&]() {
+    event_loop_.add_child_process( ChildProcess( "packetshell", [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -67,26 +67,26 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             Ferry inner_ferry;
 
             /* run dnsmasq as local caching nameserver */
-            inner_ferry.add_child_process( start_dnsmasq( {
-                        "-S", dns_outside_.udp_listener().local_addr().str( "#" ) } ) );
+            inner_ferry.add_child_process( ChildProcess( start_dnsmasq( {
+                        "-S", dns_outside_.udp_listener().local_addr().str( "#" ) } ) ) );
 
             /* Fork again after dropping root privileges */
             drop_privileges();
 
-            inner_ferry.add_child_process( join( command ), [&]() {
+            inner_ferry.add_child_process( ChildProcess( join( command ), [&]() {
                     /* restore environment and tweak bash prompt */
                     environ = user_environment;
                     prepend_shell_prefix( shell_prefix );
 
                     return ezexec( command, true );
-                } );
+                } ) );
 
             /* allow downlink to write directly to inner namespace's TUN device */
             pipe_.first.send_fd( ingress_tun );
 
             FerryQueueType uplink_queue = ferry_maker();
             return inner_ferry.loop( uplink_queue, ingress_tun, egress_tun_ );
-        }, true );  /* new network namespace */
+        }, true ) );  /* new network namespace */
 }
 
 template <class FerryQueueType>
@@ -97,7 +97,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
             return FerryQueueType( forward<Targs>( Fargs )... );
         }, forward<Targs>( Fargs )... );
 
-    event_loop_.add_child_process( "downlink", [&] () {
+    event_loop_.add_child_process( ChildProcess( "downlink", [&] () {
             drop_privileges();
 
             /* downlink packets go to inner namespace's TUN device */
@@ -109,7 +109,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
 
             FerryQueueType downlink_queue = ferry_maker();
             return outer_ferry.loop( downlink_queue, egress_tun_, ingress_tun );
-        } );
+        } ) );
 }
 
 template <class FerryQueueType>

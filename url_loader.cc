@@ -104,11 +104,11 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
                         SystemCall( "pipe", pipe( pipefd ) );
                         FileDescriptor read_end = pipefd[ 0 ], write_end = pipefd[ 1 ];
 
-                        shell_event_loop.add_child_process( "phantomjs", [&]() {
+                        shell_event_loop.add_child_process( ChildProcess( "phantomjs", [&]() {
                                 SystemCall( "dup2", dup2( read_end.num(), STDIN_FILENO ) );
                                 return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
                                                  "--ssl-protocol=TLSv1", "/dev/stdin" } );
-                            } );
+                            } ) );
 
                         /* Phantomjs command to load provided url */
                         string phantom_command = "url = \"" + url + phantomjs_config;
@@ -130,11 +130,11 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
             signal_pipe.first.write( "x" );
 
             /* now that we have its pid, move container process to event loop */
-            outer_event_loop.add_child_process( move( container_process ) );
+            outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
         }
 
         /* do the actual recording in a different unprivileged child */
-        outer_event_loop.add_child_process( "recorder", [&]() {
+        outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
                 drop_privileges();
 
                 /* set up bulk response storage */
@@ -144,7 +144,7 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
                 dns_outside.register_handlers( recordr_event_loop );
                 http_proxy.register_handlers( recordr_event_loop, bulk_response_store );
                 return recordr_event_loop.loop();
-            } );
+            } ) );
 
         return outer_event_loop.loop();
 }

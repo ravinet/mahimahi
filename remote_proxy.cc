@@ -89,10 +89,10 @@ int main( int argc, char *argv[] )
                                                  cerr << "got client" << endl;
                                                  run( { "/usr/bin/id", "-a" } );
                                                  Socket client = listener_socket.accept();
-                                                 event_loop.add_child_process( "new_client", [&] () {
+                                                 event_loop.add_child_process( ChildProcess( "new_client", [&] () {
                                                          handle_client( move( client ), veth_counter );
                                                          return EXIT_SUCCESS;
-                                                     } );
+                                                     } ), false );
                                                  veth_counter++;
                                                  return ResultType::Continue;
                                              } );

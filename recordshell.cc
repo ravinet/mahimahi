@@ -122,13 +122,13 @@ int main( int argc, char *argv[] )
                     /* prepare child's event loop */
                     EventLoop shell_event_loop;
 
-                    shell_event_loop.add_child_process( join( command ), [&]() {
+                    shell_event_loop.add_child_process( ChildProcess( join( command ), [&]() {
                             /* restore environment and tweak prompt */
                             environ = user_environment;
                             prepend_shell_prefix( "[record] " );
 
                             return ezexec( command, true );
-                        } );
+                        } ) );
 
                     if ( dns_inside ) {
                         dns_inside->register_handlers( shell_event_loop );
@@ -145,11 +145,11 @@ int main( int argc, char *argv[] )
             pipe.first.write( "x" );
 
             /* now that we have its pid, move container process to event loop */
-            outer_event_loop.add_child_process( move( container_process ) );
+            outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
         }
 
         /* do the actual recording in a different unprivileged child */
-        outer_event_loop.add_child_process( "recorder", [&]() {
+        outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
                 drop_privileges();
 
                 make_directory( directory );
@@ -161,7 +161,7 @@ int main( int argc, char *argv[] )
                 dns_outside.register_handlers( recordr_event_loop );
                 http_proxy.register_handlers( recordr_event_loop, disk_backing_store );
                 return recordr_event_loop.loop();
-            } );
+            } ) );
 
         return outer_event_loop.loop();
     } catch ( const Exception & e ) {
