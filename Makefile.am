@@ -58,10 +58,10 @@ nph_replayserver_cgi_SOURCES = $(common_source) $(http_source) replayserver.cc
 nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
-bin_PROGRAMS += remoteproxy
-remoteproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy.cc phantomjs_configuration.hh url_loader.hh url_loader.cc
-remoteproxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-remoteproxy_LDFLAGS = -pthread
+bin_PROGRAMS += remote_proxy
+remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy.cc phantomjs_configuration.hh url_loader.hh url_loader.cc
+remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+remote_proxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy_test_client
 remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc
@@ -77,5 +77,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
-	chown root $(DESTDIR)$(bindir)/remoteproxy
-	chmod u+s $(DESTDIR)$(bindir)/remoteproxy
+	chown root $(DESTDIR)$(bindir)/remote_proxy
+	chmod u+s $(DESTDIR)$(bindir)/remote_proxy
