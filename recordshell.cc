@@ -152,8 +152,6 @@ int main( int argc, char *argv[] )
         outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
                 drop_privileges();
 
-                make_directory( directory );
-
                 /* set up backing store to save to disk */
                 HTTPDiskStore disk_backing_store( directory );
 
