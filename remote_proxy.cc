@@ -13,6 +13,8 @@
 #include "http_request_parser.hh"
 #include "poller.hh"
 #include "system_runner.hh"
+#include "config.h"
+#include "phantomjs_configuration.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -51,7 +53,13 @@ void handle_client( Socket && client, const int & veth_counter )
             if ( incoming_request.has_header( "Host" ) ) {
                 url = incoming_request.get_header_value( "Host" );
             }
-            load_page.get_all_resources( url, veth_counter );
+            load_page.get_all_resources( []( FileDescriptor & parent_channel ) {
+                                         SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
+                                         return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
+                                                          "--ssl-protocol=TLSv1", "/dev/stdin" } );
+                                         },
+                                         veth_counter,
+                                         "url = \"" + url + phantomjs_config );
             done_loading = true;
         }
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
