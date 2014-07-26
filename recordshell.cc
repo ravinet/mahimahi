@@ -17,6 +17,7 @@
 #include "config.h"
 #include "backing_store.hh"
 #include "process_recorder.hh"
+#include "process_recorder.cc"
 
 using namespace std;
 
@@ -54,7 +55,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        ProcessRecorder process_recorder;
+        ProcessRecorder<HTTPDiskStore> process_recorder( directory );
         process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                            /* restore environment and tweak prompt */
                                            environ = user_environment;

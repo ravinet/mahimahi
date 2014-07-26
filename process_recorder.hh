@@ -10,10 +10,14 @@
 
 /* class that loads an arbitrary process and captures all HTTP traffic originating from it */
 
+template <class StoreType>
 class ProcessRecorder
 {
+private:
+    StoreType response_store_;
 public:
-    ProcessRecorder();
+    template <typename... Targs>
+    ProcessRecorder( Targs... Fargs ) : response_store_( Fargs... ) {}
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
                         const int & veth_counter = 0,
                         const std::string & stdin_input = "" );
