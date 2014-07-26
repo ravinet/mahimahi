@@ -56,13 +56,13 @@ int main( int argc, char *argv[] )
         }
 
         ProcessRecorder<HTTPDiskStore> process_recorder( directory );
-        process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
-                                           /* restore environment and tweak prompt */
-                                           environ = user_environment;
-                                           prepend_shell_prefix( "[record] " );
+        return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
+                                                /* restore environment and tweak prompt */
+                                                environ = user_environment;
+                                                prepend_shell_prefix( "[record] " );
 
-                                           return ezexec( command, true );
-                                         } );
+                                                return ezexec( command, true );
+                                              } );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
