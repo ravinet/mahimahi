@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <net/route.h>
+#include <functional>
 
 #include "nat.hh"
 #include "util.hh"
@@ -14,18 +15,19 @@
 #include "netdevice.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
-#include "config.h"
 #include "backing_store.hh"
 #include "http_console_store.hh"
-#include "phantomjs_configuration.hh"
 #include "url_loader.hh"
+#include "config.h"
 
 using namespace std;
 
 URLLoader::URLLoader()
 {}
 
-int URLLoader::get_all_resources( const string & url, const int & veth_counter )
+int URLLoader::get_all_resources( std::function<int( FileDescriptor & )> && child_procedure,
+                                  const int & veth_counter,
+                                  const string & stdin_input )
 {
     TemporarilyRoot tr;
 
@@ -104,15 +106,10 @@ int URLLoader::get_all_resources( const string & url, const int & veth_counter )
                     SystemCall( "pipe", pipe( pipefd ) );
                     FileDescriptor read_end = pipefd[ 0 ], write_end = pipefd[ 1 ];
 
-                    shell_event_loop.add_child_process( ChildProcess( "phantomjs", [&]() {
-                            SystemCall( "dup2", dup2( read_end.num(), STDIN_FILENO ) );
-                            return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
-                                             "--ssl-protocol=TLSv1", "/dev/stdin" } );
-                        } ) );
+                    shell_event_loop.add_child_process( ChildProcess( "recorded_child", bind( child_procedure, std::ref( read_end ) ) ) );
 
-                    /* Phantomjs command to load provided url */
-                    string phantom_command = "url = \"" + url + phantomjs_config;
-                    write_end.write( phantom_command );
+                    /* Write out input to child, NOTE: Child might choose to ignore it. */
+                    write_end.write( stdin_input );
                     /* pipe endpoint gets closed when FileDescriptor goes out of scope,
                        giving phantomjs EOF and telling it that the script is over */
                 }
