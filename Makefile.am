@@ -40,11 +40,13 @@ http_source = http_request_parser.hh \
 	backing_store.hh backing_store.cc \
 	http_console_store.hh http_console_store.cc
 
+http_recorder_source =	process_recorder.hh process_recorder.cc
+
 http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
 
 bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) recordshell.cc
+recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
 recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 recordshell_LDFLAGS = -pthread
 
@@ -59,7 +61,7 @@ nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIB
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy
-remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy.cc phantomjs_configuration.hh url_loader.hh url_loader.cc
+remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) remote_proxy.cc phantomjs_configuration.hh
 remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_LDFLAGS = -pthread
 
