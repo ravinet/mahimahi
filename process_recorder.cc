@@ -15,19 +15,15 @@
 #include "netdevice.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
-#include "backing_store.hh"
-#include "http_console_store.hh"
 #include "process_recorder.hh"
 #include "config.h"
 
 using namespace std;
 
-ProcessRecorder::ProcessRecorder()
-{}
-
-int ProcessRecorder::record_process( std::function<int( FileDescriptor & )> && child_procedure,
-                                     const int & veth_counter,
-                                     const string & stdin_input )
+template <class StoreType>
+int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
+                                                const int & veth_counter,
+                                                const string & stdin_input )
 {
     TemporarilyRoot tr;
 
@@ -134,12 +130,9 @@ int ProcessRecorder::record_process( std::function<int( FileDescriptor & )> && c
     outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
             drop_privileges();
 
-            /* set up bulk response storage */
-            HTTPConsoleStore bulk_response_store;
-
             EventLoop recordr_event_loop;
             dns_outside.register_handlers( recordr_event_loop );
-            http_proxy.register_handlers( recordr_event_loop, bulk_response_store );
+            http_proxy.register_handlers( recordr_event_loop, response_store_ );
             return recordr_event_loop.loop();
         } ) );
 

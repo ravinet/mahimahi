@@ -6,6 +6,7 @@
 
 #include "util.hh"
 #include "process_recorder.hh"
+#include "process_recorder.cc"
 #include "exception.hh"
 #include "event_loop.hh"
 #include "socket.hh"
@@ -15,6 +16,7 @@
 #include "system_runner.hh"
 #include "config.h"
 #include "phantomjs_configuration.hh"
+#include "http_console_store.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -25,7 +27,7 @@ void handle_client( Socket && client, const int & veth_counter )
 
     Poller poller;
 
-    ProcessRecorder process_recorder;
+    ProcessRecorder<HTTPConsoleStore> process_recorder;
 
     bool done_loading = false;
 
