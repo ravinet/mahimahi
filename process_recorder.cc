@@ -17,17 +17,17 @@
 #include "socketpair.hh"
 #include "backing_store.hh"
 #include "http_console_store.hh"
-#include "url_loader.hh"
+#include "process_recorder.hh"
 #include "config.h"
 
 using namespace std;
 
-URLLoader::URLLoader()
+ProcessRecorder::ProcessRecorder()
 {}
 
-int URLLoader::get_all_resources( std::function<int( FileDescriptor & )> && child_procedure,
-                                  const int & veth_counter,
-                                  const string & stdin_input )
+int ProcessRecorder::record_process( std::function<int( FileDescriptor & )> && child_procedure,
+                                     const int & veth_counter,
+                                     const string & stdin_input )
 {
     TemporarilyRoot tr;
 
