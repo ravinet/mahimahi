@@ -3,13 +3,17 @@
 #include "backing_store.hh"
 #include "http_record.pb.h"
 #include "temp_file.hh"
+#include "util.hh"
 
 using namespace std;
 
 HTTPDiskStore::HTTPDiskStore( const string & record_folder )
     : record_folder_( record_folder ),
       mutex_()
-{}
+{
+    TemporarilyUnprivileged temp_unprivileged;
+    make_directory( record_folder_ );
+}
 
 void HTTPDiskStore::save( const HTTPResponse & response, const Address & server_address )
 {
