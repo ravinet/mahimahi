@@ -11,7 +11,7 @@ common_source = exception.hh ezio.cc ezio.hh                                   \
 	poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
 	event_loop.hh event_loop.cc \
 	temp_file.hh temp_file.cc dns_server.hh dns_server.cc \
-	socketpair.hh socketpair.cc
+	socketpair.hh socketpair.cc int32.hh
 
 packet_shell_source = packetshell.cc packetshell.hh
 
@@ -70,6 +70,11 @@ bin_PROGRAMS += remote_proxy_test_client
 remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc
 remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_test_client_LDFLAGS = -pthread
+
+bin_PROGRAMS += bulkparser
+bulkparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkparser.cc
+bulkparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+bulkparser_LDFLAGS = -pthread
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
