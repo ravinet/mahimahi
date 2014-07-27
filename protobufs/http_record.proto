@@ -30,6 +30,5 @@ message RequestResponse {
 
 /* header should include content-type: bulk_response */
 message BulkMessage {
-    repeated HTTPHeader header = 1;
     repeated HTTPMessage msg = 2;
 }
