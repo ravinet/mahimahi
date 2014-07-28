@@ -29,8 +29,6 @@ void handle_client( Socket && client, const int & veth_counter )
 
     ProcessRecorder<HTTPConsoleStore> process_recorder;
 
-    bool done_loading = false;
-
     poller.add_action( Poller::Action( client, Direction::In,
                                        [&] () {
                                            string buffer = client.read();
@@ -41,29 +39,26 @@ void handle_client( Socket && client, const int & veth_counter )
 
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
+                                           string url;
+                                           HTTPRequest incoming_request = request_parser.front();
+                                           request_parser.pop();
+                                           if ( incoming_request.has_header( "Host" ) ) {
+                                               url = incoming_request.get_header_value( "Host" );
+                                           } else {
+                                               throw Exception( "remote_proxy", "incoming request does not have Host header field" );
+                                           }
+                                           process_recorder.record_process( []( FileDescriptor & parent_channel ) {
+                                                                            SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
+                                                                            return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
+                                                                                             "--ssl-protocol=TLSv1", "/dev/stdin" } );
+                                                                            },
+                                                                            veth_counter,
+                                                                            "url = \"" + url + phantomjs_config );
                                            client.write( "DONE" );
-                                           done_loading = false;
                                            return Result::Type::Exit;
                                        },
-                                       [&] () { return done_loading; } ) );
-
+                                       [&] () { return not request_parser.empty(); } ) );
     while ( true ) {
-        if ( not request_parser.empty() )  { /* we have a complete request */
-            string url;
-            HTTPRequest incoming_request = request_parser.front();
-            request_parser.pop();
-            if ( incoming_request.has_header( "Host" ) ) {
-                url = incoming_request.get_header_value( "Host" );
-            }
-            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
-                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
-                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
-                                                              "--ssl-protocol=TLSv1", "/dev/stdin" } );
-                                             },
-                                             veth_counter,
-                                             "url = \"" + url + phantomjs_config );
-            done_loading = true;
-        }
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
             return;
         }
