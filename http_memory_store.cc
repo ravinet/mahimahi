@@ -30,7 +30,7 @@ void HTTPMemoryStore::save( const HTTPResponse & response, const Address & serve
     responses.add_msg()->CopyFrom( response.toprotobuf() );
 }
 
-pair<string, string> HTTPMemoryStore::serialize( void )
+void HTTPMemoryStore::serialize_to_socket( Socket && client )
 {
     /* bulk response format: # of pairs, request protobuf size, request protobuf, # of pairs, response protobuf size, response protobuf */
 
@@ -49,14 +49,6 @@ pair<string, string> HTTPMemoryStore::serialize( void )
     string requests_ret = static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
     string responses_ret = static_cast<string>( Integer32( all_responses.size() ) ) + all_responses;
 
-    return make_pair( requests_ret, responses_ret );
-}
-
-void HTTPMemoryStore::persist( void )
-{
-    FileDescriptor bulkreply = SystemCall( "open", open( "bulk_reply.txt", O_WRONLY | O_CREAT, 00700 ) );
-    auto bulk_message = serialize();
-    /* Write requests first to ensure that they arrive quickly for parsing */
-    bulkreply.write( bulk_message.first );
-    bulkreply.write( bulk_message.second );
+    client.write( requests_ret );
+    client.write( responses_ret );
 }

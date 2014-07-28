@@ -21,6 +21,7 @@ private:
 public:
     HTTPConsoleStore();
     void save( const HTTPResponse & response, const Address & server_address ) override;
+    void serialize_to_socket( Socket && client ) override;
 };
 
 #endif /* HTTP_CONSOLE_STORE_HH */
