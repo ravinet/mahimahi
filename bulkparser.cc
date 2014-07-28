@@ -20,11 +20,6 @@ int main()
 
         string bulk_response( bulkreply.read() );
 
-        /* The first 4-byte number represents the total number of request/response pairs */
-        Integer32 pairs = static_cast<Integer32>( bulk_response.substr( 0,4 ) );
-        bulk_response = bulk_response.substr( 4 );
-        cout << "Request/Response pairs: " << pairs << endl;
-
         /* Request protobuf size */
         Integer32 req_size = static_cast<Integer32>( bulk_response.substr( 0,4 ) );
         bulk_response = bulk_response.substr( 4 );
@@ -38,9 +33,6 @@ int main()
         for ( int i = 0; i < requests.msg_size(); i++ ) {
             cout << requests.msg( i ).first_line() << endl;
         }
-
-        /* The next 4-byte number represents the total number of request/response pairs */
-        bulk_response = bulk_response.substr( 4 );
 
         /* Response protobuf size */
         Integer32 res_size = static_cast<Integer32>( bulk_response.substr( 0,4 ) );
