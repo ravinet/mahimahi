@@ -39,9 +39,6 @@ pair<string, string> HTTPMemoryStore::serialize( void )
     /* make sure there is a 1 to 1 matching of requests and responses */
     assert( requests.msg_size() == responses.msg_size() );
 
-    /* Number of request/response pairs (4 bytes) */
-    string pairs = static_cast<string>( Integer32( requests.msg_size() ) );
-
     /* Serialize both request and response to String for transmission */
     string all_requests;
     string all_responses;
@@ -49,8 +46,8 @@ pair<string, string> HTTPMemoryStore::serialize( void )
     responses.SerializeToString( &all_responses );
 
     /* Put sizes and messages into bulk response formats (one for request, one for response) */
-    string requests_ret = pairs + static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
-    string responses_ret = pairs + static_cast<string>( Integer32( all_responses.size() ) ) + all_responses;
+    string requests_ret = static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
+    string responses_ret = static_cast<string>( Integer32( all_responses.size() ) ) + all_responses;
 
     return make_pair( requests_ret, responses_ret );
 }
