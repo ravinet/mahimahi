@@ -46,11 +46,6 @@ http_recorder_source =	process_recorder.hh process_recorder.cc
 http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
 
-bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
-recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-recordshell_LDFLAGS = -pthread
-
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
 replayshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)

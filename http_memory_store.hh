@@ -24,8 +24,7 @@ private:
 public:
     HTTPMemoryStore();
     void save( const HTTPResponse & response, const Address & server_address );
-    std::pair<std::string, std::string> serialize( void );
-    void persist( void );
+    void serialize_to_socket( Socket && client ) override;
 };
 
 #endif /* HTTP_MEMORY_STORE_HH */

@@ -7,6 +7,7 @@
 #include <functional>
 
 #include "file_descriptor.hh"
+#include "socket.hh"
 
 /* class that loads an arbitrary process and captures all HTTP traffic originating from it */
 
@@ -19,6 +20,7 @@ public:
     template <typename... Targs>
     ProcessRecorder( Targs... Fargs ) : response_store_( Fargs... ) {}
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
+                        Socket && client,
                         const int & veth_counter = 0,
                         const std::string & stdin_input = "" );
 };

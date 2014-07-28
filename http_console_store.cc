@@ -15,3 +15,5 @@ void HTTPConsoleStore::save( const HTTPResponse & response, const Address & serv
     unique_lock<mutex> ul( mutex_ );
     cout << "Request to " << server_address.ip() << ": " << response.request().first_line() << ", Response: " << response.first_line() << endl;
 }
+
+void HTTPConsoleStore::serialize_to_socket( Socket && client __attribute__ ( ( unused ) ) ) {}

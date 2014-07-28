@@ -16,7 +16,7 @@
 #include "system_runner.hh"
 #include "config.h"
 #include "phantomjs_configuration.hh"
-#include "http_console_store.hh"
+#include "http_memory_store.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -27,7 +27,7 @@ void handle_client( Socket && client, const int & veth_counter )
 
     Poller poller;
 
-    ProcessRecorder<HTTPConsoleStore> process_recorder;
+    ProcessRecorder<HTTPMemoryStore> process_recorder;
 
     poller.add_action( Poller::Action( client, Direction::In,
                                        [&] () {
@@ -52,9 +52,10 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
                                                                                              "--ssl-protocol=TLSv1", "/dev/stdin" } );
                                                                             },
+                                                                            move( client ),
                                                                             veth_counter,
                                                                             "url = \"" + url + phantomjs_config );
-                                           client.write( "DONE" );
+                                           client.write( "" );
                                            return Result::Type::Exit;
                                        },
                                        [&] () { return not request_parser.empty(); } ) );
