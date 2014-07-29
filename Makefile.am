@@ -71,6 +71,11 @@ bulkparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkp
 bulkparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 bulkparser_LDFLAGS = -pthread
 
+bin_PROGRAMS += bulkrequestparser
+bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkrequestparser.cc
+bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+bulkrequestparser_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
