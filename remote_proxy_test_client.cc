@@ -2,6 +2,7 @@
 
 #include "socket.hh"
 #include "event_loop.hh"
+#include "file_descriptor.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -18,9 +19,13 @@ int main( int argc, char *argv[] )
 
         server.write( "GET / HTTP/1.1\r\nHost: " + string( argv[ 3 ] ) + "\r\n\r\n" );
 
+        string bulk_response;
+
         while ( not server.eof() ) {
-            cout << server.read() << endl;
+            bulk_response.append( server.read() );
         }
+        FileDescriptor bulkreply = SystemCall( "open", open( "bulk_reply.txt", O_WRONLY | O_CREAT, 00700 ) );
+        bulkreply.write( bulk_response );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

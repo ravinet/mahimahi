@@ -39,14 +39,15 @@ int main()
         bulk_response = bulk_response.substr( 4 );
         cout << "Response protobuf size: " << res_size << endl;
 
-        /* Iterate through responses and print first lines */
-        if ( bulk_response.size() > res_size ) { /* remove excess part of string if bulk response is smaller than 2^18 bytes */
-           bulk_response = bulk_response.substr( 0, res_size );
-        } 
         while ( bulk_response.size() < res_size ) { /* if bulk response larger than 2^18 bytes, read until we have all of it */
             string bulk2( bulkreply.read() );
             bulk_response = bulk_response + bulk2;
         }
+        if ( bulk_response.size() > res_size ) { /* remove excess part of string if bulk response is smaller than 2^18 bytes */
+            bulk_response = bulk_response.substr( 0, res_size );
+        }
+
+        /* Iterate throgh responses and print first lines */
         string response_proto = bulk_response.substr( 0, res_size );
         bulk_response = bulk_response.substr( res_size );
         MahimahiProtobufs::BulkMessage responses;
