@@ -2,7 +2,7 @@
 
 #include "socket.hh"
 #include "event_loop.hh"
-#include "file_descriptor.hh"
+#include "bulk_parser.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -21,11 +21,12 @@ int main( int argc, char *argv[] )
 
         string bulk_response;
 
+        BulkParser bulk_parser;
+
         while ( not server.eof() ) {
             bulk_response.append( server.read() );
         }
-        FileDescriptor bulkreply = SystemCall( "open", open( "bulk_reply.txt", O_WRONLY | O_CREAT, 00700 ) );
-        bulkreply.write( bulk_response );
+        bulk_parser.parse( bulk_response );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
