@@ -28,7 +28,15 @@ message RequestResponse {
     optional HTTPMessage response = 5;
 }
 
-/* header should include content-type: bulk_response */
+message BulkRequest {
+    enum Scheme {
+        HTTP = 1;
+        HTTPS = 2;
+    }
+    required Scheme scheme = 1;
+    required HTTPMessage request = 2;
+}
+
 message BulkMessage {
     repeated HTTPMessage msg = 2;
 }
