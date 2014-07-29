@@ -62,7 +62,7 @@ remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(lib
 remote_proxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy_test_client
-remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc
+remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc bulk_parser.hh bulk_parser.cc
 remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_test_client_LDFLAGS = -pthread
 
