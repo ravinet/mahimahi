@@ -2,7 +2,7 @@
 
 #include "socket.hh"
 #include "event_loop.hh"
-#include "bulk_parser.hh"
+#include "length_value_parser.hh"
 #include "http_record.pb.h"
 #include "http_header.hh"
 #include "int32.hh"
@@ -38,16 +38,20 @@ int main( int argc, char *argv[] )
         /* Make request string to send (prepended with size) */
         string request = static_cast<string>( Integer32( request_proto.size() ) ) + request_proto;
 
-        /* For now, write bulk request to a file for offline parsing and write simple HTTP request to server */
-        server.write( "GET / HTTP/1.1\r\nHost: " + url + "\r\n\r\n"  );
-        FileDescriptor bulkreply = SystemCall( "open", open( "bulk_request.txt", O_WRONLY | O_CREAT, 00700 ) );
-        bulkreply.write( request );
-        cout << "Wrote request to file. Request protobuf size: " << Integer32( request_proto.size() ) << endl;
+        server.write( request );
 
-        BulkParser bulk_parser;
+        LengthValueParser bulk_parser;
 
         while ( not server.eof() ) {
-            bulk_parser.parse( server.read() );
+            auto res = bulk_parser.parse( server.read() );
+            if ( res.first ) { /* We read a complete bulk protobuf */
+                MahimahiProtobufs::BulkMessage message;
+                message.ParseFromString( res.second );
+                /* Print first line of each request or response in protobuf */
+                for ( int i = 0; i < message.msg_size(); i++ ) {
+                    cout << message.msg( i ).first_line() << endl;
+                }
+            }
         }
     } catch ( const Exception & e ) {
         e.perror();

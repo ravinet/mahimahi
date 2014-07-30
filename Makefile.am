@@ -51,6 +51,8 @@ http_recorder_source =	process_recorder.hh process_recorder.cc
 http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
 
+bulk_message_source = length_value_parser.hh length_value_parser.cc
+
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
 replayshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
@@ -62,12 +64,12 @@ nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIB
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy
-remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) remote_proxy.cc phantomjs_configuration.hh
+remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) $(bulk_message_source) remote_proxy.cc phantomjs_configuration.hh
 remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy_test_client
-remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) remote_proxy_test_client.cc bulk_parser.hh bulk_parser.cc
+remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) remote_proxy_test_client.cc
 remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_test_client_LDFLAGS = -pthread
 

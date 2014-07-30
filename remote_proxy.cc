@@ -11,42 +11,57 @@
 #include "event_loop.hh"
 #include "socket.hh"
 #include "address.hh"
-#include "http_request_parser.hh"
 #include "poller.hh"
 #include "system_runner.hh"
 #include "config.h"
 #include "phantomjs_configuration.hh"
 #include "http_memory_store.hh"
+#include "length_value_parser.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
 void handle_client( Socket && client, const int & veth_counter )
 {
-    HTTPRequestParser request_parser;
+    LengthValueParser bulk_request_parser;
 
     Poller poller;
 
     ProcessRecorder<HTTPMemoryStore> process_recorder;
 
+    bool request_ready = false;
+
+    MahimahiProtobufs::BulkRequest incoming_request;
+
     poller.add_action( Poller::Action( client, Direction::In,
                                        [&] () {
                                            string buffer = client.read();
-                                           request_parser.parse( buffer );
+                                           auto res = bulk_request_parser.parse( buffer );
+                                           if ( res.first ) { /* request protobuf ready */
+                                               incoming_request.ParseFromString( res.second );
+                                               request_ready = true;
+                                           }
                                            return ResultType::Continue;
                                        },
                                        [&] () { return true; } ) );
 
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
-                                           string url;
-                                           HTTPRequest incoming_request = request_parser.front();
-                                           request_parser.pop();
-                                           if ( incoming_request.has_header( "Host" ) ) {
-                                               url = incoming_request.get_header_value( "Host" );
-                                           } else {
-                                               throw Exception( "remote_proxy", "incoming request does not have Host header field" );
+                                           /* Obtain url from BulkRequest protobuf */
+                                           string scheme = ( incoming_request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
+                                                             ? "https" : "http" );
+                                           MahimahiProtobufs::HTTPMessage request_message = incoming_request.request();
+                                           string hostname;
+                                           for ( int i = 0; i < request_message.header_size(); i++ ) {
+                                               if ( request_message.header( i ).key() == "Host" ) {
+                                                   hostname = request_message.header( i ).value();
+                                               }
+                                               if ( hostname == "" ) { /* no Host header field */
+                                                   throw Exception( "remote_proxy", "No Host header field found in incoming request" );
+                                               }
                                            }
+                                           string url = scheme + "://" + hostname;
+
                                            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
                                                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
                                                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
@@ -56,9 +71,11 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             veth_counter,
                                                                             "url = \"" + url + phantomjs_config );
                                            client.write( "" );
+                                           request_ready = false;
+                                           hostname = "";
                                            return Result::Type::Exit;
                                        },
-                                       [&] () { return not request_parser.empty(); } ) );
+                                       [&] () { return request_ready; } ) );
     while ( true ) {
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
             return;
