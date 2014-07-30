@@ -44,14 +44,11 @@ int main( int argc, char *argv[] )
         bulkreply.write( request );
         cout << "Wrote request to file. Request protobuf size: " << Integer32( request_proto.size() ) << endl;
 
-        string bulk_response;
-
         BulkParser bulk_parser;
 
         while ( not server.eof() ) {
-            bulk_response.append( server.read() );
+            bulk_parser.parse( server.read() );
         }
-        bulk_parser.parse( bulk_response );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
