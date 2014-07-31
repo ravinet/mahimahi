@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )
                                                 prepend_shell_prefix( "[record] " );
 
                                                 return ezexec( command, true );
-                                              } );
+                                              }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */ );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
