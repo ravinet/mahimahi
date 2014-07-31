@@ -20,7 +20,7 @@ public:
     template <typename... Targs>
     ProcessRecorder( Targs... Fargs ) : response_store_( Fargs... ) {}
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
-                        Socket && client,
+                        Socket && socket_output,
                         const int & veth_counter = 0,
                         const std::string & stdin_input = "" );
 };
