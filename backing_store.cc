@@ -39,4 +39,4 @@ void HTTPDiskStore::save( const HTTPResponse & response, const Address & server_
 
 }
 
-void HTTPDiskStore::serialize_to_socket( Socket && client __attribute__ ( ( unused ) ) ) {}
+void HTTPDiskStore::serialize_to_socket( Socket && client __attribute__ ( ( unused ) ) ) { printf("WARNING: IGNORING Socket that was passed\n"); }
