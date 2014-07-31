@@ -27,6 +27,11 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += recordshell
+recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
+recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+recordshell_LDFLAGS = -pthread
+
 http_source = http_request_parser.hh \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
