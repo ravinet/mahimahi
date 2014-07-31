@@ -22,7 +22,7 @@ using namespace std;
 
 template <class StoreType>
 int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
-                                                Socket && client,
+                                                Socket && socket_output,
                                                 const int & veth_counter,
                                                 const string & stdin_input )
 {
@@ -135,7 +135,7 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
             dns_outside.register_handlers( recordr_event_loop );
             http_proxy.register_handlers( recordr_event_loop, response_store_ );
             auto ret = recordr_event_loop.loop();
-            response_store_.serialize_to_socket( move( client ) );
+            response_store_.serialize_to_socket( move( socket_output ) );
             return ret;
         } ) );
 
