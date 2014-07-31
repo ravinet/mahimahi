@@ -42,14 +42,12 @@ MahimahiProtobufs::HTTPMessage find_response( MahimahiProtobufs::BulkMessage & r
     HTTPRequest new_request( client_request.request() );
     for ( int i = 0; i < requests.msg_size(); i++ ) {
         HTTPRequest current_request( requests.msg( i ) );
-        if ( current_request.first_line() == new_request.first_line() ) { /* exact request line match...check host header */
-            if ( current_request.get_header_value( "Host" ) == new_request.get_header_value( "Host" ) ) { /* host matches, send response */
-                return responses.msg( i );
-            }
-        }
-        /* request line isn't exact match...check if possible match */
-        if ( strip_query( current_request.first_line() ) == strip_query( new_request.first_line() ) ) { /* up to "?" does match */
-            if ( current_request.get_header_value( "Host" ) == new_request.get_header_value( "Host" ) ) { /* host matches too */
+        if ( strip_query( current_request.first_line() ) == strip_query( new_request.first_line() ) ) { /* up to ? matches */
+            if ( current_request.get_header_value( "Host" ) == new_request.get_header_value( "Host" ) ) { /* host header matches */
+                if ( current_request.first_line() == new_request.first_line() ) { /* exact match */
+                    return responses.msg( i );
+                }
+                /* possible match, not exact match */
                 int match_val = match_length( current_request.first_line(), new_request.first_line() );
                 if (match_val > possible_match.first ) { /* this possible match is closer to client request */
                     possible_match = make_pair( match_val, responses.msg( i ) );
