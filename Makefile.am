@@ -27,11 +27,6 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
-recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-recordshell_LDFLAGS = -pthread
-
 http_source = http_request_parser.hh \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
@@ -52,6 +47,11 @@ http_server_source = http_proxy.hh http_proxy.cc \
 	secure_socket.hh secure_socket.cc certificate.hh apache_configuration.hh
 
 bulk_message_source = length_value_parser.hh length_value_parser.cc
+
+bin_PROGRAMS += recordshell
+recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
+recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+recordshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
@@ -88,6 +88,11 @@ bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source
 bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 bulkrequestparser_LDFLAGS = -pthread
 
+bin_PROGRAMS += localproxyshell
+localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) localproxyshell.cc
+localproxyshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+localproxyshell_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
@@ -99,3 +104,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
 	chown root $(DESTDIR)$(bindir)/remote_proxy
 	chmod u+s $(DESTDIR)$(bindir)/remote_proxy
+	chown root $(DESTDIR)$(bindir)/localproxyshell
+	chmod u+s $(DESTDIR)$(bindir)/localproxyshell

@@ -22,6 +22,7 @@ public:
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
                         Socket && socket_output,
                         const int & veth_counter = 0,
+                        bool record = true,
                         const std::string & stdin_input = "" );
 };
 

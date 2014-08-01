@@ -24,6 +24,7 @@ template <class StoreType>
 int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
                                                 Socket && socket_output,
                                                 const int & veth_counter,
+                                                bool record,
                                                 const string & stdin_input )
 {
     TemporarilyRoot tr;
@@ -52,6 +53,7 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
 
     /* set up NAT between egress and eth0 */
     NAT nat_rule( ingress_addr );
+
 
     /* set up http proxy for tcp */
     HTTPProxy http_proxy( egress_addr );
@@ -127,17 +129,26 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
         outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
     }
 
-    /* do the actual recording in a different unprivileged child */
-    outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
-            drop_privileges();
+    if ( record ) { /* use http proxy */
+        /* do the actual recording in a different unprivileged child */
+        outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
+                drop_privileges();
 
-            EventLoop recordr_event_loop;
-            dns_outside.register_handlers( recordr_event_loop );
-            http_proxy.register_handlers( recordr_event_loop, response_store_ );
-            auto ret = recordr_event_loop.loop();
-            response_store_.serialize_to_socket( move( socket_output ) );
-            return ret;
-        } ) );
+                EventLoop recordr_event_loop;
+                dns_outside.register_handlers( recordr_event_loop );
+                http_proxy.register_handlers( recordr_event_loop, response_store_ );
+                auto ret = recordr_event_loop.loop();
+                response_store_.serialize_to_socket( move( socket_output ) );
+                return ret;
+            } ) );
+    } else { /* use local proxy */
+        outer_event_loop.add_child_process( ChildProcess( "localproxy", [&]() {
+                drop_privileges();
+                EventLoop local_proxy_loop;
+                dns_outside.register_handlers( local_proxy_loop );
+                return ezexec( { "/usr/local/bin/local_proxy", egress_addr.ip(), to_string( egress_addr.port() ), "127.0.0.1", "2222", "http" } );
+            } ) );
 
+    }
     return outer_event_loop.loop();
 }

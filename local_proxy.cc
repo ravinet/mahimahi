@@ -136,14 +136,14 @@ void handle_client( Socket && client, const Address & remote_proxy, const string
 int main( int argc, char *argv[] )
 {
     try {
-        if ( argc != 5 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " local_proxy_port remote_proxy_ip remote_proxy_port scheme" );
+        if ( argc != 6 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " local_proxy_ip local_proxy_port remote_proxy_ip remote_proxy_port scheme" );
         }
 
-        Address remote_proxy( string( argv[ 2 ] ), argv[ 3 ] );
+        Address remote_proxy( string( argv[ 3 ] ), argv[ 4 ] );
 
         Socket listener_socket( TCP );
-        listener_socket.bind( Address( "0", argv[ 1 ] ) );
+        listener_socket.bind( Address( argv[ 1 ], argv[ 2 ] ) );
         listener_socket.listen();
 
         EventLoop event_loop;
@@ -153,7 +153,7 @@ int main( int argc, char *argv[] )
                                              [&] () {
                                                  Socket client = listener_socket.accept();
                                                  event_loop.add_child_process( ChildProcess( "new_client", [&] () {
-                                                         handle_client( move( client ), remote_proxy, string( argv[ 4 ] ) );
+                                                         handle_client( move( client ), remote_proxy, string( argv[ 5 ] ) );
                                                          return EXIT_SUCCESS;
                                                      } ), false );
                                                  return ResultType::Continue;
