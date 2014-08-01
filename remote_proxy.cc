@@ -60,7 +60,10 @@ void handle_client( Socket && client, const int & veth_counter )
                                                    throw Exception( "remote_proxy", "No Host header field found in incoming request" );
                                                }
                                            }
-                                           string url = scheme + "://" + hostname;
+                                           auto path_start = request_message.first_line().find( "/" );
+                                           auto path_end = request_message.first_line().find( " ", path_start );
+                                           string path = request_message.first_line().substr( path_start, path_end - path_start );
+                                           string url = scheme + "://" + hostname + path;
 
                                            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
                                                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );

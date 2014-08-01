@@ -64,24 +64,25 @@ MahimahiProtobufs::HTTPMessage find_response( MahimahiProtobufs::BulkMessage & r
 int main( int argc, char *argv[] )
 {
     try {
-        if ( argc != 4 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " host port url" );
+        if ( argc != 6 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " host port scheme hostname path" );
         }
 
         Socket server( TCP );
         server.connect( Address( argv[ 1 ], argv[ 2 ] ) );
 
         /* parse url into scheme and HTTPMessage request */
-        string url( argv[ 3 ] );
-        string scheme = url.substr( 0, url.find( ":" ) );
-        string hostname = url.substr( url.find( ":" ) + 3 );
+
+        if ( string( argv[ 5 ] ).at( 0 ) != '/' ) {
+            throw Exception( string( argv[ 0 ] ), "path must begin with /" );
+        }
 
         /* Construct bulk request */
         MahimahiProtobufs::BulkRequest bulk_request;
-        bulk_request.set_scheme( scheme == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS : MahimahiProtobufs::BulkRequest_Scheme_HTTP );
+        bulk_request.set_scheme( string( argv[ 3 ] ) == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS : MahimahiProtobufs::BulkRequest_Scheme_HTTP );
         MahimahiProtobufs::HTTPMessage request_message;
-        request_message.set_first_line( "GET / HTTP/1.1" );
-        HTTPHeader request_header( "Host: " + hostname );
+        request_message.set_first_line( "GET " + string( argv[ 5 ] ) + " HTTP/1.1" );
+        HTTPHeader request_header( "Host: " + string( argv[ 4 ] ) );
         request_message.add_header()->CopyFrom( request_header.toprotobuf() );
         bulk_request.mutable_request()->CopyFrom( request_message );
         string request_proto;
