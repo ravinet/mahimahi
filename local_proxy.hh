@@ -1,0 +1,27 @@
+/* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
+#ifndef LOCAL_PROXY_HH
+#define LOCAL_PROXY_HH
+
+#include <string>
+
+#include "address.hh"
+#include "socket.hh"
+
+class LocalProxy
+{
+private:
+    Socket listener_socket_;
+    Address remote_proxy_addr_;
+
+    void handle_client( Socket && client, const std::string & scheme );
+
+public:
+    LocalProxy( const Address & listener_addr, const Address & remote_proxy_addr );
+
+    Socket & tcp_listener( void ) { return listener_socket_; }
+
+    void listen( void );
+};
+
+#endif /* LOCAL_PROXY_HH */
