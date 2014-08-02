@@ -73,10 +73,10 @@ remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http
 remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_test_client_LDFLAGS = -pthread
 
-bin_PROGRAMS += local_proxy
-local_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) local_proxy.cc
-local_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-local_proxy_LDFLAGS = -pthread
+bin_PROGRAMS += localproxy
+localproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) local_proxy_bin.cc
+localproxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+localproxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += bulkparser
 bulkparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkparser.cc

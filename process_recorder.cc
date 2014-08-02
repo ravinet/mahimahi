@@ -143,7 +143,7 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
             } ) );
     } else { /* use local proxy */
         outer_event_loop.add_child_process( ChildProcess( "local", [&]() {
-                return ezexec( { "/usr/local/bin/local_proxy", new_egress_addr.ip(), to_string( new_egress_addr.port() ), "127.0.0.1", "2222" } );
+                return ezexec( { "/usr/local/bin/localproxy", new_egress_addr.ip(), to_string( new_egress_addr.port() ), "127.0.0.1", "2222" } );
             } ) );
         outer_event_loop.add_child_process( ChildProcess( "localproxy", [&]() {
                 drop_privileges();
