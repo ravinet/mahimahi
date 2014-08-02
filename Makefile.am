@@ -51,7 +51,7 @@ bulk_message_source = length_value_parser.hh length_value_parser.cc
 local_proxy_source = local_proxy.hh local_proxy.cc
 
 bin_PROGRAMS += recordshell
-recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
+recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) recordshell.cc
 recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 recordshell_LDFLAGS = -pthread
 
@@ -66,7 +66,7 @@ nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIB
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy
-remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) $(bulk_message_source) remote_proxy.cc phantomjs_configuration.hh
+remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) remote_proxy.cc phantomjs_configuration.hh
 remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 remote_proxy_LDFLAGS = -pthread
 
@@ -91,7 +91,7 @@ bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) 
 bulkrequestparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += localproxyshell
-localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) localproxyshell.cc
+localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) localproxyshell.cc
 localproxyshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 localproxyshell_LDFLAGS = -pthread
 

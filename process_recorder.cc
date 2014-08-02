@@ -17,6 +17,7 @@
 #include "socketpair.hh"
 #include "process_recorder.hh"
 #include "config.h"
+#include "local_proxy.hh"
 
 using namespace std;
 
@@ -142,13 +143,14 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
                 return ret;
             } ) );
     } else { /* use local proxy */
-        outer_event_loop.add_child_process( ChildProcess( "local", [&]() {
-                return ezexec( { "/usr/local/bin/localproxy", new_egress_addr.ip(), to_string( new_egress_addr.port() ), "127.0.0.1", "2222" } );
-            } ) );
         outer_event_loop.add_child_process( ChildProcess( "localproxy", [&]() {
                 drop_privileges();
 
+                Address remote_proxy_addr( "127.0.0.1", "2222" );
+                LocalProxy local_proxy( new_egress_addr, remote_proxy_addr );
+
                 EventLoop local_proxy_loop;
+                local_proxy.listen();
                 dns_outside.register_handlers( local_proxy_loop );
                 return local_proxy_loop.loop();
             } ) );
