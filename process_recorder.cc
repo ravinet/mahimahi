@@ -48,18 +48,16 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
     /* bring up egress */
     assign_address( egress_name, egress_addr, ingress_addr );
 
+    Address new_egress_addr( egress_addr.ip(), 5555 );
+
     /* create DNS proxy */
     DNSProxy dns_outside( egress_addr, nameserver, nameserver );
 
     /* set up NAT between egress and eth0 */
     NAT nat_rule( ingress_addr );
 
-
-    /* set up http proxy for tcp */
-    HTTPProxy http_proxy( egress_addr );
-
     /* set up dnat */
-    DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
+    DNAT dnat( new_egress_addr, egress_name );
 
     /* prepare event loop */
     EventLoop outer_event_loop;
@@ -134,6 +132,8 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
         outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
                 drop_privileges();
 
+                HTTPProxy http_proxy( new_egress_addr );
+
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );
                 http_proxy.register_handlers( recordr_event_loop, response_store_ );
@@ -142,11 +142,15 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
                 return ret;
             } ) );
     } else { /* use local proxy */
+        outer_event_loop.add_child_process( ChildProcess( "local", [&]() {
+                return ezexec( { "/usr/local/bin/local_proxy", new_egress_addr.ip(), to_string( new_egress_addr.port() ), "127.0.0.1", "2222" } );
+            } ) );
         outer_event_loop.add_child_process( ChildProcess( "localproxy", [&]() {
                 drop_privileges();
+
                 EventLoop local_proxy_loop;
                 dns_outside.register_handlers( local_proxy_loop );
-                return ezexec( { "/usr/local/bin/local_proxy", egress_addr.ip(), to_string( egress_addr.port() ), "127.0.0.1", "2222", "http" } );
+                return local_proxy_loop.loop();
             } ) );
 
     }

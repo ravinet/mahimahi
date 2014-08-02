@@ -11,6 +11,7 @@
 #include "http_request.hh"
 #include "http_request_parser.hh"
 #include "poller.hh"
+#include "http_response.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -61,7 +62,16 @@ MahimahiProtobufs::HTTPMessage find_response( MahimahiProtobufs::BulkMessage & r
     if ( possible_match.first != 0 ) { /* we had a possible match */
         return possible_match.second;
     }
-    throw Exception( "test_client", "Could not find matching request for: " + new_request.first_line() );
+    MahimahiProtobufs::HTTPMessage ret;
+    ret.set_first_line( "HTTP/1.1 200 OK" );
+    HTTPHeader header1( "Content-Type: Text/html" );
+    HTTPHeader header2( "Connection: close");
+    HTTPHeader header3( "Content-Length: 24" );
+    ret.set_body( "COULD NOT FIND AN OBJECT" );
+    ret.add_header()->CopyFrom( header1.toprotobuf() );
+    ret.add_header()->CopyFrom( header2.toprotobuf() );
+    ret.add_header()->CopyFrom( header3.toprotobuf() );
+    return ret;
 }
 
 void handle_client( Socket && client, const Address & remote_proxy, const string & scheme )
@@ -119,7 +129,8 @@ void handle_client( Socket && client, const Address & remote_proxy, const string
                                                    } else { /* it is the responses */
                                                        responses.ParseFromString( res.second );
                                                        MahimahiProtobufs::HTTPMessage matched_response = find_response( requests, responses, bulk_request );
-                                                       client.write( matched_response.first_line() );
+                                                       HTTPResponse res( matched_response );
+                                                       client.write( res.str() );
                                                    }
                                                }
                                                return ResultType::Continue;
@@ -136,8 +147,8 @@ void handle_client( Socket && client, const Address & remote_proxy, const string
 int main( int argc, char *argv[] )
 {
     try {
-        if ( argc != 6 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " local_proxy_ip local_proxy_port remote_proxy_ip remote_proxy_port scheme" );
+        if ( argc != 5 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " local_proxy_ip local_proxy_port remote_proxy_ip remote_proxy_port" );
         }
 
         Address remote_proxy( string( argv[ 3 ] ), argv[ 4 ] );
@@ -153,7 +164,11 @@ int main( int argc, char *argv[] )
                                              [&] () {
                                                  Socket client = listener_socket.accept();
                                                  event_loop.add_child_process( ChildProcess( "new_client", [&] () {
-                                                         handle_client( move( client ), remote_proxy, string( argv[ 5 ] ) );
+                                                         string scheme = "http";
+                                                         if ( client.original_dest().port() == 443 ) {
+                                                             scheme = "https";
+                                                         }
+                                                         handle_client( move( client ), remote_proxy, scheme );
                                                          return EXIT_SUCCESS;
                                                      } ), false );
                                                  return ResultType::Continue;
