@@ -20,7 +20,11 @@ int main( int argc, char *argv[] )
 
         LocalProxy local_proxy( listener_addr, remote_proxy_addr );
 
-        local_proxy.listen();
+        EventLoop event_loop;
+
+        local_proxy.listen( event_loop );
+
+        event_loop.loop();
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

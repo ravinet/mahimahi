@@ -7,6 +7,7 @@
 
 #include "address.hh"
 #include "socket.hh"
+#include "event_loop.hh"
 
 class LocalProxy
 {
@@ -21,7 +22,7 @@ public:
 
     Socket & tcp_listener( void ) { return listener_socket_; }
 
-    void listen( void );
+    void listen( EventLoop & event_loop );
 };
 
 #endif /* LOCAL_PROXY_HH */

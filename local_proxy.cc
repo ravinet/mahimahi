@@ -153,10 +153,8 @@ void LocalProxy::handle_client( Socket && client, const string & scheme )
     }
 }
 
-void LocalProxy::listen( void )
+void LocalProxy::listen( EventLoop & event_loop )
 {
-    EventLoop event_loop;
-
     /* listen for new clients */
     event_loop.add_simple_input_handler( listener_socket_,
                                          [&] () {
@@ -171,6 +169,4 @@ void LocalProxy::listen( void )
                                                  } ), false );
                                              return ResultType::Continue;
                                          } );
-
-    event_loop.loop();
 }

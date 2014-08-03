@@ -150,7 +150,7 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
                 LocalProxy local_proxy( new_egress_addr, remote_proxy_addr );
 
                 EventLoop local_proxy_loop;
-                local_proxy.listen();
+                local_proxy.listen( local_proxy_loop );
                 dns_outside.register_handlers( local_proxy_loop );
                 return local_proxy_loop.loop();
             } ) );
