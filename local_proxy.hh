@@ -8,6 +8,8 @@
 #include "address.hh"
 #include "socket.hh"
 #include "event_loop.hh"
+#include "socket.hh"
+#include "secure_socket.hh"
 
 class LocalProxy
 {
@@ -15,7 +17,8 @@ private:
     Socket listener_socket_;
     Address remote_proxy_addr_;
 
-    void handle_client( Socket && client, const std::string & scheme );
+    template <class SocketType>
+    void handle_client( SocketType && client, const std::string & scheme );
 
 public:
     LocalProxy( const Address & listener_addr, const Address & remote_proxy_addr );

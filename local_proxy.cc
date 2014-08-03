@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "address.hh"
-#include "socket.hh"
 #include "system_runner.hh"
 #include "poller.hh"
 #include "http_request_parser.hh"
@@ -83,7 +82,8 @@ MahimahiProtobufs::HTTPMessage find_response( MahimahiProtobufs::BulkMessage & r
     return ret;
 }
 
-void LocalProxy::handle_client( Socket && client, const string & scheme )
+template <class SocketType>
+void LocalProxy::handle_client( SocketType && client, const string & scheme )
 {
     Socket server( TCP );
     server.connect( remote_proxy_addr_ );
@@ -163,6 +163,11 @@ void LocalProxy::listen( EventLoop & event_loop )
                                                      string scheme = "http";
                                                      if ( client.original_dest().port() == 443 ) {
                                                          scheme = "https";
+                                                         SSLContext server_context( SERVER );
+                                                         SecureSocket tls_client( server_context.new_secure_socket( move( client ) ) );
+                                                         tls_client.accept();
+                                                         handle_client( move( tls_client ), scheme );
+                                                         return EXIT_SUCCESS;
                                                      }
                                                      handle_client( move( client ), scheme );
                                                      return EXIT_SUCCESS;
