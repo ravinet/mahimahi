@@ -111,6 +111,14 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
 
     poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
+                                           /* don't send POST requests to the remote proxy */
+                                           string type = request_parser.front().str().substr( 0, 4 );
+                                           if ( type == "POST" ) { /* POST request so send back can't find */
+                                               server.write( "" );
+                                               client.write( "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT" );
+                                               request_parser.pop();
+                                               return ResultType::Continue;
+                                           }
                                            bulk_request.set_scheme( scheme == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS :
                                                                                         MahimahiProtobufs::BulkRequest_Scheme_HTTP );
                                            bulk_request.mutable_request()->CopyFrom( request_parser.front().toprotobuf() );
