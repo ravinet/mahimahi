@@ -106,5 +106,3 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
 	chown root $(DESTDIR)$(bindir)/remote_proxy
 	chmod u+s $(DESTDIR)$(bindir)/remote_proxy
-	chown root $(DESTDIR)$(bindir)/localproxyshell
-	chmod u+s $(DESTDIR)$(bindir)/localproxyshell
