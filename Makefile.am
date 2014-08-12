@@ -54,6 +54,7 @@ bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) recordshell.cc
 recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 recordshell_LDFLAGS = -pthread
+archive_source = archive.hh archive.cc
 
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
@@ -76,7 +77,7 @@ remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf
 remote_proxy_test_client_LDFLAGS = -pthread
 
 bin_PROGRAMS += localproxy
-localproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) $(local_proxy_source) local_proxy_bin.cc
+localproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) $(local_proxy_source) $(archive_source) local_proxy_bin.cc
 localproxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 localproxy_LDFLAGS = -pthread
 
@@ -91,7 +92,7 @@ bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) 
 bulkrequestparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += localproxyshell
-localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) localproxyshell.cc
+localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) $(archive_source) localproxyshell.cc
 localproxyshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 localproxyshell_LDFLAGS = -pthread
 
