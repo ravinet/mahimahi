@@ -148,6 +148,7 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                    MahimahiProtobufs::HTTPMessage matched_response = find_response( requests, responses, bulk_request );
                                                    HTTPResponse res( matched_response );
                                                    client.write( res.str() );
+                                                   parsed_requests = false;
                                                }
                                            }
                                            return ResultType::Continue;
