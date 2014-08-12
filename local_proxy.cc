@@ -13,6 +13,8 @@
 #include "http_header.hh"
 #include "http_response.hh"
 
+#include "archive.hh"
+
 using namespace std;
 using namespace PollerShortNames;
 
@@ -92,6 +94,10 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
 
     LengthValueParser bulk_parser;
 
+    Archive archive;
+
+    vector< pair< int, int > > request_positions;
+
     bool parsed_requests = false;
 
     MahimahiProtobufs::BulkMessage requests;
@@ -143,11 +149,24 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                if ( not parsed_requests ) { /* it is the requests */
                                                    requests.ParseFromString( res.second );
                                                    parsed_requests = true;
+                                                   /* add requests to archive */
+                                                   for ( int i = 0; i < requests.msg_size(); i++ ) {
+                                                       if ( auto pos = archive.add_request( requests.msg( i ) ) ) {
+                                                           if ( pos >= 0 ) {
+                                                               request_positions.emplace_back( make_pair( i, pos ) );
+                                                           }
+                                                       }
+                                                   }
                                                } else { /* it is the responses */
                                                    responses.ParseFromString( res.second );
+                                                   for ( int j = 0; j < request_positions.size(); j++ ) {
+                                                       archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
+                                                   }
+                                                   request_positions.clear();
                                                    MahimahiProtobufs::HTTPMessage matched_response = find_response( requests, responses, bulk_request );
                                                    HTTPResponse res( matched_response );
                                                    client.write( res.str() );
+                                                   archive.print();
                                                    parsed_requests = false;
                                                }
                                            }

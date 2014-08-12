@@ -10,6 +10,7 @@
 #include "http_response.hh"
 #include "http_header.hh"
 
+#include "file_descriptor.hh"
 using namespace std;
 
 string remove_query( const string & request_line )
@@ -96,4 +97,17 @@ void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, con
     assert( current_res.first_line() == "" );
 
     archive_.at( index ).second = response;
+}
+
+void Archive::print( void )
+{
+    string bulk_file_name = "archivestuff.txt";
+    FileDescriptor bulkreply = SystemCall( "open", open( bulk_file_name.c_str(), O_WRONLY | O_CREAT, 00700 ) );
+    string to_write;
+    for ( unsigned int i = 0; i < archive_.size(); i++ ) {
+        HTTPRequest curr1( archive_.at( i ).first );
+        HTTPResponse curr2( archive_.at( i ).second );
+        to_write.append( curr1.first_line() + "\n" + curr2.first_line() + "\n\n" );
+    }
+    bulkreply.write( to_write );
 }

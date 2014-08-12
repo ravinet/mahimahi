@@ -19,6 +19,7 @@ public:
     std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     int add_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     void add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index );
+    void print( void );
 };
 
 #endif /* ARCHIVE_HH */
