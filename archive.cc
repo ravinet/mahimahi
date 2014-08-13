@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "archive.hh"
 #include "http_request.hh"
@@ -84,8 +85,9 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
         return -1;
     } else { /* add request to archive */
         MahimahiProtobufs::HTTPMessage blank;
+        int new_pos = archive_.size();
         archive_.emplace_back( make_pair( incoming_req, blank ) );
-        return ( archive_.size() - 1 );
+        return new_pos;
     }
 }
 
@@ -99,15 +101,25 @@ void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, con
     archive_.at( index ).second = response;
 }
 
-void Archive::print( void )
+void Archive::print( const HTTPRequest & req )
 {
+    unlink( "archivestuff.txt" );
+
     string bulk_file_name = "archivestuff.txt";
     FileDescriptor bulkreply = SystemCall( "open", open( bulk_file_name.c_str(), O_WRONLY | O_CREAT, 00700 ) );
+    bulkreply.write( "CLIENT REQUEST WAS: " + req.get_header_value( "Host" )  + " " + req.first_line() );
+    bulkreply.write( "\n\nNumber of reqs/res: " + to_string( archive_.size() ) + "\n\n" );
     string to_write;
     for ( unsigned int i = 0; i < archive_.size(); i++ ) {
         HTTPRequest curr1( archive_.at( i ).first );
         HTTPResponse curr2( archive_.at( i ).second );
-        to_write.append( curr1.first_line() + "\n" + curr2.first_line() + "\n\n" );
+        to_write.append( curr1.first_line() + "\n");
+        for ( const auto header : archive_.at( i ).second.header() ) {
+            HTTPHeader curr( header );
+            to_write.append( curr.str() + "\n" );
+        }
+        to_write.append( "\n\n" );
+
     }
     bulkreply.write( to_write );
 }

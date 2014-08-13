@@ -151,10 +151,9 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                    parsed_requests = true;
                                                    /* add requests to archive */
                                                    for ( int i = 0; i < requests.msg_size(); i++ ) {
-                                                       if ( auto pos = archive.add_request( requests.msg( i ) ) ) {
-                                                           if ( pos >= 0 ) {
-                                                               request_positions.emplace_back( make_pair( i, pos ) );
-                                                           }
+                                                       auto pos = archive.add_request( requests.msg( i ) );
+                                                       if ( pos >= 0 ) {
+                                                           request_positions.emplace_back( make_pair( i, pos ) );
                                                        }
                                                    }
                                                } else { /* it is the responses */
@@ -166,7 +165,7 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                    MahimahiProtobufs::HTTPMessage matched_response = find_response( requests, responses, bulk_request );
                                                    HTTPResponse res( matched_response );
                                                    client.write( res.str() );
-                                                   archive.print();
+                                                   archive.print( bulk_request.request() );
                                                    parsed_requests = false;
                                                }
                                            }

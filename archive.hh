@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "http_record.pb.h"
+#include "http_request.hh"
 
 class Archive
 {
@@ -19,7 +20,7 @@ public:
     std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     int add_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     void add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index );
-    void print( void );
+    void print( const HTTPRequest & req );
 };
 
 #endif /* ARCHIVE_HH */
