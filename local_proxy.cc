@@ -162,9 +162,12 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
                                                    request_positions.clear();
-                                                   MahimahiProtobufs::HTTPMessage matched_response = find_response( requests, responses, bulk_request );
-                                                   HTTPResponse res( matched_response );
-                                                   client.write( res.str() );
+                                                   auto tosend = archive.find_request( bulk_request.request() );
+                                                   if ( tosend.first == true ) {
+                                                       client.write( tosend.second );
+                                                   } else {
+                                                       client.write( "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT" );
+                                                   }
                                                    archive.print( bulk_request.request() );
                                                    parsed_requests = false;
                                                }
