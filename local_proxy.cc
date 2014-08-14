@@ -13,14 +13,13 @@
 #include "http_header.hh"
 #include "http_response.hh"
 
-#include "archive.hh"
-
 using namespace std;
 using namespace PollerShortNames;
 
 LocalProxy::LocalProxy( const Address & listener_addr, const Address & remote_proxy )
     : listener_socket_( TCP ),
-      remote_proxy_addr_( remote_proxy )
+      remote_proxy_addr_( remote_proxy ),
+      archive()
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -94,8 +93,6 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
 
     LengthValueParser bulk_parser;
 
-    Archive archive;
-
     vector< pair< int, int > > request_positions;
 
     bool parsed_requests = false;
@@ -122,6 +119,13 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                            if ( type == "POST" ) { /* POST request so send back can't find */
                                                server.write( "" );
                                                client.write( "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT" );
+                                               request_parser.pop();
+                                               return ResultType::Continue;
+                                           }
+                                           auto tosend = archive.find_request( request_parser.front().toprotobuf() );
+                                           if ( tosend.first == true ) {
+                                               server.write( "" );
+                                               client.write( tosend.second );
                                                request_parser.pop();
                                                return ResultType::Continue;
                                            }

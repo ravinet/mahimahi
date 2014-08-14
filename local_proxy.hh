@@ -10,12 +10,15 @@
 #include "event_loop.hh"
 #include "socket.hh"
 #include "secure_socket.hh"
+#include "archive.hh"
 
 class LocalProxy
 {
 private:
     Socket listener_socket_;
     Address remote_proxy_addr_;
+
+    Archive archive;
 
     template <class SocketType>
     void handle_client( SocketType && client, const std::string & scheme );
