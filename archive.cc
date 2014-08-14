@@ -36,7 +36,8 @@ int match_size( const string & first, const string & second )
 }
 
 Archive::Archive()
-    : archive_()
+    : mutex_(),
+      archive_()
 {}
 
 pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
@@ -54,12 +55,18 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
             if ( curr.get_header_value( "Host" ) == request.get_header_value( "Host" ) ) { /* host header matches */
                 if ( curr.first_line() == request.first_line() ) { /* exact match */
                     HTTPResponse ret( x.second );
+                    if ( ret.first_line() == "" ) { /* response is pending */
+                        return make_pair( false, "" );
+                    }
                     return make_pair( true, ret.str() );
                 }
                 /* possible match, but not exact */
                 int match_val = match_size( curr.first_line(), request.first_line() );
                 if ( match_val > possible_match.first ) { /* closer possible match */
                     HTTPResponse ret( x.second );
+                    if ( ret.first_line() == "" ) { /* response is pending */
+                        possible_match = make_pair( 0, "" );
+                    }
                     possible_match = make_pair( match_val, ret.str());
                 }
             }
@@ -79,6 +86,8 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
     /* first calls find_request to see if the request is already there. if it is, return -1
     if not, emplace to end of vector as <request, empty HTTPMessage> and return index */
 
+    unique_lock<mutex> ul( mutex_ );
+
     auto res = find_request( incoming_req );
 
     if ( res.first == true ) { /* we have request already */
@@ -93,6 +102,8 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
 
 void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index )
 {
+    unique_lock<mutex> ul( mutex_ );
+
     /* first assert that response is null at given index. then add response in that position */
 
     HTTPResponse current_res( archive_.at( index ).second );

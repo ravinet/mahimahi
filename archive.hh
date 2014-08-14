@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <mutex>
 
 #include "http_record.pb.h"
 #include "http_request.hh"
@@ -13,6 +14,7 @@
 class Archive
 {
 private:
+    std::mutex mutex_;
     std::vector< std::pair< MahimahiProtobufs::HTTPMessage, MahimahiProtobufs::HTTPMessage > > archive_;
 
 public:
