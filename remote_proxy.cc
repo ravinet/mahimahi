@@ -21,6 +21,32 @@
 using namespace std;
 using namespace PollerShortNames;
 
+string phantomjs_request( MahimahiProtobufs::BulkRequest & incoming_request )
+{
+    /* Obtain url from BulkRequest protobuf */
+    string scheme = ( incoming_request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
+                      ? "https" : "http" );
+    HTTPRequest curr_request( incoming_request.request() );
+    string hostname = curr_request.get_header_value( "Host" );
+    auto path_start = curr_request.first_line().find( "/" );
+    auto path_end = curr_request.first_line().find( " ", path_start );
+    string path = curr_request.first_line().substr( path_start, path_end - path_start );
+    string url = scheme + "://" + hostname + path;
+
+    /* Get relevant headers so phantomjs mimics user agent */
+    string user_agent = "Chrome/31.0.1650.63 Safari/537.36';\n";
+    string accept = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"};";
+    if ( curr_request.has_header( "User-Agent" ) ) {
+        user_agent = curr_request.get_header_value( "User-Agent" ) + "';\n";
+    }
+
+    if ( curr_request.has_header( "Accept" ) ) {
+        accept = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"};";
+    }
+
+    return( "url = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load );
+}
+
 void handle_client( Socket && client, const int & veth_counter )
 {
     LengthValueParser bulk_request_parser;
@@ -47,29 +73,6 @@ void handle_client( Socket && client, const int & veth_counter )
 
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
-                                           /* Obtain url from BulkRequest protobuf */
-                                           string scheme = ( incoming_request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
-                                                             ? "https" : "http" );
-                                           MahimahiProtobufs::HTTPMessage request_message = incoming_request.request();
-                                           HTTPRequest curr_request( incoming_request.request() );
-                                           string hostname = curr_request.get_header_value( "Host" );
-                                           auto path_start = request_message.first_line().find( "/" );
-                                           auto path_end = request_message.first_line().find( " ", path_start );
-                                           string path = request_message.first_line().substr( path_start, path_end - path_start );
-                                           string url = scheme + "://" + hostname + path;
-
-
-                                           /* Get relevant headers so phantomjs mimics user agent */
-                                           string user_agent = "Chrome/31.0.1650.63 Safari/537.36';\n";
-                                           string accept = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"};";
-                                           if ( curr_request.has_header( "User-Agent" ) ) {
-                                               user_agent = curr_request.get_header_value( "User-Agent" ) + "';\n";
-                                           }
-
-                                           if ( curr_request.has_header( "Accept" ) ) {
-                                               accept = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"};";
-                                           }
-
                                            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
                                                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
                                                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
@@ -77,10 +80,9 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             },
                                                                             move( client ),
                                                                             veth_counter,
-                                                                            "url = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load );
+                                                                            phantomjs_request( incoming_request ) );
                                            client.write( "" );
                                            request_ready = false;
-                                           hostname = "";
                                            return Result::Type::Exit;
                                        },
                                        [&] () { return request_ready; } ) );
