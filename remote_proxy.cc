@@ -58,6 +58,18 @@ void handle_client( Socket && client, const int & veth_counter )
                                            string path = request_message.first_line().substr( path_start, path_end - path_start );
                                            string url = scheme + "://" + hostname + path;
 
+
+                                           /* Get relevant headers so phantomjs mimics user agent */
+                                           string user_agent = "Chrome/31.0.1650.63 Safari/537.36';\n";
+                                           string accept = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"};";
+                                           if ( curr_request.has_header( "User-Agent" ) ) {
+                                               user_agent = curr_request.get_header_value( "User-Agent" ) + "';\n";
+                                           }
+
+                                           if ( curr_request.has_header( "Accept" ) ) {
+                                               accept = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"};";
+                                           }
+
                                            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
                                                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
                                                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
@@ -65,7 +77,7 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             },
                                                                             move( client ),
                                                                             veth_counter,
-                                                                            "url = \"" + url + phantomjs_config );
+                                                                            "url = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load );
                                            client.write( "" );
                                            request_ready = false;
                                            hostname = "";
