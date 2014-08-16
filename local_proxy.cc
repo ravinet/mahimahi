@@ -25,64 +25,6 @@ LocalProxy::LocalProxy( const Address & listener_addr, const Address & remote_pr
     listener_socket_.listen();
 }
 
-int match_length( const string & first, const string & second )
-{
-    const auto max_match = min( first.size(), second.size() );
-    for ( unsigned int i = first.find( "?" ); i < max_match; i++ ) {
-        if ( first.at( i ) != second.at( i ) ) {
-            return i;
-        }
-    }
-    return max_match;
-}
-
-string strip_query( const string & request_line )
-{
-    const auto index = request_line.find( "?" );
-    if ( index == string::npos ) {
-        return request_line;
-    } else {
-        return request_line.substr( 0, index );
-    }
-}
-
-/* matches client request with a request in bulk response and then return the corresponding response in bulk response */
-MahimahiProtobufs::HTTPMessage find_response( MahimahiProtobufs::BulkMessage & requests,
-                                              MahimahiProtobufs::BulkMessage & responses,
-                                              MahimahiProtobufs::BulkRequest & client_request )
-{
-    pair< int, MahimahiProtobufs::HTTPMessage > possible_match = make_pair( 0, MahimahiProtobufs::HTTPMessage() );
-    HTTPRequest new_request( client_request.request() );
-    for ( int i = 0; i < requests.msg_size(); i++ ) {
-        HTTPRequest current_request( requests.msg( i ) );
-        if ( strip_query( current_request.first_line() ) == strip_query( new_request.first_line() ) ) { /* up to ? matches */
-            if ( current_request.get_header_value( "Host" ) == new_request.get_header_value( "Host" ) ) { /* host header matches */
-                if ( current_request.first_line() == new_request.first_line() ) { /* exact match */
-                    return responses.msg( i );
-                }
-                /* possible match, not exact match */
-                int match_val = match_length( current_request.first_line(), new_request.first_line() );
-                if (match_val > possible_match.first ) { /* this possible match is closer to client request */
-                    possible_match = make_pair( match_val, responses.msg( i ) );
-                }
-            }
-        }
-    }
-    if ( possible_match.first != 0 ) { /* we had a possible match */
-        return possible_match.second;
-    }
-    MahimahiProtobufs::HTTPMessage ret;
-    ret.set_first_line( "HTTP/1.1 200 OK" );
-    HTTPHeader header1( "Content-Type: Text/html" );
-    HTTPHeader header2( "Connection: close");
-    HTTPHeader header3( "Content-Length: 24" );
-    ret.set_body( "COULD NOT FIND AN OBJECT" );
-    ret.add_header()->CopyFrom( header1.toprotobuf() );
-    ret.add_header()->CopyFrom( header2.toprotobuf() );
-    ret.add_header()->CopyFrom( header3.toprotobuf() );
-    return ret;
-}
-
 template <class SocketType>
 void LocalProxy::handle_client( SocketType && client, const string & scheme )
 {
