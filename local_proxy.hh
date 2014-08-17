@@ -12,6 +12,8 @@
 #include "secure_socket.hh"
 #include "archive.hh"
 
+static const std::string could_not_find = "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
+
 class LocalProxy
 {
 private:
@@ -19,6 +21,9 @@ private:
     Address remote_proxy_addr_;
 
     Archive archive;
+
+    template <class SocketType>
+    std::string get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType && server );
 
     template <class SocketType>
     void handle_client( SocketType && client, const std::string & scheme );

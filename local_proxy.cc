@@ -25,13 +25,39 @@ LocalProxy::LocalProxy( const Address & listener_addr, const Address & remote_pr
     listener_socket_.listen();
 }
 
-template <class SocketType>
-void LocalProxy::handle_client( SocketType && client, const string & scheme )
+string make_bulk_request( const HTTPRequest & request, const string & scheme )
 {
-    Socket server( TCP );
-    server.connect( remote_proxy_addr_ );
+    MahimahiProtobufs::BulkRequest bulk_request;
 
-    HTTPRequestParser request_parser;
+    bulk_request.set_scheme( scheme == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS :
+                                                 MahimahiProtobufs::BulkRequest_Scheme_HTTP );
+    bulk_request.mutable_request()->CopyFrom( request.toprotobuf() );
+
+    string request_proto;
+    bulk_request.SerializeToString( &request_proto );
+
+    /* Return request string to send (prepended with size) */
+    return( static_cast<string>( Integer32( request_proto.size() ) ) + request_proto );
+}
+
+/* function blocks until it can send a response back to the client for the given request */
+template <class SocketType>
+string LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType && server )
+{
+    /* first check if request is POST and if so, respond that we can't find the response */
+    string type = new_request.str().substr( 0, 4 );
+    if ( type == "POST" ) { /* POST request so send back can't find */
+        return could_not_find;
+    }
+
+    /* check if request and response are in the archive */
+    auto to_send = archive.find_request( new_request.toprotobuf() );
+    if ( to_send.first == true ) {
+        return to_send.second;
+    }
+
+    /* not in archive, so send to remote proxy and wait for response */
+    Poller server_poller;
 
     LengthValueParser bulk_parser;
 
@@ -39,60 +65,25 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
 
     bool parsed_requests = false;
 
-    MahimahiProtobufs::BulkMessage requests;
-    MahimahiProtobufs::BulkMessage responses;
+    bool sent_request = false;
 
-    MahimahiProtobufs::BulkRequest bulk_request;
+    string response;
 
-    Poller poller;
-
-    poller.add_action( Poller::Action( client, Direction::In,
+    server_poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
-                                           string buffer = client.read();
-                                           request_parser.parse( buffer );
+                                           server.write( make_bulk_request( new_request , scheme ) );
+                                           sent_request = true;
                                            return ResultType::Continue;
                                        },
-                                       [&] () { return true; } ) );
+                                       [&] () { return not sent_request; } ) );
 
-    poller.add_action( Poller::Action( server, Direction::Out,
-                                       [&] () {
-                                           /* don't send POST requests to the remote proxy */
-                                           string type = request_parser.front().str().substr( 0, 4 );
-                                           if ( type == "POST" ) { /* POST request so send back can't find */
-                                               server.write( "" );
-                                               client.write( "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT" );
-                                               request_parser.pop();
-                                               return ResultType::Continue;
-                                           }
-                                           auto tosend = archive.find_request( request_parser.front().toprotobuf() );
-                                           if ( tosend.first == true ) {
-                                               server.write( "" );
-                                               client.write( tosend.second );
-                                               request_parser.pop();
-                                               return ResultType::Continue;
-                                           }
-                                           bulk_request.set_scheme( scheme == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS :
-                                                                                        MahimahiProtobufs::BulkRequest_Scheme_HTTP );
-                                           bulk_request.mutable_request()->CopyFrom( request_parser.front().toprotobuf() );
-                                           request_parser.pop();
-                                           string request_proto;
-                                           bulk_request.SerializeToString( &request_proto );
-
-                                           /* Make request string to send (prepended with size) */
-                                           string request = static_cast<string>( Integer32( request_proto.size() ) ) + request_proto;
-
-                                           server.write( request );
-
-                                           return ResultType::Continue;
-                                       },
-                                       [&] () { return not request_parser.empty(); } ) );
-
-    poller.add_action( Poller::Action( server, Direction::In,
+    server_poller.add_action( Poller::Action( server, Direction::In,
                                        [&] () {
                                            string buffer = server.read();
                                            auto res = bulk_parser.parse( buffer );
                                            if ( res.first ) { /* we have read a complete bulk protobuf */
                                                if ( not parsed_requests ) { /* it is the requests */
+                                                   MahimahiProtobufs::BulkMessage requests;
                                                    requests.ParseFromString( res.second );
                                                    parsed_requests = true;
                                                    /* add requests to archive */
@@ -103,24 +94,69 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                                        }
                                                    }
                                                } else { /* it is the responses */
+                                                   MahimahiProtobufs::BulkMessage responses;
                                                    responses.ParseFromString( res.second );
-                                                   for ( int j = 0; j < request_positions.size(); j++ ) {
+                                                   for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
-                                                   request_positions.clear();
-                                                   auto tosend = archive.find_request( bulk_request.request() );
-                                                   if ( tosend.first == true ) {
-                                                       client.write( tosend.second );
+                                                   auto match = archive.find_request( new_request.toprotobuf() );
+                                                   if ( match.first == true ) {
+                                                       response = match.second;
                                                    } else {
-                                                       client.write( "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT" );
+                                                       response = could_not_find;
                                                    }
-                                                   archive.print( bulk_request.request() );
-                                                   parsed_requests = false;
                                                }
                                            }
                                            return ResultType::Continue;
                                        },
-                                       [&] () { return not server.eof(); } ) );
+                                       [&] () { return sent_request; } ) );
+
+    while ( true ) {
+        if ( server_poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
+            return "";
+        }
+        if ( response != "" ) { /* we have the response */
+            return response;
+        }
+    }
+}
+
+template <class SocketType>
+void LocalProxy::handle_client( SocketType && client, const string & scheme )
+{
+    Socket server( TCP );
+    server.connect( remote_proxy_addr_ );
+
+    HTTPRequestParser request_parser;
+
+    Poller poller;
+
+    /* Currently we can only have one response at a time anyway (should replace with bytestreamqueue eventually) */
+    string current_response;
+
+    poller.add_action( Poller::Action( client, Direction::In,
+                                       [&] () {
+                                           string buffer = client.read();
+                                           request_parser.parse( buffer );
+                                           if ( not request_parser.empty() ) { /* we have a complete request */
+                                               current_response = get_response( request_parser.front(), scheme, move( server ) );
+                                               request_parser.pop();
+                                               if ( current_response == "" ) {
+                                                   return ResultType::Exit;
+                                               }
+                                           }
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return ( ( not server.eof() ) and ( current_response.empty() ) ); } ) );
+
+    poller.add_action( Poller::Action( client, Direction::Out,
+                                       [&] () {
+                                           client.write( current_response );
+                                           current_response.clear();
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not current_response.empty(); } ) );
+
 
     while ( true ) {
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
