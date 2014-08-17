@@ -45,6 +45,8 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
     /* iterates through requests in the archive and see if request matches any of them. if it does, return <true, response as string>
     otherwise, return <false, ""> */
 
+    /* should take out lock here? doesn't seem to work when I do */
+
     pair< int, string > possible_match = make_pair( 0, "" );
 
     HTTPRequest request( incoming_req );
@@ -67,7 +69,9 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                     if ( ret.first_line() == "" ) { /* response is pending */
                         possible_match = make_pair( 0, "" );
                     }
-                    possible_match = make_pair( match_val, ret.str());
+                    else {
+                        possible_match = make_pair( match_val, ret.str());
+                    }
                 }
             }
         }
@@ -114,6 +118,8 @@ void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, con
 
 void Archive::print( const HTTPRequest & req )
 {
+    unique_lock<mutex> ul( mutex_ );
+
     unlink( "archivestuff.txt" );
 
     string bulk_file_name = "archivestuff.txt";
