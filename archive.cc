@@ -45,7 +45,7 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
     /* iterates through requests in the archive and see if request matches any of them. if it does, return <true, response as string>
     otherwise, return <false, ""> */
 
-    /* should take out lock here? doesn't seem to work when I do */
+    unique_lock<mutex> ul( mutex_ );
 
     pair< int, string > possible_match = make_pair( 0, "" );
 
@@ -87,9 +87,9 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
     /* first calls find_request to see if the request is already there. if it is, return -1
     if not, emplace to end of vector as <request, empty HTTPMessage> and return index */
 
-    unique_lock<mutex> ul( mutex_ );
-
     auto res = find_request( incoming_req );
+
+    unique_lock<mutex> ul( mutex_ );
 
     if ( res.first == true ) { /* we have request already */
         return -1;
