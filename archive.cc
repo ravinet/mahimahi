@@ -66,11 +66,8 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                 int match_val = match_size( curr.first_line(), request.first_line() );
                 if ( match_val > possible_match.first ) { /* closer possible match */
                     HTTPResponse ret( x.second );
-                    if ( ret.first_line() == "" ) { /* response is pending */
-                        possible_match = make_pair( 0, "" );
-                    }
-                    else {
-                        possible_match = make_pair( match_val, ret.str());
+                    if ( ret.first_line() != "" ) { /* response is not pending */
+                        possible_match = make_pair( match_val, ret.str() );
                     }
                 }
             }
