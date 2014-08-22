@@ -134,7 +134,6 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     /* do the actual recording in a different unprivileged child */
     outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
             drop_privileges();
-
             EventLoop recordr_event_loop;
             dns_outside.register_handlers( recordr_event_loop );
             proxy_target.register_handlers( recordr_event_loop );

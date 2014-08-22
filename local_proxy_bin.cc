@@ -22,7 +22,7 @@ int main( int argc, char *argv[] )
 
         EventLoop event_loop;
 
-        local_proxy.listen( event_loop );
+        local_proxy.register_handlers( event_loop );
 
         event_loop.loop();
     } catch ( const Exception & e ) {

@@ -33,12 +33,10 @@ public:
 
     Socket & tcp_listener( void ) { return listener_socket_; }
 
-    void listen( EventLoop & event_loop );
+    void listen( void );
 
-    /* TODO: Need to fix these things */
-    void register_handlers( EventLoop & event_loop ) { listen( event_loop ); }
+    void register_handlers( EventLoop & event_loop );
 
-    /* TODO: Serialize results to socket */
     void serialize_to_socket( Socket && socket_output __attribute__ ((unused)) ) { printf("WARNING NOT IMPLEMENTED\n"); }
 };
 

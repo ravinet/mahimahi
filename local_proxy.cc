@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <iostream>
+#include <thread>
 
 #include "address.hh"
 #include "system_runner.hh"
@@ -166,25 +167,36 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
     }
 }
 
-void LocalProxy::listen( EventLoop & event_loop )
+void LocalProxy::listen( void )
 {
-    /* listen for new clients */
-    event_loop.add_simple_input_handler( listener_socket_,
+
+    thread newthread( [&] ( Socket client ) {
+            try {
+                string scheme = "http";
+                if ( client.original_dest().port() == 443 ) {
+                    scheme = "https";
+                    SSLContext server_context( SERVER );
+                    SecureSocket tls_client( server_context.new_secure_socket( move( client ) ) );
+                    tls_client.accept();
+                    handle_client( move( tls_client ), scheme );
+                    return;
+                }
+                handle_client( move( client ), scheme );
+                return;
+            } catch ( const Exception & e ) {
+                e.perror();
+            }
+    }, listener_socket_.accept() );
+
+    /* don't wait around for the reply */
+    newthread.detach();
+}
+
+void LocalProxy::register_handlers( EventLoop & event_loop )
+{
+    event_loop.add_simple_input_handler( tcp_listener(),
                                          [&] () {
-                                             Socket client = listener_socket_.accept();
-                                             event_loop.add_child_process( ChildProcess( "new_client", [&] () {
-                                                     string scheme = "http";
-                                                     if ( client.original_dest().port() == 443 ) {
-                                                         scheme = "https";
-                                                         SSLContext server_context( SERVER );
-                                                         SecureSocket tls_client( server_context.new_secure_socket( move( client ) ) );
-                                                         tls_client.accept();
-                                                         handle_client( move( tls_client ), scheme );
-                                                         return EXIT_SUCCESS;
-                                                     }
-                                                     handle_client( move( client ), scheme );
-                                                     return EXIT_SUCCESS;
-                                                 } ), false );
+                                             listen();
                                              return ResultType::Continue;
                                          } );
 }
