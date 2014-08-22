@@ -30,10 +30,14 @@ int main( int argc, char *argv[] )
 
         /* what command will we run inside the container? */
         vector < string > command;
-        if ( argc == 1 ) {
+        if ( argc <= 1 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " remote_proxy_port [command...]" );
+        }
+
+        if ( argc == 2 ) {
             command.push_back( shell_path() );
         } else {
-            for ( int i = 1; i < argc; i++ ) {
+            for ( int i = 2; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
             }
         }
