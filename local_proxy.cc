@@ -88,8 +88,9 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                                    parsed_requests = true;
                                                    /* add requests to archive */
                                                    for ( int i = 0; i < requests.msg_size(); i++ ) {
-                                                       auto pos = archive.add_request( requests.msg( i ) );
-                                                       if ( pos >= 0 ) {
+                                                       auto find_result = archive.find_request( requests.msg( i ) );
+                                                       if ( find_result.first == false ) { /* request not already in archive */
+                                                           auto pos = archive.add_request( requests.msg( i ) );
                                                            request_positions.emplace_back( make_pair( i, pos ) );
                                                        }
                                                    }

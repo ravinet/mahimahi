@@ -84,28 +84,22 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
 
 int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
 {
-    /* first calls find_request to see if the request is already there. if it is, return -1
-    if not, emplace to end of vector as <request, empty HTTPMessage> and return index */
-
-    auto res = find_request( incoming_req );
+    /* emplace to end of vector as <request, empty HTTPMessage> and return index */
+    /* caller should have called find_request() to make sure request is not already there */
 
     unique_lock<mutex> ul( mutex_ );
 
-    if ( res.first == true ) { /* we have request already */
-        return -1;
-    } else { /* add request to archive */
-        MahimahiProtobufs::HTTPMessage blank;
-        int new_pos = archive_.size();
-        archive_.emplace_back( make_pair( incoming_req, blank ) );
-        return new_pos;
-    }
+    MahimahiProtobufs::HTTPMessage blank;
+    int new_pos = archive_.size();
+    archive_.emplace_back( make_pair( incoming_req, blank ) );
+    return new_pos;
 }
 
 void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index )
 {
     unique_lock<mutex> ul( mutex_ );
 
-    /* first assert that response is null at given index. then add response in that position */
+    /* first assert that response is empty (pending) at given index. then add response in that position */
 
     HTTPResponse current_res( archive_.at( index ).second );
     assert( current_res.first_line() == "" );
