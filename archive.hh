@@ -10,16 +10,18 @@
 
 #include "http_record.pb.h"
 #include "http_request.hh"
+#include "http_response.hh"
 
 class Archive
 {
 private:
     std::mutex mutex_;
     std::vector< std::pair< MahimahiProtobufs::HTTPMessage, MahimahiProtobufs::HTTPMessage > > archive_;
+    bool check_freshness( const HTTPRequest & new_request, const HTTPResponse & stored_response );
 
 public:
     Archive();
-    std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
+    std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh = true );
     int add_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     void add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index );
     void print( const HTTPRequest & req );

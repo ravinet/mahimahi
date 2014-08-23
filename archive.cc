@@ -5,13 +5,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <chrono>
+#include <ctime>
 
 #include "archive.hh"
 #include "http_request.hh"
 #include "http_response.hh"
 #include "http_header.hh"
-
 #include "file_descriptor.hh"
+
 using namespace std;
 
 string remove_query( const string & request_line )
@@ -35,12 +37,109 @@ int match_size( const string & first, const string & second )
     return max_match;
 }
 
+int date_diff( const string & date1, const string & date2 )
+{
+    /* returns the difference, in seconds, between date1 and date2 (can be negative if date2 is later than date1) */
+    tm tm_date1;
+    strptime( date1.c_str(), "%a, %d %b %Y %H:%M:%S", &tm_date1 );
+    auto tp_date1 = chrono::system_clock::from_time_t( std::mktime( &tm_date1 ) );
+    time_t tt_date1 = chrono::system_clock::to_time_t( tp_date1 );
+
+    tm tm_date2;
+    strptime( date2.c_str(), "%a, %d %b %Y %H:%M:%S", &tm_date2 );
+    auto tp_date2 = chrono::system_clock::from_time_t( mktime( &tm_date2 ) );
+    time_t tt_date2 = chrono::system_clock::to_time_t( tp_date2 );
+
+    return difftime( tt_date1, tt_date2 );
+}
+
+int get_cache_value( const string & cache_header, const string & value_to_find )
+{
+    /* returns value of specific field of cache header (caller has checked that value field present) */
+    int value = -1;
+    size_t loc = cache_header.find( value_to_find );
+    if ( loc != string::npos ) { /* we have the desired value */
+        loc = loc + value_to_find.size() + 1;
+        size_t comma = cache_header.find( ",", loc );
+        if ( comma != string::npos ) { /* we have another cache field listed after this */
+            value = myatoi( cache_header.substr( loc, ( comma - loc ) ).c_str() );
+        } else { /* cache header ends after this field */
+            value = myatoi( cache_header.substr( loc ).c_str() );
+        }
+    } else {
+        throw Exception( "get_cache_val", value_to_find + " not present in cache header" );
+    }
+    return value;
+}
+
 Archive::Archive()
     : mutex_(),
       archive_()
 {}
 
-pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
+bool Archive::check_freshness( const HTTPRequest & new_request, const HTTPResponse & stored_response )
+{
+    /* current age represents how long since object in response was made */
+    /* current_age = date_in_new_request - date_in_stored_response + Age header value in response (if present) */
+    /* If no date present in request, assume age is 0 */
+    int current_age = 0;
+    if ( new_request.has_header( "Date" ) and stored_response.has_header( "Date" ) ) {
+        current_age = date_diff( new_request.get_header_value( "Date" ), stored_response.get_header_value( "Date" ) );
+        if ( stored_response.has_header( "Age" ) ) { /* stored header specifies age of object when response was sent */
+            current_age = current_age + myatoi( stored_response.get_header_value( "Age" ) );
+        }
+    }
+
+    /* max_freshness represents lifetime of response- initialize to traffic server default */
+    int max_freshness = 86400;
+    if ( stored_response.has_header( "Cache-Control" ) ) {
+        string cache_control = stored_response.get_header_value( "Cache-Control" );
+        if ( cache_control.find( "max-age" ) != string::npos ) { /* we have a max age */
+            max_freshness = get_cache_value( cache_control, "max-age" );
+        }
+    } else if ( stored_response.has_header( "Expires" ) and stored_response.has_header( "Date" ) ) { /* we have expiration date */
+        /* max_freshness = expires_date - date_in_stored_response */
+        max_freshness = date_diff( stored_response.get_header_value( "Expires" ), stored_response.get_header_value( "Date" ) );
+        if ( max_freshness < 0 ) { /* response has expired */
+            max_freshness = 0;
+        }
+    } else if ( stored_response.has_header( "Date" ) and stored_response.has_header( "Last-Modified" ) ) {
+        /* max_freshness = (date - last_modified) * 0.1 */
+        max_freshness = date_diff( stored_response.get_header_value( "Date" ), stored_response.get_header_value( "Last-Modified" ) ) * 0.1;
+        if ( max_freshness < 0 ) { /* response not consistent (last-modified can't be later than the date of response) */
+            max_freshness = 0;
+        }
+    }
+
+    /* compare freshness with new_request requirements */
+    if ( new_request.has_header( "Cache-Control" ) ) { /* first check if client has freshness requirement */
+        string cache_control = new_request.get_header_value( "Cache-Control" );
+        if ( cache_control.find( "min-fresh" ) != string::npos ) { /* client has min requirement on freshness */
+            int client_min_fresh = get_cache_value( cache_control, "min-fresh" );
+            if ( client_min_fresh > ( max_freshness - current_age ) ) { /* remaining lifetime is less than what client wants */
+                return false;
+            } else {
+                return true;
+            }
+        } else if ( cache_control.find( "max-stale" ) != string::npos ) { /* client willing to take stale response */
+            int client_max_stale = get_cache_value( cache_control, "max-stale" );
+            if ( client_max_stale < ( current_age - max_freshness ) ) { /* response fresh enough to send */
+                return true;
+            } else { /* response too stale */
+                return false;
+            }
+        }
+    }
+
+    /* compare freshness with current age */
+    if ( max_freshness >= current_age ) { /* response is still fresh */
+        return true;
+    } else { /* response stale */
+        return false;
+    }
+}
+
+pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh )
 {
     /* iterates through requests in the archive and see if request matches any of them. if it does, return <true, response as string>
     otherwise, return <false, ""> */
@@ -59,15 +158,30 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                     HTTPResponse ret( x.second );
                     if ( ret.first_line() == "" ) { /* response is pending */
                         return make_pair( false, "" );
+                    } else {
+                        if ( check_fresh ) {
+                            if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                return make_pair( true, ret.str() );
+                            } else {
+                                return make_pair( false, "" );
+                            }
+                        } else {
+                            return make_pair( true, ret.str() );
+                        }
                     }
-                    return make_pair( true, ret.str() );
                 }
                 /* possible match, but not exact */
                 int match_val = match_size( curr.first_line(), request.first_line() );
                 if ( match_val > possible_match.first ) { /* closer possible match */
                     HTTPResponse ret( x.second );
                     if ( ret.first_line() != "" ) { /* response is not pending */
-                        possible_match = make_pair( match_val, ret.str() );
+                        if ( check_fresh ) {
+                            if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                possible_match = make_pair( match_val, ret.str() );
+                            }
+                        } else {
+                            possible_match = make_pair( match_val, ret.str() );
+                        }
                     }
                 }
             }
@@ -98,11 +212,6 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
 void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index )
 {
     unique_lock<mutex> ul( mutex_ );
-
-    /* first assert that response is empty (pending) at given index. then add response in that position */
-
-    HTTPResponse current_res( archive_.at( index ).second );
-    assert( current_res.first_line() == "" );
 
     archive_.at( index ).second = response;
 }

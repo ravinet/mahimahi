@@ -89,7 +89,8 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                                    parsed_requests = true;
                                                    /* add requests to archive */
                                                    for ( int i = 0; i < requests.msg_size(); i++ ) {
-                                                       auto find_result = archive.find_request( requests.msg( i ) );
+                                                       /* Don't check freshness since these are newer than whatever is in archive */
+                                                       auto find_result = archive.find_request( requests.msg( i ), false );
                                                        if ( find_result.first == false ) { /* request not already in archive */
                                                            auto pos = archive.add_request( requests.msg( i ) );
                                                            request_positions.emplace_back( make_pair( i, pos ) );
@@ -101,7 +102,8 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
-                                                   auto match = archive.find_request( new_request.toprotobuf() );
+                                                   /* Don't check freshness since we just added the response in the archive */
+                                                   auto match = archive.find_request( new_request.toprotobuf(), false );
                                                    if ( match.first == true ) {
                                                        response = match.second;
                                                    } else {
