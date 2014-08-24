@@ -21,7 +21,7 @@ private:
 
 public:
     Archive();
-    std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh = true );
+    std::pair< bool, std::string > find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh = true, const bool & pending_ok = true );
     int add_request( const MahimahiProtobufs::HTTPMessage & incoming_req );
     void add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index );
     void print( const HTTPRequest & req );

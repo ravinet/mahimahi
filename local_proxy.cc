@@ -52,7 +52,7 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
     }
 
     /* check if request and response are in the archive */
-    auto to_send = archive.find_request( new_request.toprotobuf() );
+    auto to_send = archive.find_request( new_request.toprotobuf(), false );
     if ( to_send.first == true ) {
         return to_send.second;
     }
@@ -90,7 +90,7 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                                    /* add requests to archive */
                                                    for ( int i = 0; i < requests.msg_size(); i++ ) {
                                                        /* Don't check freshness since these are newer than whatever is in archive */
-                                                       auto find_result = archive.find_request( requests.msg( i ), false );
+                                                       auto find_result = archive.find_request( requests.msg( i ), false, false );
                                                        if ( find_result.first == false ) { /* request not already in archive */
                                                            auto pos = archive.add_request( requests.msg( i ) );
                                                            request_positions.emplace_back( make_pair( i, pos ) );

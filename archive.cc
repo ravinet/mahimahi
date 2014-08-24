@@ -139,7 +139,7 @@ bool Archive::check_freshness( const HTTPRequest & new_request, const HTTPRespon
     }
 }
 
-pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh )
+pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage & incoming_req, const bool & check_fresh, const bool & pending_ok )
 {
     /* iterates through requests in the archive and see if request matches any of them. if it does, return <true, response as string>
     otherwise, return <false, ""> */
@@ -170,17 +170,19 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                         }
                     }
                 }
-                /* possible match, but not exact */
-                int match_val = match_size( curr.first_line(), request.first_line() );
-                if ( match_val > possible_match.first ) { /* closer possible match */
-                    HTTPResponse ret( x.second );
-                    if ( ret.first_line() != "" ) { /* response is not pending */
-                        if ( check_fresh ) {
-                            if ( check_freshness( request, ret ) ) { /* response is fresh */
+                if ( pending_ok ) {
+                    /* possible match, but not exact */
+                    int match_val = match_size( curr.first_line(), request.first_line() );
+                    if ( match_val > possible_match.first ) { /* closer possible match */
+                        HTTPResponse ret( x.second );
+                        if ( ret.first_line() != "" ) { /* response is not pending */
+                            if ( check_fresh ) {
+                                if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                    possible_match = make_pair( match_val, ret.str() );
+                                }
+                            } else {
                                 possible_match = make_pair( match_val, ret.str() );
                             }
-                        } else {
-                            possible_match = make_pair( match_val, ret.str() );
                         }
                     }
                 }
