@@ -43,7 +43,7 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 
 /* function blocks until it can send a response back to the client for the given request */
 template <class SocketType>
-string LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType && server )
+string LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType && server, bool & already_connected )
 {
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
@@ -55,6 +55,11 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
     auto to_send = archive.find_request( new_request.toprotobuf(), false );
     if ( to_send.first == true ) {
         return to_send.second;
+    }
+
+    if ( not already_connected ) {
+        server.connect( remote_proxy_addr_ );
+        already_connected = true;
     }
 
     /* not in archive, so send to remote proxy and wait for response */
@@ -128,12 +133,12 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
 template <class SocketType>
 void LocalProxy::handle_client( SocketType && client, const string & scheme )
 {
-    Socket server( TCP );
-    server.connect( remote_proxy_addr_ );
-
     HTTPRequestParser request_parser;
 
     Poller poller;
+
+    Socket server( TCP );
+    bool already_connected = false;
 
     /* Currently we can only have one response at a time anyway (should replace with bytestreamqueue eventually) */
     string current_response;
@@ -143,7 +148,7 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
                                            if ( not request_parser.empty() ) { /* we have a complete request */
-                                               current_response = get_response( request_parser.front(), scheme, move( server ) );
+                                               current_response = get_response( request_parser.front(), scheme, move( server ), already_connected );
                                                request_parser.pop();
                                                if ( current_response == "" ) {
                                                    return ResultType::Exit;

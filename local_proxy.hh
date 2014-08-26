@@ -23,7 +23,7 @@ private:
     Archive archive;
 
     template <class SocketType>
-    std::string get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType && server );
+    std::string get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType && server, bool & already_connected );
 
     template <class SocketType>
     void handle_client( SocketType && client, const std::string & scheme );
