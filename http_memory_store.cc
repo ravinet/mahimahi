@@ -49,6 +49,11 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
     string requests_ret = static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
     string responses_ret = static_cast<string>( Integer32( all_responses.size() ) ) + all_responses;
 
-    client.write( requests_ret );
+    /* prepend the first response size and the response itself to the requests of bulk response */
+    string first_response;
+    responses.msg( 0 ).SerializeToString( &first_response );
+    string requests_and_response = static_cast<string>( Integer32( first_response.size() ) ) + first_response + requests_ret;
+
+    client.write( requests_and_response );
     client.write( responses_ret );
 }
