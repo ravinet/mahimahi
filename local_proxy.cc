@@ -42,19 +42,21 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 }
 
 /* function blocks until it can send a response back to the client for the given request */
-template <class SocketType>
-string LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType && server, bool & already_connected )
+template <class SocketType1, class SocketType2>
+pair< bool, string> LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client )
 {
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
     if ( type == "POST" ) { /* POST request so send back can't find */
-        return could_not_find;
+        client.write( could_not_find );
+        return make_pair( true, could_not_find );
     }
 
     /* check if request and response are in the archive */
     auto to_send = archive.find_request( new_request.toprotobuf(), false );
     if ( to_send.first == true ) {
-        return to_send.second;
+        client.write( to_send.second );
+        return make_pair( true, to_send.second );
     }
 
     if ( not already_connected ) {
@@ -73,7 +75,9 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
 
     bool sent_request = false;
 
-    string response;
+    bool first_response = false;
+
+    bool finished_bulk = false;
 
     server_poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
@@ -88,7 +92,13 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                            string buffer = server.read();
                                            auto res = bulk_parser.parse( buffer );
                                            if ( res.first ) { /* we have read a complete bulk protobuf */
-                                               if ( not parsed_requests ) { /* it is the requests */
+                                               if ( not first_response ) { /* this is the first response, send back to client */
+                                                   MahimahiProtobufs::HTTPMessage response_to_send;
+                                                   response_to_send.ParseFromString( res.second );
+                                                   HTTPResponse first_res( response_to_send );
+                                                   client.write( first_res.str() );
+                                                   first_response = true;
+                                               } else if ( not parsed_requests ) { /* it is the requests */
                                                    MahimahiProtobufs::BulkMessage requests;
                                                    requests.ParseFromString( res.second );
                                                    parsed_requests = true;
@@ -107,13 +117,7 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
-                                                   /* Don't check freshness since we just added the response in the archive */
-                                                   auto match = archive.find_request( new_request.toprotobuf(), false );
-                                                   if ( match.first == true ) {
-                                                       response = match.second;
-                                                   } else {
-                                                       response = could_not_find;
-                                                   }
+                                                   finished_bulk = true;
                                                }
                                            }
                                            return ResultType::Continue;
@@ -122,10 +126,10 @@ string LocalProxy::get_response( const HTTPRequest & new_request, const string &
 
     while ( true ) {
         if ( server_poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
-            return "";
+            return make_pair( true, "" );
         }
-        if ( response != "" ) { /* we have the response */
-            return response;
+        if ( finished_bulk ) {
+            return make_pair( false, "" );
         }
     }
 }
@@ -148,24 +152,27 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
                                            if ( not request_parser.empty() ) { /* we have a complete request */
-                                               current_response = get_response( request_parser.front(), scheme, move( server ), already_connected );
+                                               auto status = get_response( request_parser.front(), scheme, move( server ), already_connected, move( client ) );
                                                request_parser.pop();
-                                               if ( current_response == "" ) {
-                                                   return ResultType::Exit;
+                                               if ( status.first == true ) { /* we should handle response */
+                                                   if ( current_response == "" ) {
+                                                       return ResultType::Exit;
+                                                   }
+                                                   //current_response = status.second;
                                                }
                                            }
                                            return ResultType::Continue;
                                        },
                                        [&] () { return ( ( not server.eof() ) and ( current_response.empty() ) ); } ) );
 
-    poller.add_action( Poller::Action( client, Direction::Out,
+/*    poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
                                            client.write( current_response );
                                            current_response.clear();
                                            return ResultType::Continue;
                                        },
                                        [&] () { return not current_response.empty(); } ) );
-
+*/
 
     while ( true ) {
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
