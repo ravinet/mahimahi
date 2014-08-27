@@ -13,6 +13,7 @@
 #include "http_request.hh"
 #include "http_header.hh"
 #include "http_response.hh"
+#include "timestamp.hh"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -43,20 +44,20 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 
 /* function blocks until it can send a response back to the client for the given request */
 template <class SocketType1, class SocketType2>
-pair< bool, string> LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client )
+bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client )
 {
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
     if ( type == "POST" ) { /* POST request so send back can't find */
         client.write( could_not_find );
-        return make_pair( true, could_not_find );
+        return false;
     }
 
     /* check if request and response are in the archive */
     auto to_send = archive.find_request( new_request.toprotobuf(), false );
-    if ( to_send.first == true ) {
+    if ( to_send.first ) {
         client.write( to_send.second );
-        return make_pair( true, to_send.second );
+        return false;
     }
 
     if ( not already_connected ) {
@@ -91,7 +92,7 @@ pair< bool, string> LocalProxy::get_response( const HTTPRequest & new_request, c
                                        [&] () {
                                            string buffer = server.read();
                                            auto res = bulk_parser.parse( buffer );
-                                           if ( res.first ) { /* we have read a complete bulk protobuf */
+                                           while ( res.first ) {
                                                if ( not first_response ) { /* this is the first response, send back to client */
                                                    MahimahiProtobufs::HTTPMessage response_to_send;
                                                    response_to_send.ParseFromString( res.second );
@@ -119,6 +120,7 @@ pair< bool, string> LocalProxy::get_response( const HTTPRequest & new_request, c
                                                    }
                                                    finished_bulk = true;
                                                }
+                                               res = bulk_parser.parse( "" );
                                            }
                                            return ResultType::Continue;
                                        },
@@ -126,10 +128,10 @@ pair< bool, string> LocalProxy::get_response( const HTTPRequest & new_request, c
 
     while ( true ) {
         if ( server_poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
-            return make_pair( true, "" );
+            return true;
         }
         if ( finished_bulk ) {
-            return make_pair( false, "" );
+            return false;
         }
     }
 }
@@ -152,27 +154,15 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
                                            if ( not request_parser.empty() ) { /* we have a complete request */
-                                               auto status = get_response( request_parser.front(), scheme, move( server ), already_connected, move( client ) );
+                                               bool status = get_response( request_parser.front(), scheme, move( server ), already_connected, move( client ) );
                                                request_parser.pop();
-                                               if ( status.first == true ) { /* we should handle response */
-                                                   if ( current_response == "" ) {
-                                                       return ResultType::Exit;
-                                                   }
-                                                   //current_response = status.second;
+                                               if ( status ) { /* we should handle response */
+                                                   return ResultType::Exit;
                                                }
                                            }
                                            return ResultType::Continue;
                                        },
                                        [&] () { return ( ( not server.eof() ) and ( current_response.empty() ) ); } ) );
-
-/*    poller.add_action( Poller::Action( client, Direction::Out,
-                                       [&] () {
-                                           client.write( current_response );
-                                           current_response.clear();
-                                           return ResultType::Continue;
-                                       },
-                                       [&] () { return not current_response.empty(); } ) );
-*/
 
     while ( true ) {
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
