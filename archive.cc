@@ -74,6 +74,7 @@ int get_cache_value( const string & cache_header, const string & value_to_find )
 
 Archive::Archive()
     : mutex_(),
+      cv_(),
       archive_()
 {}
 
@@ -157,7 +158,7 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                 if ( curr.first_line() == request.first_line() ) { /* exact match */
                     HTTPResponse ret( x.second );
                     if ( ret.first_line() == "" ) { /* response is pending */
-                        return make_pair( false, "" );
+                        return make_pair( true, "" );
                     } else {
                         if ( check_fresh ) {
                             if ( check_freshness( request, ret ) ) { /* response is fresh */
@@ -183,6 +184,8 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                             } else {
                                 possible_match = make_pair( match_val, ret.str() );
                             }
+                        } else {
+                            possible_match = make_pair( match_val, ret.str() );
                         }
                     }
                 }
@@ -195,7 +198,7 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
     }
 
     /* no match */
-    return make_pair( false, "" );
+    return make_pair( false, " " );
 }
 
 int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
@@ -213,6 +216,8 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
 
 void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index )
 {
+    notify();
+
     unique_lock<mutex> ul( mutex_ );
 
     archive_.at( index ).second = response;
@@ -241,4 +246,10 @@ void Archive::print( const HTTPRequest & req )
 
     }
     bulkreply.write( to_write );
+}
+
+void Archive::wait( void )
+{
+    unique_lock<mutex> pending_lock( mutex_ );
+    cv_.wait( pending_lock );
 }

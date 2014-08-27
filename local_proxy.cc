@@ -56,6 +56,10 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
     /* check if request and response are in the archive */
     auto to_send = archive.find_request( new_request.toprotobuf(), false );
     if ( to_send.first ) {
+        while ( to_send.second == "" ) { /* response is pending */
+            archive.wait();
+            to_send = archive.find_request( new_request.toprotobuf(), false );
+        }
         client.write( to_send.second );
         return false;
     }
