@@ -41,13 +41,18 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
 
     /* Serialize both request and response to String for transmission */
     string all_requests;
-    string all_responses;
     requests.SerializeToString( &all_requests );
-    responses.SerializeToString( &all_responses );
 
     /* Put sizes and messages into bulk response formats (one for request, one for response) */
     string requests_ret = static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
-    string responses_ret = static_cast<string>( Integer32( all_responses.size() ) ) + all_responses;
+
+    string responses_ret;
+
+    for ( int i = 0; i < responses.msg_size(); i++ ) { /* add response string size and response string */
+        string current_response;
+        responses.msg( i ).SerializeToString( &current_response );
+        responses_ret = responses_ret + static_cast<string>( Integer32( current_response.size() ) ) + current_response;
+    }
 
     /* prepend the first response size and the response itself to the requests of bulk response */
     string first_response;
