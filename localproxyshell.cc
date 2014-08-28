@@ -43,6 +43,8 @@ int main( int argc, char *argv[] )
         }
 
         ProcessRecorder<LocalProxy> process_recorder;
+        string remote_port( argv[ 1 ] );
+        Address remote_proxy_addr( "54.183.156.70", remote_port );
         return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                                 /* restore environment and tweak prompt */
                                                 environ = user_environment;
@@ -52,7 +54,7 @@ int main( int argc, char *argv[] )
                                               }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */
                                                , 0
                                                , ""
-                                               , Address ( "8.8.8.8", 5555 ) );
+                                               , remote_proxy_addr );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

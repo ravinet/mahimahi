@@ -216,11 +216,13 @@ int Archive::add_request( const MahimahiProtobufs::HTTPMessage & incoming_req )
 
 void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index )
 {
+    {
+        unique_lock<mutex> ul( mutex_ );
+
+        archive_.at( index ).second = response;
+    }
+
     notify();
-
-    unique_lock<mutex> ul( mutex_ );
-
-    archive_.at( index ).second = response;
 }
 
 void Archive::print( const HTTPRequest & req )

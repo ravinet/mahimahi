@@ -46,6 +46,7 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 template <class SocketType1, class SocketType2>
 bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client )
 {
+    cout << "INCOMING REQUEST: " << new_request.first_line() << " AT: " << timestamp() << endl;
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
     if ( type == "POST" ) { /* POST request so send back can't find */
@@ -60,6 +61,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
             archive.wait();
             to_send = archive.find_request( new_request.toprotobuf(), false );
         }
+        cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
         client.write( to_send.second );
         return false;
     }
@@ -101,6 +103,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    MahimahiProtobufs::HTTPMessage response_to_send;
                                                    response_to_send.ParseFromString( res.second );
                                                    HTTPResponse first_res( response_to_send );
+                                                   cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
                                                    client.write( first_res.str() );
                                                    first_response = true;
                                                } else if ( not parsed_requests ) { /* it is the requests */
@@ -122,6 +125,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
+                                                   cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
                                                    finished_bulk = true;
                                                }
                                                res = bulk_parser.parse( "" );
