@@ -86,6 +86,10 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
 
     bool finished_bulk = false;
 
+    int response_counter = 0;
+
+    int total_requests = 0;
+
     server_poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
                                            server.write( make_bulk_request( new_request , scheme ) );
@@ -110,6 +114,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    MahimahiProtobufs::BulkMessage requests;
                                                    requests.ParseFromString( res.second );
                                                    parsed_requests = true;
+                                                   total_requests = requests.msg_size();
                                                    /* add requests to archive */
                                                    for ( int i = 0; i < requests.msg_size(); i++ ) {
                                                        /* Don't check freshness since these are newer than whatever is in archive */
@@ -119,18 +124,22 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                            request_positions.emplace_back( make_pair( i, pos ) );
                                                        }
                                                    }
-                                               } else { /* it is the responses */
-                                                   cout << "RECEIVED ENTIRE BULK RESPONSE AT: " << timestamp() << endl;
-                                                   MahimahiProtobufs::BulkMessage responses;
-                                                   responses.ParseFromString( res.second );
+                                               } else { /* it is a response */
+                                                   cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
+                                                   MahimahiProtobufs::HTTPMessage single_response;
+                                                   single_response.ParseFromString( res.second );
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
-                                                       //cout << "ADDING RESPONSE AT: " << timestamp() << endl; 
-                                                       archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
+                                                       if ( response_counter == request_positions.at( j ).first ) { /* we want to add this response */
+                                                           archive.add_response( single_response, request_positions.at( j ).second );
+                                                       }
                                                    }
-                                                   cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
-                                                   finished_bulk = true;
+                                                   response_counter++;
                                                }
                                                res = bulk_parser.parse( "" );
+                                           }
+                                           if ( total_requests == response_counter && total_requests != 0 ) {
+                                               cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " WITH # RES: " << total_requests << " AT: " << timestamp() << endl;
+                                               finished_bulk = true;
                                            }
                                            return ResultType::Continue;
                                        },
