@@ -120,9 +120,11 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                        }
                                                    }
                                                } else { /* it is the responses */
+                                                   cout << "RECEIVED ENTIRE BULK RESPONSE AT: " << timestamp() << endl;
                                                    MahimahiProtobufs::BulkMessage responses;
                                                    responses.ParseFromString( res.second );
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
+                                                       //cout << "ADDING RESPONSE AT: " << timestamp() << endl; 
                                                        archive.add_response( responses.msg( request_positions.at( j ).first ), request_positions.at( j ).second );
                                                    }
                                                    cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;

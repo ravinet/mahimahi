@@ -13,7 +13,7 @@
 #include "http_response.hh"
 #include "http_header.hh"
 #include "file_descriptor.hh"
-
+#include "timestamp.hh"
 using namespace std;
 
 string remove_query( const string & request_line )
@@ -221,7 +221,7 @@ void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, con
 
         archive_.at( index ).second = response;
     }
-
+    cout << "NOTIFYING AT: " << timestamp() << endl;
     notify();
 }
 
