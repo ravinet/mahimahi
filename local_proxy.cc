@@ -44,13 +44,14 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 
 /* function blocks until it can send a response back to the client for the given request */
 template <class SocketType1, class SocketType2>
-bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client )
+bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser )
 {
     cout << "INCOMING REQUEST: " << new_request.first_line() << " AT: " << timestamp() << endl;
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
     if ( type == "POST" ) { /* POST request so send back can't find */
         client.write( could_not_find );
+        request_parser.pop();
         return false;
     }
 
@@ -63,6 +64,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
         }
         cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
         client.write( to_send.second );
+        request_parser.pop();
         return false;
     }
 
@@ -109,6 +111,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    HTTPResponse first_res( response_to_send );
                                                    cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
                                                    client.write( first_res.str() );
+                                                   request_parser.pop();
                                                    first_response = true;
                                                } else if ( not parsed_requests ) { /* it is the requests */
                                                    MahimahiProtobufs::BulkMessage requests;
@@ -173,15 +176,15 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
                                            if ( not request_parser.empty() ) { /* we have a complete request */
-                                               bool status = get_response( request_parser.front(), scheme, move( server ), already_connected, move( client ) );
-                                               request_parser.pop();
+                                               HTTPRequest new_req( request_parser.front() );
+                                               bool status = get_response( new_req, scheme, move( server ), already_connected, move( client ), request_parser );
                                                if ( status ) { /* we should handle response */
                                                    return ResultType::Exit;
                                                }
                                            }
                                            return ResultType::Continue;
                                        },
-                                       [&] () { return ( ( not server.eof() ) and ( current_response.empty() ) ); } ) );
+                                       [&] () { return not server.eof(); } ) );
 
     while ( true ) {
         if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {

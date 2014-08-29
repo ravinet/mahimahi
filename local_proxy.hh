@@ -11,6 +11,7 @@
 #include "socket.hh"
 #include "secure_socket.hh"
 #include "archive.hh"
+#include "http_request_parser.hh"
 
 static const std::string could_not_find = "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
 
@@ -23,7 +24,7 @@ private:
     Archive archive;
 
     template <class SocketType1, class SocketType2>
-    bool get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client );
+    bool get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser );
 
     template <class SocketType>
     void handle_client( SocketType && client, const std::string & scheme );
