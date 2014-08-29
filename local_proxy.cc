@@ -46,7 +46,7 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 template <class SocketType1, class SocketType2>
 bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser )
 {
-    cout << "INCOMING REQUEST: " << new_request.first_line() << " AT: " << timestamp() << endl;
+    //cout << "INCOMING REQUEST: " << new_request.first_line() << "AT: " << timestamp() << endl;
     /* first check if request is POST and if so, respond that we can't find the response */
     string type = new_request.str().substr( 0, 4 );
     if ( type == "POST" ) { /* POST request so send back can't find */
@@ -62,7 +62,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
             archive.wait();
             to_send = archive.find_request( new_request.toprotobuf(), false );
         }
-        cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
+        //cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
         client.write( to_send.second );
         request_parser.pop();
         return false;
@@ -119,7 +119,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    MahimahiProtobufs::HTTPMessage response_to_send;
                                                    response_to_send.ParseFromString( res.second );
                                                    HTTPResponse first_res( response_to_send );
-                                                   cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
+                                                   //cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
                                                    client.write( first_res.str() );
                                                    request_parser.pop();
                                                    first_response = true;
@@ -138,7 +138,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                        }
                                                    }
                                                } else { /* it is a response */
-                                                   cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
+                                                   //cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
                                                    MahimahiProtobufs::HTTPMessage single_response;
                                                    single_response.ParseFromString( res.second );
                                                    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
@@ -151,7 +151,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    if ( not request_parser.empty() ) {
                                                        auto new_req_status = archive.find_request( request_parser.front().toprotobuf(), false );
                                                        if ( new_req_status.first and ( new_req_status.second != "" ) ) { /* we have new request on same thread */
-                                                           cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
+                                                           //cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
                                                            client.write( new_req_status.second );
                                                            request_parser.pop();
                                                        }
@@ -160,7 +160,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                res = bulk_parser.parse( "" );
                                            }
                                            if ( total_requests == response_counter && total_requests != 0 ) {
-                                               cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " WITH # RES: " << total_requests << " AT: " << timestamp() << endl;
+                                               //cout << "FINISHED ADDING BULK FOR: " << new_request.first_line() << " WITH # RES: " << total_requests << " AT: " << timestamp() << endl;
                                                finished_bulk = true;
                                            }
                                            return ResultType::Continue;
@@ -187,14 +187,11 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
     Socket server( TCP );
     bool already_connected = false;
 
-    /* Currently we can only have one response at a time anyway (should replace with bytestreamqueue eventually) */
-    string current_response;
-
     poller.add_action( Poller::Action( client, Direction::In,
                                        [&] () {
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
-                                           if ( not request_parser.empty() ) { /* we have a complete request */
+                                           while ( not request_parser.empty() ) { /* we have a complete request */
                                                HTTPRequest new_req( request_parser.front() );
                                                bool status = get_response( new_req, scheme, move( server ), already_connected, move( client ), request_parser );
                                                if ( status ) { /* we should handle response */
@@ -214,7 +211,6 @@ void LocalProxy::handle_client( SocketType && client, const string & scheme )
 
 void LocalProxy::listen( void )
 {
-
     thread newthread( [&] ( Socket client ) {
             try {
                 string scheme = "http";

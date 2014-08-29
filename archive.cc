@@ -221,7 +221,7 @@ void Archive::add_response( const MahimahiProtobufs::HTTPMessage & response, con
 
         archive_.at( index ).second = response;
     }
-    cout << "NOTIFYING AT: " << timestamp() << endl;
+    //cout << "NOTIFYING AT: " << timestamp() << endl;
     notify();
 }
 
