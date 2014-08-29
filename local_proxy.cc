@@ -92,6 +92,16 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
 
     int total_requests = 0;
 
+    Poller client_poller;
+
+    client_poller.add_action( Poller::Action( client, Direction::In,
+                                       [&] () {
+                                           string buffer = client.read();
+                                           request_parser.parse( buffer );
+                                           return ResultType::Continue;
+                                       },
+                                       [&] () { return not server.eof(); } ) );
+
     server_poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
                                            server.write( make_bulk_request( new_request , scheme ) );
@@ -137,6 +147,15 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                        }
                                                    }
                                                    response_counter++;
+                                                   client_poller.poll( 0 );
+                                                   if ( not request_parser.empty() ) {
+                                                       auto new_req_status = archive.find_request( request_parser.front().toprotobuf(), false );
+                                                       if ( new_req_status.first and ( new_req_status.second != "" ) ) { /* we have new request on same thread */
+                                                           cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
+                                                           client.write( new_req_status.second );
+                                                           request_parser.pop();
+                                                       }
+                                                   }
                                                }
                                                res = bulk_parser.parse( "" );
                                            }
