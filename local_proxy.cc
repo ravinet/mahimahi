@@ -42,6 +42,48 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
     return( static_cast<string>( Integer32( request_proto.size() ) ) + request_proto );
 }
 
+int LocalProxy::add_bulk_requests( const string & bulk_requests, vector< pair< int, int > > & request_positions )
+{
+    MahimahiProtobufs::BulkMessage requests;
+    requests.ParseFromString( bulk_requests );
+    /* add requests to archive */
+    for ( int i = 0; i < requests.msg_size(); i++ ) {
+        /* Don't check freshness since these are newer than whatever is in archive */
+        auto find_result = archive.find_request( requests.msg( i ), false, false );
+        if ( find_result.first == false ) { /* request not already in archive */
+            auto pos = archive.add_request( requests.msg( i ) );
+            request_positions.emplace_back( make_pair( i, pos ) );
+        }
+    }
+    return requests.msg_size();
+}
+
+void LocalProxy::handle_response( const string & res, const vector< pair< int, int > > & request_positions, int & response_counter )
+{
+    MahimahiProtobufs::HTTPMessage single_response;
+    single_response.ParseFromString( res );
+    for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
+        if ( response_counter == request_positions.at( j ).first ) { /* we want to add this response */
+            archive.add_response( single_response, request_positions.at( j ).second );
+        }
+    }
+    response_counter++;
+}
+
+template <class SocketType>
+void LocalProxy::handle_new_requests( Poller & client_poller, HTTPRequestParser & request_parser, SocketType && client )
+{
+    client_poller.poll( 0 );
+    if ( not request_parser.empty() ) {
+        auto new_req_status = archive.find_request( request_parser.front().toprotobuf(), false );
+        if ( new_req_status.first and ( new_req_status.second != "" ) ) { /* we have new request on same thread */
+            //cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
+            client.write( new_req_status.second );
+            request_parser.pop();
+        }
+    }
+}
+
 /* function blocks until it can send a response back to the client for the given request */
 template <class SocketType1, class SocketType2>
 bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser )
@@ -124,38 +166,12 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    request_parser.pop();
                                                    first_response = true;
                                                } else if ( not parsed_requests ) { /* it is the requests */
-                                                   MahimahiProtobufs::BulkMessage requests;
-                                                   requests.ParseFromString( res.second );
                                                    parsed_requests = true;
-                                                   total_requests = requests.msg_size();
-                                                   /* add requests to archive */
-                                                   for ( int i = 0; i < requests.msg_size(); i++ ) {
-                                                       /* Don't check freshness since these are newer than whatever is in archive */
-                                                       auto find_result = archive.find_request( requests.msg( i ), false, false );
-                                                       if ( find_result.first == false ) { /* request not already in archive */
-                                                           auto pos = archive.add_request( requests.msg( i ) );
-                                                           request_positions.emplace_back( make_pair( i, pos ) );
-                                                       }
-                                                   }
+                                                   total_requests = add_bulk_requests( res.second, request_positions );
                                                } else { /* it is a response */
                                                    //cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
-                                                   MahimahiProtobufs::HTTPMessage single_response;
-                                                   single_response.ParseFromString( res.second );
-                                                   for ( unsigned int j = 0; j < request_positions.size(); j++ ) {
-                                                       if ( response_counter == request_positions.at( j ).first ) { /* we want to add this response */
-                                                           archive.add_response( single_response, request_positions.at( j ).second );
-                                                       }
-                                                   }
-                                                   response_counter++;
-                                                   client_poller.poll( 0 );
-                                                   if ( not request_parser.empty() ) {
-                                                       auto new_req_status = archive.find_request( request_parser.front().toprotobuf(), false );
-                                                       if ( new_req_status.first and ( new_req_status.second != "" ) ) { /* we have new request on same thread */
-                                                           //cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
-                                                           client.write( new_req_status.second );
-                                                           request_parser.pop();
-                                                       }
-                                                   }
+                                                   handle_response( res.second, request_positions, response_counter );
+                                                   handle_new_requests( client_poller, request_parser, move( client ) );
                                                }
                                                res = bulk_parser.parse( "" );
                                            }

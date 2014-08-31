@@ -23,6 +23,13 @@ private:
 
     Archive archive;
 
+    int add_bulk_requests( const std::string & bulk_requests, std::vector< std::pair< int, int > > & request_positions );
+
+    void handle_response( const std::string & res, const std::vector< std::pair< int, int > > & request_positions, int & response_counter );
+
+    template <class SocketType>
+    void handle_new_requests( Poller & client_poller, HTTPRequestParser & request_parser, SocketType && client );
+
     template <class SocketType1, class SocketType2>
     bool get_response( const HTTPRequest & new_request, const std::string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser );
 
