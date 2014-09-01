@@ -20,10 +20,9 @@ HTTPMemoryStore::HTTPMemoryStore()
       responses()
 {}
 
-void HTTPMemoryStore::save( const HTTPResponse & response, const Address & server_address )
+void HTTPMemoryStore::save( const HTTPResponse & response, const Address & server_address __attribute__ ( ( unused ) ) )
 {
     unique_lock<mutex> ul( mutex_ );
-    cout << "Request to: " << server_address.ip() << endl;
 
     /* Add the current request to requests BulkMessage and current response to responses BulkMessage */
     requests.add_msg()->CopyFrom( response.request().toprotobuf() );
