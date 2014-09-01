@@ -73,13 +73,16 @@ void LocalProxy::handle_response( const string & res, const vector< pair< int, i
 template <class SocketType>
 void LocalProxy::handle_new_requests( Poller & client_poller, HTTPRequestParser & request_parser, SocketType && client )
 {
+    bool cannot_handle = false;
     client_poller.poll( 0 );
-    if ( not request_parser.empty() ) {
+    while ( ( not request_parser.empty() ) and ( not cannot_handle ) ) {
         auto new_req_status = archive.find_request( request_parser.front().toprotobuf(), false );
         if ( new_req_status.first and ( new_req_status.second != "" ) ) { /* we have new request on same thread */
             //cout << "WROTE RESPONSE FOR: " << request_parser.front().first_line() << " AT: " << timestamp() << endl;
             client.write( new_req_status.second );
             request_parser.pop();
+        } else {
+            cannot_handle = true;
         }
     }
 }
