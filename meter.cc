@@ -50,8 +50,6 @@ int main( int argc, char *argv[] )
             }
         }
 
-        cerr << "optind = " << optind << endl;
-
         vector< string > command;
 
         if ( optind == argc ) {
@@ -62,10 +60,13 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<MeterQueue> link_shell_app( "meter" );
+        PacketShell<MeterQueue> link_shell_app( "meter", user_environment );
 
-        link_shell_app.start_uplink( "[meter] ", user_environment, command, meter_uplink );
-        link_shell_app.start_downlink( meter_downlink );
+        const string uplink_name = "Uplink", downlink_name = "Downlink";
+
+        link_shell_app.start_uplink( "[meter] ", command,
+                                     uplink_name, meter_uplink );
+        link_shell_app.start_downlink( downlink_name, meter_downlink );
         return link_shell_app.wait_for_exit();
     } catch ( const Exception & e ) {
         e.perror();

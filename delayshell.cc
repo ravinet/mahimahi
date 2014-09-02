@@ -34,10 +34,9 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<DelayQueue> delay_shell_app( "delay" );
+        PacketShell<DelayQueue> delay_shell_app( "delay", user_environment );
 
         delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ",
-                                      user_environment,
                                       command,
                                       delay_ms );
         delay_shell_app.start_downlink( delay_ms );

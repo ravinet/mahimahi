@@ -36,12 +36,13 @@ private:
         int loop( FerryQueueType & ferry_queue, FileDescriptor & tun, FileDescriptor & sibling );
     };
 
+    char ** const user_environment_;
+
 public:
-    PacketShell( const std::string & device_prefix );
+    PacketShell( const std::string & device_prefix, char ** const user_environment );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
-                       char ** const user_environment,
                        const std::vector< std::string > & command,
                        Targs&&... Fargs );
 

@@ -5,17 +5,19 @@
 
 #include <queue>
 #include <string>
+#include <memory>
 
 #include "file_descriptor.hh"
+#include "graph.hh"
 
 class MeterQueue
 {
 private:
     std::queue<std::string> packet_queue_;
-    bool graph_;
+    std::unique_ptr<Graph> graph_;
 
 public:
-    MeterQueue( const bool graph );
+    MeterQueue( const std::string & name, const bool graph );
 
     void read_packet( const std::string & contents );
 

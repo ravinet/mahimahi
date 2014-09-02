@@ -7,11 +7,15 @@
 
 using namespace std;
 
-MeterQueue::MeterQueue( const bool graph )
+MeterQueue::MeterQueue( const string & name, const bool graph )
     : packet_queue_(),
-      graph_( graph )
+      graph_( nullptr )
 {
     assert_not_root();
+
+    if ( graph ) {
+        graph_.reset( new Graph( 1, 640, 480, name, 0, 1 ) );
+    }
 }
 
 void MeterQueue::read_packet( const string & contents )

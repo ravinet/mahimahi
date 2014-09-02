@@ -76,9 +76,9 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<LinkQueue> link_shell_app( "link" );
+        PacketShell<LinkQueue> link_shell_app( "link", user_environment );
 
-        link_shell_app.start_uplink( "[link] ", user_environment, command,
+        link_shell_app.start_uplink( "[link] ", command,
                                      uplink_filename, uplink_logfile, repeat );
         link_shell_app.start_downlink( downlink_filename, downlink_logfile, repeat );
         return link_shell_app.wait_for_exit();

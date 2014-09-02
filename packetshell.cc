@@ -20,14 +20,15 @@ using namespace std;
 using namespace PollerShortNames;
 
 template <class FerryQueueType>
-PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix )
+PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment )
     : egress_ingress( two_unassigned_addresses() ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( Address( egress_addr().ip(), "domain" ), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       pipe_( UnixDomainSocket::make_pair() ),
-      event_loop_()
+      event_loop_(),
+      user_environment_( user_environment )
 {
     /* make sure environment has been cleared */
     if ( environ != nullptr ) {
@@ -41,7 +42,6 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix )
 template <class FerryQueueType>
 template <typename... Targs>
 void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
-                                                char ** const user_environment,
                                                 const vector< string > & command,
                                                 Targs&&... Fargs )
 {
@@ -77,9 +77,11 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             /* Fork again after dropping root privileges */
             drop_privileges();
 
+            /* restore environment */
+            environ = user_environment_;
+
             inner_ferry.add_child_process( join( command ), [&]() {
-                    /* restore environment and tweak bash prompt */
-                    environ = user_environment;
+                    /* tweak bash prompt */
                     prepend_shell_prefix( shell_prefix );
 
                     return ezexec( command, true );
@@ -103,6 +105,9 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
 
     event_loop_.add_child_process( "downlink", [&] () {
             drop_privileges();
+
+            /* restore environment */
+            environ = user_environment_;            
 
             /* downlink packets go to inner namespace's TUN device */
             FileDescriptor ingress_tun = pipe_.second.recv_fd();
