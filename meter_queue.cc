@@ -48,9 +48,6 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
 
 uint64_t MeterQueue::advance( void )
 {
-    static mutex m;
-    unique_lock<mutex> ul { m };
-
     assert( graph_ );
 
     const uint64_t now = timestamp();
@@ -68,10 +65,6 @@ uint64_t MeterQueue::advance( void )
         bytes_this_bin_ = 0;
         current_bin_++;
     }
-
-    /* cull the data */
-    logical_width_ = max( 5.0, graph_->size().first / 100.0 );
-    graph_->set_window( current_bin_ * bin_width_ / 1000.0, logical_width_ );
 
     return now;
 }
