@@ -37,6 +37,8 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
                         logical_height_ = (current_estimate / bin_fraction) * 1.2;
                     }
 
+                    logical_width_ = max( 5.0, graph_->size().first / 100.0 );
+
                     graph_->blocking_draw( ts / 1000.0, logical_width_, 0, logical_height_,
                                            { float( current_estimate / bin_fraction ) },
                                            1 - cos( bin_fraction * 3.14159 / 2.0 ) );
