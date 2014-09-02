@@ -27,6 +27,12 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += meter
+meter_SOURCES = $(common_source) $(packet_shell_source) meter.cc \
+	meter_queue.hh meter_queue.cc
+meter_LDADD = -lrt
+meter_LDFLAGS = -pthread
+
 http_source = http_request_parser.hh \
 	http_request.hh http_request.cc \
 	http_response.hh http_response.cc \
@@ -62,6 +68,8 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
 	chown root $(DESTDIR)$(bindir)/linkshell
 	chmod u+s $(DESTDIR)$(bindir)/linkshell
+	chown root $(DESTDIR)$(bindir)/meter
+	chmod u+s $(DESTDIR)$(bindir)/meter
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell
