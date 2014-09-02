@@ -3,6 +3,7 @@
 #include <limits>
 #include <cassert>
 #include <thread>
+#include <cmath>
 
 #include "meter_queue.hh"
 #include "util.hh"
@@ -16,7 +17,8 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
       bytes_this_bin_( 0 ),
       bin_width_( 250 ),
       current_bin_( timestamp() / bin_width_ ),
-      logical_width_( graph ? max( 5.0, 640 / 100.0 ) : 1 )
+      logical_width_( graph ? max( 5.0, 640 / 100.0 ) : 1 ),
+      logical_height_( 1 )
 {
     assert_not_root();
 
@@ -25,26 +27,43 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
         graph_->set_color( 0, 1, 0, 0, 0.5 );
         thread newthread( [&] () {
                 while ( true ) {
-                    graph_->blocking_draw( timestamp() / 1000.0, logical_width_, 0, 10 );
+                    const uint64_t ts = advance();
+
+                    double current_estimate = (bytes_this_bin_ * 8.0 / (bin_width_ / 1000.0)) / 1000000.0;
+                    double bin_fraction = (ts % bin_width_) / double( bin_width_ );
+                    double confidence = 1 - cos( bin_fraction * 3.14159 / 2.0 );
+
+                    if ( confidence > 0.75 and (current_estimate / bin_fraction) > (logical_height_ * 0.85) ) {
+                        logical_height_ = (current_estimate / bin_fraction) * 1.2;
+                    }
+
+                    graph_->blocking_draw( ts / 1000.0, logical_width_, 0, logical_height_,
+                                           { float( current_estimate / bin_fraction ) },
+                                           1 - cos( bin_fraction * 3.14159 / 2.0 ) );
                 }
             } );
         newthread.detach();
     }
 }
 
-void MeterQueue::advance( void )
+uint64_t MeterQueue::advance( void )
 {
+    static mutex m;
+    unique_lock<mutex> ul { m };
+
     assert( graph_ );
 
-    const uint64_t now_bin = timestamp() / bin_width_;
+    const uint64_t now = timestamp();
+
+    const uint64_t now_bin = now / bin_width_;
 
     if ( current_bin_ == now_bin ) {
-        return;
+        return now;
     }
 
     while ( current_bin_ < now_bin ) {
         graph_->add_data_point( 0,
-                                current_bin_ * bin_width_ / 1000.0,
+                                (current_bin_ + 1) * bin_width_ / 1000.0,
                                 (bytes_this_bin_ * 8.0 / (bin_width_ / 1000.0)) / 1000000.0 );
         bytes_this_bin_ = 0;
         current_bin_++;
@@ -53,6 +72,8 @@ void MeterQueue::advance( void )
     /* cull the data */
     logical_width_ = max( 5.0, graph_->size().first / 100.0 );
     graph_->set_window( current_bin_ * bin_width_ / 1000.0, logical_width_ );
+
+    return now;
 }
 
 void MeterQueue::read_packet( const string & contents )

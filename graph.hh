@@ -67,19 +67,14 @@ public:
   void add_data_point( const unsigned int num, const float t, const float y ) {
     std::unique_lock<std::mutex> ul { data_mutex_ };
 
-    if ( not data_points_.at( num ).empty() ) {
-      if ( y == data_points_.at( num ).back().second ) {
-	return;
-      }
-    }
-
     data_points_.at( num ).emplace_back( t, y );
   }
 
   void set_color( const unsigned int num, const float red, const float green, const float blue,
 		  const float alpha );
 
-  bool blocking_draw( const float t, const float logical_width, const float min_y, const float max_y );
+  bool blocking_draw( const float t, const float logical_width, const float min_y, const float max_y,
+		      const std::vector<float> & current_values, const double current_weight );
 
   void set_info( const std::string & info );
 

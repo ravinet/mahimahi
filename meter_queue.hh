@@ -20,8 +20,9 @@ private:
     unsigned int bin_width_;
     uint64_t current_bin_;
     double logical_width_;
+    double logical_height_;
 
-    void advance( void );
+    uint64_t advance( void );
 
 public:
     MeterQueue( const std::string & name, const bool graph );

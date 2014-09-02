@@ -82,8 +82,12 @@ static int to_int( const float x )
   return static_cast<int>( lrintf( x ) );
 }
 
-bool Graph::blocking_draw( const float t, const float logical_width, const float min_y, const float max_y )
+bool Graph::blocking_draw( const float t, const float logical_width, const float min_y, const float max_y,
+			   const std::vector<float> & current_values, const double current_weight )
 {
+  assert( current_weight >= 0 );
+  assert( current_weight <= 1 );
+
   /* set scale (with smoothing) */
   top_ = top_ * .95 + max_y * 0.05;
   bottom_ = bottom_ * 0.95 + min_y * 0.05;
@@ -168,6 +172,11 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
 	cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
       }
 
+      cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
+		     chart_height( current_weight * current_values.at( line_no )
+				   + (1 - current_weight) * line.back().second,
+				   window_size.second ) );
+
       cairo_set_source_rgba( cairo_,
 			     get<0>( colors_.at( line_no ) ),
 			     get<1>( colors_.at( line_no ) ),
@@ -177,7 +186,7 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
       if ( line_no == 0 ) {
 	/* fill the curve */
       
-	cairo_line_to( cairo_, window_size.first - (t - line.back().first) * window_size.first / logical_width,
+	cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
 		       chart_height( 0, window_size.second ) );
 	cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
 		       chart_height( 0, window_size.second ) );
