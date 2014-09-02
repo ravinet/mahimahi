@@ -16,6 +16,13 @@ private:
     std::queue<std::string> packet_queue_;
     std::unique_ptr<Graph> graph_;
 
+    unsigned int bytes_this_bin_;
+    unsigned int bin_width_;
+    uint64_t current_bin_;
+    double logical_width_;
+
+    void advance( void );
+
 public:
     MeterQueue( const std::string & name, const bool graph );
 

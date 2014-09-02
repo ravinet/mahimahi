@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <vector>
+#include <mutex>
 
 #include "display.hh"
 #include "cairo_objects.hh"
@@ -55,6 +56,8 @@ class Graph
 
   Cairo::Pattern horizontal_fadeout_;
 
+  std::mutex data_mutex_;
+
 public:
   Graph( const unsigned int num_lines,
 	 const unsigned int initial_width, const unsigned int initial_height, const std::string & title,
@@ -62,6 +65,8 @@ public:
 
   void set_window( const float t, const float logical_width );
   void add_data_point( const unsigned int num, const float t, const float y ) {
+    std::unique_lock<std::mutex> ul { data_mutex_ };
+
     if ( not data_points_.at( num ).empty() ) {
       if ( y == data_points_.at( num ).back().second ) {
 	return;

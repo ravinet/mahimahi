@@ -41,7 +41,8 @@ Graph::Graph( const unsigned int num_lines,
     info_( current_gc().cairo, current_gc().pango, label_font_, "" ),
     bottom_( min_y ),
     top_( max_y ),
-    horizontal_fadeout_( cairo_pattern_create_linear( 0, 0, 190, 0 ) )
+    horizontal_fadeout_( cairo_pattern_create_linear( 0, 0, 190, 0 ) ),
+    data_mutex_()
 {
   cairo_pattern_add_color_stop_rgba( horizontal_fadeout_, 0.0, 1, 1, 1, 1 );
   cairo_pattern_add_color_stop_rgba( horizontal_fadeout_, 0.67, 1, 1, 1, 1 );
@@ -62,6 +63,8 @@ void Graph::set_info( const string & info )
 
 void Graph::set_window( const float t, const float logical_width )
 {
+  std::unique_lock<std::mutex> ul { data_mutex_ };
+
   for ( auto & line : data_points_ ) {
     while ( (line.size() >= 2) and (line.front().first < t - logical_width - 1)
 	    and (line.at( 1 ).first < t - logical_width - 1) ) {
@@ -142,45 +145,46 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
   cairo_set_source_rgba( cairo_, 0, 0, 0.4, 1 );
   cairo_fill( cairo_ );
 
-  /* cull the data */
-  set_window( t, logical_width );
+  {
+    std::unique_lock<std::mutex> ul { data_mutex_ };
 
-  /* draw the data */
-  for ( unsigned int line_no = 0; line_no < data_points_.size(); line_no++ ) {
-    const auto & line = data_points_.at( line_no );
+    /* draw the data */
+    for ( unsigned int line_no = 0; line_no < data_points_.size(); line_no++ ) {
+      const auto & line = data_points_.at( line_no );
 
-    if ( line.size() < 2 ) {
-      continue;
-    }
+      if ( line.size() < 2 ) {
+	continue;
+      }
 
-    cairo_identity_matrix( cairo_ );
-    cairo_set_line_width( cairo_, 3 );
+      cairo_identity_matrix( cairo_ );
+      cairo_set_line_width( cairo_, 3 );
 
-    const double x_position = window_size.first - (t - line.front().first) * window_size.first / logical_width;
+      const double x_position = window_size.first - (t - line.front().first) * window_size.first / logical_width;
 
-    cairo_move_to( cairo_, x_position, chart_height( line.front().second, window_size.second ) );
+      cairo_move_to( cairo_, x_position, chart_height( line.front().second, window_size.second ) );
 
-    for ( unsigned int i = 1; i < line.size(); i++ ) {
-      const double x_position = window_size.first - (t - line[ i ].first) * window_size.first / logical_width;
-      cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
-    }
+      for ( unsigned int i = 1; i < line.size(); i++ ) {
+	const double x_position = window_size.first - (t - line[ i ].first) * window_size.first / logical_width;
+	cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
+      }
 
-    cairo_set_source_rgba( cairo_,
-			   get<0>( colors_.at( line_no ) ),
-			   get<1>( colors_.at( line_no ) ),
-			   get<2>( colors_.at( line_no ) ),
-			   get<3>( colors_.at( line_no ) ) );
+      cairo_set_source_rgba( cairo_,
+			     get<0>( colors_.at( line_no ) ),
+			     get<1>( colors_.at( line_no ) ),
+			     get<2>( colors_.at( line_no ) ),
+			     get<3>( colors_.at( line_no ) ) );
 
-    if ( line_no == 0 ) {
-      /* fill the curve */
+      if ( line_no == 0 ) {
+	/* fill the curve */
       
-      cairo_line_to( cairo_, window_size.first - (t - line.back().first) * window_size.first / logical_width,
-		     chart_height( 0, window_size.second ) );
-      cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
-		     chart_height( 0, window_size.second ) );
-      cairo_fill( cairo_ );
-    } else {
-      cairo_stroke( cairo_ );
+	cairo_line_to( cairo_, window_size.first - (t - line.back().first) * window_size.first / logical_width,
+		       chart_height( 0, window_size.second ) );
+	cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
+		       chart_height( 0, window_size.second ) );
+	cairo_fill( cairo_ );
+      } else {
+	cairo_stroke( cairo_ );
+      }
     }
   }
 

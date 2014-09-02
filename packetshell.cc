@@ -90,7 +90,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             /* allow downlink to write directly to inner namespace's TUN device */
             pipe_.first.send_fd( ingress_tun );
 
-            FerryQueueType uplink_queue = ferry_maker();
+            FerryQueueType uplink_queue { ferry_maker() };
             return inner_ferry.loop( uplink_queue, ingress_tun, egress_tun_ );
         }, true );  /* new network namespace */
 }
@@ -116,7 +116,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
 
             dns_outside_.register_handlers( outer_ferry );
 
-            FerryQueueType downlink_queue = ferry_maker();
+            FerryQueueType downlink_queue { ferry_maker() };
             return outer_ferry.loop( downlink_queue, egress_tun_, ingress_tun );
         } );
 }
