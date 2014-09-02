@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I./protobufs
+AM_CPPFLAGS = -I./protobufs $(XCBPRESENT_CFLAGS) $(PANGOCAIRO_CFLAGS)
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
 SUBDIRS = protobufs man_pages
 common_source = exception.hh ezio.cc ezio.hh                                   \
@@ -27,10 +27,14 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
+graphing_source = cairo_objects.hh cairo_objects.cc \
+	display.hh display.cc \
+	graph.hh graph.cc
+
 bin_PROGRAMS += meter
-meter_SOURCES = $(common_source) $(packet_shell_source) meter.cc \
+meter_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) meter.cc \
 	meter_queue.hh meter_queue.cc
-meter_LDADD = -lrt
+meter_LDADD = -lrt $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
 meter_LDFLAGS = -pthread
 
 http_source = http_request_parser.hh \
