@@ -185,7 +185,7 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                                 possible_match = make_pair( match_val, ret.str() );
                             }
                         } else {
-                            possible_match = make_pair( match_val, ret.str() );
+                            possible_match = make_pair( match_val, ret.first_line() );
                         }
                     }
                 }
