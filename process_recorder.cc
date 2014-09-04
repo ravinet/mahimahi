@@ -27,7 +27,6 @@ template <typename... Targs>
 int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
                                                  Socket && socket_output,
                                                  const int & veth_counter,
-                                                 bool record,
                                                  const string & stdin_input,
                                                  Targs... Fargs )
 {
@@ -131,20 +130,18 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
         outer_event_loop.add_child_process( ChildProcess( move( container_process ) ) );
     }
 
-    if ( record ) { /* use http proxy */
-        /* do the actual recording in a different unprivileged child */
-        outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
-                drop_privileges();
+    /* do the actual recording in a different unprivileged child */
+    outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
+            drop_privileges();
 
-                TargetType proxy_target( new_egress_addr, Fargs... );
+            TargetType proxy_target( new_egress_addr, Fargs... );
 
-                EventLoop recordr_event_loop;
-                dns_outside.register_handlers( recordr_event_loop );
-                proxy_target.register_handlers( recordr_event_loop );
-                auto ret = recordr_event_loop.loop();
-                proxy_target.serialize_to_socket( move( socket_output ) );
-                return ret;
-            } ) );
-    }
+            EventLoop recordr_event_loop;
+            dns_outside.register_handlers( recordr_event_loop );
+            proxy_target.register_handlers( recordr_event_loop );
+            auto ret = recordr_event_loop.loop();
+            proxy_target.serialize_to_socket( move( socket_output ) );
+            return ret;
+        } ) );
     return outer_event_loop.loop();
 }

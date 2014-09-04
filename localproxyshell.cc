@@ -48,7 +48,6 @@ int main( int argc, char *argv[] )
                                                 return ezexec( command, true );
                                               }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */
                                                , 0
-                                               , true
                                                , ""
                                                , Address ( "8.8.8.8", 5555 ) );
     } catch ( const Exception & e ) {

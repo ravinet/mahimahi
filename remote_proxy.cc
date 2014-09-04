@@ -65,7 +65,6 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             },
                                                                             move( client ),
                                                                             veth_counter,
-                                                                            true,
                                                                             "url = \"" + url + phantomjs_config );
                                            client.write( "" );
                                            request_ready = false;
