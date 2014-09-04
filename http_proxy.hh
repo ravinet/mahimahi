@@ -9,7 +9,6 @@
 #include "secure_socket.hh"
 #include "http_response.hh"
 
-class HTTPBackingStore;
 class EventLoop;
 class Poller;
 class HTTPRequestParser;

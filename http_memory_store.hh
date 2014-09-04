@@ -14,7 +14,7 @@
 
 /* class to print an HTTP request/response to screen */
 
-class HTTPMemoryStore : public HTTPBackingStore
+class HTTPMemoryStore
 {
 private:
     std::mutex mutex_;
@@ -24,7 +24,7 @@ private:
 public:
     HTTPMemoryStore();
     void save( const HTTPResponse & response, const Address & server_address );
-    void serialize_to_socket( Socket && client ) override;
+    void serialize_to_socket( Socket && client );
 };
 
 #endif /* HTTP_MEMORY_STORE_HH */

@@ -13,15 +13,15 @@
 
 /* class to print an HTTP request/response to screen */
 
-class HTTPConsoleStore : public HTTPBackingStore
+class HTTPConsoleStore
 {
 private:
     std::mutex mutex_;
 
 public:
     HTTPConsoleStore();
-    void save( const HTTPResponse & response, const Address & server_address ) override;
-    void serialize_to_socket( Socket && client ) override;
+    void save( const HTTPResponse & response, const Address & server_address );
+    void serialize_to_socket( Socket && client );
 };
 
 #endif /* HTTP_CONSOLE_STORE_HH */
