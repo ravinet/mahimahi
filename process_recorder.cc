@@ -11,22 +11,25 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "dns_proxy.hh"
-#include "http_proxy.hh"
 #include "netdevice.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
 #include "process_recorder.hh"
 #include "config.h"
 #include "local_proxy.hh"
+#include "http_proxy.cc"
+#include "http_memory_store.hh"
 
 using namespace std;
 
-template <class StoreType>
-int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
-                                                Socket && socket_output,
-                                                const int & veth_counter,
-                                                bool record,
-                                                const string & stdin_input )
+template <class TargetType>
+template <typename... Targs>
+int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
+                                                 Socket && socket_output,
+                                                 const int & veth_counter,
+                                                 bool record,
+                                                 const string & stdin_input,
+                                                 Targs... Fargs )
 {
     TemporarilyRoot tr;
 
@@ -49,7 +52,7 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
     /* bring up egress */
     assign_address( egress_name, egress_addr, ingress_addr );
 
-    Address new_egress_addr( egress_addr.ip(), 5555 );
+    const Address new_egress_addr( egress_addr.ip(), 5555 );
 
     /* create DNS proxy */
     DNSProxy dns_outside( egress_addr, nameserver, nameserver );
@@ -133,28 +136,15 @@ int ProcessRecorder<StoreType>::record_process( std::function<int( FileDescripto
         outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
                 drop_privileges();
 
-                HTTPProxy http_proxy( new_egress_addr );
+                TargetType proxy_target( new_egress_addr, Fargs... );
 
                 EventLoop recordr_event_loop;
                 dns_outside.register_handlers( recordr_event_loop );
-                http_proxy.register_handlers( recordr_event_loop, response_store_ );
+                proxy_target.register_handlers( recordr_event_loop );
                 auto ret = recordr_event_loop.loop();
-                response_store_.serialize_to_socket( move( socket_output ) );
+                proxy_target.serialize_to_socket( move( socket_output ) );
                 return ret;
             } ) );
-    } else { /* use local proxy */
-        outer_event_loop.add_child_process( ChildProcess( "localproxy", [&]() {
-                drop_privileges();
-
-                Address remote_proxy_addr( "127.0.0.1", "2222" );
-                LocalProxy local_proxy( new_egress_addr, remote_proxy_addr );
-
-                EventLoop local_proxy_loop;
-                local_proxy.listen( local_proxy_loop );
-                dns_outside.register_handlers( local_proxy_loop );
-                return local_proxy_loop.loop();
-            } ) );
-
     }
     return outer_event_loop.loop();
 }

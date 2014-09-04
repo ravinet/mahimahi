@@ -11,19 +11,19 @@
 
 /* class that loads an arbitrary process and captures all HTTP traffic originating from it */
 
-template <class StoreType>
+template <class TargetType>
 class ProcessRecorder
 {
-private:
-    StoreType response_store_;
 public:
+    ProcessRecorder() {}
+
     template <typename... Targs>
-    ProcessRecorder( Targs... Fargs ) : response_store_( Fargs... ) {}
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
                         Socket && socket_output,
-                        const int & veth_counter = 0,
-                        bool record = true,
-                        const std::string & stdin_input = "" );
+                        const int & veth_counter, 
+                        bool record,
+                        const std::string & stdin_input,
+                        Targs... Fargs );
 };
 
 #endif /* PROCESS_RECORDER_HH */
