@@ -17,6 +17,7 @@ class HTTPBackingStore
 public:
     virtual void save( const HTTPResponse & response, const Address & server_address ) = 0;
     virtual void serialize_to_socket( Socket && client ) = 0;
+    virtual ~HTTPBackingStore() {};
 };
 
 class HTTPDiskStore : public HTTPBackingStore
