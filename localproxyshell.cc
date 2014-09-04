@@ -10,13 +10,11 @@
 #include "interfaces.hh"
 #include "address.hh"
 #include "dns_proxy.hh"
-#include "http_proxy.hh"
 #include "netdevice.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
 #include "config.h"
 #include "backing_store.hh"
-#include "process_recorder.hh"
 #include "process_recorder.cc"
 #include "http_console_store.hh"
 
@@ -41,14 +39,18 @@ int main( int argc, char *argv[] )
             }
         }
 
-        ProcessRecorder<HTTPConsoleStore> process_recorder;
+        ProcessRecorder<LocalProxy> process_recorder;
         return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                                 /* restore environment and tweak prompt */
                                                 environ = user_environment;
                                                 prepend_shell_prefix( "[localproxy] " );
 
                                                 return ezexec( command, true );
-                                              }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */, 0, false );
+                                              }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */
+                                               , 0
+                                               , true
+                                               , ""
+                                               , Address ( "8.8.8.8", 5555 ) );
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

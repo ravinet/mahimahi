@@ -27,7 +27,7 @@ void handle_client( Socket && client, const int & veth_counter )
 
     Poller poller;
 
-    ProcessRecorder<HTTPMemoryStore> process_recorder;
+    ProcessRecorder<HTTPProxy<HTTPMemoryStore>> process_recorder;
 
     bool request_ready = false;
 
