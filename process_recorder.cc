@@ -51,7 +51,8 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     /* bring up egress */
     assign_address( egress_name, egress_addr, ingress_addr );
 
-    const Address new_egress_addr( egress_addr.ip(), 5555 );
+    /* Run proxy_target by dynamically picking an available port */
+    TargetType proxy_target( new_egress_addr, Fargs... );
 
     /* create DNS proxy */
     DNSProxy dns_outside( egress_addr, nameserver, nameserver );
@@ -59,8 +60,8 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     /* set up NAT between egress and eth0 */
     NAT nat_rule( ingress_addr );
 
-    /* set up dnat */
-    DNAT dnat( new_egress_addr, egress_name );
+    /* set up dnat for all TCP connections to the port picked by proxy_target */
+    DNAT dnat( proxy_target.tcp_listener().local_addr(), egress_name );
 
     /* prepare event loop */
     EventLoop outer_event_loop;
@@ -133,8 +134,6 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     /* do the actual recording in a different unprivileged child */
     outer_event_loop.add_child_process( ChildProcess( "recorder", [&]() {
             drop_privileges();
-
-            TargetType proxy_target( new_egress_addr, Fargs... );
 
             EventLoop recordr_event_loop;
             dns_outside.register_handlers( recordr_event_loop );
