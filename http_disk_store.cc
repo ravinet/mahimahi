@@ -1,6 +1,6 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include "backing_store.hh"
+#include "http_disk_store.hh"
 #include "http_record.pb.h"
 #include "temp_file.hh"
 #include "util.hh"

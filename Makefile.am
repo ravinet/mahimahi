@@ -37,7 +37,7 @@ http_source = http_request_parser.hh \
 	chunked_parser.hh chunked_parser.cc \
 	http_message.hh http_message.cc \
 	http_message_sequence.hh \
-	backing_store.hh backing_store.cc \
+	http_disk_store.hh http_disk_store.cc \
 	http_console_store.hh http_console_store.cc \
 	http_memory_store.hh http_memory_store.cc
 

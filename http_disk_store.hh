@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef BACKING_STORE_HH
-#define BACKING_STORE_HH
+#ifndef HTTP_DISK_STORE_HH
+#define HTTP_DISK_STORE_HH
 
 #include <string>
 #include <mutex>
