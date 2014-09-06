@@ -35,16 +35,33 @@ string phantomjs_request( MahimahiProtobufs::BulkRequest & incoming_request )
 
     /* Get relevant headers so phantomjs mimics user agent */
     string user_agent = "Chrome/31.0.1650.63 Safari/537.36';\n";
-    string accept = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"};";
+    string accept = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"";
+
     if ( curr_request.has_header( "User-Agent" ) ) {
         user_agent = curr_request.get_header_value( "User-Agent" ) + "';\n";
     }
 
     if ( curr_request.has_header( "Accept" ) ) {
-        accept = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"};";
+        accept = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"";
     }
 
-    return( "url = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load );
+    if ( curr_request.has_header( "Cookie" ) ) {
+        accept.append( ", \"cookie\": \"" + curr_request.get_header_value( "Cookie" ) + "\"" );
+    }
+
+    if ( curr_request.has_header( "Content-Type" ) ) {
+        accept.append( ", \"content-type\": \"" + curr_request.get_header_value( "Content-Type" ) + "\"" );
+    }
+
+    accept.append( "};" );
+
+    string data = incoming_request.request().body();
+
+    if ( curr_request.first_line().find( "POST" ) != string::npos ) {
+        return( "data = \"" + data + "\"\nurl = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load_post );
+    } else {
+        return( "url = \"" + url + phantomjs_setup + user_agent + accept + phantomjs_load );
+    }
 }
 
 void handle_client( Socket && client, const int & veth_counter )
