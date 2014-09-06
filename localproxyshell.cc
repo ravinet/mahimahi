@@ -14,7 +14,6 @@
 #include "event_loop.hh"
 #include "socketpair.hh"
 #include "config.h"
-#include "backing_store.hh"
 #include "process_recorder.cc"
 #include "http_console_store.hh"
 

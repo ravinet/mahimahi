@@ -18,7 +18,6 @@
 #include "event_loop.hh"
 #include "temp_file.hh"
 #include "secure_socket.hh"
-#include "backing_store.hh"
 
 using namespace std;
 using namespace PollerShortNames;

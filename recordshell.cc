@@ -14,7 +14,7 @@
 #include "event_loop.hh"
 #include "socketpair.hh"
 #include "config.h"
-#include "backing_store.hh"
+#include "http_disk_store.hh"
 #include "process_recorder.cc"
 
 using namespace std;

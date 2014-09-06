@@ -52,7 +52,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     assign_address( egress_name, egress_addr, ingress_addr );
 
     /* Run proxy_target by dynamically picking an available port */
-    TargetType proxy_target( new_egress_addr, Fargs... );
+    TargetType proxy_target( egress_addr, Fargs... );
 
     /* create DNS proxy */
     DNSProxy dns_outside( egress_addr, nameserver, nameserver );

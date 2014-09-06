@@ -9,7 +9,7 @@
 #include "http_request.hh"
 #include "http_response.hh"
 #include "address.hh"
-#include "backing_store.hh"
+#include "socket.hh"
 
 /* class to print an HTTP request/response to screen */
 
