@@ -151,41 +151,59 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
 
     HTTPRequest request( incoming_req );
 
+    string incoming_cookie = "";
+    if ( request.has_header( "Cookie" ) ) {
+        incoming_cookie = request.get_header_value( "Cookie" );
+    }
+
     for ( auto & x : archive_ ) {
         HTTPRequest curr( x.first );
+        string new_cookie = "";
+        if ( curr.has_header( "Cookie" ) ) {
+            new_cookie = curr.get_header_value( "Cookie" );
+        }
+        bool cookies_compatible = false;
+        if ( new_cookie == "" and incoming_cookie == "" ) { /* neither request has cookie header */
+            cookies_compatible = true;
+        }
+        if ( new_cookie != "" and incoming_cookie != "" ) { /* both requests have cookie header */
+            cookies_compatible = true;
+        }
         if ( remove_query( curr.first_line() ) == remove_query( request.first_line() ) ) { /* up to ? matches */
             if ( curr.get_header_value( "Host" ) == request.get_header_value( "Host" ) ) { /* host header matches */
-                if ( curr.first_line() == request.first_line() ) { /* exact match */
-                    HTTPResponse ret( x.second );
-                    if ( ret.first_line() == "" ) { /* response is pending */
-                        return make_pair( true, "" );
-                    } else {
-                        if ( check_fresh ) {
-                            if ( check_freshness( request, ret ) ) { /* response is fresh */
-                                return make_pair( true, ret.str() );
-                            } else {
-                                return make_pair( false, "" );
-                            }
-                        } else {
-                            return make_pair( true, ret.str() );
-                        }
-                    }
-                }
-                if ( pending_ok ) {
-                    /* possible match, but not exact */
-                    int match_val = match_size( curr.first_line(), request.first_line() );
-                    if ( match_val > possible_match.first ) { /* closer possible match */
+                if ( cookies_compatible ) {
+                    if ( curr.first_line() == request.first_line() ) { /* exact match */
                         HTTPResponse ret( x.second );
-                        if ( ret.first_line() != "" ) { /* response is not pending */
+                        if ( ret.first_line() == "" ) { /* response is pending */
+                            return make_pair( true, "" );
+                        } else {
                             if ( check_fresh ) {
                                 if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                    return make_pair( true, ret.str() );
+                                } else {
+                                    return make_pair( false, "" );
+                                }
+                            } else {
+                                return make_pair( true, ret.str() );
+                            }
+                        }
+                    }
+                    if ( pending_ok ) {
+                        /* possible match, but not exact */
+                        int match_val = match_size( curr.first_line(), request.first_line() );
+                        if ( match_val > possible_match.first ) { /* closer possible match */
+                            HTTPResponse ret( x.second );
+                            if ( ret.first_line() != "" ) { /* response is not pending */
+                                if ( check_fresh ) {
+                                    if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                        possible_match = make_pair( match_val, ret.str() );
+                                    }
+                                } else {
                                     possible_match = make_pair( match_val, ret.str() );
                                 }
                             } else {
-                                possible_match = make_pair( match_val, ret.str() );
+                                possible_match = make_pair( match_val, ret.first_line() );
                             }
-                        } else {
-                            possible_match = make_pair( match_val, ret.first_line() );
                         }
                     }
                 }

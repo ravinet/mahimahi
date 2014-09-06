@@ -92,13 +92,6 @@ template <class SocketType1, class SocketType2>
 bool LocalProxy::get_response( const HTTPRequest & new_request, const string & scheme, SocketType1 && server, bool & already_connected, SocketType2 && client, HTTPRequestParser & request_parser )
 {
     //cout << "INCOMING REQUEST: " << new_request.first_line() << "AT: " << timestamp() << endl;
-    /* first check if request is POST and if so, respond that we can't find the response */
-    string type = new_request.str().substr( 0, 4 );
-    if ( type == "POST" ) { /* POST request so send back can't find */
-        client.write( could_not_find );
-        request_parser.pop();
-        return false;
-    }
 
     /* check if request and response are in the archive */
     auto to_send = archive.find_request( new_request.toprotobuf(), false );
