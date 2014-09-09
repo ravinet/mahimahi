@@ -17,61 +17,67 @@
 #include "phantomjs_configuration.hh"
 #include "http_memory_store.hh"
 #include "length_value_parser.hh"
+#include "http_header.hh"
+#include "http_message.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
-string phantomjs_request( MahimahiProtobufs::BulkRequest & incoming_request )
+string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_request )
 {
-    /* Obtain url from BulkRequest protobuf */
-    string scheme = ( incoming_request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
-                      ? "https" : "http" );
-    HTTPRequest curr_request( incoming_request.request() );
+    /* Obtain scheme from BulkRequest protobuf */
+    string scheme = incoming_request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
+                    ? "https" : "http";
+    /* Obtain hostname from http request within BulkRequest */
+    const HTTPRequest curr_request( incoming_request.request() );
     string hostname = curr_request.get_header_value( "Host" );
+
+    /* Obtain path from http request within BulkRequest */
     auto path_start = curr_request.first_line().find( "/" );
     auto path_end = curr_request.first_line().find( " ", path_start );
     string path = curr_request.first_line().substr( path_start, path_end - path_start );
+
+    /* Now concatenate the components into one URL */
     string url = scheme + "://" + hostname + path;
 
-    /* Get relevant headers so phantomjs mimics user agent */
-    string user_agent = "Chrome/31.0.1650.63 Safari/537.36';\n";
-    string custom_headers = "page.customHeaders = {\"accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\"";
-
-    if ( curr_request.has_header( "User-Agent" ) ) {
-        user_agent = curr_request.get_header_value( "User-Agent" ) + "';\n";
+    /* Populate HTTP headers as per incoming_request */
+    string custom_headers = "page.customHeaders = {";
+    string user_agent_header = "page.settings.userAgent = '";
+    for ( const auto &x : incoming_request.request().header() ) {
+        HTTPHeader http_header( x );
+        if ( HTTPMessage::equivalent_strings( http_header.key(), "User-Agent" ) ) {
+            user_agent_header += http_header.value();
+        } else {
+            custom_headers += "'" + http_header.key() + "' : '" + http_header.value() + "',";
+        }
     }
-
-    if ( curr_request.has_header( "Accept" ) ) {
-        custom_headers = "page.customHeaders = {\"accept\": \"" + curr_request.get_header_value( "Accept" ) + "\"";
-    }
-
-    if ( curr_request.has_header( "Cookie" ) ) {
-        custom_headers.append( ", \"cookie\": \"" + curr_request.get_header_value( "Cookie" ) + "\"" );
-    }
-
-    if ( curr_request.has_header( "Content-Type" ) ) {
-        custom_headers.append( ", \"content-type\": \"" + curr_request.get_header_value( "Content-Type" ) + "\"" );
-    }
-
-    custom_headers.append( "};" );
+    user_agent_header.append( "';\n" );
+    custom_headers.append( "};\n" );
 
     string data = incoming_request.request().body();
 
     if ( curr_request.first_line().find( "POST" ) != string::npos ) {
-        return( "data = \"" + data + "\"\nurl = \"" + url + phantomjs_setup + user_agent + custom_headers + phantomjs_load_post );
+        cout << ( "data = '" + data + "';\nurl = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load_post );
+        return( "data = '" + data + "';\nurl = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load_post );
     } else {
-        return( "url = \"" + url + phantomjs_setup + user_agent + custom_headers + phantomjs_load );
+        cout << ( "url = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load );
+        return( "url = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load );
     }
 }
 
 void handle_client( Socket && client, const int & veth_counter )
 {
+    /* LengthValueParser for bulk requests coming in from local_proxy? */
     LengthValueParser bulk_request_parser;
 
     Poller poller;
 
+    /* Setup a process recorder with a HTTPProxy target and a
+       and save requests and responses from the HTTPProxy to a
+       HTTPMemoryStore */
     ProcessRecorder<HTTPProxy<HTTPMemoryStore>> process_recorder;
 
+    /* Have we finished parsing the bulk request from local_proxy? */
     bool request_ready = false;
 
     MahimahiProtobufs::BulkRequest incoming_request;
@@ -85,11 +91,12 @@ void handle_client( Socket && client, const int & veth_counter )
                                                request_ready = true;
                                            }
                                            return ResultType::Continue;
-                                       },
-                                       [&] () { return true; } ) );
+                                       } ) );
 
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
+                                           /* Pass the incoming_request to phantomjs within a ProcessRecorder */
+                                           /* Block until it's done recording */
                                            process_recorder.record_process( []( FileDescriptor & parent_channel ) {
                                                                             SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
                                                                             return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
@@ -97,9 +104,9 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                             },
                                                                             move( client ),
                                                                             veth_counter,
-                                                                            phantomjs_request( incoming_request ) );
+                                                                            make_phantomjs_script( incoming_request ) );
+                                           /* Write a null string to prevent poller from throwing an exception */
                                            client.write( "" );
-                                           request_ready = false;
                                            return Result::Type::Exit;
                                        },
                                        [&] () { return request_ready; } ) );
