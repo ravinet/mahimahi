@@ -81,10 +81,10 @@ localproxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bul
 localproxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 localproxy_LDFLAGS = -pthread
 
-bin_PROGRAMS += bulkparser
-bulkparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkparser.cc
-bulkparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
-bulkparser_LDFLAGS = -pthread
+bin_PROGRAMS += bulkresponseparser
+bulkresponseparser_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) bulkresponseparser.cc
+bulkresponseparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+bulkresponseparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += bulkrequestparser
 bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) bulkrequestparser.cc
