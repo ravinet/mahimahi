@@ -42,6 +42,14 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
     /* make sure there is a 1 to 1 matching of requests and responses */
     assert( requests.msg_size() == responses.msg_size() );
 
+    if ( responses.msg_size() == 0 ) {
+        const string error_message =
+         "HTTP/1.1 404 Not Found" + CRLF +
+         "Content-Type: text/plain" + CRLF + CRLF;
+        client.write( static_cast<string>( Integer32( error_message.size() ) ) + error_message );
+        return;
+    }
+
     /* First, write out the first response as a length-value pair */
     string first_response;
     responses.msg( 0 ).SerializeToString( &first_response );
