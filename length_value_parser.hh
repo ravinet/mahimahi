@@ -15,7 +15,7 @@ class LengthValueParser
 private:
     Integer32 proto_size;
     std::string buffer;
-   enum {SIZE, BODY} state_;
+    enum {SIZE, BODY} state_;
 public:
     LengthValueParser()
         : proto_size(),

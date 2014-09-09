@@ -21,6 +21,7 @@ pair< bool, string> LengthValueParser::parse( const string & response )
         buffer = buffer.substr( 4 );
         state_ = BODY;
     }
+    /* FALLTHROUGH to BODY if you are done with SIZE */
 
     case BODY: {
         if ( buffer.size() < proto_size ) { /* Don't have enough for request protobuf */
@@ -30,9 +31,6 @@ pair< bool, string> LengthValueParser::parse( const string & response )
         buffer = buffer.substr( proto_size );
         state_ = SIZE;
         return make_pair( true, message);
-
-        /* Make sure the string is now empty */
-        assert( buffer.size() == 0 );
     }
     }
     return make_pair( false, "" );
