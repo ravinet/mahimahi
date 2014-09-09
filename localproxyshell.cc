@@ -30,21 +30,22 @@ int main( int argc, char *argv[] )
 
         /* what command will we run inside the container? */
         vector < string > command;
-        if ( argc <= 1 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " remote_proxy_port [command...]" );
+        if ( argc <= 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " remote_proxy_ip remote_proxy_port [command...]" );
         }
 
-        if ( argc == 2 ) {
+        if ( argc == 3 ) {
             command.push_back( shell_path() );
         } else {
-            for ( int i = 2; i < argc; i++ ) {
+            for ( int i = 3; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
             }
         }
 
         ProcessRecorder<LocalProxy> process_recorder;
-        string remote_port( argv[ 1 ] );
-        Address remote_proxy_addr( "54.183.156.70", remote_port );
+        string remote_proxy_ip( argv[ 1 ] );
+        string remote_proxy_port( argv[ 2 ] );
+        Address remote_proxy_addr( remote_proxy_ip, remote_proxy_port );
         return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                                 /* restore environment and tweak prompt */
                                                 environ = user_environment;
