@@ -43,7 +43,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
 
     /* make pair of devices */
-    const string unique_id = to_string( getpid() ) + "-" + to_string( veth_counter );
+    const string unique_id = to_string( getpid() ) + to_string( veth_counter );
     string egress_name = "veth-" + unique_id, ingress_name = "veth-i" + unique_id;
 
     VirtualEthernetPair veth_devices( egress_name, ingress_name );
@@ -58,7 +58,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
     DNSProxy dns_outside( egress_addr, nameserver, nameserver );
 
     /* set up NAT between egress and eth0 */
-    NAT nat_rule( ingress_addr );
+    NAT nat_rule( ingress_addr, unique_id );
 
     /* set up dnat for all TCP connections to the port picked by proxy_target */
     DNAT dnat( proxy_target.tcp_listener().local_addr(), egress_name );

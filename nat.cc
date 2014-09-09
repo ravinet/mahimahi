@@ -6,8 +6,6 @@
    We mark the connections on entry from the ingress address (with our PID),
    and then look for the mark on output. */
 
-#include <unistd.h>
-
 #include "nat.hh"
 #include "exception.hh"
 #include "config.h"
@@ -33,11 +31,11 @@ NATRule::~NATRule()
     }
 }
 
-NAT::NAT( const Address & ingress_addr )
+NAT::NAT( const Address & ingress_addr, const string & unique_id )
 : pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK",
-            "--set-mark", to_string( getpid() ) } ),
+            "--set-mark", unique_id } ),
   post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark",
-              "--mark", to_string( getpid() ) } )
+              "--mark", unique_id } )
 {}
 
 DNAT::DNAT( const Address & listener, const string & interface )

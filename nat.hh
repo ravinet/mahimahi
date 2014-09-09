@@ -4,7 +4,7 @@
 #define NAT_HH
 
 /* Network Address Translator */
-
+#include <unistd.h>
 #include <string>
 
 #include "system_runner.hh"
@@ -34,7 +34,7 @@ private:
     NATRule pre_, post_;
 
 public:
-    NAT( const Address & ingress_addr );
+    NAT( const Address & ingress_addr, const std::string & unique_id = std::to_string( getpid() ) );
 };
 
 class DNAT
