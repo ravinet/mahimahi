@@ -98,12 +98,14 @@ localproxyshell_LDFLAGS = -pthread
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
-	chmod u+s $(DESTDIR)$(bindir)/delayshell
+	chmod u+s  $(DESTDIR)$(bindir)/delayshell
 	chown root $(DESTDIR)$(bindir)/linkshell
-	chmod u+s $(DESTDIR)$(bindir)/linkshell
+	chmod u+s  $(DESTDIR)$(bindir)/linkshell
 	chown root $(DESTDIR)$(bindir)/recordshell
-	chmod u+s $(DESTDIR)$(bindir)/recordshell
+	chmod u+s  $(DESTDIR)$(bindir)/recordshell
+	chown root $(DESTDIR)$(bindir)/localproxyshell
+	chmod u+s  $(DESTDIR)$(bindir)/localproxyshell
 	chown root $(DESTDIR)$(bindir)/replayshell
-	chmod u+s $(DESTDIR)$(bindir)/replayshell
+	chmod u+s  $(DESTDIR)$(bindir)/replayshell
 	chown root $(DESTDIR)$(bindir)/remote_proxy
-	chmod u+s $(DESTDIR)$(bindir)/remote_proxy
+	chmod u+s  $(DESTDIR)$(bindir)/remote_proxy
