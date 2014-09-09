@@ -9,28 +9,33 @@
 #include "exception.hh"
 #include "file_descriptor.hh"
 #include "int32.hh"
+#include "length_value_parser.hh"
 #include "http_record.pb.h"
 
 using namespace std;
 
-int main()
+int main( int argc, char *argv[] )
 {
     try {
-        FileDescriptor bulkreply = SystemCall( "open", open( "bulk_request.txt", O_RDONLY ) );
+        if ( argc != 2 ) {
+            throw Exception( "Usage", string( argv[ 0 ] ) + " bulk_request_file " );
+        }
 
-        string bulk_request( bulkreply.read() );
+        /* Open file */
+        FileDescriptor bulk_request_file = SystemCall( "open", open( argv[ 0 ], O_RDONLY ) );
+        string bulk_request( bulk_request_file.read() );
 
-        /* Request protobuf size */
-        Integer32 req_size = static_cast<Integer32>( bulk_request.substr( 0,4 ) );
-        bulk_request = bulk_request.substr( 4 );
-        cout << "Request protobuf size: " << req_size << endl;
+        /* Parse it using LengthValueParser */
+        LengthValueParser bulk_request_parser;
+        auto res = bulk_request_parser.parse( bulk_request );
+        assert( res.first );
 
         /* Print incoming request url (to be given to phantomjs) */
-        string request_proto = bulk_request.substr( 0, req_size );
-        bulk_request = bulk_request.substr( req_size );
         MahimahiProtobufs::BulkRequest request;
-        request.ParseFromString( request_proto );
-        string scheme = (request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS ? "https" : "http" );
+        request.ParseFromString( res.second );
+        string scheme = (request.scheme() == MahimahiProtobufs::BulkRequest_Scheme_HTTPS
+                        ? "https"
+                        : "http" );
         MahimahiProtobufs::HTTPMessage request_message = request.request();
         string hostname;
         for ( int i = 0; i < request_message.header_size(); i++ ) {
@@ -41,8 +46,8 @@ int main()
         string url = scheme + "://" + hostname;
         cout << url << endl;
 
-        /* Make sure the string is now empty */
-        assert( bulk_request.size() == 0 );
+        /* Print request body itself */
+        cout << request_message.DebugString() << endl;
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;

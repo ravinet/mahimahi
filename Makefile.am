@@ -87,7 +87,7 @@ bulkparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libss
 bulkparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += bulkrequestparser
-bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source) bulkrequestparser.cc
+bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) bulkrequestparser.cc
 bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 bulkrequestparser_LDFLAGS = -pthread
 
