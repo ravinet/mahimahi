@@ -154,6 +154,13 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                            auto res = bulk_parser.parse( buffer );
                                            while ( res.first ) {
                                                if ( not first_response ) { /* this is the first response, send back to client */
+                                                   if ( res.second.substr( 0, 11 ) == "HTTP/1.1 404" ) {
+                                                       /* phantomjs could not load the request so don't wait for bulk response */
+                                                       client.write( res.second );
+                                                       request_parser.pop();
+                                                       finished_bulk = true;
+                                                       break;
+                                                   }
                                                    MahimahiProtobufs::HTTPMessage response_to_send;
                                                    response_to_send.ParseFromString( res.second );
                                                    HTTPResponse first_res( response_to_send );
