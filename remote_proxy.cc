@@ -48,7 +48,9 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
         if ( HTTPMessage::equivalent_strings( http_header.key(), "User-Agent" ) ) {
             user_agent_header += http_header.value();
         } else {
-            custom_headers += "'" + http_header.key() + "' : '" + http_header.value() + "',";
+            if ( not HTTPMessage::equivalent_strings( http_header.key(), "Content-Length" ) ) {
+                custom_headers += "'" + http_header.key() + "' : '" + http_header.value() + "',";
+            }
         }
     }
     user_agent_header.append( "';\n" );
