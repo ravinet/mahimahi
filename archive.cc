@@ -213,25 +213,27 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                 }
             }
         } else { /* up to ? did not match, but maybe there is no ? for the query string (check up to last /) */
-            if ( curr.get_header_value( "Host" ) == request.get_header_value( "Host" ) ) {
-                size_t new_last_slash = request.first_line().find_last_of( "/" );
-                size_t curr_last_slash = curr.first_line().find_last_of( "/" );
-                string new_before_slash = request.first_line().substr( 0, new_last_slash );
-                string curr_before_slash = curr.first_line().substr( 0, curr_last_slash );
-                if ( new_before_slash == curr_before_slash ) { /* first lines match until last / */
-                    int match_val = match_size( curr_before_slash, new_before_slash );
-                    if ( match_val > no_query_possible_match.first ) { /* closer match after last slash */
-                        HTTPResponse ret( x.second );
-                        if ( ret.first_line() != "" ) { /* response is not pending */
-                            if ( check_fresh ) {
-                                if ( check_freshness( request, ret ) ) { /* response is fresh */
+            if ( pending_ok ) {
+                if ( curr.get_header_value( "Host" ) == request.get_header_value( "Host" ) ) {
+                    size_t new_last_slash = request.first_line().find_last_of( "/" );
+                    size_t curr_last_slash = curr.first_line().find_last_of( "/" );
+                    string new_before_slash = request.first_line().substr( 0, new_last_slash );
+                    string curr_before_slash = curr.first_line().substr( 0, curr_last_slash );
+                    if ( new_before_slash == curr_before_slash ) { /* first lines match until last / */
+                        int match_val = match_size( curr_before_slash, new_before_slash );
+                        if ( match_val > no_query_possible_match.first ) { /* closer match after last slash */
+                            HTTPResponse ret( x.second );
+                            if ( ret.first_line() != "" ) { /* response is not pending */
+                                if ( check_fresh ) {
+                                    if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                        no_query_possible_match = make_pair( match_val, ret.str() );
+                                    }
+                                } else {
                                     no_query_possible_match = make_pair( match_val, ret.str() );
                                 }
                             } else {
-                                no_query_possible_match = make_pair( match_val, ret.str() );
+                                no_query_possible_match = make_pair( match_val, ret.first_line() );
                             }
-                        } else {
-                            no_query_possible_match = make_pair( match_val, ret.first_line() );
                         }
                     }
                 }
