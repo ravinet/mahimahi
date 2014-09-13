@@ -122,7 +122,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
 
         /* give ingress to container */
         run( { IP, "link", "set", "dev", ingress_name, "netns", to_string( container_process.pid() ) } );
-        veth_devices.set_kernel_will_destroy();
+        //veth_devices.set_kernel_will_destroy();
 
         /* tell ChildProcess it's ok to proceed */
         signal_pipe.first.write( "x" );
