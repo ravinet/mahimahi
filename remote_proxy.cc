@@ -69,53 +69,58 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
 
 void handle_client( Socket && client, const int & veth_counter )
 {
-    /* LengthValueParser for bulk requests coming in from local_proxy? */
-    LengthValueParser bulk_request_parser;
+    try {
+        /* LengthValueParser for bulk requests coming in from local_proxy? */
+        LengthValueParser bulk_request_parser;
 
-    Poller poller;
+        Poller poller;
 
-    /* Setup a process recorder with a HTTPProxy target and a
-       and save requests and responses from the HTTPProxy to a
-       HTTPMemoryStore */
-    ProcessRecorder<HTTPProxy<HTTPMemoryStore>> process_recorder;
+        /* Setup a process recorder with a HTTPProxy target and a
+           and save requests and responses from the HTTPProxy to a
+           HTTPMemoryStore */
+        ProcessRecorder<HTTPProxy<HTTPMemoryStore>> process_recorder;
 
-    /* Have we finished parsing the bulk request from local_proxy? */
-    bool request_ready = false;
+        /* Have we finished parsing the bulk request from local_proxy? */
+        bool request_ready = false;
 
-    MahimahiProtobufs::BulkRequest incoming_request;
+        MahimahiProtobufs::BulkRequest incoming_request;
 
-    poller.add_action( Poller::Action( client, Direction::In,
-                                       [&] () {
-                                           string buffer = client.read();
-                                           auto res = bulk_request_parser.parse( buffer );
-                                           if ( res.first ) { /* request protobuf ready */
-                                               incoming_request.ParseFromString( res.second );
-                                               request_ready = true;
-                                           }
-                                           return ResultType::Continue;
-                                       } ) );
+        poller.add_action( Poller::Action( client, Direction::In,
+                                           [&] () {
+                                               string buffer = client.read();
+                                               auto res = bulk_request_parser.parse( buffer );
+                                               if ( res.first ) { /* request protobuf ready */
+                                                   incoming_request.ParseFromString( res.second );
+                                                   request_ready = true;
+                                               }
+                                               return ResultType::Continue;
+                                           } ) );
 
-    poller.add_action( Poller::Action( client, Direction::Out,
-                                       [&] () {
-                                           /* Pass the incoming_request to phantomjs within a ProcessRecorder */
-                                           /* Block until it's done recording */
-                                           process_recorder.record_process( []( FileDescriptor & parent_channel ) {
-                                                                            SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
-                                                                            return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
-                                                                                             "--ssl-protocol=TLSv1", "/dev/stdin" } );
-                                                                            },
-                                                                            move( client ),
-                                                                            veth_counter,
-                                                                            make_phantomjs_script( incoming_request ) );
-                                           /* Write a null string to prevent poller from throwing an exception */
-                                           client.write( "" );
-                                           return Result::Type::Exit;
-                                       },
-                                       [&] () { return request_ready; } ) );
-    while ( true ) {
-        if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
-            return;
+        poller.add_action( Poller::Action( client, Direction::Out,
+                                           [&] () {
+                                               /* Pass the incoming_request to phantomjs within a ProcessRecorder */
+                                               /* Block until it's done recording */
+                                               process_recorder.record_process( []( FileDescriptor & parent_channel ) {
+                                                                                SystemCall( "dup2", dup2( parent_channel.num(), STDIN_FILENO ) );
+                                                                                return ezexec( { PHANTOMJS, "--ignore-ssl-errors=true",
+                                                                                                 "--ssl-protocol=TLSv1", "/dev/stdin" } );
+                                                                                },
+                                                                                move( client ),
+                                                                                veth_counter,
+                                                                                make_phantomjs_script( incoming_request ) );
+                                               /* Write a null string to prevent poller from throwing an exception */
+                                               client.write( "" );
+                                               return Result::Type::Exit;
+                                           },
+                                           [&] () { return request_ready; } ) );
+        while ( true ) {
+            if ( poller.poll( -1 ).result == Poller::Result::Type::Exit ) {
+                return;
+            }
         }
+    } catch ( const Exception & e ) {
+        e.perror();
+        return;
     }
 }
 
