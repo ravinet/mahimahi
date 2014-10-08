@@ -139,6 +139,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
             proxy_target.register_handlers( recordr_event_loop );
             auto ret = recordr_event_loop.loop();
             proxy_target.serialize_to_socket( move( socket_output ) );
+            proxy_target.print_sent_requests();
             return ret;
         } ) );
     return outer_event_loop.loop();

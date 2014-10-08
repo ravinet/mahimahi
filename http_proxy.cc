@@ -137,3 +137,7 @@ void HTTPProxy<StoreType>::register_handlers( EventLoop & event_loop )
                                              return ResultType::Continue;
                                          } );
 }
+
+template<class StoreType>
+void HTTPProxy<StoreType>::print_sent_requests( void )
+{}

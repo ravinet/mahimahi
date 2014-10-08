@@ -21,7 +21,8 @@ using namespace PollerShortNames;
 LocalProxy::LocalProxy( const Address & listener_addr, const Address & remote_proxy )
     : listener_socket_( TCP ),
       remote_proxy_addr_( remote_proxy ),
-      archive()
+      archive(),
+      sent_requests()
 {
     listener_socket_.bind( listener_addr );
     listener_socket_.listen();
@@ -144,6 +145,10 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                        [&] () {
                                            server.write( make_bulk_request( new_request , scheme ) );
                                            sent_request = true;
+                                           auto path_start = new_request.first_line().find( "/" );
+                                           auto path_end = new_request.first_line().find( " ", path_start );
+                                           string req_sent = new_request.get_header_value( "Host" ) + new_request.first_line().substr( path_start, path_end - path_start );
+                                           sent_requests.emplace_back( req_sent );
                                            return ResultType::Continue;
                                        },
                                        [&] () { return not sent_request; } ) );
@@ -259,4 +264,12 @@ void LocalProxy::register_handlers( EventLoop & event_loop )
                                              listen();
                                              return ResultType::Continue;
                                          } );
+}
+
+void LocalProxy::print_sent_requests( void )
+{
+    for ( uint i = 0; i < sent_requests.size(); i++ ) {
+        cout << "Sent: " << sent_requests.at( i ) << endl;
+    }
+    cout << "Total requests sent: " << sent_requests.size() << endl;
 }

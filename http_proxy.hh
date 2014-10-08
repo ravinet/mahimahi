@@ -42,6 +42,8 @@ public:
 
     /* Serialize results to socket */
     void serialize_to_socket( Socket && socket_output ) { backing_store_.serialize_to_socket( std::move( socket_output ) ); }
+
+    void print_sent_requests( void );
 };
 
 #endif /* HTTP_PROXY_HH */

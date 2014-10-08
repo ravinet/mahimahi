@@ -23,6 +23,8 @@ private:
 
     Archive archive;
 
+    std::vector<std::string> sent_requests;
+
     int add_bulk_requests( const std::string & bulk_requests, std::vector< std::pair< int, int > > & request_positions );
 
     void handle_response( const std::string & res, const std::vector< std::pair< int, int > > & request_positions, int & response_counter );
@@ -46,6 +48,8 @@ public:
     void register_handlers( EventLoop & event_loop );
 
     void serialize_to_socket( Socket && socket_output __attribute__ ((unused)) ) { printf("WARNING NOT IMPLEMENTED\n"); }
+
+    void print_sent_requests( void );
 };
 
 #endif /* LOCAL_PROXY_HH */
