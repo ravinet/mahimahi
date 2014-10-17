@@ -96,6 +96,11 @@ texttoproto_SOURCES = $(common_source) $(http_source) text_to_proto.cc
 texttoproto_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 texttoproto_LDFLAGS = -pthread
 
+bin_PROGRAMS += changeheader
+changeheader_SOURCES = $(common_source) $(http_source) change_header.cc
+changeheader_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+changeheader_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
