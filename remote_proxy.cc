@@ -41,8 +41,8 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
     string url = scheme + "://" + hostname + path;
 
     /* Populate HTTP headers as per incoming_request */
-    string custom_headers = "page.customHeaders = {";
-    string user_agent_header = "page.settings.userAgent = '";
+    string custom_headers = "page.customHeaders = [{";
+    string user_agent_header = "page.settings.userAgent = ['";
     for ( const auto &x : incoming_request.request().header() ) {
         HTTPHeader http_header( x );
         if ( HTTPMessage::equivalent_strings( http_header.key(), "User-Agent" ) ) {
@@ -53,8 +53,8 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
             }
         }
     }
-    user_agent_header.append( "';\n" );
-    custom_headers.append( "};\n" );
+    user_agent_header.append( "'];\n" );
+    custom_headers.append( "}];\n" );
 
     string data = incoming_request.request().body();
 
