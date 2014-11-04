@@ -2,6 +2,9 @@ mahimahi binary: setuid-binary usr/bin/delayshell 4755 root/root
 mahimahi binary: setuid-binary usr/bin/recordshell 4755 root/root
 mahimahi binary: setuid-binary usr/bin/replayshell 4755 root/root
 mahimahi binary: setuid-binary usr/bin/linkshell 4755 root/root
-# delayshell needs to be setuid root to run unshare().
-# This program drops permissions before executing the user's shell
-# and runs in a sanitized environment.
+mahimahi binary: setuid-binary usr/bin/meter 4755 root/root
+# mahimahi's shells need to be setuid root to run unshare()
+# (to create a new network namespace / Linux container)
+#
+# These programs drop permissions before executing the user's command
+# and run in a sanitized environment.
