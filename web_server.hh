@@ -13,8 +13,6 @@ class WebServer
 private:
     /* each apache instance needs unique configuration file, error/access logs, and pid file */
     TempFile config_file_;
-    TempFile error_log_;
-    TempFile access_log_;
 
     bool moved_away_;
 

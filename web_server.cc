@@ -13,8 +13,6 @@ using namespace std;
 
 WebServer::WebServer( const Address & addr, const string & record_folder )
     : config_file_( "/tmp/replayshell_apache_config" ),
-      error_log_( "/tmp/replayshell_apache_error" ),
-      access_log_( "/tmp/replayshell_apache_access" ),
       moved_away_( false )
 {
     config_file_.write( apache_main_config + record_folder + "\n" );
@@ -31,9 +29,9 @@ WebServer::WebServer( const Address & addr, const string & record_folder )
 
     config_file_.write( "ServerName mahimahi.\n" );
 
-    config_file_.write( "ErrorLog " + error_log_.name() + "\n" );
+    config_file_.write( "ErrorLog /dev/null\n" );
 
-    config_file_.write( "CustomLog " + access_log_.name() + " common" + "\n" );
+    config_file_.write( "CustomLog /dev/null common\n" );
 
     config_file_.write( "User #" + to_string( getuid() ) + "\n" );
 
@@ -57,8 +55,6 @@ WebServer::~WebServer()
 
 WebServer::WebServer( WebServer && other )
     : config_file_( move( other.config_file_ ) ),
-      error_log_( move( other.error_log_ ) ),
-      access_log_( move( other.access_log_ ) ),
       moved_away_( false )
 {
     other.moved_away_ = true;
