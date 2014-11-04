@@ -13,6 +13,7 @@ public:
   XCBObject();
   XCBObject( XCBObject & original );
   XCBObject( XCBObject && original );
+  virtual ~XCBObject() {}
 
   xcb_connection_t * xcb_connection( void ) { return connection_.get(); }
 
