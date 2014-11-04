@@ -1,3 +1,9 @@
+mahimahi (0.11-1) unstable; urgency=low
+
+  * Bump version number for repository migration.
+
+ -- Keith Winstein <keithw@mit.edu>  Tue, 04 Nov 2014 08:58:36 -0800
+
 mahimahi (0.1-1) unstable; urgency=low
 
   * First packaging.
