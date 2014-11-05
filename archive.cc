@@ -153,6 +153,9 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
     /* longest matching string after last backslash */
     pair< int, string > no_query_possible_match = make_pair( 0, "" );
 
+    /* longest matching string before first semicolon */
+    pair< int, string > semi_possible_match = make_pair( 0, "" );
+
     HTTPRequest request( incoming_req );
 
     string incoming_cookie = "";
@@ -236,6 +239,27 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
                             }
                         }
                     }
+                    size_t new_first_semi = request.first_line().find_first_of( ";" );
+                    size_t curr_first_semi = curr.first_line().find_first_of( ";" );
+                    string new_before_semi = request.first_line().substr( 0, new_first_semi );
+                    string curr_before_semi = curr.first_line().substr( 0, curr_first_semi );
+                    if ( new_before_semi == curr_before_semi ) { /* first lines match until last / */
+                        int match_val = match_size( curr_before_semi, new_before_semi );
+                        if ( match_val > semi_possible_match.first ) { /* closer match after last slash */
+                            HTTPResponse ret( x.second );
+                            if ( ret.first_line() != "" ) { /* response is not pending */
+                                if ( check_fresh ) {
+                                    if ( check_freshness( request, ret ) ) { /* response is fresh */
+                                        semi_possible_match = make_pair( match_val, ret.str() );
+                                    }
+                                } else {
+                                    semi_possible_match = make_pair( match_val, ret.str() );
+                                }
+                            } else {
+                                semi_possible_match = make_pair( match_val, ret.first_line() );
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -247,6 +271,10 @@ pair< bool, string > Archive::find_request( const MahimahiProtobufs::HTTPMessage
 
     if ( no_query_possible_match.first != 0 ) { /* we have a posssible match when considering after last / */
         return make_pair( true, no_query_possible_match.second );
+    }
+
+    if ( semi_possible_match.first != 0 ) { /* we have a posssible match when considering before first ; */
+        return make_pair( true, semi_possible_match.second );
     }
 
     /* no match */
