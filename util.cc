@@ -26,7 +26,7 @@ string shell_path( void )
 {
     passwd *pw = getpwuid( getuid() );
     if ( pw == nullptr ) {
-        throw Exception( "getpwuid" );
+        throw unix_error( "getpwuid" );
     }
 
     string shell_path( pw->pw_shell );
@@ -68,7 +68,7 @@ void check_requirements( const int argc, const char * const argv[] )
 {
     if ( argc <= 0 ) {
         /* really crazy user */
-        throw Exception( "missing argv[ 0 ]", "argc <= 0" );
+        throw runtime_error( "missing argv[ 0 ]: argc <= 0" );
     }
 
     /* verify normal fds are present (stderr hasn't been closed) */
@@ -76,23 +76,23 @@ void check_requirements( const int argc, const char * const argv[] )
 
     /* verify running as euid root, but not ruid root */
     if ( geteuid() != 0 ) {
-        throw Exception( argv[ 0 ], "needs to be installed setuid root" );
+        throw runtime_error( string( argv[ 0 ] ) + ": needs to be installed setuid root" );
     }
 
     if ( (getuid() == 0) || (getgid() == 0) ) {
-        throw Exception( argv[ 0 ], "please run as non-root" );
+        throw runtime_error( string( argv[ 0 ] ) + ": please run as non-root" );
     }
 
     /* verify environment has been cleared */
     if ( environ ) {
-        throw Exception( "BUG", "environment not cleared in sensitive region" );
+        throw runtime_error( "BUG: environment not cleared in sensitive region" );
     }
 
     /* verify IP forwarding is enabled */
     FileDescriptor ipf( SystemCall( "open /proc/sys/net/ipv4/ip_forward",
                                     open( "/proc/sys/net/ipv4/ip_forward", O_RDONLY ) ) );
     if ( ipf.read() != "1\n" ) {
-        throw Exception( argv[ 0 ], "Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
+        throw runtime_error( string( argv[ 0 ] ) + ": Please run \"sudo sysctl -w net.ipv4.ip_forward=1\" to enable IP forwarding" );
     }
 }
 
@@ -148,7 +148,7 @@ vector< string > list_directory_contents( const string & dir )
 
     unique_ptr< DIR, Closedir > dp( opendir( dir.c_str() ) );
     if ( not dp ) {
-        throw Exception( "opendir (" + dir + ")" );
+        throw unix_error( "opendir (" + dir + ")" );
     }
 
     vector< string > ret;
@@ -164,7 +164,7 @@ vector< string > list_directory_contents( const string & dir )
 void assert_not_root( void )
 {
     if ( ( geteuid() == 0 ) or ( getegid() == 0 ) ) {
-        throw Exception( "BUG", "privileges not dropped in sensitive region" );
+        throw runtime_error( "BUG: privileges not dropped in sensitive region" );
     }
 }
 

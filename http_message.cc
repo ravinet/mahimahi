@@ -64,7 +64,7 @@ void HTTPMessage::eof( void )
     case FIRST_LINE_PENDING:
         return;
     case HEADERS_PENDING:
-        throw Exception( "HTTPMessage", "EOF received in middle of headers" );
+        throw runtime_error( "HTTPMessage: EOF received in middle of headers" );
     case BODY_PENDING:
         if ( eof_in_body() ) {
             state_ = COMPLETE;
@@ -148,7 +148,7 @@ const string & HTTPMessage::get_header_value( const std::string & header_name ) 
         }
     }
 
-    throw Exception( "HTTPMessage header not found", header_name );
+    throw runtime_error( "HTTPMessage header not found: " + header_name );
 }
 
 /* serialize the request or response as one string */

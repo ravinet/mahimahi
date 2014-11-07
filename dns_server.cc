@@ -32,7 +32,7 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
     unsigned int attempts = 0;
     while ( true ) {
         if ( ++attempts >= 20 ) {
-            throw Exception( "dnsmasq", "did not start after " + to_string( attempts ) + " attempts" );
+            throw runtime_error( "dnsmasq: did not start after " + to_string( attempts ) + " attempts" );
         }
 
         try {
@@ -41,8 +41,8 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
             this_thread::sleep_for( chrono::milliseconds( 10 ) );
             server.write( "x" );
             break;
-        } catch ( const Exception & e ) {
-            if ( e.attempt() != "write" ) {
+        } catch ( const exception & e ) {
+            if ( string( e.what() ).substr( 0, 6 ) != "write:" ) {
                 throw;
             }
             this_thread::sleep_for( chrono::milliseconds( 10 ) );

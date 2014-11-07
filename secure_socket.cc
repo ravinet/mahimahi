@@ -11,10 +11,25 @@
 
 using namespace std;
 
-Exception SSLException( const string & s_attempt )
+/* error category for OpenSSL */
+class ssl_error_category : public error_category
 {
-    return Exception( s_attempt, ERR_error_string( ERR_get_error(), nullptr ) );
-}
+public:
+    const char * name( void ) const noexcept override { return "SSL"; }
+    string message( const int ssl_error ) const noexcept override
+    {
+        return ERR_error_string( ssl_error, nullptr );
+    }
+};
+
+class ssl_error : public tagged_error
+{
+public:
+    ssl_error( const string & s_attempt,
+               const int error_code = ERR_get_error() )
+        : tagged_error( ssl_error_category(), s_attempt, error_code )
+    {}
+};
 
 class OpenSSL
 {
@@ -67,21 +82,21 @@ SSLContext::SSLContext( const SSL_MODE type )
     ctx_ = SSL_CTX_new( type == CLIENT ? TLSv1_client_method() : TLSv1_server_method() );
 
     if ( not ctx_ ) {
-        throw SSLException( "SSL_CTX_new" );
+        throw ssl_error( "SSL_CTL_new" );
     }
 
     if ( type == SERVER ) {
         if ( not SSL_CTX_use_certificate_ASN1( ctx_, 678, certificate ) ) {
-            throw SSLException( "SSL_CTX_use_certificate_ASN1" );
+            throw ssl_error( "SSL_CTX_use_certificate_ASN1" );
         }
 
         if ( not SSL_CTX_use_RSAPrivateKey_ASN1( ctx_, private_key, 1191 ) ) {
-            throw SSLException( "SSL_CTX_use_RSAPrivateKey_ASN1" );
+            throw ssl_error( "SSL_CTX_use_RSAPrivateKey_ASN1" );
         }
 
         /* check consistency of private key with loaded certificate */
         if ( not SSL_CTX_check_private_key( ctx_ ) ) {
-            throw SSLException( "SSL_CTX_check_private_key" );
+            throw ssl_error( "SSL_CTX_check_private_key" );
         }
     }
 }
@@ -98,11 +113,11 @@ SecureSocket::SecureSocket( Socket && sock, SSL *ssl )
       ssl_( ssl )
 {
     if ( not ssl_ ) {
-        throw Exception( "SecureSocket", "constructor must be passed valid SSL structure" );
+        throw runtime_error( "SecureSocket: constructor must be passed valid SSL structure" );
     }
 
     if ( not SSL_set_fd( ssl_, num() ) ) {
-        throw SSLException( "SSL_set_fd" );
+        throw ssl_error( "SSL_set_fd" );
     }
 
     /* enable read/write to return only after handshake/renegotiation and successful completion */
@@ -129,7 +144,7 @@ SecureSocket SSLContext::new_secure_socket( Socket && sock )
 {
     SSL *ssl = SSL_new( ctx_ );
     if ( not ssl ) {
-        throw SSLException( "SSL_new" );
+        throw ssl_error( "SSL_new" );
     }
 
     return SecureSocket( move( sock ), ssl );
@@ -138,7 +153,7 @@ SecureSocket SSLContext::new_secure_socket( Socket && sock )
 void SecureSocket::connect( void )
 {
     if ( not SSL_connect( ssl_ ) ) {
-        throw SSLException( "SSL_connect" );
+        throw ssl_error( "SSL_connect" );
     }
 }
 
@@ -147,10 +162,8 @@ void SecureSocket::accept( void )
     const auto ret = SSL_accept( ssl_ );
     if ( ret == 1 ) {
         return;
-    } else if ( ret == 0 ) {
-        throw Exception( "SSL_accept", ERR_error_string( SSL_get_error( ssl_, ret ), nullptr ) );
     } else {
-        throw SSLException( "SSL_accept" );
+        throw ssl_error( "SSL_accept" );
     }
 
     register_read();
@@ -180,7 +193,7 @@ string SecureSocket::read( void )
         register_read();
         return string(); /* EOF */
     } else if ( bytes_read < 0 ) {
-        throw SSLException( "SSL_read" );
+        throw ssl_error( "SSL_read" );
     } else {
         /* success */
         register_read();
@@ -194,7 +207,7 @@ void SecureSocket::write(const string & message )
     ssize_t bytes_written = SSL_write( ssl_, message.c_str(), message.length() );
 
     if ( bytes_written < 0 ) {
-        throw SSLException( "SSL_write" );
+        throw ssl_error( "SSL_write" );
     }
 
     register_write();

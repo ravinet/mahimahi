@@ -28,8 +28,8 @@ NATRule::~NATRule()
         vector< string > command = { IPTABLES, "-t", "nat", "-D" };
         command.insert( command.end(), arguments.begin(), arguments.end() );
         run( command );
-    } catch ( const Exception & e ) { /* don't throw from destructor */
-        e.perror();
+    } catch ( const exception & e ) { /* don't throw from destructor */
+        print_exception( e );
     }
 }
 

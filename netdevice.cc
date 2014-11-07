@@ -76,7 +76,7 @@ void assign_address( const string & device_name, const Address & addr, const Add
 void name_check( const string & str )
 {
     if ( str.find( "veth-" ) != 0 ) {
-        throw Exception( str, "name of veth device must start with \"veth-\"" );
+        throw runtime_error( str + ": name of veth device must start with \"veth-\"" );
     }
 }
 
@@ -99,8 +99,8 @@ VirtualEthernetPair::~VirtualEthernetPair()
 
     try {
         run( { IP, "link", "del", name_ } );
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const std::exception & e ) {
+        print_exception( e );
     }
     /* deleting one is sufficient to delete both */
 }

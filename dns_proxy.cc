@@ -42,8 +42,8 @@ void DNSProxy::handle_udp( void )
                                                        return ResultType::Continue;
                                                    } ) );
                 poller.poll( 60000 );
-            } catch ( const Exception & e ) {
-                e.perror();
+            } catch ( const exception & e ) {
+                print_exception( e );
                 return;
             }
 
@@ -89,8 +89,8 @@ void DNSProxy::handle_tcp( void )
                         return;
                     }
                 }
-            } catch ( const Exception & e ) {
-                e.perror();
+            } catch ( const exception & e ) {
+                print_exception( e );
                 return;
             }
             return;
@@ -104,8 +104,8 @@ unique_ptr<DNSProxy> DNSProxy::maybe_proxy( const Address & listen_address, cons
 {
     try {
         return unique_ptr<DNSProxy>( new DNSProxy( listen_address, s_udp_target, s_tcp_target ) );
-    } catch ( const Exception & e ) {
-        if ( e.attempt() == "bind" ) {
+    } catch ( const exception & e ) {
+        if ( string( e.what() ).substr( 0, 5 ) == "bind:" ) {
             return nullptr;
         } else {
             throw;

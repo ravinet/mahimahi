@@ -30,7 +30,7 @@ void HTTPDiskStore::save( const HTTPResponse & response, const Address & server_
     output.mutable_response()->CopyFrom( response.toprotobuf() );
 
     if ( not output.SerializeToFileDescriptor( file.fd().num() ) ) {
-        throw Exception( "save_to_disk", "failure to serialize HTTP request/response pair" );
+        throw runtime_error( "save_to_disk: failure to serialize HTTP request/response pair" );
     }
 
 }

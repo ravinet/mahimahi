@@ -34,8 +34,8 @@ ChildProcess::ChildProcess( const string & name,
         try {
             SignalMask( {} ).set_as_mask();
             _exit( child_procedure() );
-        } catch ( const Exception & e ) {
-            e.perror();
+        } catch ( const exception & e ) {
+            print_exception( e );
             _exit( EXIT_FAILURE );
         }
     }
@@ -57,7 +57,7 @@ bool ChildProcess::waitable( void ) const
     } else if ( infop.si_pid == pid_ ) {
         return true;
     } else {
-        throw Exception( "waitid", "unexpected value in siginfo_t si_pid field (not 0 or pid)" );
+        throw runtime_error( "waitid: unexpected value in siginfo_t si_pid field (not 0 or pid)" );
     }
 }
 
@@ -73,15 +73,15 @@ void ChildProcess::wait( const bool nonblocking )
                                   WEXITED | WSTOPPED | WCONTINUED | (nonblocking ? WNOHANG : 0) ) );
 
     if ( nonblocking and (infop.si_pid == 0) ) {
-        throw Exception( "nonblocking wait", "process was not waitable" );
+        throw runtime_error( "nonblocking wait: process was not waitable" );
     }
 
     if ( infop.si_pid != pid_ ) {
-        throw Exception( "waitid", "unexpected value in siginfo_t si_pid field" );
+        throw runtime_error( "waitid: unexpected value in siginfo_t si_pid field" );
     }
 
     if ( infop.si_signo != SIGCHLD ) {
-        throw Exception( "waitid", "unexpected value in siginfo_t si_signo field (not SIGCHLD)" );
+        throw runtime_error( "waitid: unexpected value in siginfo_t si_signo field (not SIGCHLD)" );
     }
 
     /* how did the process change state? */
@@ -103,7 +103,7 @@ void ChildProcess::wait( const bool nonblocking )
         running_ = true;
         break;
     default:
-        throw Exception( "waitid", "unexpected siginfo_t si_code" );
+        throw runtime_error( "waitid: unexpected siginfo_t si_code" );
     }
 }
 
@@ -137,8 +137,8 @@ ChildProcess::~ChildProcess()
             signal( graceful_termination_signal_ );
             wait();
         }
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
     }
 }
 
@@ -160,9 +160,9 @@ ChildProcess::ChildProcess( ChildProcess && other )
 
 void ChildProcess::throw_exception( void ) const
 {
-    throw Exception( "`" + name() + "'", "process "
-                     + (died_on_signal()
-                        ? string("died on signal ")
-                        : string("exited with failure status "))
-                     + to_string( exit_status() ) );
+    throw runtime_error( "`" + name() + "': process "
+                         + (died_on_signal()
+                            ? string("died on signal ")
+                            : string("exited with failure status "))
+                         + to_string( exit_status() ) );
 }

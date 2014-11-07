@@ -3,31 +3,41 @@
 #ifndef EXCEPTION_HH
 #define EXCEPTION_HH
 
-#include <string>
+#include <system_error>
 #include <iostream>
-#include <cstring>
 
-class Exception
+class tagged_error : public std::system_error
 {
 private:
-    std::string attempt_, error_;
+    std::string attempt_and_error_;
 
 public:
-    Exception( const std::string s_attempt, const std::string s_error )
-        : attempt_( s_attempt ), error_( s_error )
+    tagged_error( const std::error_category & category,
+                  const std::string & s_attempt,
+                  const int error_code )
+        : system_error( error_code, category ),
+          attempt_and_error_( s_attempt + ": " + std::system_error::what() )
     {}
 
-    Exception( const std::string s_attempt )
-        : attempt_( s_attempt ), error_( strerror( errno ) )
-    {}
-
-    void perror( void ) const
+    const char * what( void ) const noexcept override
     {
-        std::cerr << attempt_ << ": " << error_ << std::endl << std::flush;
+        return attempt_and_error_.c_str();
     }
-
-    const std::string & attempt( void ) const { return attempt_; }
 };
+
+class unix_error : public tagged_error
+{
+public:
+    unix_error( const std::string & s_attempt,
+                const int s_errno = errno )
+        : tagged_error( std::system_category(), s_attempt, s_errno )
+    {}
+};
+
+inline void print_exception( const std::exception & e )
+{
+    std::cerr << e.what() << std::endl;
+}
 
 /* error-checking wrapper for most syscalls */
 inline int SystemCall( const std::string & s_attempt, const int return_value )
@@ -36,7 +46,7 @@ inline int SystemCall( const std::string & s_attempt, const int return_value )
     return return_value;
   }
 
-  throw Exception( s_attempt );
+  throw unix_error( s_attempt );
 }
 
 #endif

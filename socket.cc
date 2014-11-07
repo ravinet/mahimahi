@@ -69,7 +69,7 @@ Socket Socket::accept( void )
 
   // verify length is what we expected 
   if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
-    throw Exception( "sockaddr size mismatch" );
+    throw runtime_error( "sockaddr size mismatch" );
   }
 
   register_read();
@@ -104,9 +104,9 @@ pair< Address, string > Socket::recvfrom( void )
                                    &fromlen );
 
     if ( recv_len < 0 ) {
-        throw Exception( "recvfrom" );
+        throw unix_error( "recvfrom" );
     } else if ( recv_len > RECEIVE_MTU ) {
-        throw Exception( "oversized datagram" );
+        throw unix_error( "recvfrom (oversized datagram)" );
     }
 
     register_read();

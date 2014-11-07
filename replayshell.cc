@@ -43,14 +43,14 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc < 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " directory [command...]" );
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory [command...]" );
         }
 
         /* clean directory name */
         string directory = argv[ 1 ];
 
         if ( directory.empty() ) {
-            throw Exception( argv[ 0 ], "directory name must be non-empty" );
+            throw runtime_error( string( argv[ 0 ] ) + ": directory name must be non-empty" );
         }
 
         /* make sure directory ends with '/' so we can prepend directory to file name for storage */
@@ -94,7 +94,7 @@ int main( int argc, char *argv[] )
 
                 MahimahiProtobufs::RequestResponse protobuf;
                 if ( not protobuf.ParseFromFileDescriptor( fd.num() ) ) {
-                    throw Exception( filename, "invalid HTTP request/response" );
+                    throw runtime_error( filename + ": invalid HTTP request/response" );
                 }
 
                 const Address address( protobuf.ip(), protobuf.port() );
@@ -155,8 +155,8 @@ int main( int argc, char *argv[] )
         } );
 
         return event_loop.loop();
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
         return EXIT_FAILURE;
     }
 }

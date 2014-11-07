@@ -23,7 +23,7 @@ string safe_getenv( const string & key )
 {
     const char * const value = getenv( key.c_str() );
     if ( not value ) {
-        throw Exception( "missing environment variable", key );
+        throw runtime_error( "missing environment variable: " + key );
     }
     return value;
 }
@@ -119,7 +119,7 @@ int main( void )
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
             if ( not current_record.ParseFromFileDescriptor( fd.num() ) ) {
-                throw Exception( filename, "invalid HTTP request/response" );
+                throw runtime_error( filename + ": invalid HTTP request/response" );
             }
 
             unsigned int score = match_score( current_record, request_line, is_https );
@@ -135,11 +135,11 @@ int main( void )
         } else {                /* no acceptable matches for request */
             cout << "HTTP/1.1 404 Not Found" << CRLF;
             cout << "Content-Type: text/plain" << CRLF << CRLF;
-            cout << "replayshell: could not find a match for " << request_line << CRLF;
-            throw Exception( "replayserver", "Could not find match for request: " + request_line );
+            cout << "replayserver: could not find a match for " << request_line << CRLF;
+            throw runtime_error( "replayserver: Could not find match for request: " + request_line );
         }
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
         return EXIT_FAILURE;
     }
 }

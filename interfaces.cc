@@ -54,7 +54,7 @@ Interfaces::Interfaces()
     string header_line; getline( all_routes_stream, header_line );
 
     if ( header_line.find( "Iface" ) != 0 ) {
-        throw Exception( "/proc/net/route", "unknown format" );
+        throw runtime_error( "/proc/net/route: unknown format" );
     }
 
     for ( string line; getline( all_routes_stream, line ); ) {
@@ -63,14 +63,14 @@ Interfaces::Interfaces()
         auto dest_end = line.find( "\t", dest_start + 1 );
 
         if ( dest_start == string::npos or dest_end == string::npos ) {
-            throw Exception( "/proc/net/route line", "unknown format" );
+            throw runtime_error( "/proc/net/route line: unknown format" );
         }
 
         dest_start += 1;
         size_t len = dest_end - dest_start;
 
         if ( len != 8 ) {
-            throw Exception( "/proc/net/route destination address", "unknown format" );
+            throw runtime_error( "/proc/net/route destination address: unknown format" );
         }
 
         string dest_address = line.substr( dest_start, len );
@@ -105,7 +105,7 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
         last_octet++;
     }
 
-    throw Exception( "Interfaces", "could not find free interface address" );
+    throw runtime_error( "Interfaces: could not find free interface address" );
 }
 
 std::pair< Address, Address > two_unassigned_addresses( void )

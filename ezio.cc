@@ -27,9 +27,9 @@ string::const_iterator write_some( const int fd,
     ssize_t bytes_written = write( fd, &*begin, end - begin );
 
     if ( bytes_written < 0 ) {
-        throw Exception( "write" );
+        throw unix_error( "write" );
     } else if ( bytes_written == 0 ) {
-        throw Exception( "write returned 0" );
+        throw unix_error( "write returned 0" );
     }
 
     return begin + bytes_written;
@@ -47,7 +47,7 @@ string readall( const int fd, const size_t limit )
         /* end of file = client has closed their side of connection */
         return string();
     } else if ( bytes_read < 0 ) {
-        throw Exception( "read" );
+        throw unix_error( "read" );
     } else {
         /* successful read */
         return string( buffer, bytes_read );
@@ -57,7 +57,7 @@ string readall( const int fd, const size_t limit )
 long int myatoi( const string & str, const int base )
 {
     if ( str.empty() ) {
-        throw Exception( "Invalid integer string", "empty" );
+        throw runtime_error( "Invalid integer string: empty" );
     }
 
     char *end;
@@ -66,9 +66,9 @@ long int myatoi( const string & str, const int base )
     long int ret = strtol( str.c_str(), &end, base );
 
     if ( errno != 0 ) {
-        throw Exception( "strtol" );
+        throw unix_error( "strtol" );
     } else if ( end != str.c_str() + str.size() ) {
-        throw Exception( "Invalid integer", str );
+        throw runtime_error( "Invalid integer: " + str );
     }
 
     return ret;

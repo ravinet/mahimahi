@@ -10,7 +10,7 @@ MIMEType::MIMEType( const string & content_type )
   auto type_and_parameters = split( content_type, ";" );
   if ( type_and_parameters.size() == 0
        or type_and_parameters.at( 0 ).empty() ) {
-    throw Exception( "MIMEType", "invalid MIME media-type string" );
+    throw runtime_error( "MIMEType: invalid MIME media-type string" );
   }
 
   type_ = type_and_parameters.at( 0 );

@@ -27,7 +27,7 @@ public:
           read_count_(), write_count_()
     {
         if ( fd_ <= 2 ) { /* make sure not overwriting stdout/stderr */
-            throw Exception( "FileDescriptor", "fd <= 2" );
+            throw unix_error( "FileDescriptor: fd <= 2" );
         }
 
         /* set close-on-exec flag so our file descriptors
@@ -43,8 +43,8 @@ public:
 
         try {
             SystemCall( "close", close( fd_ ) );
-        } catch ( const Exception & e ) { /* don't throw from destructor */
-            e.perror();
+        } catch ( const std::exception & e ) { /* don't throw from destructor */
+            print_exception( e );
         }
     }
 

@@ -2,6 +2,8 @@
 
 #include <csignal>
 
+#include <cstring>
+
 #include "signalfd.hh"
 
 using namespace std;
@@ -59,7 +61,7 @@ signalfd_siginfo SignalFD::read_signal( void )
     string delivered_signal_str = fd_.read( sizeof( signalfd_siginfo ) );
 
     if ( delivered_signal_str.size() != sizeof( signalfd_siginfo ) ) {
-        throw Exception( "signalfd read size mismatch" );
+        throw runtime_error( "signalfd read size mismatch" );
     }
 
     memcpy( &delivered_signal, delivered_signal_str.data(), sizeof( signalfd_siginfo ) );

@@ -61,7 +61,7 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
     case SIGINT:
         return ResultType::Exit;
     default:
-        throw Exception( "EventLoop", "unknown signal" );
+        throw runtime_error( "EventLoop: unknown signal" );
     }
 
     return ResultType::Continue;
@@ -75,7 +75,7 @@ int EventLoop::internal_loop( const std::function<int(void)> & wait_time )
     SignalMask current_mask = SignalMask::current_mask();
 
     if ( !( signals_ == current_mask ) ) {
-        throw Exception( "EventLoop", "signal mask has been altered" );
+        throw runtime_error( "EventLoop: signal mask has been altered" );
     }
 
     SignalFD signal_fd( signals_ );

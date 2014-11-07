@@ -48,8 +48,8 @@ WebServer::~WebServer()
 
     try {
         run( { APACHE2, "-f", config_file_.name(), "-k", "graceful-stop" } );
-    } catch ( const Exception & e ) { /* don't throw from destructor */
-        e.perror();
+    } catch ( const exception & e ) { /* don't throw from destructor */
+        print_exception( e );
     }
 }
 

@@ -58,7 +58,7 @@ Poller::Result Poller::poll( const int & timeout_ms )
             auto result = actions_.at( i ).callback();
 
             if ( count_before == actions_.at( i ).service_count() ) {
-                throw Exception( "Poller", "busy wait detected: callback did not read/write fd" );
+                throw runtime_error( "Poller: busy wait detected: callback did not read/write fd" );
             }
 
             switch ( result.result ) {

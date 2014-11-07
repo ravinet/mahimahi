@@ -22,7 +22,7 @@ Address::Address( const sockaddr & s_addr )
     : addr_()
 {
     if ( s_addr.sa_family != AF_INET ) {
-        throw Exception( "Address()", "sockaddr is not of family AF_INET" );
+        throw runtime_error( "Address(): sockaddr is not of family AF_INET" );
     }
 
     addr_ = *reinterpret_cast<const sockaddr_in *>( &s_addr );
@@ -51,7 +51,7 @@ Address::Address( const string & ip, const uint16_t port )
     addr_.sin_family = AF_INET;
 
     if ( 1 != inet_pton( AF_INET, ip.c_str(), &addr_.sin_addr ) ) {
-        throw Exception( "inet_pton (" + ip + ")" );
+        throw unix_error( "inet_pton (" + ip + ")" );
     }
 
     addr_.sin_port = htons( port );
@@ -61,6 +61,17 @@ Address Address::cgnat( const uint8_t last_octet )
 {
     return Address( "100.64.0." + to_string( last_octet ), 0 );
 }
+
+/* error category for getaddrinfo */
+class gai_error_category : public error_category
+{
+public:
+    const char * name( void ) const noexcept override { return "getaddrinfo"; }
+    string message( const int gai_ret ) const noexcept override
+    {
+        return gai_strerror( gai_ret );
+    }
+};
 
 Address::Address( const string & hostname, const string & service )
   : addr_()
@@ -76,7 +87,7 @@ Address::Address( const string & hostname, const string & service )
   /* look up the name or names */
   int gai_ret = getaddrinfo( hostname.c_str(), service.c_str(), &hints, &res );
   if ( gai_ret != 0 ) {
-    throw Exception( "getaddrinfo", gai_strerror( gai_ret ) );
+      throw tagged_error( gai_error_category(), "getaddrinfo", gai_ret );
   }
 
   /* if success, should always have at least one entry */
@@ -106,7 +117,7 @@ string Address::ip( void ) const
 {
     char addrstr[ INET_ADDRSTRLEN ] = {};
     if ( nullptr == inet_ntop( AF_INET, &addr_.sin_addr, addrstr, INET_ADDRSTRLEN ) ) {
-        throw Exception( "inet_ntop" );
+        throw unix_error( "inet_ntop" );
     }
 
     return addrstr;

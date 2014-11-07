@@ -9,7 +9,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw Exception( "Usage", program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 int main( int argc, char *argv[] )
@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )
                 usage_error( argv[ 0 ] );
                 break;
             default:
-                throw Exception( "getopt_log", "unexpected return value " + to_string( opt ) );
+                throw runtime_error( "getopt_log: unexpected return value " + to_string( opt ) );
             }
         }
 
@@ -82,8 +82,8 @@ int main( int argc, char *argv[] )
                                      uplink_filename, uplink_logfile, repeat );
         link_shell_app.start_downlink( downlink_filename, downlink_logfile, repeat );
         return link_shell_app.wait_for_exit();
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
         return EXIT_FAILURE;
     }
 }

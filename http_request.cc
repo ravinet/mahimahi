@@ -15,24 +15,24 @@ void HTTPRequest::calculate_expected_body_size( void )
         set_expected_body_size( true, 0 );
     } else if ( first_line_.substr( 0, 5 ) == "POST " ) {
         if ( !has_header( "Content-Length" ) ) {
-            throw Exception( "HTTPRequest", "does not support chunked requests" );
+            throw runtime_error( "HTTPRequest: does not support chunked requests" );
         }
 
         set_expected_body_size( true, myatoi( get_header_value( "Content-Length" ) ) );
     } else {
-        throw Exception( "Cannot handle HTTP method", first_line_ );
+        throw runtime_error( "Cannot handle HTTP method: " + first_line_ );
     }
 }
 
 size_t HTTPRequest::read_in_complex_body( const std::string & )
 {
     /* we don't support complex bodies */
-    throw Exception( "HTTPRequest", "does not support chunked requests" );
+    throw runtime_error( "HTTPRequest: does not support chunked requests" );
 }
 
 bool HTTPRequest::eof_in_body( void ) const
 {
-    throw Exception( "HTTPRequest", "got EOF in middle of body" );
+    throw runtime_error( "HTTPRequest: got EOF in middle of body" );
 }
 
 bool HTTPRequest::is_head( void ) const

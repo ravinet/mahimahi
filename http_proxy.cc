@@ -111,8 +111,8 @@ void HTTPProxy::handle_tcp( HTTPBackingStore & backing_store )
                 tls_client.accept();
 
                 loop( tls_server, tls_client, backing_store );
-            } catch ( const Exception & e ) {
-                e.perror();
+            } catch ( const exception & e ) {
+                print_exception( e );
             }
         }, listener_socket_.accept() );
 

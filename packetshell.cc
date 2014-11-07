@@ -32,7 +32,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
 {
     /* make sure environment has been cleared */
     if ( environ != nullptr ) {
-        throw Exception( "PacketShell", "environment was not cleared" );
+        throw runtime_error( "PacketShell: environment was not cleared" );
     }
 
     /* initialize base timestamp value before any forking */

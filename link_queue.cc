@@ -24,21 +24,21 @@ LinkQueue::LinkQueue( const string & filename, const string & logfile, const boo
     ifstream trace_file( filename );
 
     if ( not trace_file.good() ) {
-        throw Exception( filename, "error opening for reading" );
+        throw runtime_error( filename + ": error opening for reading" );
     }
 
     string line;
 
     while ( trace_file.good() and getline( trace_file, line ) ) {
         if ( line.empty() ) {
-            throw Exception( filename, "invalid empty line" );
+            throw runtime_error( filename + ": invalid empty line" );
         }
 
         const uint64_t ms = myatoi( line );
 
         if ( not schedule_.empty() ) {
             if ( ms < schedule_.back() ) {
-                throw Exception( filename, "timestamps must be monotonically nondecreasing" );
+                throw runtime_error( filename + ": timestamps must be monotonically nondecreasing" );
             }
         }
 
@@ -46,18 +46,18 @@ LinkQueue::LinkQueue( const string & filename, const string & logfile, const boo
     }
 
     if ( schedule_.empty() ) {
-        throw Exception( filename, "no valid timestamps found" );
+        throw runtime_error( filename + ": no valid timestamps found" );
     }
 
     if ( schedule_.back() == 0 ) {
-        throw Exception( filename, "trace must last for a nonzero amount of time" );
+        throw runtime_error( filename + ": trace must last for a nonzero amount of time" );
     }
 
     /* open logfile if called for */
     if ( not logfile.empty() ) {
         log_.reset( new ofstream( logfile ) );
         if ( not log_->good() ) {
-            throw Exception( logfile, "error opening for writing" );
+            throw runtime_error( logfile + ": error opening for writing" );
         }
     }
 }
@@ -105,7 +105,7 @@ void LinkQueue::use_a_delivery_opportunity( void )
         if ( repeat_ ) {
             base_timestamp_ += schedule_.back();
         } else {
-            throw Exception( "LinkQueue", "reached end of link recording" );
+            throw runtime_error( "LinkQueue: reached end of link recording" );
         }
     }
 }

@@ -17,16 +17,16 @@ using namespace std;
 int ezexec( const vector< string > & command, const bool path_search )
 {
     if ( command.empty() ) {
-        throw Exception( "ezexec", "empty command" );
+        throw runtime_error( "ezexec: empty command" );
     }
 
     if ( geteuid() == 0 or getegid() == 0 ) {
         if ( environ ) {
-            throw Exception( "BUG", "root's environment not cleared" );
+            throw runtime_error( "BUG: root's environment not cleared" );
         }
 
         if ( path_search ) {
-            throw Exception( "BUG", "root should not search PATH" );
+            throw runtime_error( "BUG: root should not search PATH" );
         }
     }
 
@@ -51,7 +51,7 @@ int ezexec( const vector< string > & command, const bool path_search )
 
     SystemCall( path_search ? "execvpe" : "execve",
                 (path_search ? execvpe : execve )( &argv[ 0 ][ 0 ], &argv[ 0 ], environ ) );
-    throw Exception( "execve", "failed" );
+    throw runtime_error( "execve: failed" );
 }
 
 void run( const vector< string > & command )

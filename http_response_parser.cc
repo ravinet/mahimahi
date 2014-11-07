@@ -13,7 +13,7 @@ void HTTPResponseParser::initialize_new_message( void )
 {
     /* do we have a request that we can match this response up with? */
     if ( requests_.empty() ) {
-        throw Exception( "HTTPResponseParser", "response without matching request" );
+        throw runtime_error( "HTTPResponseParser: response without matching request" );
     }
 
     message_in_progress_.set_request( requests_.front() );

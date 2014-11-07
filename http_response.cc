@@ -15,7 +15,7 @@ string HTTPResponse::status_code( void ) const
     assert( state_ > FIRST_LINE_PENDING );
     auto tokens = split( first_line_, " " );
     if ( tokens.size() < 3 ) {
-        throw Exception( "HTTPResponse", "Invalid status line: " + first_line_ );
+        throw runtime_error( "HTTPResponse: Invalid status line: " + first_line_ );
     }
 
     return tokens.at( 1 );
@@ -56,7 +56,7 @@ void HTTPResponse::calculate_expected_body_size( void )
 
         /* Rule 4 */
         set_expected_body_size( false );
-        throw Exception( "HTTPResponse", "unsupported multipart/byteranges without Content-Length" );
+        throw runtime_error( "HTTPResponse: unsupported multipart/byteranges without Content-Length" );
     } else {
         /* Rule 5 */
         set_expected_body_size( false );
@@ -89,7 +89,7 @@ bool HTTPResponse::eof_in_body( void ) const
     if ( body_parser_ ) {
         return body_parser_->eof();
     } else {
-        throw Exception( "HTTPResponse", "got EOF in middle of body" );
+        throw runtime_error( "HTTPResponse: got EOF in middle of body" );
     }
 }
 

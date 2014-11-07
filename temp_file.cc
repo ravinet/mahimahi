@@ -36,8 +36,8 @@ TempFile::~TempFile()
 
     try {
         SystemCall( "unlink " + name(), unlink( name().c_str() ) );
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
     }
 }
 

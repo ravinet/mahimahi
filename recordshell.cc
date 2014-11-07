@@ -29,14 +29,14 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc < 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " directory [command...]" );
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory [command...]" );
         }
 
         /* Make sure directory ends with '/' so we can prepend directory to file name for storage */
         string directory( argv[ 1 ] );
 
         if ( directory.empty() ) {
-            throw Exception( argv[ 0 ], "directory name must be non-empty" );
+            throw runtime_error( string( argv[ 0 ] ) + ": directory name must be non-empty" );
         }
 
         if ( directory.back() != '/' ) {
@@ -164,8 +164,8 @@ int main( int argc, char *argv[] )
             } );
 
         return outer_event_loop.loop();
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
         return EXIT_FAILURE;
     }
 }

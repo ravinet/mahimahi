@@ -19,7 +19,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc < 2 ) {
-            throw Exception( "Usage", string( argv[ 0 ] ) + " delay-milliseconds [command...]" );
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " delay-milliseconds [command...]" );
         }
 
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
@@ -41,8 +41,8 @@ int main( int argc, char *argv[] )
                                       delay_ms );
         delay_shell_app.start_downlink( delay_ms );
         return delay_shell_app.wait_for_exit();
-    } catch ( const Exception & e ) {
-        e.perror();
+    } catch ( const exception & e ) {
+        print_exception( e );
         return EXIT_FAILURE;
     }
 }
