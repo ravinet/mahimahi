@@ -19,6 +19,11 @@ void HTTPRequest::calculate_expected_body_size( void )
         }
 
         set_expected_body_size( true, myatoi( get_header_value( "Content-Length" ) ) );
+    } else if ( first_line_.substr( 0, 8 ) == "OPTIONS " ) {
+        if ( has_header( "Content-Length" ) or has_header( "Transfer-Encoding" ) ) {
+            throw Exception( "HTTPRequest", "does not support OPTIONS request with body" );
+        }
+        set_expected_body_size( true, 0 );
     } else {
         throw Exception( "Cannot handle HTTP method", first_line_ );
     }
