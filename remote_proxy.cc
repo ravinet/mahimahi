@@ -23,6 +23,19 @@
 using namespace std;
 using namespace PollerShortNames;
 
+string remove_single_quotes( string current_header )
+{
+    /* change all single quotes to \' */
+    size_t loc = current_header.find("'");
+    while ( loc != string::npos ) { /* we have a ' */
+        if ( current_header[loc] == '\'' and current_header[loc-1] != '\\') { /* must replace */
+            current_header.replace(loc, 1, "\\\'");
+        }
+        loc = current_header.find("'", loc+1);
+    }
+    return current_header;
+}
+
 string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_request )
 {
     /* Obtain scheme from BulkRequest protobuf */
@@ -49,7 +62,7 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
             user_agent_header += http_header.value();
         } else {
             if ( not HTTPMessage::equivalent_strings( http_header.key(), "Content-Length" ) ) {
-                custom_headers += "'" + http_header.key() + "' : '" + http_header.value() + "',";
+                custom_headers += "'" + remove_single_quotes( http_header.key() ) + "' : '" + remove_single_quotes( http_header.value() ) + "',";
             }
         }
     }
