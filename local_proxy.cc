@@ -123,7 +123,7 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
 
     bool sent_request = false;
 
-    bool first_response = false;
+    bool first_response = true;
 
     bool finished_bulk = false;
 
@@ -158,26 +158,19 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                            string buffer = server.read();
                                            auto res = bulk_parser.parse( buffer );
                                            while ( res.first ) {
-                                               if ( not first_response ) { /* this is the first response, send back to client */
-                                                   if ( res.second.substr( 0, 11 ) == "HTTP/1.1 404" ) {
-                                                       /* phantomjs could not load the request so don't wait for bulk response */
-                                                       client.write( res.second );
-                                                       request_parser.pop();
-                                                       finished_bulk = true;
-                                                       break;
-                                                   }
-                                                   MahimahiProtobufs::HTTPMessage response_to_send;
-                                                   response_to_send.ParseFromString( res.second );
-                                                   HTTPResponse first_res( response_to_send );
-                                                   //cout << "WROTE RESPONSE FOR: " << new_request.first_line() << " AT: " << timestamp() << endl;
-                                                   client.write( first_res.str() );
-                                                   request_parser.pop();
-                                                   first_response = true;
-                                               } else if ( not parsed_requests ) { /* it is the requests */
+                                               if ( not parsed_requests ) { /* it is the requests */
                                                    parsed_requests = true;
                                                    total_requests = add_bulk_requests( res.second, request_positions );
                                                } else { /* it is a response */
                                                    //cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
+                                                   if ( first_response ) { /* this is the first response, send back to client */
+                                                       MahimahiProtobufs::HTTPMessage response_to_send;
+                                                       response_to_send.ParseFromString( res.second );
+                                                       HTTPResponse first_res( response_to_send );
+                                                       client.write( first_res.str() );
+                                                       request_parser.pop();
+                                                       first_response = false;
+                                                   }
                                                    handle_response( res.second, request_positions, response_counter );
                                                    handle_new_requests( client_poller, request_parser, move( client ) );
                                                }

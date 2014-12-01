@@ -32,7 +32,6 @@ void HTTPMemoryStore::save( const HTTPResponse & response, const Address & serve
 void HTTPMemoryStore::serialize_to_socket( Socket && client )
 {
     /* bulk response format:
-       length-value pair for first response,
        length-value pair for requests protobuf,
        for each response:
          length-value pair for each response
@@ -50,11 +49,6 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
         return;
     }
 
-    /* First, write out the first response as a length-value pair */
-    string first_response;
-    responses.msg( 0 ).SerializeToString( &first_response );
-    first_response = static_cast<string>( Integer32( first_response.size() ) ) + first_response;
-
     /* Serialize all requests alone to a length-value pair for transmission */
     string all_requests;
     requests.SerializeToString( &all_requests );
@@ -69,5 +63,5 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
         all_responses = all_responses + static_cast<string>( Integer32( current_response.size() ) ) + current_response;
     }
 
-    client.write( first_response + all_requests + all_responses );
+    client.write( all_requests + all_responses );
 }
