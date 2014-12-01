@@ -14,6 +14,8 @@
 #include "http_header.hh"
 #include "http_response.hh"
 #include "timestamp.hh"
+#include "google/protobuf/io/gzip_stream.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
 
 using namespace std;
 using namespace PollerShortNames;
@@ -46,7 +48,12 @@ string make_bulk_request( const HTTPRequest & request, const string & scheme )
 int LocalProxy::add_bulk_requests( const string & bulk_requests, vector< pair< int, int > > & request_positions )
 {
     MahimahiProtobufs::BulkMessage requests;
-    requests.ParseFromString( bulk_requests );
+    {
+        google::protobuf::io::ArrayInputStream compressedStream( bulk_requests.c_str(), bulk_requests.size() );
+        google::protobuf::io::GzipInputStream compressingStream( &compressedStream );
+        requests.ParseFromZeroCopyStream( &compressingStream );
+    }
+
     /* add requests to archive */
     for ( int i = 0; i < requests.msg_size(); i++ ) {
         /* Don't check freshness since these are newer than whatever is in archive */
@@ -163,15 +170,21 @@ bool LocalProxy::get_response( const HTTPRequest & new_request, const string & s
                                                    total_requests = add_bulk_requests( res.second, request_positions );
                                                } else { /* it is a response */
                                                    //cout << "RECEIVED A RESPONSE AT: " << timestamp() << endl;
+                                                   MahimahiProtobufs::HTTPMessage current_response;
+                                                   {
+                                                       google::protobuf::io::ArrayInputStream compressedStream( res.second.c_str(), res.second.size() );
+                                                       google::protobuf::io::GzipInputStream compressingStream( &compressedStream );
+                                                       current_response.ParseFromZeroCopyStream( &compressingStream );
+                                                   }
                                                    if ( first_response ) { /* this is the first response, send back to client */
-                                                       MahimahiProtobufs::HTTPMessage response_to_send;
-                                                       response_to_send.ParseFromString( res.second );
-                                                       HTTPResponse first_res( response_to_send );
+                                                       HTTPResponse first_res( current_response );
                                                        client.write( first_res.str() );
                                                        request_parser.pop();
                                                        first_response = false;
                                                    }
-                                                   handle_response( res.second, request_positions, response_counter );
+                                                   string curr_response;
+                                                   current_response.SerializeToString( &curr_response );
+                                                   handle_response( curr_response, request_positions, response_counter );
                                                    handle_new_requests( client_poller, request_parser, move( client ) );
                                                }
                                                res = bulk_parser.parse( "" );

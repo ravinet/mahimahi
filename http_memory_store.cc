@@ -11,6 +11,8 @@
 #include "http_header.hh"
 #include "int32.hh"
 #include "file_descriptor.hh"
+#include "google/protobuf/io/gzip_stream.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
 
 using namespace std;
 
@@ -51,7 +53,14 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
 
     /* Serialize all requests alone to a length-value pair for transmission */
     string all_requests;
-    requests.SerializeToString( &all_requests );
+    {
+        google::protobuf::io::GzipOutputStream::Options options;
+        options.format = google::protobuf::io::GzipOutputStream::GZIP;
+        options.compression_level = 9;
+        google::protobuf::io::StringOutputStream compressedStream( &all_requests );
+        google::protobuf::io::GzipOutputStream compressingStream( &compressedStream, options );
+        requests.SerializeToZeroCopyStream( &compressingStream );
+    }
     all_requests = static_cast<string>( Integer32( all_requests.size() ) ) + all_requests;
 
     /* Now make a set of length-value pairs, one for each response */
@@ -59,7 +68,14 @@ void HTTPMemoryStore::serialize_to_socket( Socket && client )
     for ( int i = 0; i < responses.msg_size(); i++ ) {
         /* add response string size and response string */
         string current_response;
-        responses.msg( i ).SerializeToString( &current_response );
+        {
+            google::protobuf::io::GzipOutputStream::Options options;
+            options.format = google::protobuf::io::GzipOutputStream::GZIP;
+            options.compression_level = 9;
+            google::protobuf::io::StringOutputStream compressedStream( &current_response );
+            google::protobuf::io::GzipOutputStream compressingStream( &compressedStream, options );
+            responses.msg(i).SerializeToZeroCopyStream( &compressingStream );
+        }
         all_responses = all_responses + static_cast<string>( Integer32( current_response.size() ) ) + current_response;
     }
 
