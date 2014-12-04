@@ -74,10 +74,10 @@ string make_phantomjs_script( const MahimahiProtobufs::BulkRequest & incoming_re
     string data = incoming_request.request().body();
 
     if ( curr_request.first_line().find( "POST" ) != string::npos ) {
-        cout << ( "data = '" + data + "';\nurl = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load_post ) << endl;
+        //cout << ( "data = '" + data + "';\nurl = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load_post ) << endl;
         return( "data = '" + data + "';\nurl = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load_post );
     } else {
-        cout << ( "url = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load ) << endl;
+        //cout << ( "url = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load ) << endl;
         return( "url = '" + url + "';\n" + phantomjs_setup + user_agent_header + custom_headers + phantomjs_load );
     }
 }

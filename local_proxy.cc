@@ -275,7 +275,7 @@ void LocalProxy::register_handlers( EventLoop & event_loop )
 void LocalProxy::print_sent_requests( void )
 {
     for ( uint i = 0; i < sent_requests.size(); i++ ) {
-        cout << "Sent: " << sent_requests.at( i ) << endl;
+        //cout << "Sent: " << sent_requests.at( i ) << endl;
     }
-    cout << "Total requests sent: " << sent_requests.size() << endl;
+    //cout << "Total requests sent: " << sent_requests.size() << endl;
 }
