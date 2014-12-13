@@ -42,6 +42,25 @@ int main( int argc, char *argv[] )
 
         /* write just the response body to the specific file in readable format */
         messages.write( string( protobuf.response().body() ) );
+
+        /* check if response is gzipped */
+        bool gzipped = false;
+        for ( int i = 0; i < protobuf.response().header_size(); i++ ) {
+            HTTPHeader current_header( protobuf.response().header(i) );
+            if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Encoding" ) ) {
+                if ( current_header.value().find("gzip") != string::npos ) {
+                    /* it is gzipped */
+                    cout << "gzipped" << endl;
+                    gzipped = true;
+                }
+            }
+        }
+
+        /* check if we found that it was gzipped, if not then print not gzipped */
+        if ( not gzipped ) {
+            cout << "not gzipped" << endl;
+        }
+
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
