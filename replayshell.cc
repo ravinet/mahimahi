@@ -109,21 +109,28 @@ int main( int argc, char *argv[] )
 
         /* set up dummy interfaces */
         unsigned int interface_counter = 0;
+        bool one_interface = true;
+        string list_ip;
         for ( const auto ip : unique_ip ) {
-            add_dummy_interface( "sharded" + to_string( interface_counter ), ip );
-            interface_counter++;
+            if ( one_interface ) {
+                add_dummy_interface( "sharded" + to_string( interface_counter ), ip );
+                list_ip = ip.ip();
+                interface_counter++;
+                one_interface = false;
+            }
         }
 
         /* set up web servers */
         vector< WebServer > servers;
-        for ( const auto ip_port : unique_ip_and_port ) {
-            servers.emplace_back( ip_port, directory );
-        }
+        Address non_ssl = Address( list_ip, 80 );
+        Address ssl = Address ( list_ip, 443);
+        servers.emplace_back( non_ssl, directory );
+        servers.emplace_back( ssl, directory );
 
         /* set up DNS server */
         TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
         for ( const auto mapping : hostname_to_ip ) {
-            dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
+            dnsmasq_hosts.write( list_ip + " " + mapping.first + "\n" );
         }
 
         /* initialize event loop */
