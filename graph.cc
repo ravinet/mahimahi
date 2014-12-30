@@ -33,12 +33,14 @@ Graph::Graph( const unsigned int num_lines,
     label_font_( "Open Sans Condensed Bold 20" ),
     x_tick_labels_(),
     y_tick_labels_(),
-    colors_( num_lines ),
+    styles_( num_lines ),
     data_points_( num_lines ),
     x_label_( current_gc().cairo, current_gc().pango, label_font_, "time (s)" ),
     y_label_( current_gc().cairo, current_gc().pango, label_font_, "throughput (Mbps)" ),
     info_string_(),
     info_( current_gc().cairo, current_gc().pango, label_font_, "" ),
+    target_min_y_( min_y ),
+    target_max_y_( max_y ),
     bottom_( min_y ),
     top_( max_y ),
     horizontal_fadeout_( cairo_pattern_create_linear( 0, 0, 190, 0 ) ),
@@ -82,15 +84,53 @@ static int to_int( const float x )
   return static_cast<int>( lrintf( x ) );
 }
 
-bool Graph::blocking_draw( const float t, const float logical_width, const float min_y, const float max_y,
+bool Graph::blocking_draw( const float t, const float logical_width,
 			   const std::vector<float> & current_values, const double current_weight )
 {
   assert( current_weight >= 0 );
   assert( current_weight <= 1 );
 
-  /* set scale (with smoothing) */
-  top_ = top_ * .95 + max_y * 0.05;
-  bottom_ = bottom_ * 0.95 + min_y * 0.05;
+  {
+    /* autoscale graph */
+    float max_value = numeric_limits<float>::min();
+    std::unique_lock<std::mutex> ul { data_mutex_ }; /* going to read data_points_ */
+
+    /* look at historical data points */
+    for ( unsigned int i = 0; i < data_points_.size(); i++ ) {
+      for ( const auto & point : data_points_.at( i ) ) {
+	if ( point.second > max_value ) {
+	  max_value = point.second;
+	}
+
+	if ( point.second < target_min_y_ ) {
+	  target_min_y_ = point.second; /* not expecting points below 0, but include if necessary */
+	}
+      }
+    }
+
+    /* look at current/provisional data points? */
+    if ( current_weight > 0.75 ) {
+      for ( const auto & point : current_values ) {
+	if ( point > max_value ) {
+	  max_value = point;
+	}
+      }
+    }
+
+    /* expansion? */
+    if ( max_value * 1.2 > target_max_y_ ) {
+      target_max_y_ = max( max_value * 1.4f, target_min_y_ + 1 );
+    }
+
+    /* contraction */
+    if ( max_value * 1.8 < target_max_y_ ) {
+      target_max_y_ = max( max_value * 1.5f, target_min_y_ + 1 );
+    }
+  }
+
+  /* set scale for this frame (with smoothing) */
+  top_ = top_ * .95 + target_max_y_ * 0.05;
+  bottom_ = bottom_ * 0.95 + target_min_y_ * 0.05;
 
   /* get the current window size */
   const auto window_size = window_.size();
@@ -156,7 +196,7 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
     for ( unsigned int line_no = 0; line_no < data_points_.size(); line_no++ ) {
       const auto & line = data_points_.at( line_no );
 
-      if ( line.size() < 2 ) {
+      if ( line.empty() ) {
 	continue;
       }
 
@@ -178,12 +218,12 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
 				   window_size.second ) );
 
       cairo_set_source_rgba( cairo_,
-			     get<0>( colors_.at( line_no ) ),
-			     get<1>( colors_.at( line_no ) ),
-			     get<2>( colors_.at( line_no ) ),
-			     get<3>( colors_.at( line_no ) ) );
+			     get<0>( styles_.at( line_no ) ),
+			     get<1>( styles_.at( line_no ) ),
+			     get<2>( styles_.at( line_no ) ),
+			     get<3>( styles_.at( line_no ) ) );
 
-      if ( line_no == 0 ) {
+      if ( get<4>( styles_.at( line_no ) ) ) {
 	/* fill the curve */
       
 	cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
@@ -252,11 +292,6 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
       it->intensity = 0.95 * it->intensity + 0.05;
     } else {
       it->intensity = 0.95 * it->intensity;
-      /*
-      if ( it->intensity < 0.05 ) {
-	y_tick_labels_.erase( it );
-      }
-      */
     }
   }
 
@@ -308,27 +343,16 @@ bool Graph::blocking_draw( const float t, const float logical_width, const float
     cairo_fill( cairo_ );
   }
 
-  /* draw the cairo surface on the OpenGL display */
   window_.present( current_gc().pixmap, gcs_.size(), current_gc_ );
-  //  window_.flush();
   current_gc_ = (current_gc_ + 1) % gcs_.size();
-
-  /* should we quit? */
-  /* XXX
-  glfwPollEvents();
-
-  if ( display_.window().key_pressed( GLFW_KEY_ESCAPE ) or display_.window().should_close() ) {
-    return true;
-  }
-  */
 
   return false;
 }
 
-void Graph::set_color( const unsigned int num, const float red, const float green, const float blue,
-		       const float alpha )
+void Graph::set_style( const unsigned int num, const float red, const float green, const float blue,
+		       const float alpha, const bool fill )
 {
-  if ( num < colors_.size() ) {
-    colors_.at( num ) = make_tuple( red, green, blue, alpha );
+  if ( num < styles_.size() ) {
+    styles_.at( num ) = make_tuple( red, green, blue, alpha, fill );
   }
 }

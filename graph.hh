@@ -37,7 +37,7 @@ class Graph
 
   std::deque<std::pair<int, Pango::Text>> x_tick_labels_;
   std::vector<YLabel> y_tick_labels_;
-  std::vector<std::tuple<float, float, float, float>> colors_;
+  std::vector<std::tuple<float, float, float, float, bool>> styles_;
   std::vector<std::deque<std::pair<float, float>>> data_points_;
 
   Pango::Text x_label_;
@@ -46,6 +46,7 @@ class Graph
   std::string info_string_;
   Pango::Text info_;
 
+  float target_min_y_, target_max_y_;
   float bottom_, top_;
 
   float project_height( const float x ) const { return ( x - bottom_ ) / ( top_ - bottom_ ); }
@@ -70,10 +71,10 @@ public:
     data_points_.at( num ).emplace_back( t, y );
   }
 
-  void set_color( const unsigned int num, const float red, const float green, const float blue,
-		  const float alpha );
+  void set_style( const unsigned int num, const float red, const float green, const float blue,
+		  const float alpha, const bool fill );
 
-  bool blocking_draw( const float t, const float logical_width, const float min_y, const float max_y,
+  bool blocking_draw( const float t, const float logical_width,
 		      const std::vector<float> & current_values, const double current_weight );
 
   void set_info( const std::string & info );
