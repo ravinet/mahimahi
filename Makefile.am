@@ -31,11 +31,11 @@ graphing_source = cairo_objects.hh cairo_objects.cc \
 	display.hh display.cc \
 	graph.hh graph.cc
 
-bin_PROGRAMS += meter
-meter_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) meter.cc \
+bin_PROGRAMS += netmeter
+netmeter_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) meter.cc \
 	meter_queue.hh meter_queue.cc
-meter_LDADD = -lrt $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
-meter_LDFLAGS = -pthread
+netmeter_LDADD = -lrt $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
+netmeter_LDFLAGS = -pthread
 
 http_source = http_request_parser.hh \
 	http_request.hh http_request.cc \
@@ -72,8 +72,8 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
 	chown root $(DESTDIR)$(bindir)/linkshell
 	chmod u+s $(DESTDIR)$(bindir)/linkshell
-	chown root $(DESTDIR)$(bindir)/meter
-	chmod u+s $(DESTDIR)$(bindir)/meter
+	chown root $(DESTDIR)$(bindir)/netmeter
+	chmod u+s $(DESTDIR)$(bindir)/netmeter
 	chown root $(DESTDIR)$(bindir)/recordshell
 	chmod u+s $(DESTDIR)$(bindir)/recordshell
 	chown root $(DESTDIR)$(bindir)/replayshell

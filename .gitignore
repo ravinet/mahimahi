@@ -27,4 +27,4 @@ protobufs/http_record.pb.cc
 protobufs/http_record.pb.h
 recordshell
 replayshell
-meter
+netmeter

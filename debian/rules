@@ -18,4 +18,4 @@ override_dh_fixperms:
 	chmod 4755 debian/mahimahi/usr/bin/recordshell
 	chmod 4755 debian/mahimahi/usr/bin/replayshell
 	chmod 4755 debian/mahimahi/usr/bin/linkshell
-	chmod 4755 debian/mahimahi/usr/bin/meter
+	chmod 4755 debian/mahimahi/usr/bin/netmeter
