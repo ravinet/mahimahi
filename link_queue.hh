@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "file_descriptor.hh"
+#include "graph.hh"
 
 class LinkQueue
 {
@@ -32,6 +33,7 @@ private:
     std::queue< QueuedPacket > packet_queue_;
 
     std::unique_ptr<std::ofstream> log_;
+    std::unique_ptr<Graph> graph_;
 
     bool repeat_;
 
@@ -40,7 +42,7 @@ private:
     void use_a_delivery_opportunity( void );
 
 public:
-    LinkQueue( const std::string & filename, const std::string & logfile, const bool repeat );
+    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph );
 
     void read_packet( const std::string & contents );
 

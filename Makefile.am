@@ -21,15 +21,15 @@ delayshell_SOURCES = $(common_source) $(packet_shell_source) delayshell.cc \
 delayshell_LDADD = -lrt
 delayshell_LDFLAGS = -pthread
 
-bin_PROGRAMS += linkshell
-linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
-	link_queue.hh link_queue.cc
-linkshell_LDADD = -lrt
-linkshell_LDFLAGS = -pthread
-
 graphing_source = cairo_objects.hh cairo_objects.cc \
 	display.hh display.cc \
 	graph.hh graph.cc
+
+bin_PROGRAMS += linkshell
+linkshell_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) linkshell.cc \
+	link_queue.hh link_queue.cc
+linkshell_LDADD = -lrt $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
+linkshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += netmeter
 netmeter_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) meter.cc \

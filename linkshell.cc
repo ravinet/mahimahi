@@ -9,7 +9,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-downlink] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 int main( int argc, char *argv[] )
@@ -26,14 +26,17 @@ int main( int argc, char *argv[] )
         }
 
         const option command_line_options[] = {
-            { "uplink-log",   required_argument, nullptr, 'u' },
-            { "downlink-log", required_argument, nullptr, 'd' },
-            { "once",         no_argument,       nullptr, 'o' },
-            { 0,              0,                 nullptr, 0 }
+            { "uplink-log",     required_argument, nullptr, 'u' },
+            { "downlink-log",   required_argument, nullptr, 'd' },
+            { "once",           no_argument,       nullptr, 'o' },
+            { "meter-uplink",   no_argument,       nullptr, 'm' },
+            { "meter-downlink", no_argument,       nullptr, 'n' },
+            { 0,                0,                 nullptr, 0 }
         };
 
         string uplink_logfile, downlink_logfile;
         bool repeat = true;
+        bool meter_uplink = false, meter_downlink = false;
 
         while ( true ) {
             const int opt = getopt_long( argc, argv, "u:d:", command_line_options, nullptr );
@@ -50,6 +53,12 @@ int main( int argc, char *argv[] )
                 break;
             case 'o':
                 repeat = false;
+                break;
+            case 'm':
+                meter_uplink = true;
+                break;
+            case 'n':
+                meter_downlink = true;
                 break;
             case '?':
                 usage_error( argv[ 0 ] );
@@ -78,9 +87,11 @@ int main( int argc, char *argv[] )
 
         PacketShell<LinkQueue> link_shell_app( "link", user_environment );
 
+        const string uplink_name = "Uplink", downlink_name = "Downlink";
+
         link_shell_app.start_uplink( "[link] ", command,
-                                     uplink_filename, uplink_logfile, repeat );
-        link_shell_app.start_downlink( downlink_filename, downlink_logfile, repeat );
+                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink );
+        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink );
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );

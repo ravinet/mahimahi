@@ -10,12 +10,13 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const string & filename, const string & logfile, const bool repeat )
+LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_(),
       log_(),
+      graph_( nullptr ),
       repeat_( repeat )
 {
     assert_not_root();
@@ -59,6 +60,17 @@ LinkQueue::LinkQueue( const string & filename, const string & logfile, const boo
         if ( not log_->good() ) {
             throw runtime_error( logfile + ": error opening for writing" );
         }
+    }
+
+    /* create graph if called for */
+    if ( graph ) {
+        const string window_title = link_name + " [" + filename + "]";
+
+        graph_.reset( new Graph( 2, 640, 480, window_title, 0, 1 ) );
+        graph_->set_style( 0, 1, 0, 0, 0.25, true );
+        graph_->set_style( 1, 0, 0, 0.4, 1, false );
+        graph_->add_data_point( 0, 0, 0 );
+        graph_->add_data_point( 1, 0, 0 );
     }
 }
 
