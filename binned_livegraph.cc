@@ -1,6 +1,5 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <thread>
 #include <cmath>
 #include <cassert>
 
@@ -9,11 +8,13 @@
 
 using namespace std;
 
-BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const unsigned int num_lines )
-    : graph_( num_lines, 640, 480, name, 0, 1 ),
+BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const Graph::StylesType & styles )
+    : graph_( 640, 480, name, 0, 1, styles ),
       bin_width_( 500 ),
-      bytes_this_bin_( num_lines ),
-      current_bin_( timestamp() / bin_width_ )
+      bytes_this_bin_( styles.size() ),
+      current_bin_( timestamp() / bin_width_ ),
+      halt_( false ),
+      animation_thread_( [&] () { animation_loop(); } )
 {
     for ( unsigned int i = 0; i < bytes_this_bin_.size(); i++ ) {
         graph_.add_data_point( i, 0, 0 );
@@ -25,28 +26,24 @@ double BinnedLiveGraph::logical_width( void ) const
     return max( 5.0, graph_.size().first / 100.0 );
 }
 
-void BinnedLiveGraph::start_background_animation( void )
+void BinnedLiveGraph::animation_loop( void )
 {
-    thread newthread( [&] () {
-            while ( true ) {
-                const uint64_t ts = advance();
+    while ( not halt_ ) {
+        const uint64_t ts = advance();
 
-                /* calculate "current" estimate based on partial bin */
-                const double bin_fraction = (ts % bin_width_) / double( bin_width_ );
-                vector<float> current_estimates;
-                current_estimates.reserve( bytes_this_bin_.size() );
-                for ( const auto & x : bytes_this_bin_ ) {
-                    current_estimates.emplace_back( x / double( bin_width_ ) );
-                }
-                const double confidence = pow( 1 - cos( bin_fraction * 3.14159 / 2.0 ), 2 );
+        /* calculate "current" estimate based on partial bin */
+        const double bin_fraction = (ts % bin_width_) / double( bin_width_ );
+        vector<float> current_estimates;
+        current_estimates.reserve( bytes_this_bin_.size() );
+        for ( const auto & x : bytes_this_bin_ ) {
+            current_estimates.emplace_back( x / double( bin_width_ ) );
+        }
+        const double confidence = pow( 1 - cos( bin_fraction * 3.14159 / 2.0 ), 2 );
 
-                graph_.blocking_draw( ts / 1000.0, logical_width(),
-                                      current_estimates,
-                                      confidence );
-            }
-        } );
-
-    newthread.detach();
+        graph_.blocking_draw( ts / 1000.0, logical_width(),
+                              current_estimates,
+                              confidence );
+    }
 }
 
 uint64_t BinnedLiveGraph::advance( void )
@@ -76,14 +73,14 @@ uint64_t BinnedLiveGraph::advance( void )
     return now;
 }
 
-void BinnedLiveGraph::set_style( const unsigned int num, const float red, const float green, const float blue,
-                                 const float alpha, const bool fill )
-{
-    graph_.set_style( num, red, green, blue, alpha, fill );
-}
-
 void BinnedLiveGraph::add_bytes_now( const unsigned int num, const unsigned int amount )
 {
     advance();
     bytes_this_bin_.at( num ) += amount;
+}
+
+BinnedLiveGraph::~BinnedLiveGraph()
+{
+    halt_ = true;
+    animation_thread_.join();
 }

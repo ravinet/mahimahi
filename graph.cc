@@ -23,9 +23,9 @@ Graph::GraphicContext & Graph::current_gc( void )
   return gcs_[ current_gc_ ];
 }
 
-Graph::Graph( const unsigned int num_lines,
-	      const unsigned int initial_width, const unsigned int initial_height, const string & title,
-	      const float min_y, const float max_y )
+Graph::Graph( const unsigned int initial_width, const unsigned int initial_height, const string & title,
+	      const float min_y, const float max_y,
+	      const StylesType & styles )
   : window_( initial_width, initial_height ),
     gcs_( { window_, window_, window_ } ),
     current_gc_( 0 ),
@@ -33,8 +33,8 @@ Graph::Graph( const unsigned int num_lines,
     label_font_( "Open Sans Condensed Bold 20" ),
     x_tick_labels_(),
     y_tick_labels_(),
-    styles_( num_lines ),
-    data_points_( num_lines ),
+    styles_( styles ),
+    data_points_( styles_.size() ),
     x_label_( current_gc().cairo, current_gc().pango, label_font_, "time (s)" ),
     y_label_( current_gc().cairo, current_gc().pango, label_font_, "throughput (Mbps)" ),
     info_string_(),
@@ -53,14 +53,6 @@ Graph::Graph( const unsigned int num_lines,
   window_.set_name( title );
   window_.map();
   window_.flush();
-}
-
-void Graph::set_info( const string & info )
-{
-  if ( info != info_string_ ) {
-    info_string_ = info;
-    info_ = Pango::Text( current_gc().cairo, current_gc().pango, tick_font_, info );
-  }
 }
 
 void Graph::set_window( const float t, const float logical_width )
@@ -348,12 +340,4 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   current_gc_ = (current_gc_ + 1) % gcs_.size();
 
   return false;
-}
-
-void Graph::set_style( const unsigned int num, const float red, const float green, const float blue,
-		       const float alpha, const bool fill )
-{
-  if ( num < styles_.size() ) {
-    styles_.at( num ) = make_tuple( red, green, blue, alpha, fill );
-  }
 }

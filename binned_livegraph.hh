@@ -5,6 +5,8 @@
 
 #include <vector>
 #include <string>
+#include <atomic>
+#include <thread>
 
 #include "graph.hh"
 
@@ -21,15 +23,17 @@ private:
 
     double logical_width( void ) const;
 
-public:
-    BinnedLiveGraph( const std::string & name, const unsigned int num_lines );
+    void animation_loop( void );
 
-    void set_style( const unsigned int num, const float red, const float green, const float blue,
-                    const float alpha, const bool fill );
+    std::atomic<bool> halt_;
+
+    std::thread animation_thread_;
+
+public:
+    BinnedLiveGraph( const std::string & name, const Graph::StylesType & styles );
+    ~BinnedLiveGraph();
 
     void add_bytes_now( const unsigned int num, const unsigned int amount );
-
-    void start_background_animation( void );
 };
 
 #endif /* BINNED_LIVEGRAPH_HH */

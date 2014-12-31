@@ -60,9 +60,11 @@ class Graph
   std::mutex data_mutex_;
 
 public:
-  Graph( const unsigned int num_lines,
-	 const unsigned int initial_width, const unsigned int initial_height, const std::string & title,
-	 const float min_y, const float max_y );
+  typedef std::vector<std::tuple<float, float, float, float, bool>> StylesType;
+
+  Graph( const unsigned int initial_width, const unsigned int initial_height, const std::string & title,
+	 const float min_y, const float max_y,
+	 const StylesType & styles );
 
   void set_window( const float t, const float logical_width );
   void add_data_point( const unsigned int num, const float t, const float y ) {
@@ -71,13 +73,8 @@ public:
     data_points_.at( num ).emplace_back( t, y );
   }
 
-  void set_style( const unsigned int num, const float red, const float green, const float blue,
-		  const float alpha, const bool fill );
-
   bool blocking_draw( const float t, const float logical_width,
 		      const std::vector<float> & current_values, const double current_weight );
-
-  void set_info( const std::string & info );
 
   std::pair<unsigned int, unsigned int> size( void ) const { return window_.size(); }
 };

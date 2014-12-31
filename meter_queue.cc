@@ -13,9 +13,7 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
     assert_not_root();
 
     if ( graph ) {
-        graph_.reset( new BinnedLiveGraph( name, 1 ) );
-        graph_->set_style( 0, 0, 0, 0.4, 1, false );
-        graph_->start_background_animation();
+        graph_.reset( new BinnedLiveGraph( name, { make_tuple( 0.0, 0.0, 0.4, 1.0, false ) } ) );
     }
 }
 
