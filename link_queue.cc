@@ -64,7 +64,9 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
 
     /* create graph if called for */
     if ( graph ) {
-        const string window_title = link_name + " [" + filename + "]";
+        graph_.reset( new BinnedLiveGraph( link_name + " [" + filename + "]",
+                                           { make_tuple( 1.0, 0.0, 0.0, 0.25, true ),
+                                             make_tuple( 0.0, 0.0, 0.4, 1.0, false ) } ) );
     }
 }
 
@@ -78,10 +80,8 @@ void LinkQueue::read_packet( const string & contents )
 {
     const uint64_t now = timestamp();
 
-    /* pop wasted PDOs */
-    while ( next_delivery_time() <= now
-            and (packet_queue_.empty() or packet_queue_.front().arrival_time > next_delivery_time()) ) {
-        use_a_delivery_opportunity();
+    if ( contents.size() > PACKET_SIZE ) {
+        throw runtime_error( "packet size is greater than maximum" );
     }
 
     packet_queue_.emplace( contents, now );
@@ -89,6 +89,11 @@ void LinkQueue::read_packet( const string & contents )
     /* log it */
     if ( log_ ) {
         *log_ << now << " + " << contents.size() << endl;
+    }
+
+    /* meter it */
+    if ( graph_ ) {
+        graph_->add_bytes_now( 1, contents.size() );
     }
 }
 
@@ -102,6 +107,11 @@ void LinkQueue::use_a_delivery_opportunity( void )
     /* log the delivery opportunity */
     if ( log_ ) {
         *log_ << next_delivery_time() << " # " << PACKET_SIZE << endl;
+    }
+
+    /* meter the delivery opportunity */
+    if ( graph_ ) {
+        graph_->add_bytes_now( 0, PACKET_SIZE );
     }
 
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
@@ -118,13 +128,12 @@ void LinkQueue::use_a_delivery_opportunity( void )
 
 void LinkQueue::write_packets( FileDescriptor & fd )
 {
+    assert( pending_output() );
+
     uint64_t now = timestamp();
 
-    if ( not packet_queue_.empty() ) {
-        assert( packet_queue_.front().arrival_time <= next_delivery_time() );
-    }
-
-    while ( next_delivery_time() <= now ) {
+    while ( (next_delivery_time() < now)
+            or ( (next_delivery_time() == now) and pending_output() ) ) {
         const uint64_t this_delivery_time = next_delivery_time();
 
         /* burn a delivery opportunity */
@@ -155,17 +164,23 @@ void LinkQueue::write_packets( FileDescriptor & fd )
     }
 }
 
-unsigned int LinkQueue::wait_time( void ) const
+unsigned int LinkQueue::wait_time( void )
 {
-    if ( packet_queue_.empty() ) {
-        return numeric_limits<uint16_t>::max();
-    }
-
     const auto now = timestamp();
+
+    /* pop wasted PDOs */
+    while ( (next_delivery_time() < now) and not pending_output() ) {
+        use_a_delivery_opportunity();
+    }
 
     if ( next_delivery_time() <= now ) {
         return 0;
     } else {
         return next_delivery_time() - now;
     }
+}
+
+bool LinkQueue::pending_output( void ) const
+{
+    return (not packet_queue_.empty()) and (packet_queue_.front().arrival_time <= next_delivery_time());
 }

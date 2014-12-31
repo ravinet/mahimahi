@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "file_descriptor.hh"
-#include "graph.hh"
+#include "binned_livegraph.hh"
 
 class LinkQueue
 {
@@ -33,7 +33,7 @@ private:
     std::queue< QueuedPacket > packet_queue_;
 
     std::unique_ptr<std::ofstream> log_;
-    std::unique_ptr<Graph> graph_;
+    std::unique_ptr<BinnedLiveGraph> graph_;
 
     bool repeat_;
 
@@ -48,7 +48,9 @@ public:
 
     void write_packets( FileDescriptor & fd );
 
-    unsigned int wait_time( void ) const;
+    unsigned int wait_time( void );
+
+    bool pending_output( void ) const;
 };
 
 #endif /* LINK_QUEUE_HH */

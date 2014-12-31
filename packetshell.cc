@@ -145,7 +145,7 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                     ferry_queue.write_packets( sibling );
                                     return ResultType::Continue;
                                 },
-                                [&] () { return ferry_queue.wait_time() <= 0; } ) );
+                                [&] () { return ferry_queue.pending_output() and (ferry_queue.wait_time() <= 0); } ) );
 
     return internal_loop( [&] () { return ferry_queue.wait_time(); } );
 }
