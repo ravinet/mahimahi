@@ -89,6 +89,7 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 {
   assert( current_weight >= 0 );
   assert( current_weight <= 1 );
+  assert( data_points_.size() == current_values.size() );
 
   {
     /* autoscale graph */

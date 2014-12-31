@@ -23,7 +23,8 @@ delayshell_LDFLAGS = -pthread
 
 graphing_source = cairo_objects.hh cairo_objects.cc \
 	display.hh display.cc \
-	graph.hh graph.cc
+	graph.hh graph.cc \
+	binned_livegraph.hh binned_livegraph.cc
 
 bin_PROGRAMS += linkshell
 linkshell_SOURCES = $(common_source) $(graphing_source) $(packet_shell_source) linkshell.cc \
