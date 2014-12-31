@@ -102,7 +102,7 @@ bool Graph::blocking_draw( const float t, const float logical_width,
     }
 
     /* look at current/provisional data points? */
-    if ( current_weight > 0.75 ) {
+    if ( current_weight > 0.4 ) {
       for ( const auto & point : current_values ) {
 	if ( point > max_value ) {
 	  max_value = point;
@@ -117,7 +117,7 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 
     /* contraction */
     if ( max_value * 1.8 < target_max_y_ ) {
-      target_max_y_ = max( max_value * 1.5f, target_min_y_ + 1 );
+      target_max_y_ = max( max_value * 1.6f, target_min_y_ + 1 );
     }
   }
 
