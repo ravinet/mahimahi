@@ -32,12 +32,14 @@ void BinnedLiveGraph::animation_loop( void )
         const uint64_t ts = advance();
 
         /* calculate "current" estimate based on partial bin */
-        const double bin_fraction = (ts % bin_width_) / double( bin_width_ );
+        const double bin_width_so_far = ts % bin_width_;
         vector<float> current_estimates;
         current_estimates.reserve( bytes_this_bin_.size() );
         for ( const auto & x : bytes_this_bin_ ) {
-            current_estimates.emplace_back( x / double( bin_width_ ) );
+            current_estimates.emplace_back( (x * 8.0 / (bin_width_so_far / 1000.0)) / 1000000.0 );
         }
+
+        const double bin_fraction = bin_width_so_far / double( bin_width_ );
         const double confidence = pow( 1 - cos( bin_fraction * 3.14159 / 2.0 ), 2 );
 
         graph_.blocking_draw( ts / 1000.0, logical_width(),
