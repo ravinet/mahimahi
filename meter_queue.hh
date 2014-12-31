@@ -20,7 +20,6 @@ private:
     unsigned int bin_width_;
     uint64_t current_bin_;
     double logical_width_;
-    double logical_height_;
 
     uint64_t advance( void );
 

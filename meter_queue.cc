@@ -17,8 +17,7 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
       bytes_this_bin_( 0 ),
       bin_width_( 500 ),
       current_bin_( timestamp() / bin_width_ ),
-      logical_width_( graph ? max( 5.0, 640 / 100.0 ) : 1 ),
-      logical_height_( 1 )
+      logical_width_( graph ? max( 5.0, 640 / 100.0 ) : 1 )
 {
     assert_not_root();
 
@@ -33,10 +32,6 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
                     double current_estimate = (bytes_this_bin_ * 8.0 / (bin_width_ / 1000.0)) / 1000000.0;
                     double bin_fraction = (ts % bin_width_) / double( bin_width_ );
                     double confidence = pow(1 - cos( bin_fraction * 3.14159 / 2.0 ), 2);
-
-                    if ( confidence > 0.85 and (current_estimate / bin_fraction) > (logical_height_ * 0.85) ) {
-                        logical_height_ = (current_estimate / bin_fraction) * 1.2;
-                    }
 
                     logical_width_ = max( 5.0, graph_->size().first / 100.0 );
 
