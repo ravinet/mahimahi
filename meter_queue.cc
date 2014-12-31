@@ -52,9 +52,7 @@ uint64_t MeterQueue::advance( void )
 
     const uint64_t now_bin = now / bin_width_;
 
-    if ( current_bin_ == now_bin ) {
-        return now;
-    }
+    assert( current_bin_ <= now_bin );
 
     while ( current_bin_ < now_bin ) {
         graph_->add_data_point( 0,
