@@ -33,7 +33,7 @@ class XWindow : public XCBObject
 private:
   xcb_window_t window_ = xcb_generate_id( connection().get() );
   uint32_t complete_event_ = xcb_generate_id( connection().get() );
-  //  uint32_t idle_event_ = xcb_generate_id( connection().get() );
+  uint32_t idle_event_ = xcb_generate_id( connection().get() );
   bool complete_ = true, idle_ = true;
 
   void event_loop( void );

@@ -71,13 +71,11 @@ XWindow::XWindow( const unsigned int width, const unsigned int height )
 						   window_,
 						   XCB_PRESENT_EVENT_MASK_COMPLETE_NOTIFY ) );
 
-  /*
   check_noreply( "xcb_present_select_input_checked",
 		 xcb_present_select_input_checked( connection().get(),
 						   idle_event_,
 						   window_,
 						   XCB_PRESENT_EVENT_MASK_IDLE_NOTIFY ) );
-  */
 }
 
 void XWindow::map( void ) {
@@ -215,12 +213,11 @@ void XWindow::present( const XPixmap & pixmap, const unsigned int divisor, const
 					     nullptr /* notifies */ ) );
 
   complete_ = false;
+  idle_ = false;
 
-  /*
   while ( not idle_ ) {
     event_loop();
   }
-  */
 }
 
 void XWindow::event_loop( void )
@@ -231,10 +228,8 @@ void XWindow::event_loop( void )
     const uint16_t event_type = reinterpret_cast<xcb_ge_generic_event_t *>( event )->event_type;
     if ( event_type == (complete_event_ & 0xffff) ) {
       complete_ = true;
-      /*
     } else if ( event_type == (idle_event_ & 0xffff) ) {
       idle_ = true;
-      */
     } else {
       throw runtime_error( "unexpected present event" );
     }
