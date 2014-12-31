@@ -232,9 +232,9 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 
   /* draw the y-axis labels */
 
-  int label_bottom = to_int( floor( bottom_ ) );
-  int label_top = to_int( ceil( top_ ) );
-  int label_spacing = 1;
+  double label_bottom = to_int( floor( bottom_ ) );
+  double label_top = to_int( ceil( top_ ) );
+  double label_spacing = 1.0/4.0;
 
   while ( label_spacing < (label_top - label_bottom) / 6 ) {
     label_spacing *= 2;
@@ -259,9 +259,9 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   }
 
   /* find the labels we actually want on this frame */
-  vector<pair<int, bool>> labels_that_belong;
+  vector<pair<double, bool>> labels_that_belong;
 
-  for ( int val = label_bottom; val <= label_top; val += label_spacing ) {
+  for ( double val = label_bottom; val <= label_top; val += label_spacing ) {
     if ( project_height( val ) < 0 or project_height( val ) > 1 ) {
       continue;
     }
@@ -297,7 +297,7 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 
     stringstream ss;
     ss.imbue( locale( "" ) );
-    ss << fixed << x.first;
+    ss << dec << x.first;
 
     y_tick_labels_.emplace_back( YLabel( { x.first, Pango::Text( cairo_, pango_, label_font_, ss.str() ), 0.05 } ) );
   }

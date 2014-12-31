@@ -30,7 +30,7 @@ class Graph
 
   struct YLabel
   {
-    int height;
+    double height;
     Pango::Text text;
     float intensity;
   };
