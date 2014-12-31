@@ -8,20 +8,13 @@
 #include <memory>
 
 #include "file_descriptor.hh"
-#include "graph.hh"
+#include "binned_livegraph.hh"
 
 class MeterQueue
 {
 private:
     std::queue<std::string> packet_queue_;
-    std::unique_ptr<Graph> graph_;
-
-    unsigned int bytes_this_bin_;
-    unsigned int bin_width_;
-    uint64_t current_bin_;
-    double logical_width_;
-
-    uint64_t advance( void );
+    std::unique_ptr<BinnedLiveGraph> graph_;
 
 public:
     MeterQueue( const std::string & name, const bool graph );

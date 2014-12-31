@@ -84,5 +84,6 @@ void BinnedLiveGraph::set_style( const unsigned int num, const float red, const 
 
 void BinnedLiveGraph::add_bytes_now( const unsigned int num, const unsigned int amount )
 {
+    advance();
     bytes_this_bin_.at( num ) += amount;
 }
