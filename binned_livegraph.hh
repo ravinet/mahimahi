@@ -7,6 +7,7 @@
 #include <string>
 #include <atomic>
 #include <thread>
+#include <exception>
 
 #include "graph.hh"
 
@@ -27,6 +28,7 @@ private:
 
     std::atomic<bool> halt_;
 
+    std::exception_ptr animation_thread_exception_;
     std::thread animation_thread_;
 
 public:

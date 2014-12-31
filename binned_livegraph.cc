@@ -5,6 +5,7 @@
 
 #include "binned_livegraph.hh"
 #include "timestamp.hh"
+#include "exception.hh"
 
 using namespace std;
 
@@ -14,7 +15,13 @@ BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const Graph::StylesT
       bytes_this_bin_( styles.size() ),
       current_bin_( timestamp() / bin_width_ ),
       halt_( false ),
-      animation_thread_( [&] () { animation_loop(); } )
+      animation_thread_exception_(),
+      animation_thread_( [&] () {
+              try {
+                  animation_loop();
+              } catch ( ... ) {
+                  animation_thread_exception_ = current_exception();
+              } } )
 {
     for ( unsigned int i = 0; i < bytes_this_bin_.size(); i++ ) {
         graph_.add_data_point( i, 0, 0 );
@@ -85,4 +92,13 @@ BinnedLiveGraph::~BinnedLiveGraph()
 {
     halt_ = true;
     animation_thread_.join();
+
+    if ( animation_thread_exception_ != exception_ptr() ) {
+        try {
+            rethrow_exception( animation_thread_exception_ );
+        } catch ( const exception & e ) {
+            cerr << "BinnedLiveGraph exited from exception: ";
+            print_exception( e );
+        }
+    }
 }
