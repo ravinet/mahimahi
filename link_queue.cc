@@ -66,7 +66,8 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
     if ( graph ) {
         graph_.reset( new BinnedLiveGraph( link_name + " [" + filename + "]",
                                            { make_tuple( 1.0, 0.0, 0.0, 0.25, true ),
-                                             make_tuple( 0.0, 0.0, 0.4, 1.0, false ) } ) );
+                                             make_tuple( 0.0, 0.0, 0.4, 1.0, false ),
+                                             make_tuple( 1.0, 0.0, 0.0, 0.5, false ) } ) );
     }
 }
 
@@ -154,6 +155,11 @@ void LinkQueue::write_packets( FileDescriptor & fd )
                 if ( log_ ) {
                     *log_ << this_delivery_time << " - " << packet_queue_.front().contents.size()
                           << " " << this_delivery_time - packet_queue_.front().arrival_time << endl;
+                }
+
+                /* meter the delivery */
+                if ( graph_ ) {
+                    graph_->add_bytes_now( 2, packet_queue_.front().contents.size() );
                 }
 
                 /* this packet is ready to go */
