@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([mahimahi], [0.11], [mahimahi@mit.edu])
+AC_INIT([mahimahi], [0.12], [mahimahi@mit.edu])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
