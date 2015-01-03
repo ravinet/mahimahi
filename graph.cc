@@ -84,12 +84,15 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   assert( data_points_.size() == current_values.size() );
 
   {
-    /* autoscale graph */
+    /* autoscale graph -- but only lines (not filled areas) */
     float max_value = numeric_limits<float>::min();
     std::unique_lock<std::mutex> ul { data_mutex_ }; /* going to read data_points_ */
 
     /* look at historical data points */
     for ( unsigned int i = 0; i < data_points_.size(); i++ ) {
+      if ( get<4>( styles_.at( i ) ) ) { /* skip filled areas */
+	continue;
+      }
       for ( const auto & point : data_points_.at( i ) ) {
 	if ( point.second > max_value ) {
 	  max_value = point.second;
@@ -99,13 +102,11 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 	  target_min_y_ = point.second; /* not expecting points below 0, but include if necessary */
 	}
       }
-    }
 
-    /* look at current/provisional data points? */
-    if ( current_weight > 0.4 ) {
-      for ( const auto & point : current_values ) {
-	if ( point > max_value ) {
-	  max_value = point;
+      /* look at current/provisional data points? */
+      if ( current_weight > 0.4 ) {
+	if ( current_values.at( i ) > max_value ) {
+	  max_value = current_values.at( i );
 	}
       }
     }
