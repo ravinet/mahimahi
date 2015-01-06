@@ -348,6 +348,9 @@ void Archive::list_cache( MahimahiProtobufs::BulkRequest & bulk_request )
         HTTPResponse current_response( archive_.at( i ).second );
         if ( check_freshness( current_request, current_response ) ) {
             bulk_request.add_cached_requests()->CopyFrom( current_request.toprotobuf() );
+        } else {
+            /* remove stale object from archive */
+            archive_.erase( archive_.begin() + i);
         }
     }
 }
