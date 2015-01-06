@@ -10,6 +10,7 @@
 #include "http_response.hh"
 #include "address.hh"
 #include "socket.hh"
+#include "http_record.pb.h"
 
 /* class to print an HTTP request/response to screen */
 
@@ -21,7 +22,7 @@ private:
 public:
     HTTPConsoleStore();
     void save( const HTTPResponse & response, const Address & server_address );
-    void serialize_to_socket( Socket && client );
+    void serialize_to_socket( Socket && client, MahimahiProtobufs::BulkRequest & bulk_request );
 };
 
 #endif /* HTTP_CONSOLE_STORE_HH */

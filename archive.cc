@@ -335,3 +335,19 @@ void Archive::wait( void )
     unique_lock<mutex> pending_lock( mutex_ );
     cv_.wait( pending_lock );
 }
+
+void Archive::list_cache( MahimahiProtobufs::BulkRequest & bulk_request )
+{
+    /* iterate through archive and list stored requests which are still fresh */
+
+    unique_lock<mutex> ul( mutex_ );
+
+    /* for each request, check if fresh and if so, add to bulk request */
+    for ( unsigned int i = 0; i < archive_.size(); i++ ) {
+        HTTPRequest current_request( archive_.at( i ).first );
+        HTTPResponse current_response( archive_.at( i ).second );
+        if ( check_freshness( current_request, current_response ) ) {
+            bulk_request.add_cached_requests()->CopyFrom( current_request.toprotobuf() );
+        }
+    }
+}

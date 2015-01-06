@@ -29,6 +29,7 @@ public:
     void add_response( const MahimahiProtobufs::HTTPMessage & response, const int & index );
     void print( const HTTPRequest & req );
     void wait( void );
+    void list_cache( MahimahiProtobufs::BulkRequest & bulk_request );
 };
 
 #endif /* ARCHIVE_HH */

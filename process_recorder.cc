@@ -27,6 +27,7 @@ template <typename... Targs>
 int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescriptor & )> && child_procedure,
                                                  Socket && socket_output,
                                                  const int & veth_counter,
+                                                 const MahimahiProtobufs::BulkRequest & bulk_request,
                                                  const string & stdin_input,
                                                  Targs... Fargs )
 {
@@ -138,7 +139,7 @@ int ProcessRecorder<TargetType>::record_process( std::function<int( FileDescript
             dns_outside.register_handlers( recordr_event_loop );
             proxy_target.register_handlers( recordr_event_loop );
             auto ret = recordr_event_loop.loop();
-            proxy_target.serialize_to_socket( move( socket_output ) );
+            proxy_target.serialize_to_socket( move( socket_output ), bulk_request );
             proxy_target.print_sent_requests();
             return ret;
         } ) );

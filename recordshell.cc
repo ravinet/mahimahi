@@ -53,6 +53,8 @@ int main( int argc, char *argv[] )
             }
         }
 
+        MahimahiProtobufs::BulkRequest bulk_request;
+
         ProcessRecorder<HTTPProxy<HTTPDiskStore>> process_recorder;
         return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                                 /* restore environment and tweak prompt */
@@ -62,6 +64,7 @@ int main( int argc, char *argv[] )
                                                 return ezexec( command, true );
                                               }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */
                                                , 0
+                                               , bulk_request
                                                , ""
                                                , directory );
     } catch ( const Exception & e ) {

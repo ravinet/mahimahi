@@ -30,13 +30,16 @@ LocalProxy::LocalProxy( const Address & listener_addr, const Address & remote_pr
     listener_socket_.listen();
 }
 
-string make_bulk_request( const HTTPRequest & request, const string & scheme )
+string LocalProxy::make_bulk_request( const HTTPRequest & request, const string & scheme )
 {
     MahimahiProtobufs::BulkRequest bulk_request;
 
     bulk_request.set_scheme( scheme == "https" ? MahimahiProtobufs::BulkRequest_Scheme_HTTPS :
                                                  MahimahiProtobufs::BulkRequest_Scheme_HTTP );
     bulk_request.mutable_request()->CopyFrom( request.toprotobuf() );
+
+    /* add cached requests */
+    archive.list_cache( bulk_request );
 
     string request_proto;
     bulk_request.SerializeToString( &request_proto );

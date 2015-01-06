@@ -41,7 +41,7 @@ public:
     void register_handlers( EventLoop & event_loop );
 
     /* Serialize results to socket */
-    void serialize_to_socket( Socket && socket_output ) { backing_store_.serialize_to_socket( std::move( socket_output ) ); }
+    void serialize_to_socket( Socket && socket_output, MahimahiProtobufs::BulkRequest bulk_request ) { backing_store_.serialize_to_socket( std::move( socket_output ), bulk_request ); }
 
     void print_sent_requests( void );
 };

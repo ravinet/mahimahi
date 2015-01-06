@@ -20,7 +20,7 @@ private:
 public:
     HTTPDiskStore( const std::string & record_folder );
     void save( const HTTPResponse & response, const Address & server_address );
-    void serialize_to_socket( Socket && client );
+    void serialize_to_socket( Socket && client, MahimahiProtobufs::BulkRequest & bulk_request );
 };
 
 #endif /* BACKING_STORE_HH */

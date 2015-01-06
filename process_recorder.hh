@@ -8,6 +8,7 @@
 
 #include "file_descriptor.hh"
 #include "socket.hh"
+#include "http_record.pb.h"
 
 /* class that loads an arbitrary process and captures all HTTP traffic originating from it */
 
@@ -20,7 +21,8 @@ public:
     template <typename... Targs>
     int record_process( std::function<int( FileDescriptor & )> && child_procedure,
                         Socket && socket_output,
-                        const int & veth_counter, 
+                        const int & veth_counter,
+                        const MahimahiProtobufs::BulkRequest & bulk_request,
                         const std::string & stdin_input,
                         Targs... Fargs );
 };

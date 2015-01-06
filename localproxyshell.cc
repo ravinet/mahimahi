@@ -46,6 +46,7 @@ int main( int argc, char *argv[] )
         string remote_proxy_ip( argv[ 1 ] );
         string remote_proxy_port( argv[ 2 ] );
         Address remote_proxy_addr( remote_proxy_ip, remote_proxy_port );
+        MahimahiProtobufs::BulkRequest bulk_request;
         return process_recorder.record_process( [&] ( FileDescriptor & parent_channel  __attribute__ ((unused)) ) {
                                                 /* restore environment and tweak prompt */
                                                 environ = user_environment;
@@ -54,6 +55,7 @@ int main( int argc, char *argv[] )
                                                 return ezexec( command, true );
                                               }, Socket( SocketType::UDP ) /* Dummy socket, unused by HTTPDiskStore */
                                                , 0
+                                               , bulk_request
                                                , ""
                                                , remote_proxy_addr );
     } catch ( const Exception & e ) {

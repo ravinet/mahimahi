@@ -12,6 +12,7 @@
 #include "secure_socket.hh"
 #include "archive.hh"
 #include "http_request_parser.hh"
+#include "http_record.pb.h"
 
 static const std::string could_not_find = "HTTP/1.1 200 OK\r\nContent-Type: Text/html\r\nConnection: close\r\nContent-Length: 24\r\n\r\nCOULD NOT FIND AN OBJECT";
 
@@ -24,6 +25,8 @@ private:
     Archive archive;
 
     std::vector<std::string> sent_requests;
+
+    std::string make_bulk_request( const HTTPRequest & request, const std::string & scheme );
 
     int add_bulk_requests( const std::string & bulk_requests, std::vector< std::pair< int, int > > & request_positions );
 
@@ -47,7 +50,7 @@ public:
 
     void register_handlers( EventLoop & event_loop );
 
-    void serialize_to_socket( Socket && socket_output __attribute__ ((unused)) ) { /*printf("WARNING NOT IMPLEMENTED\n");*/ }
+    void serialize_to_socket( Socket && socket_output __attribute__ ((unused)), MahimahiProtobufs::BulkRequest bulk_request __attribute__ ((unused)) ) { /*printf("WARNING NOT IMPLEMENTED\n");*/ }
 
     void print_sent_requests( void );
 };

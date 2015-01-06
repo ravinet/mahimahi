@@ -122,6 +122,7 @@ void handle_client( Socket && client, const int & veth_counter )
                                                                                 },
                                                                                 move( client ),
                                                                                 veth_counter,
+                                                                                incoming_request,
                                                                                 make_phantomjs_script( incoming_request ) );
                                                /* Write a null string to prevent poller from throwing an exception */
                                                client.write( "" );
