@@ -54,6 +54,7 @@ int main( int argc, char *argv[] )
         final_new_response.set_body( protobuf.response().body() );
 
         /* use modified text file as new response body */
+        bool rewritten = false;
         for ( int i = 0; i < new_response.header_size(); i++ ) {
             HTTPHeader current_header( new_response.header(i) );
             if ( HTTPMessage::equivalent_strings( current_header.key(), header_to_change ) ) { 
@@ -61,10 +62,19 @@ int main( int argc, char *argv[] )
                string new_vals = current_header.key() + ": " + new_value;
                HTTPHeader new_header( new_vals );
                final_new_response.add_header()->CopyFrom( new_header.toprotobuf() );
+               rewritten = true;
             } else {
                 final_new_response.add_header()->CopyFrom( current_header.toprotobuf() );
             }
         }
+
+        /* header did not previously exist, so add it */
+        if ( not rewritten ) {
+            string new_head = header_to_change + ": " + new_value;
+            HTTPHeader to_add( new_head );
+            final_new_response.add_header()->CopyFrom( to_add.toprotobuf() );
+        }
+
         /* create new request/response pair using old request and new response */
         final_protobuf.set_ip( protobuf.ip() );
         final_protobuf.set_port( protobuf.port() );
