@@ -101,6 +101,11 @@ changeheader_SOURCES = $(common_source) $(http_source) change_header.cc
 changeheader_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 changeheader_LDFLAGS = -pthread
 
+bin_PROGRAMS += removeheader
+removeheader_SOURCES = $(common_source) $(http_source) remove_header.cc
+removeheader_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+removeheader_LDFLAGS = -pthread
+
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/delayshell
 	chmod u+s $(DESTDIR)$(bindir)/delayshell
