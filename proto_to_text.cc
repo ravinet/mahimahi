@@ -43,23 +43,51 @@ int main( int argc, char *argv[] )
         /* write just the response body to the specific file in readable format */
         messages.write( string( protobuf.response().body() ) );
 
-        /* check if response is gzipped */
+        /* check if response is gzipped, if object is html or javascript, and if chunked */
         bool gzipped = false;
+        bool chunked = false;
+        string object_type;
         for ( int i = 0; i < protobuf.response().header_size(); i++ ) {
             HTTPHeader current_header( protobuf.response().header(i) );
             if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Encoding" ) ) {
                 if ( current_header.value().find("gzip") != string::npos ) {
                     /* it is gzipped */
-                    cout << "gzipped" << endl;
                     gzipped = true;
+                }
+            }
+            if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Type" ) ) {
+                if ( current_header.value().find( "javascript" ) != string::npos ) { /* javascript */
+                    object_type = "javascript";
+                } else if ( current_header.value().find( "html" ) != string::npos ) { /* html */
+                    object_type = "html";
+                } else {
+                    object_type = "neither";
+                }
+            }
+
+            if ( HTTPMessage::equivalent_strings( current_header.key(), "Transfer-Encoding" ) ) {
+                if ( current_header.value().find( "chunked" ) != string::npos ) { /* chunked */
+                    chunked = true;
                 }
             }
         }
 
         /* check if we found that it was gzipped, if not then print not gzipped */
-        if ( not gzipped ) {
-            cout << "not gzipped" << endl;
+        if ( gzipped ) {
+            if ( chunked ) {
+                cout << object_type << "chunked,gzipped" << endl;
+            } else {
+                cout << object_type << ",gzipped" << endl;
+            }
+        } else {
+            if ( chunked ) {
+                cout << object_type << ",chunked,not gzipped" << endl;
+            } else {
+                cout << object_type << ",not gzipped" << endl;
+            }
         }
+
+
 
     } catch ( const Exception & e ) {
         e.perror();
