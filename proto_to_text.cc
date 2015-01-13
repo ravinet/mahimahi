@@ -72,18 +72,24 @@ int main( int argc, char *argv[] )
             }
         }
 
+        /* check if this is 'GET /'- for now we assume that this is the top-level object */
+        string top_html = "";
+        if ( (protobuf.request().first_line() == "GET / HTTP/1.1") and (object_type == "html")) {
+           top_html = "index";
+        }
+
         /* check if we found that it was gzipped, if not then print not gzipped */
         if ( gzipped ) {
             if ( chunked ) {
-                cout << object_type << "chunked,gzipped" << endl;
+                cout << object_type << top_html << "chunked,gzipped" << endl;
             } else {
-                cout << object_type << ",gzipped" << endl;
+                cout << object_type << top_html << ",gzipped" << endl;
             }
         } else {
             if ( chunked ) {
-                cout << object_type << ",chunked,not gzipped" << endl;
+                cout << object_type << top_html << ",chunked,not gzipped" << endl;
             } else {
-                cout << object_type << ",not gzipped" << endl;
+                cout << object_type << top_html << ",not gzipped" << endl;
             }
         }
 
