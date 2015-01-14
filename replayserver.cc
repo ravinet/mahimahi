@@ -81,9 +81,9 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     }
 
     /* match user agent */
-    if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
-        return 0;
-    }
+    //if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
+    //    return 0;
+    //}
 
     /* must match first line up to "?" at least */
     if ( strip_query( request_line ) != strip_query( saved_request.first_line() ) ) {
