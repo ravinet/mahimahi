@@ -41,6 +41,8 @@ private:
 
     void use_a_delivery_opportunity( void );
 
+    void discard_wasted_opportunities( const uint64_t now );
+
 public:
     LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph );
 
@@ -50,7 +52,7 @@ public:
 
     unsigned int wait_time( void );
 
-    bool pending_output( void ) const;
+    bool pending_output( void );
 };
 
 #endif /* LINK_QUEUE_HH */

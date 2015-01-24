@@ -129,12 +129,9 @@ void LinkQueue::use_a_delivery_opportunity( void )
 
 void LinkQueue::write_packets( FileDescriptor & fd )
 {
-    assert( pending_output() );
-
     uint64_t now = timestamp();
 
-    while ( (next_delivery_time() < now)
-            or ( (next_delivery_time() == now) and pending_output() ) ) {
+    while ( next_delivery_time() <= now ) {
         const uint64_t this_delivery_time = next_delivery_time();
 
         /* burn a delivery opportunity */
@@ -170,23 +167,33 @@ void LinkQueue::write_packets( FileDescriptor & fd )
     }
 }
 
+void LinkQueue::discard_wasted_opportunities( const uint64_t now )
+{
+    const uint64_t discard_before = min( now,
+                                         packet_queue_.empty()
+                                         ? now
+                                         : packet_queue_.front().arrival_time - 1 );
+
+    while ( next_delivery_time() <= discard_before ) {
+        use_a_delivery_opportunity();
+    }
+}
+
 unsigned int LinkQueue::wait_time( void )
 {
     const auto now = timestamp();
 
     /* pop wasted PDOs */
-    while ( (next_delivery_time() < now) and not pending_output() ) {
-        use_a_delivery_opportunity();
-    }
+    discard_wasted_opportunities( now );
 
-    if ( next_delivery_time() <= now ) {
-        return 0;
-    } else {
-        return next_delivery_time() - now;
-    }
+    return max( uint64_t(0), next_delivery_time() - now );
 }
 
-bool LinkQueue::pending_output( void ) const
+bool LinkQueue::pending_output( void )
 {
-    return (not packet_queue_.empty()) and (packet_queue_.front().arrival_time <= next_delivery_time());
+    const auto now = timestamp();
+
+    return (not packet_queue_.empty())
+        and (packet_queue_.front().arrival_time <= next_delivery_time())
+        and (next_delivery_time() <= now);
 }
