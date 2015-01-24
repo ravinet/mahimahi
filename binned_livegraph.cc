@@ -61,8 +61,6 @@ uint64_t BinnedLiveGraph::advance( void )
 
     const uint64_t now_bin = now / bin_width_;
 
-    assert( current_bin_ <= now_bin );
-
     bool advanced = false;
     while ( current_bin_ < now_bin ) {
         for ( unsigned int i = 0; i < bytes_this_bin_.size(); i++ ) {
