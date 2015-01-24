@@ -234,6 +234,7 @@ void XWindow::event_loop( void )
       throw runtime_error( "unexpected present event" );
     }
   } else {
-    throw runtime_error( "unexpected event" );
+    // throw runtime_error( "unexpected event" );
+    // This is happening (but very rarely). Let's ignore for now. (KJW 1/23/2015)
   }
 }
