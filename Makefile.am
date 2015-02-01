@@ -27,6 +27,12 @@ linkshell_SOURCES = $(common_source) $(packet_shell_source) linkshell.cc \
 linkshell_LDADD = -lrt
 linkshell_LDFLAGS = -pthread
 
+bin_PROGRAMS += lossshell
+lossshell_SOURCES = $(common_source) $(packet_shell_source) lossshell.cc \
+        loss_queue.hh loss_queue.cc
+lossshell_LDADD = -lrt
+lossshell_LDFLAGS = -pthread
+
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) recordshell.cc
 recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
@@ -92,3 +98,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/replayshell
 	chown root $(DESTDIR)$(bindir)/remote_proxy
 	chmod u+s $(DESTDIR)$(bindir)/remote_proxy
+	chown root $(DESTDIR)$(bindir)/lossshell
+	chmod u+s $(DESTDIR)$(bindir)/lossshell
