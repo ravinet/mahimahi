@@ -31,7 +31,7 @@ fi
 AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 
 AC_ARG_VAR([APACHE2], [path to apache2])
-AC_PATH_PROG([APACHE2], [apache2], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
 if test "$APACHE2" = "no"; then
   AC_MSG_ERROR([apache2 is required])
 fi
@@ -48,46 +48,50 @@ AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
 
+AC_CHECK_FILE([/usr/lib/apache2], [APACHE_NAME="apache2"],
+  [AC_CHECK_FILE([/usr/lib/httpd], [APACHE_NAME="httpd"],
+    [AC_MSG_ERROR([apache module directory not found])])])
+
 # Checks for apache configuration modules
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_dir.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_dir.so], [],
               [AC_MSG_ERROR([apache2 mod_dir.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_DIR], ["/usr/lib/apache2/modules/mod_dir.so"], [path to apache2 mod_dir])
+AC_DEFINE_UNQUOTED([MOD_DIR], ["/usr/lib/$APACHE_NAME/modules/mod_dir.so"], [path to apache2 mod_dir])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mpm_prefork.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_mpm_prefork.so], [],
               [AC_MSG_ERROR([apache2 mod_mpm_prefork.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["/usr/lib/apache2/modules/mod_mpm_prefork.so"], [path to apache2 mod_mpm_prefork])
+AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["/usr/lib/$APACHE_NAME/modules/mod_mpm_prefork.so"], [path to apache2 mod_mpm_prefork])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_mime.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_mime.so], [],
               [AC_MSG_ERROR([apache2 mod_mime.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_MIME], ["/usr/lib/apache2/modules/mod_mime.so"], [path to apache2 mod_mime])
+AC_DEFINE_UNQUOTED([MOD_MIME], ["/usr/lib/$APACHE_NAME/modules/mod_mime.so"], [path to apache2 mod_mime])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_authz_core.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_authz_core.so], [],
               [AC_MSG_ERROR([apache2 mod_authz_core.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/apache2/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
+AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/$APACHE_NAME/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_cgi.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_cgi.so], [],
               [AC_MSG_ERROR([apache2 mod_cgi.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_CGI], ["/usr/lib/apache2/modules/mod_cgi.so"], [path to apache2 mod_cgi])
+AC_DEFINE_UNQUOTED([MOD_CGI], ["/usr/lib/$APACHE_NAME/modules/mod_cgi.so"], [path to apache2 mod_cgi])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_rewrite.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_rewrite.so], [],
               [AC_MSG_ERROR([apache2 mod_rewrite.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_REWRITE], ["/usr/lib/apache2/modules/mod_rewrite.so"], [path to apache2 mod_rewrite])
+AC_DEFINE_UNQUOTED([MOD_REWRITE], ["/usr/lib/$APACHE_NAME/modules/mod_rewrite.so"], [path to apache2 mod_rewrite])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_env.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_env.so], [],
 	      [AC_MSG_ERROR([apache2 mod_env.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_ENV], ["/usr/lib/apache2/modules/mod_env.so"], [path to apache2 mod_env])
+AC_DEFINE_UNQUOTED([MOD_ENV], ["/usr/lib/$APACHE_NAME/modules/mod_env.so"], [path to apache2 mod_env])
 
-AC_CHECK_FILE([/usr/lib/apache2/modules/mod_ssl.so], [],
+AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_ssl.so], [],
               [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_SSL], ["/usr/lib/apache2/modules/mod_ssl.so"], [path to apache2 mod_ssl])
+AC_DEFINE_UNQUOTED([MOD_SSL], ["/usr/lib/$APACHE_NAME/modules/mod_ssl.so"], [path to apache2 mod_ssl])
 
 # Checks for SSL certificate file
 AC_CHECK_FILE([/etc/ssl/certs/ssl-cert-snakeoil.pem], [],
@@ -108,7 +112,7 @@ AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with insta
 
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
-PKG_CHECK_MODULES([libssl], [libssl])
+PKG_CHECK_MODULES([libssl], [libcrypto libssl])
 
 # Checks for header files.
 AC_HEADER_RESOLV

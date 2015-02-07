@@ -18,7 +18,7 @@ mm_meter_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-webrecord
 mm_webrecord_SOURCES = recordshell.cc
-mm_webrecord_LDADD = -lrt ../httpserver/libhttpserver.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a ../util/libutil.a $(protobuf_LIBS) $(libssl_LIBS)
+mm_webrecord_LDADD = -lrt ../httpserver/libhttpserver.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a ../util/libutil.a $(protobuf_LIBS) $(libcrypto_LIBS) $(libssl_LIBS)
 mm_webrecord_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-webreplay
