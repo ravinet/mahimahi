@@ -1,1 +1,1 @@
-SUBDIRS = src man scripts
+SUBDIRS = src man traces scripts

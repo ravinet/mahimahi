@@ -145,5 +145,6 @@ AC_CONFIG_FILES([Makefile
 		 src/frontend/Makefile
 		 src/protobufs/Makefile
 		 man/Makefile
+		 traces/Makefile
 		 scripts/Makefile])
 AC_OUTPUT
