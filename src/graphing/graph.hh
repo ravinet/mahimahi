@@ -66,8 +66,8 @@ public:
 	 const std::string & title,
 	 const float min_y, const float max_y,
 	 const StylesType & styles,
-	 const std::string & x_label = "time (s)",
-	 const std::string & y_label = "throughput (Mbps)" );
+	 const std::string & x_label,
+	 const std::string & y_label );
 
   void set_window( const float t, const float logical_width );
   void add_data_point( const unsigned int num, const float t, const float y ) {

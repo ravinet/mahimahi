@@ -74,7 +74,9 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         graph_.reset( new BinnedLiveGraph( link_name + " [" + filename + "]",
                                            { make_tuple( 1.0, 0.0, 0.0, 0.25, true ),
                                              make_tuple( 0.0, 0.0, 0.4, 1.0, false ),
-                                             make_tuple( 1.0, 0.0, 0.0, 0.5, false ) } ) );
+                                             make_tuple( 1.0, 0.0, 0.0, 0.5, false ) },
+                                           "time (s)",
+                                           "throughput (Mbps)" ) );
     }
 }
 
@@ -101,7 +103,7 @@ void LinkQueue::read_packet( const string & contents )
 
     /* meter it */
     if ( graph_ ) {
-        graph_->add_bytes_now( 1, contents.size() );
+        graph_->add_value_now( 1, contents.size() );
     }
 }
 
@@ -119,7 +121,7 @@ void LinkQueue::use_a_delivery_opportunity( void )
 
     /* meter the delivery opportunity */
     if ( graph_ ) {
-        graph_->add_bytes_now( 0, PACKET_SIZE );
+        graph_->add_value_now( 0, PACKET_SIZE );
     }
 
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
@@ -163,7 +165,7 @@ void LinkQueue::write_packets( FileDescriptor & fd )
 
                 /* meter the delivery */
                 if ( graph_ ) {
-                    graph_->add_bytes_now( 2, packet_queue_.front().contents.size() );
+                    graph_->add_value_now( 2, packet_queue_.front().contents.size() );
                 }
 
                 /* this packet is ready to go */

@@ -9,10 +9,13 @@
 
 using namespace std;
 
-BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const Graph::StylesType & styles )
-    : graph_( 640, 480, name, 0, 1, styles ),
+BinnedLiveGraph::BinnedLiveGraph( const string & name,
+                                  const Graph::StylesType & styles,
+                                  const string & x_label,
+                                  const string & y_label )
+    : graph_( 640, 480, name, 0, 1, styles, x_label, y_label ),
       bin_width_( 500 ),
-      bytes_this_bin_( styles.size() ),
+      value_this_bin_( styles.size() ),
       current_bin_( timestamp() / bin_width_ ),
       mutex_(),
       halt_( false ),
@@ -24,7 +27,7 @@ BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const Graph::StylesT
                   animation_thread_exception_ = current_exception();
               } } )
 {
-    for ( unsigned int i = 0; i < bytes_this_bin_.size(); i++ ) {
+    for ( unsigned int i = 0; i < value_this_bin_.size(); i++ ) {
         graph_.add_data_point( i, 0, 0 );
     }
 }
@@ -42,8 +45,8 @@ void BinnedLiveGraph::animation_loop( void )
         /* calculate "current" estimate based on partial bin */
         const double bin_width_so_far = ts % bin_width_;
         vector<float> current_estimates;
-        current_estimates.reserve( bytes_this_bin_.size() );
-        for ( const auto & x : bytes_this_bin_ ) {
+        current_estimates.reserve( value_this_bin_.size() );
+        for ( const auto & x : value_this_bin_ ) {
             current_estimates.emplace_back( (x * 8.0 / (bin_width_so_far / 1000.0)) / 1000000.0 );
         }
 
@@ -66,11 +69,11 @@ uint64_t BinnedLiveGraph::advance( void )
 
     bool advanced = false;
     while ( current_bin_ < now_bin ) {
-        for ( unsigned int i = 0; i < bytes_this_bin_.size(); i++ ) {
+        for ( unsigned int i = 0; i < value_this_bin_.size(); i++ ) {
             graph_.add_data_point( i,
                                    (current_bin_ + 1) * bin_width_ / 1000.0,
-                                   (bytes_this_bin_[ i ] * 8.0 / (bin_width_ / 1000.0)) / 1000000.0 );
-            bytes_this_bin_[ i ] = 0;
+                                   (value_this_bin_[ i ] * 8.0 / (bin_width_ / 1000.0)) / 1000000.0 );
+            value_this_bin_[ i ] = 0;
         }
         current_bin_++;
         advanced = true;
@@ -83,13 +86,13 @@ uint64_t BinnedLiveGraph::advance( void )
     return now;
 }
 
-void BinnedLiveGraph::add_bytes_now( const unsigned int num, const unsigned int amount )
+void BinnedLiveGraph::add_value_now( const unsigned int num, const unsigned int amount )
 {
     advance();
 
     unique_lock<mutex> ul { mutex_ };
 
-    bytes_this_bin_.at( num ) += amount;
+    value_this_bin_.at( num ) += amount;
 }
 
 BinnedLiveGraph::~BinnedLiveGraph()

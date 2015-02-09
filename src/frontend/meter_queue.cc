@@ -13,7 +13,7 @@ MeterQueue::MeterQueue( const string & name, const bool graph )
     assert_not_root();
 
     if ( graph ) {
-        graph_.reset( new BinnedLiveGraph( name, { make_tuple( 0.0, 0.0, 0.4, 1.0, false ) } ) );
+        graph_.reset( new BinnedLiveGraph( name, { make_tuple( 0.0, 0.0, 0.4, 1.0, false ) }, "time (s)", "throughput (Mbps)" ) );
     }
 }
 
@@ -23,7 +23,7 @@ void MeterQueue::read_packet( const string & contents )
 
     /* meter it */
     if ( graph_ ) {
-        graph_->add_bytes_now( 0, contents.size() );
+        graph_->add_value_now( 0, contents.size() );
     }
 }
 
