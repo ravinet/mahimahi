@@ -62,9 +62,12 @@ class Graph
 public:
   typedef std::vector<std::tuple<float, float, float, float, bool>> StylesType;
 
-  Graph( const unsigned int initial_width, const unsigned int initial_height, const std::string & title,
+  Graph( const unsigned int initial_width, const unsigned int initial_height,
+	 const std::string & title,
 	 const float min_y, const float max_y,
-	 const StylesType & styles );
+	 const StylesType & styles,
+	 const std::string & x_label = "time (s)",
+	 const std::string & y_label = "throughput (Mbps)" );
 
   void set_window( const float t, const float logical_width );
   void add_data_point( const unsigned int num, const float t, const float y ) {

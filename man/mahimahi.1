@@ -20,24 +20,24 @@ Mahimahi - tools to produce a usable benchmark for Web transport protocols and b
 .SH DESCRIPTION
 Mahimahi is a set of lightweight tools that can be used to completely record actual Web pages 
 and replay them locally over different emulated links. Mahimahi comprises of four tools:
-\fBdelayshell\fP(1), \fBlinkshell\fP(1), \fBrecordshell\fP(1), and \fBreplayshell\fP(1). 
+\fBmm-delay\fP(1), \fBmm-link\fP(1), \fBmm-webrecord\fP(1), and \fBmm-webreplay\fP(1). 
 
-\fBdelayshell\fP(1) emulates a link with a fixed minimum round trip time by delaying all network packets to and from a shell by a user-specified amount of time.  
+\fBmm-delay\fP(1) emulates a link with a fixed minimum round trip time by delaying all network packets to and from a shell by a user-specified amount of time.  
 
-\fBlinkshell\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
+\fBmm-link\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
 
-\fBrecordshell\fP(1) records complete Web pages by recording all HTTP content sent to and from a shell running a Web browser.
+\fBmm-webrecord\fP(1) records complete Web pages by recording all HTTP content sent to and from a shell running a Web browser.
 
-\fBreplayshell\fP(1) replays previously recorded Web pages while accurately mirroring each page's sharding structure. \fBreplayshell\fP(1) creates a shell where browsers can load recorded Web pages locally. 
+\fBmm-webreplay\fP(1) replays previously recorded Web pages while accurately mirroring each page's sharding structure. \fBmm-webreplay\fP(1) creates a shell where browsers can load recorded Web pages locally. 
 
 
 .nf
 
 .SH SEE ALSO
-.BR delayshell (1),
-.BR linkshell (1),
-.BR recordshell (1),
-.BR replayshell (1).
+.BR mm-delay (1),
+.BR mm-link (1),
+.BR mm-webrecord (1),
+.BR mm-webreplay (1).
 
 Project home page:
 .I http://mahimahi.mit.edu

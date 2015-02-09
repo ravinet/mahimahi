@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH delayshell 1 "February 2014"
+.TH mm-delay 1 "February 2014"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,45 +16,46 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-delayshell - delay all network packets to and from a shell by user-specified amount
+mm-delay - delay all network packets to and from a shell by user-specified amount
 .SH SYNOPSIS
-.B delayshell
+.B mm-delay
 \fIdelay\fP
 .br
 .SH DESCRIPTION
-delayshell is a network emulation tool that emulates a link with a fixed
-minimum round trip time (RTT). delayshell uses \fBclone\fP(2) to fork a new shell in
-a distinct network namespace. Every program run inside delayshell has its IP
+mm-delay is a network emulation tool that emulates a link with a fixed
+minimum round trip time (RTT). mm-delay uses \fBclone\fP(2) to fork a new shell in
+a distinct network namespace. Every program run inside mm-delay has its IP
 datagrams routed over a virtual network interface. All packets to and from an
-application running inside delayshell are delayed by \fIdelay\fP, the one-way per-packet
-delay specified by the user in milliseconds. delayshell can be nested within
+application running inside mm-delay are delayed by \fIdelay\fP, the one-way per-packet
+delay specified by the user in milliseconds. mm-delay can be nested within
 \fBlinkshell\fP(1) to flexibly create links with a user-supplied one-way delay
 and a user-supplied link rate.
 
-To exit delayshell, simply type "exit" or CTRL-D inside delayshell. 
+To exit mm-delay, simply type "exit" or CTRL-D inside mm-delay. 
 
 .SH EXAMPLE
 
 .nf
-delayshell can create a new shell such that all packets to and from a program
+mm-delay can create a new shell such that all packets to and from a program
 run within this shell are delayed by 10ms in each direction:
-$ delayshell 10
+$ mm-delay 10
 
-delayshell
+mm-delay
 [...] (copyright notice omitted)
 
 .fi
 
 .SH SEE ALSO
-.BR linkshell (1),
-.BR recordshell (1),
-.BR replayshell (1).
+.BR mahimahi (1),
+.BR mm-link (1),
+.BR mm-webrecord (1),
+.BR mm-webreplay (1).
 
 Project home page:
 .I http://mahimahi.mit.edu
 
 .br
 .SH AUTHOR
-delayshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+mm-delay was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.

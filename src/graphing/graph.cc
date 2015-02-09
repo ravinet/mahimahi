@@ -23,9 +23,12 @@ Graph::GraphicContext & Graph::current_gc( void )
   return gcs_[ current_gc_ ];
 }
 
-Graph::Graph( const unsigned int initial_width, const unsigned int initial_height, const string & title,
+Graph::Graph( const unsigned int initial_width, const unsigned int initial_height,
+	      const string & title,
 	      const float min_y, const float max_y,
-	      const StylesType & styles )
+	      const StylesType & styles,
+	      const string & x_label,
+	      const string & y_label )
   : window_( initial_width, initial_height ),
     gcs_( { window_, window_, window_ } ),
     current_gc_( 0 ),
@@ -35,8 +38,8 @@ Graph::Graph( const unsigned int initial_width, const unsigned int initial_heigh
     y_tick_labels_(),
     styles_( styles ),
     data_points_( styles_.size() ),
-    x_label_( current_gc().cairo, current_gc().pango, label_font_, "time (s)" ),
-    y_label_( current_gc().cairo, current_gc().pango, label_font_, "throughput (Mbps)" ),
+    x_label_( current_gc().cairo, current_gc().pango, label_font_, x_label ),
+    y_label_( current_gc().cairo, current_gc().pango, label_font_, y_label ),
     info_string_(),
     info_( current_gc().cairo, current_gc().pango, label_font_, "" ),
     target_min_y_( min_y ),

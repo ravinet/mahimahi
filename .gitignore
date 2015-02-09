@@ -20,11 +20,11 @@ Makefile.in
 /stamp-h1
 
 compile
-delayshell
-linkshell
-nph-replayserver.cgi
-protobufs/http_record.pb.cc
-protobufs/http_record.pb.h
-recordshell
-replayshell
-netmeter
+src/protobufs/http_record.pb.cc
+src/protobufs/http_record.pb.h
+src/frontend/mm-delay
+src/frontend/mm-link
+src/frontend/mm-meter
+src/frontend/mm-webrecord
+src/frontend/mm-webreplay
+src/frontend/nph-replayserver.cgi

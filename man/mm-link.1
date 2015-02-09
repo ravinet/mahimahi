@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH linkshell 1 "February 2014"
+.TH mm-link 1 "February 2014"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,25 +16,25 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-linkshell - UNIX shell connected to an emulated link with a user-specified packet-delivery schedule.
+mm-link - UNIX shell connected to an emulated link with a user-specified packet-delivery schedule.
 .SH SYNOPSIS
-.B linkshell
+.B mm-link
 \fIuplink\fP
 \fIdownlink\fP
 [\-\- command...]
 .br
 .SH DESCRIPTION
-linkshell is a network emulation tool that emulates links using packet delivery
+mm-link is a network emulation tool that emulates links using packet delivery
 trace files (\fIuplink\fP for the uplink direction and \fIdownlink\fP for the downlink direction) provided on the command
-line. linkshell uses \fBclone\fP(2) to fork a new shell in a distinct network
-namespace.  uplink_trace_file emulates the link from linkshell to the Internet
-and downlink_trace_file emulates the link from the Internet to linkshell.
+line. mm-link uses \fBclone\fP(2) to fork a new shell in a distinct network
+namespace.  uplink_trace_file emulates the link from mm-link to the Internet
+and downlink_trace_file emulates the link from the Internet to mm-link.
 
-linkshell can emulate both time-varying links, such as cellular links, and
+mm-link can emulate both time-varying links, such as cellular links, and
 links with fixed link speeds. When a packet arrives at the link (from either
-the Internent or from linkshell), it is directly placed into one of two packet
+the Internent or from mm-link), it is directly placed into one of two packet
 queues depending on its intended direction: the uplink queue or the downlink
-queue.  linkshell releases packets from each queue based on the corresponding
+queue.  mm-link releases packets from each queue based on the corresponding
 input packet-delivery trace. 
 
 Each line in the trace  represents a packet delivery opportunity: the time at
@@ -43,12 +43,12 @@ at the byte-level, and each delivery opportunity represents the ability to
 deliver 1500 bytes. Thus, a single line in the trace file can delivery several
 smaller packets whose sizes sum to 1500 bytes. Delivery opportunities are
 wasted if bytes are unavailable at the instant of an opportunity. When
-linkshell reaches the end of an input trace file, it wraps around to the
-beginning of the trace file. linkshell can be nested within delayshell (1) to
+mm-link reaches the end of an input trace file, it wraps around to the
+beginning of the trace file. mm-link can be nested within delayshell (1) to
 flexibly create links with a user-supplied one-way delay and a user-supplied
 link rate.
 
-To exit linkshell, simply type "exit" or CTRL-D inside linkshell.
+To exit mm-link, simply type "exit" or CTRL-D inside mm-link.
 
 .SH EXAMPLE
 
@@ -65,27 +65,28 @@ and must follow the pattern below:
 The link above delivers an MTU-sized packet (1500 bytes or 12000 bits) every
 ms.
 
-Run linkshell with:
-$ linkshell 12Mbps_trace 12Mbps_trace
+Run mm-link with:
+$ mm-link 12Mbps_trace 12Mbps_trace
 
-All programs run from within linkshell are sent according 
+All programs run from within mm-link are sent according 
 to the packet delivery times specified in 12Mbps_trace.
 
-linkshell
+mm-link
 [...] (copyright notice omitted)
 
 .fi
 
 .SH SEE ALSO
-.BR delayshell (1),
-.BR recordshell (1),
-.BR replayshell (1).
+.BR mahimahi (1),
+.BR mm-delay (1),
+.BR mm-webrecord (1),
+.BR mm-webreplay (1).
 
 Project home page:
 .I http://mahimahi.mit.edu
 
 .br
 .SH AUTHOR
-linkshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+mm-link was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.

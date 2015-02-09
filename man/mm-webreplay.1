@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH replayshell 1 "February 2014"
+.TH mm-webreplay 1 "February 2014"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,41 +16,41 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-replayshell - mirror/replay a website previously recorded using \fBrecordshell\fP(1)
+mm-webreplay - mirror/replay a website previously recorded using \fBrecordshell\fP(1)
 .SH SYNOPSIS
-.B replayshell
+.B mm-webreplay
 \fIdirectory\fP
 [\-\- command...]
 .br
 .SH DESCRIPTION
-replayshell uses content recorded by \fBrecordshell\fP(1) to accurately
+mm-webreplay uses content recorded by \fBrecordshell\fP(1) to accurately
 mirror a website. All recorded pages in the user-specified
-recorded content folder, \fIdirectory\fP, can be reloaded in replayshell.
+recorded content folder, \fIdirectory\fP, can be reloaded in mm-webreplay.
 \fIdirectory\fP must be specified using the absolute path.
 
-replayshell uses \fBunshare\fP(2) with the CLONE_NEWNET flag to create a shell in an isolated network
+mm-webreplay uses \fBunshare\fP(2) with the CLONE_NEWNET flag to create a shell in an isolated network
 namespace. This isolation prevents the accidental download of resources over
 the Internet when replaying page loads.
 
-replayshell mimics the multi-origin nature of most web sites today (also known
+mm-webreplay mimics the multi-origin nature of most web sites today (also known
 as server sharding) by spawning an Apache Web server for each distinct IP/port
 pair seen while recording. This prevents the browser from using a single TCP
 connection to download resources belonging to different web servers, something
 that cannot be done in practice today due to the point-to-point nature of TCP.
-replayshell binds its web servers to the same IP address and port number as
+mm-webreplay binds its web servers to the same IP address and port number as
 their recorded counterparts by creating a separate dummy network interface for
 each distinct server IP.
 
-All HTTP requests made within replayshell are handled by one of replayshell's
+All HTTP requests made within mm-webreplay are handled by one of mm-webreplay's
 servers, each of which can access to the user-specified recorded folder. Each
 Apache server is configured to redirect all incoming requests to a CGI script
 on the appropriate server using Apache’s mod_rewrite module. The CGI script
 running on each web server compares the incoming HTTP request to the set of all
 recorded request-response pairs in the user-specified recorded folder to locate
-a matching HTTP response. For this comparison, replayshell considers the Host,
+a matching HTTP response. For this comparison, mm-webreplay considers the Host,
 Accept-Language, Accept-Encoding, Connection, and Referer HTTP header fields,
 while ignoring time-sensitive header fields (eg. If-Modified-Since, Cookie,
-If-Unmodified-Since). If a Request-URI has a query string, replayshell first
+If-Unmodified-Since). If a Request-URI has a query string, mm-webreplay first
 finds all matching object names (ignoring the query string) and then selects
 the response pertaining to the longest matching query string.  If an requested
 object has no match in the user-specified recorded folder, the CGI script
@@ -62,30 +62,31 @@ mod_spdy 0.9.3.3-386) and use mod_ssl to handle HTTPS traffic.
 To reduce the number of unmatched requests when replaying web pages, we recommend
 using the same browser for both record and replay.
 
-To exit replayshell, simply type "exit" or CTRL-D in the generated shell.
+To exit mm-webreplay, simply type "exit" or CTRL-D in the generated shell.
 .SH EXAMPLE
 
 .nf
-replayshell can create a new shell which mimics the structure of a recorded site (stored
+mm-webreplay can create a new shell which mimics the structure of a recorded site (stored
 in a directory named "recorded_content"). All pages loaded from this shell will use the
 recorded content:
-$ replayshell recorded_content
+$ mm-webreplay recorded_content
 
-replayshell
+mm-webreplay
 [...] (copyright notice omitted)
 
 .fi
 
 .SH SEE ALSO
-.BR recordshell (1),
-.BR delayshell (1),
-.BR linkshell (1).
+.BR mahimahi (1),
+.BR mm-webrecord (1),
+.BR mm-delay (1),
+.BR mm-link (1).
 
 Project home page:
 .I http://mahimahi.mit.edu
 
 .br
 .SH AUTHOR
-replayshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <skanirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+mm-webreplay was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <skanirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.

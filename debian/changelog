@@ -1,3 +1,9 @@
+mahimahi (0.12-1) unstable; urgency=low
+
+  * Rename programs to start with "mm-" consistently.
+
+ -- Keith Winstein <keithw@mit.edu>  Mon, 09 Feb 2015 02:47:40 -0800
+
 mahimahi (0.11-1) unstable; urgency=low
 
   * Bump version number for repository migration.

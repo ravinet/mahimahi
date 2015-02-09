@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH recordshell 1 "February 2014"
+.TH mm-webrecord 1 "February 2014"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,36 +16,36 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-recordshell - record all HTTP content sent to and from a shell for subsequent replay
+mm-webrecord - record all HTTP content sent to and from a shell for subsequent replay
 .SH SYNOPSIS
-.B recordshell
+.B mm-webrecord
 \fIdirectory\fP
 [\-\- command...]
 .br
 .SH DESCRIPTION
-recordshell creates a shell in a new network namespace using the \fBclone\fP(2)
+mm-webrecord creates a shell in a new network namespace using the \fBclone\fP(2)
 system call. All HTTP requests and responses sent during actual page loads from
-recordshell are parsed and stored in \fIdirectory\fP, in a structured format to
+mm-webrecord are parsed and stored in \fIdirectory\fP, in a structured format to
 facilitate replay (see \fBreplayshell\fP(2)). \fIdirectory\fP will be created
-by recordshell and must not already exist. \fIdirectory\fP can be specified
+by mm-webrecord and must not already exist. \fIdirectory\fP can be specified
 using relative or absolute path.
 
-recordshell adds an iptables rule to forward all TCP traffic from inside
-recordshell to a man-in-the-middle proxy.  This proxy parses, stores, and
-relays all HTTP traffic both to and from a program running inside recordshell.
+mm-webrecord adds an iptables rule to forward all TCP traffic from inside
+mm-webrecord to a man-in-the-middle proxy.  This proxy parses, stores, and
+relays all HTTP traffic both to and from a program running inside mm-webrecord.
 The proxy accepts each TCP connection request from a program run inside
-recordshell and terminates the TCP connection.  It then determines the original
+mm-webrecord and terminates the TCP connection.  It then determines the original
 destination address of the TCP connection request using the SO_ORIGINAL_DST
 socket option and connects to the original destination on the program's behalf. 
 
 The proxy runs an HTTP parser which parses all traffic to and from a program
-running in recordshell to determine HTTP requests and responses from TCP
+running in mm-webrecord to determine HTTP requests and responses from TCP
 segments. Once an HTTP request and its corresponding response have both been
 parsed, the proxy associates the request to the response and writes the pair to
 disk using Protocol Buffers, a seralizing library for structured data.
 
-recordshell handles SSL traffic similarly using OpenSSL. To establish a
-connection with the program running inside recordshell, the proxy uses a fake
+mm-webrecord handles SSL traffic similarly using OpenSSL. To establish a
+connection with the program running inside mm-webrecord, the proxy uses a fake
 self-signed certificate with the common name "Mahimahi". The proxy also makes
 an SSL connection request to the original destination. 
 
@@ -63,34 +63,35 @@ session. Each file is stored as a protobuf which includes the complete HTTP
 request and response (headers and body) as well as the connection's original
 destination ip address and port number, and the protocol used (HTTP or HTTPS).   
 
-recordshell is compatible with any unmodified browser because recording is done
+mm-webrecord is compatible with any unmodified browser because recording is done
 at the packet level. Additionally, HTTP/HTTPS traffic generated from file
 download tools like Wget can be recorded.
 
-To exit recordshell, simply type "exit" in the generated shell.
+To exit mm-webrecord, simply type "exit" in the generated shell.
 
 .SH EXAMPLE
 
 .nf
-recordshell can create a new shell such that all HTTP traffic to and from a
+mm-webrecord can create a new shell such that all HTTP traffic to and from a
 program run from this shell are recorded and stored in a directory named
-"recorded_content": $ recordshell recorded_content
+"recorded_content": $ mm-webrecord recorded_content
 
-recordshell
+mm-webrecord
 [...] (copyright notice omitted)
 
 .fi
 
 .SH SEE ALSO
-.BR replayshell (1),
-.BR delayshell (1),
-.BR linkshell (1).
+.BR mahimahi (1),
+.BR mm-webreplay (1),
+.BR mm-delay (1),
+.BR mm-link (1).
 
 Project home page:
 .I http://mahimahi.mit.edu
 
 .br
 .SH AUTHOR
-recordshell was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <skanirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+mm-webrecord was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <skanirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.

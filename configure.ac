@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([mahimahi], [0.11], [mahimahi@mit.edu])
+AC_INIT([mahimahi], [0.12], [mahimahi@mit.edu])
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_SRCDIR([delayshell.cc])
+AC_CONFIG_SRCDIR([src/frontend/delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Add picky CXXFLAGS
@@ -131,5 +131,15 @@ AC_CHECK_FUNCS([clock_gettime inet_ntoa memset mkdir setenv socket strerror strt
 PKG_CHECK_MODULES([XCBPRESENT], [xcb-present])
 PKG_CHECK_MODULES([PANGOCAIRO], [pangocairo])
 
-AC_CONFIG_FILES([Makefile protobufs/Makefile man_pages/Makefile])
+AC_CONFIG_FILES([Makefile
+		 src/Makefile
+		 src/util/Makefile
+		 src/packet/Makefile
+		 src/graphing/Makefile
+		 src/http/Makefile
+		 src/httpserver/Makefile
+		 src/frontend/Makefile
+		 src/protobufs/Makefile
+		 man/Makefile
+		 scripts/Makefile])
 AC_OUTPUT
