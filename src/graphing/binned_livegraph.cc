@@ -14,6 +14,7 @@ BinnedLiveGraph::BinnedLiveGraph( const std::string & name, const Graph::StylesT
       bin_width_( 500 ),
       bytes_this_bin_( styles.size() ),
       current_bin_( timestamp() / bin_width_ ),
+      mutex_(),
       halt_( false ),
       animation_thread_exception_(),
       animation_thread_( [&] () {
@@ -57,6 +58,8 @@ void BinnedLiveGraph::animation_loop( void )
 
 uint64_t BinnedLiveGraph::advance( void )
 {
+    unique_lock<mutex> ul { mutex_ };
+
     const uint64_t now = timestamp();
 
     const uint64_t now_bin = now / bin_width_;
@@ -83,6 +86,9 @@ uint64_t BinnedLiveGraph::advance( void )
 void BinnedLiveGraph::add_bytes_now( const unsigned int num, const unsigned int amount )
 {
     advance();
+
+    unique_lock<mutex> ul { mutex_ };
+
     bytes_this_bin_.at( num ) += amount;
 }
 

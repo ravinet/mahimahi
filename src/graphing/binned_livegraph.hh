@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 #include <exception>
+#include <mutex>
 
 #include "graph.hh"
 
@@ -26,6 +27,7 @@ private:
 
     void animation_loop( void );
 
+    std::mutex mutex_;
     std::atomic<bool> halt_;
 
     std::exception_ptr animation_thread_exception_;
