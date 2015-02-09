@@ -3,14 +3,19 @@
 use strict;
 use POSIX;
 
-if ( scalar @ARGV < 1 ) {
+sub usage
+{
   die qq{Usage: $0 MS_PER_BIN [filename]\n};
+}
+
+if ( scalar @ARGV < 1 ) {
+  usage;
 }
 
 my $MS_PER_BIN = shift;
 
 if ( $MS_PER_BIN !~ m{^\d+$} ) {
-  die qq{Invalid milliseconds per bin: $MS_PER_BIN};
+  usage;
 }
 
 sub ms_to_bin {
@@ -25,12 +30,24 @@ my ( %capacity, %arrivals, %departures );
 
 my $first_timestamp = undef;
 my $last_timestamp = undef;
+my $base_timestamp = undef;
 my $capacity_sum;
 my $departure_sum;
 my @delays;
 
-while ( <> ) {
+LINE: while ( <> ) {
   chomp;
+
+  if ( m{^# base timestamp: (\d+)} ) {
+    if ( defined $base_timestamp ) {
+      die "base timestamp multiply defined";
+    } else {
+      $base_timestamp = $1;
+    }
+    next LINE;
+  } elsif ( m{^#} ) {
+    next LINE;
+  }
 
   # parse and validate line
   my ( $timestamp, $event_type, $num_bytes, $delay ) = split /\s+/, $_;
@@ -46,6 +63,12 @@ while ( <> ) {
   if ( $num_bytes !~ m{^\d+$} ) {
     die qq{Invalid byte count: $num_bytes};
   }
+
+  if ( not defined $base_timestamp ) {
+    die "logfile is missing base timestamp";
+  }
+
+  $timestamp -= $base_timestamp; # correct for startup time variation
 
   if ( not defined $last_timestamp ) {
     $last_timestamp = $first_timestamp = $timestamp;

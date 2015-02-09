@@ -60,6 +60,13 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         if ( not log_->good() ) {
             throw runtime_error( logfile + ": error opening for writing" );
         }
+
+        *log_ << "# mahimahi mm-link (" << link_name << ") [" << filename << "] > " << logfile << endl;
+        *log_ << "# base timestamp: " << base_timestamp_ << endl;
+        const char * prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
+        if ( prefix ) {
+            *log_ << "# mahimahi config: " << prefix << endl;
+        }
     }
 
     /* create graph if called for */
