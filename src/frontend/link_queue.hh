@@ -33,7 +33,8 @@ private:
     std::queue< QueuedPacket > packet_queue_;
 
     std::unique_ptr<std::ofstream> log_;
-    std::unique_ptr<BinnedLiveGraph> graph_;
+    std::unique_ptr<BinnedLiveGraph> throughput_graph_;
+    std::unique_ptr<BinnedLiveGraph> delay_graph_;
 
     bool repeat_;
 
@@ -44,7 +45,7 @@ private:
     void discard_wasted_opportunities( const uint64_t now );
 
 public:
-    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph );
+    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay );
 
     void read_packet( const std::string & contents );
 

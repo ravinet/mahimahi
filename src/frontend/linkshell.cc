@@ -31,12 +31,15 @@ int main( int argc, char *argv[] )
             { "once",           no_argument,       nullptr, 'o' },
             { "meter-uplink",   no_argument,       nullptr, 'm' },
             { "meter-downlink", no_argument,       nullptr, 'n' },
+            { "meter-uplink-delay",   no_argument,       nullptr, 'x' },
+            { "meter-downlink-delay", no_argument,       nullptr, 'y' },
             { 0,                0,                 nullptr, 0 }
         };
 
         string uplink_logfile, downlink_logfile;
         bool repeat = true;
         bool meter_uplink = false, meter_downlink = false;
+        bool meter_uplink_delay = false, meter_downlink_delay = false;
 
         while ( true ) {
             const int opt = getopt_long( argc, argv, "u:d:", command_line_options, nullptr );
@@ -59,6 +62,12 @@ int main( int argc, char *argv[] )
                 break;
             case 'n':
                 meter_downlink = true;
+                break;
+            case 'x':
+                meter_uplink_delay = true;
+                break;
+            case 'y':
+                meter_downlink_delay = true;
                 break;
             case '?':
                 usage_error( argv[ 0 ] );
@@ -90,8 +99,8 @@ int main( int argc, char *argv[] )
         const string uplink_name = "Uplink", downlink_name = "Downlink";
 
         link_shell_app.start_uplink( "[link] ", command,
-                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink );
-        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink );
+                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay );
+        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay );
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );

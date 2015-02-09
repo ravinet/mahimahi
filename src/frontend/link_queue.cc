@@ -10,13 +10,14 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph )
+LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_(),
       log_(),
-      graph_( nullptr ),
+      throughput_graph_( nullptr ),
+      delay_graph_( nullptr ),
       repeat_( repeat )
 {
     assert_not_root();
@@ -69,14 +70,25 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         }
     }
 
-    /* create graph if called for */
-    if ( graph ) {
-        graph_.reset( new BinnedLiveGraph( link_name + " [" + filename + "]",
-                                           { make_tuple( 1.0, 0.0, 0.0, 0.25, true ),
-                                             make_tuple( 0.0, 0.0, 0.4, 1.0, false ),
-                                             make_tuple( 1.0, 0.0, 0.0, 0.5, false ) },
-                                           "time (s)",
-                                           "throughput (Mbps)" ) );
+    /* create graphs if called for */
+    if ( graph_throughput ) {
+        throughput_graph_.reset( new BinnedLiveGraph( link_name + " [" + filename + "]",
+                                                      { make_tuple( 1.0, 0.0, 0.0, 0.25, true ),
+                                                        make_tuple( 0.0, 0.0, 0.4, 1.0, false ),
+                                                        make_tuple( 1.0, 0.0, 0.0, 0.5, false ) },
+                                                      "throughput (Mbps)",
+                                                      8.0 / 1000000.0,
+                                                      true,
+                                                      500,
+                                                      [] ( int, int & x ) { x = 0; } ) );
+    }
+
+    if ( graph_delay ) {
+        delay_graph_.reset( new BinnedLiveGraph( link_name + " delay [" + filename + "]",
+                                                 { make_tuple( 0.0, 0.25, 0.0, 1.0, false ) },
+                                                 "delay (ms)",
+                                                 1, false, 50,
+                                                 [] ( int bin_width_ms, int & x ) { x = -(abs( x ) + bin_width_ms); } ) );
     }
 }
 
@@ -102,8 +114,8 @@ void LinkQueue::read_packet( const string & contents )
     }
 
     /* meter it */
-    if ( graph_ ) {
-        graph_->add_value_now( 1, contents.size() );
+    if ( throughput_graph_ ) {
+        throughput_graph_->add_value_now( 1, contents.size() );
     }
 }
 
@@ -120,8 +132,8 @@ void LinkQueue::use_a_delivery_opportunity( void )
     }
 
     /* meter the delivery opportunity */
-    if ( graph_ ) {
-        graph_->add_value_now( 0, PACKET_SIZE );
+    if ( throughput_graph_ ) {
+        throughput_graph_->add_value_now( 0, PACKET_SIZE );
     }
 
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
@@ -164,8 +176,12 @@ void LinkQueue::write_packets( FileDescriptor & fd )
                 }
 
                 /* meter the delivery */
-                if ( graph_ ) {
-                    graph_->add_value_now( 2, packet_queue_.front().contents.size() );
+                if ( throughput_graph_ ) {
+                    throughput_graph_->add_value_now( 2, packet_queue_.front().contents.size() );
+                }
+
+                if ( delay_graph_ ) {
+                    delay_graph_->set_max_value_now( 0, this_delivery_time - packet_queue_.front().arrival_time );
                 }
 
                 /* this packet is ready to go */
