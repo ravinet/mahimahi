@@ -9,7 +9,7 @@ Vcs-Browser: https://github.com/keithw/mahimahi
 
 Package: mahimahi
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin
+Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin, gnuplot
 Description: Tools for network testing and emulation
  Mahimahi is a set of tools for measuring the performance of new
  Web protocols over emulated networks
