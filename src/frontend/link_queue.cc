@@ -86,9 +86,9 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
     if ( graph_delay ) {
         delay_graph_.reset( new BinnedLiveGraph( link_name + " delay [" + filename + "]",
                                                  { make_tuple( 0.0, 0.25, 0.0, 1.0, false ) },
-                                                 "self-inflicted delay (ms)",
+                                                 "queueing delay (ms)",
                                                  1, false, 50,
-                                                 [] ( int bin_width_ms, int & x ) { x = -(abs( x ) + bin_width_ms); } ) );
+                                                 [] ( int, int & x ) { x = -( abs( x ) ); } ) );
     }
 }
 
