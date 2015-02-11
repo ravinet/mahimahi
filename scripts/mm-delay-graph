@@ -1,0 +1,115 @@
+#!/usr/bin/perl -w
+
+use strict;
+use POSIX;
+
+sub usage
+{
+  die qq{Usage: $0 [filename]\n};
+}
+
+if ( scalar @ARGV < 1 ) {
+  usage;
+}
+
+my $first_timestamp = undef;
+my $last_timestamp = undef;
+my $base_timestamp = undef;
+my @delays;
+my $points;
+
+LINE: while ( <> ) {
+  chomp;
+
+  if ( m{^# base timestamp: (\d+)} ) {
+    if ( defined $base_timestamp ) {
+      die "base timestamp multiply defined";
+    } else {
+      $base_timestamp = $1;
+    }
+    next LINE;
+  } elsif ( m{^#} ) {
+    next LINE;
+  }
+
+  # parse and validate line
+  my ( $timestamp, $event_type, $num_bytes, $delay ) = split /\s+/, $_;
+
+  if ( not defined $num_bytes ) {
+    die q{Format: timestamp event_type num_bytes [delay]};
+  }
+
+  if ( $timestamp !~ m{^\d+$} ) {
+    die qq{Invalid timestamp: $timestamp};
+  }
+
+  if ( $num_bytes !~ m{^\d+$} ) {
+    die qq{Invalid byte count: $num_bytes};
+  }
+
+  if ( not defined $base_timestamp ) {
+    die "logfile is missing base timestamp";
+  }
+
+  $timestamp -= $base_timestamp; # correct for startup time variation
+
+  if ( not defined $last_timestamp ) {
+    $last_timestamp = $first_timestamp = $timestamp;
+  }
+
+  $last_timestamp = max( $timestamp, $last_timestamp );
+
+  # process the event
+  if ( $event_type eq q{-} ) {
+    if ( not defined $delay ) {
+      die q{Departure format: timestamp - num_bytes delay};
+    }
+    push @delays, $delay;
+    $points .= $timestamp / 1000.0 . " $delay\n";
+  }
+}
+
+sub max {
+  my $maxval = - POSIX::DBL_MAX;
+
+  for ( @_ ) {
+    if ( $_ > $maxval ) {
+      $maxval = $_;
+    }
+  }
+
+  return $maxval;
+}
+
+# calculate statistics
+if ( scalar @delays == 0 ) {
+  die q{Must have at least one departure event};
+}
+
+@delays = sort { $a <=> $b } @delays;
+
+my $pp95 = $delays[ 0.95 * scalar @delays ];
+
+printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
+
+my $graph_max = $delays[-1] * 1.2;
+
+# make graph
+open GNUPLOT, q{| gnuplot} or die;
+
+print GNUPLOT <<END;
+set xlabel "time (s)"
+set ylabel "queueing delay (ms)
+set key left
+set style fill solid 0.7 noborder
+set logscale y
+set yrange [30:$graph_max]
+set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded dashed
+set output "/dev/stdout"
+END
+
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Queueing delay" with filledcurves above x1 lt 1 lc 3, %f with lines lt 3 lc 1 lw 2.5 title "95th percentile (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95, $pp95;
+
+print GNUPLOT $points;
+
+close GNUPLOT or die qq{$!};
