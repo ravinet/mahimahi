@@ -68,7 +68,7 @@ LINE: while ( <> ) {
     push @delays, $delay;
     $signal_delay{ $timestamp } = min( $delay,
 				       defined $signal_delay{ $timestamp } ? $signal_delay{ $timestamp } : POSIX::DBL_MAX );
-    $points .= $timestamp / 1000.0 . " $delay $signal_delay{ $timestamp }\n";
+    $points .= $timestamp / 1000.0 . " $delay\n";
   }
 }
 
@@ -107,6 +107,7 @@ my $pp95 = $delays[ 0.95 * scalar @delays ];
 
 # measure signalling delay every millisecond
 # no datagrams => necessary signal delay increases at 1 s/s
+my $signal_delay_points;
 if ( not defined $signal_delay{ $first_timestamp } ) {
   $signal_delay{ $first_timestamp } = 0;
 }
@@ -115,6 +116,7 @@ for ( my $ts = $first_timestamp; $ts <= $last_timestamp; $ts++ ) {
   if ( not defined $signal_delay{ $ts } ) {
     $signal_delay{ $ts } = $signal_delay{ $ts - 1 } + 1;
   }
+  $signal_delay_points .= $ts/1000.0 . " $signal_delay{ $ts }\n";
 }
 
 my @signal_delays = sort { $a <=> $b } values %signal_delay;
@@ -139,9 +141,9 @@ set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded dashed
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Per-packet delay" with filledcurves above x1 lt 1 lc 3, "-" using 1:3 title "Signalling delay" with lines lt 1 lc 1, %f with lines lt 3 lc 3 lw 2.5 title "95th percentile per-packet delay (%.0f ms)", %f with lines lt 3 lc 1 lw 2.5 title "95th percentile signalling delay (%.0f ms)\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95, $pp95, $pp95s, $pp95s;
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Signal delay" with filledcurves above x1 lt 1 lc 3, "-" using 1:2 title "Per-packet delay" with filledcurves above x1 lt 1 lc 1, %f with lines lt 3 lc 3 lw 2.5 title "95th percentile signal delay (%.0f ms)", %f with lines lt 3 lc 1 lw 2.5 title "95th percentile per-packet delay (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95s, $pp95s, $pp95, $pp95;
 
-print GNUPLOT $points;
+print GNUPLOT $signal_delay_points;
 print GNUPLOT "e\n";
 print GNUPLOT $points;
 
