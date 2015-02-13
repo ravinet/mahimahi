@@ -34,6 +34,7 @@ my $base_timestamp = undef;
 my $capacity_sum;
 my $departure_sum;
 my @delays;
+my %signal_delay;
 
 LINE: while ( <> ) {
   chomp;
@@ -92,6 +93,9 @@ LINE: while ( <> ) {
     $departures{ $bin } += $num_bits;
     push @delays, $delay;
     $departure_sum += $num_bits;
+
+    $signal_delay{ $timestamp } = min( $delay,
+				       defined $signal_delay{ $timestamp } ? $signal_delay{ $timestamp } : POSIX::DBL_MAX );
   } else {
     die qq{Unknown event type: $event_type};
   }
@@ -134,9 +138,25 @@ if ( scalar @delays == 0 ) {
 
 my $pp95 = $delays[ 0.95 * scalar @delays ];
 
+# measure signalling delay every millisecond
+# no datagrams => necessary signal delay increases at 1 s/s
+if ( not defined $signal_delay{ $first_timestamp } ) {
+  $signal_delay{ $first_timestamp } = 0;
+}
+
+for ( my $ts = $first_timestamp; $ts <= $last_timestamp; $ts++ ) {
+  if ( not defined $signal_delay{ $ts } ) {
+    $signal_delay{ $ts } = $signal_delay{ $ts - 1 } + 1;
+  }
+}
+
+my @signal_delays = sort { $a <=> $b } values %signal_delay;
+my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
+
 printf STDERR qq{Average capacity: %.2f Mbits/s\n}, $average_capacity;
 printf STDERR qq{Average throughput of measured protocol: %.2f Mbits/s (%.1f%% utilization)\n}, $average_throughput, 100.0 * $average_throughput / $average_capacity;
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
+printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
 # make graph
 my $earliest_bin = min( keys %arrivals, keys %capacity, keys %departures );
@@ -153,7 +173,7 @@ open GNUPLOT, q{| gnuplot} or die;
 print GNUPLOT <<END;
 set xlabel "time (s)"
 set ylabel "throughput (Mbits/s)
-set key left
+set key right
 set style fill solid 0.4 border
 set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid
 set output "/dev/stdout"

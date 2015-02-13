@@ -16,6 +16,7 @@ my $first_timestamp = undef;
 my $last_timestamp = undef;
 my $base_timestamp = undef;
 my @delays;
+my %signal_delay;
 my $points;
 
 LINE: while ( <> ) {
@@ -65,7 +66,9 @@ LINE: while ( <> ) {
       die q{Departure format: timestamp - num_bytes delay};
     }
     push @delays, $delay;
-    $points .= $timestamp / 1000.0 . " $delay\n";
+    $signal_delay{ $timestamp } = min( $delay,
+				       defined $signal_delay{ $timestamp } ? $signal_delay{ $timestamp } : POSIX::DBL_MAX );
+    $points .= $timestamp / 1000.0 . " $delay $signal_delay{ $timestamp }\n";
   }
 }
 
@@ -81,6 +84,18 @@ sub max {
   return $maxval;
 }
 
+sub min {
+  my $minval = POSIX::DBL_MAX;
+
+  for ( @_ ) {
+    if ( $_ < $minval ) {
+      $minval = $_;
+    }
+  }
+
+  return $minval;
+}
+
 # calculate statistics
 if ( scalar @delays == 0 ) {
   die q{Must have at least one departure event};
@@ -90,7 +105,23 @@ if ( scalar @delays == 0 ) {
 
 my $pp95 = $delays[ 0.95 * scalar @delays ];
 
+# measure signalling delay every millisecond
+# no datagrams => necessary signal delay increases at 1 s/s
+if ( not defined $signal_delay{ $first_timestamp } ) {
+  $signal_delay{ $first_timestamp } = 0;
+}
+
+for ( my $ts = $first_timestamp; $ts <= $last_timestamp; $ts++ ) {
+  if ( not defined $signal_delay{ $ts } ) {
+    $signal_delay{ $ts } = $signal_delay{ $ts - 1 } + 1;
+  }
+}
+
+my @signal_delays = sort { $a <=> $b } values %signal_delay;
+my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
+
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
+printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
 my $graph_max = $delays[-1] * 1.2;
 
@@ -99,8 +130,8 @@ open GNUPLOT, q{| gnuplot} or die;
 
 print GNUPLOT <<END;
 set xlabel "time (s)"
-set ylabel "queueing delay (ms)
-set key left
+set ylabel "delay (ms)
+set key right
 set style fill solid 0.7 noborder
 set logscale y
 set yrange [30:$graph_max]
@@ -108,8 +139,10 @@ set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded dashed
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Queueing delay" with filledcurves above x1 lt 1 lc 3, %f with lines lt 3 lc 1 lw 2.5 title "95th percentile (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95, $pp95;
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Per-packet delay" with filledcurves above x1 lt 1 lc 3, "-" using 1:3 title "Signalling delay" with lines lt 1 lc 1, %f with lines lt 3 lc 3 lw 2.5 title "95th percentile per-packet delay (%.0f ms)", %f with lines lt 3 lc 1 lw 2.5 title "95th percentile signalling delay (%.0f ms)\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95, $pp95, $pp95s, $pp95s;
 
+print GNUPLOT $points;
+print GNUPLOT "e\n";
 print GNUPLOT $points;
 
 close GNUPLOT or die qq{$!};
