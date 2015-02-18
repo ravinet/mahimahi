@@ -66,8 +66,10 @@ LINE: while ( <> ) {
       die q{Departure format: timestamp - num_bytes delay};
     }
     push @delays, $delay;
-    $signal_delay{ $timestamp } = min( $delay,
-				       defined $signal_delay{ $timestamp } ? $signal_delay{ $timestamp } : POSIX::DBL_MAX );
+    $signal_delay{ $timestamp - $delay } = min( $delay,
+						(defined $signal_delay{ $timestamp - $delay })
+						? $signal_delay{ $timestamp - $delay }
+						: POSIX::DBL_MAX );
     $points .= $timestamp / 1000.0 . " $delay\n";
   }
 }
@@ -105,18 +107,19 @@ if ( scalar @delays == 0 ) {
 
 my $pp95 = $delays[ 0.95 * scalar @delays ];
 
-# measure signalling delay every millisecond
-# no datagrams => necessary signal delay increases at 1 s/s
-my $signal_delay_points;
-if ( not defined $signal_delay{ $first_timestamp } ) {
-  $signal_delay{ $first_timestamp } = 0;
+# measure signal delay every millisecond
+# = minimum time for a message created at time t to get to receiver
+my @signal_delay_samples = sort { $a <=> $b } keys %signal_delay;
+
+for ( my $ts = $signal_delay_samples[ -1 ]; $ts >= $signal_delay_samples[ 0 ]; $ts-- ) {
+  if ( not defined $signal_delay{ $ts } ) {
+    $signal_delay{ $ts } = $signal_delay{ $ts + 1 } + 1;
+  }
 }
 
-for ( my $ts = $first_timestamp; $ts <= $last_timestamp; $ts++ ) {
-  if ( not defined $signal_delay{ $ts } ) {
-    $signal_delay{ $ts } = $signal_delay{ $ts - 1 } + 1;
-  }
-  $signal_delay_points .= $ts/1000.0 . " $signal_delay{ $ts }\n";
+my $signal_delay_points;
+for ( my $ts = $signal_delay_samples[ 0 ]; $ts <= $signal_delay_samples[ -1 ]; $ts++ ) {
+  $signal_delay_points .= $ts / 1000.0 . " " . $signal_delay{ $ts } . "\n";
 }
 
 my @signal_delays = sort { $a <=> $b } values %signal_delay;
