@@ -64,9 +64,9 @@ static int to_int( const float x )
 }
 
 bool Graph::blocking_draw( const float t, const float logical_width,
-			   const std::vector<float> & current_values, const double current_weight )
+			   const vector<float> & current_values, const double current_weight )
 {
-  std::unique_lock<std::mutex> ul { data_mutex_ }; /* going to read data_points_ */
+  unique_lock<mutex> ul { data_mutex_ }; /* going to read and write data_points_ */
   for ( auto & line : data_points_ ) {
     while ( (line.size() >= 2) and (line.front().first < t - logical_width - 1)
 	    and (line.at( 1 ).first < t - logical_width - 1) ) {
@@ -74,7 +74,7 @@ bool Graph::blocking_draw( const float t, const float logical_width,
     }
   }
 
-  const auto data_points_snapshot = data_points_;
+  const vector<deque<pair<float, float>>> data_points_snapshot = data_points_;
   ul.unlock();
 
   assert( data_points_snapshot.size() == current_values.size() );
