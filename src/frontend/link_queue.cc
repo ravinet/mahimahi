@@ -87,7 +87,7 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         delay_graph_.reset( new BinnedLiveGraph( link_name + " delay [" + filename + "]",
                                                  { make_tuple( 0.0, 0.25, 0.0, 1.0, false ) },
                                                  "queueing delay (ms)",
-                                                 1, false, 50,
+                                                 1, false, 250,
                                                  [] ( int, int & x ) { x = -( abs( x ) ); } ) );
     }
 }

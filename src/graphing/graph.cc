@@ -93,10 +93,6 @@ bool Graph::blocking_draw( const float t, const float logical_width,
       if ( point.second > max_value ) {
 	max_value = point.second;
       }
-
-      if ( point.second < target_min_y_ ) {
-	target_min_y_ = point.second; /* not expecting points below 0, but include if necessary */
-      }
     }
 
     /* look at current/provisional data points? */
@@ -197,15 +193,36 @@ bool Graph::blocking_draw( const float t, const float logical_width,
 			   get<2>( styles_.at( line_no ) ),
 			   get<3>( styles_.at( line_no ) ) );
 
-    begin_line( t, line.front().first, line.front().second, logical_width );
+    bool pen_down = false;
+    pair<float, float> last_point;
 
-    for ( unsigned int i = 1; i < line.size(); i++ ) {
-      add_segment( t, line[ i ].first, line[ i ].second, logical_width );
+    for ( unsigned int i = 0; i < line.size(); i++ ) {
+      if ( pen_down ) {
+	if ( line[ i ].second >= 0 ) {
+	  add_segment( t, line[ i ].first, line[ i ].second, logical_width );
+	  last_point = line[ i ];
+	} else {
+	  end_line( t, last_point.first, logical_width, get<4>( styles_.at( line_no ) ) );
+	  pen_down = false;
+	}
+      } else if ( line[ i ].second >= 0 ) {
+	begin_line( t, line[ i ].first, line[ i ].second, logical_width );
+	last_point = line[ i ];
+	pen_down = true;
+      }
     }
 
-    end_line( t, line.front().first,
-	      current_weight * current_values.at( line_no ) + (1 - current_weight) * line.back().second,
-	      logical_width, get<4>( styles_.at( line_no ) ) );
+    if ( pen_down ) {
+      if ( (line.back().second >= 0) and (current_values.at( line_no ) >= 0) ) {
+	add_segment( t, t,
+		     current_weight * current_values.at( line_no ) + (1 - current_weight) * line.back().second,
+		     logical_width );
+	end_line( t, line.front().first,
+		  logical_width, get<4>( styles_.at( line_no ) ) );
+      } else {
+	end_line( t, line.front().first, logical_width, get<4>( styles_.at( line_no ) ) );
+      }
+    }
   }
 
   /* draw the y-axis labels */
@@ -341,12 +358,10 @@ void Graph::add_segment( const float t, const float x, const float y, const floa
   cairo_line_to( cairo_, x_position, chart_height( y, window_size.second ) );
 }
 
-void Graph::end_line( const float t, const float x, const float y, const float logical_width, const bool fill )
+void Graph::end_line( const float t, const float x, const float logical_width, const bool fill )
 {
   Cairo & cairo_ = current_gc().cairo;
   const auto & window_size = cairo_.size();
-
-  cairo_line_to( cairo_, window_size.first, chart_height( y, window_size.second ) );
 
   if ( fill ) {
     /* fill the curve */

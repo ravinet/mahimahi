@@ -53,7 +53,7 @@ void BinnedLiveGraph::animation_loop( void )
         vector<float> current_estimates;
         current_estimates.reserve( value_this_bin_.size() );
         for ( const auto & x : value_this_bin_ ) {
-            double current_estimate = abs( x ) * multiplier_;
+            double current_estimate = x * multiplier_;
             if ( rate_quantity_ ) {
                 current_estimate /= (bin_width_so_far / 1000.0);
             }
@@ -79,7 +79,7 @@ uint64_t BinnedLiveGraph::advance( void )
 
     while ( current_bin_ < now_bin ) {
         for ( unsigned int i = 0; i < value_this_bin_.size(); i++ ) {
-            double value = abs( value_this_bin_[ i ] ) * multiplier_;
+            double value = value_this_bin_[ i ] * multiplier_;
             if ( rate_quantity_ ) {
                 value /= (bin_width_ms_ / 1000.0);
             }
