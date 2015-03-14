@@ -59,6 +59,10 @@ class Graph
 
   std::mutex data_mutex_;
 
+  void begin_line( const float t, const float x, const float y, const float logical_width );
+  void add_segment( const float t, const float x, const float y, const float logical_width );
+  void end_line( const float t, const float x, const float y, const float logical_width, const bool fill );
+
 public:
   typedef std::vector<std::tuple<float, float, float, float, bool>> StylesType;
 

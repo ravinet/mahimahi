@@ -191,40 +191,21 @@ bool Graph::blocking_draw( const float t, const float logical_width,
       continue;
     }
 
-    cairo_identity_matrix( cairo_ );
-    cairo_set_line_width( cairo_, 3 );
-
-    const double x_position = window_size.first - (t - line.front().first) * window_size.first / logical_width;
-
-    cairo_move_to( cairo_, x_position, chart_height( line.front().second, window_size.second ) );
-
-    for ( unsigned int i = 1; i < line.size(); i++ ) {
-      const double x_position = window_size.first - (t - line[ i ].first) * window_size.first / logical_width;
-      cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
-    }
-
-    cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
-		   chart_height( current_weight * current_values.at( line_no )
-				 + (1 - current_weight) * line.back().second,
-				 window_size.second ) );
-
     cairo_set_source_rgba( cairo_,
 			   get<0>( styles_.at( line_no ) ),
 			   get<1>( styles_.at( line_no ) ),
 			   get<2>( styles_.at( line_no ) ),
 			   get<3>( styles_.at( line_no ) ) );
 
-    if ( get<4>( styles_.at( line_no ) ) ) {
-      /* fill the curve */
-      
-      cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
-		     chart_height( 0, window_size.second ) );
-      cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
-		     chart_height( 0, window_size.second ) );
-      cairo_fill( cairo_ );
-    } else {
-      cairo_stroke( cairo_ );
+    begin_line( t, line.front().first, line.front().second, logical_width );
+
+    for ( unsigned int i = 1; i < line.size(); i++ ) {
+      add_segment( t, line[ i ].first, line[ i ].second, logical_width );
     }
+
+    end_line( t, line.front().first,
+	      current_weight * current_values.at( line_no ) + (1 - current_weight) * line.back().second,
+	      logical_width, get<4>( styles_.at( line_no ) ) );
   }
 
   /* draw the y-axis labels */
@@ -337,4 +318,43 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   current_gc_ = (current_gc_ + 1) % gcs_.size();
 
   return false;
+}
+
+void Graph::begin_line( const float t, const float x, const float y, const float logical_width )
+{
+  Cairo & cairo_ = current_gc().cairo;
+  const auto & window_size = cairo_.size();
+
+  cairo_identity_matrix( cairo_ );
+  cairo_set_line_width( cairo_, 3 );
+
+  const double x_position = window_size.first - (t - x) * window_size.first / logical_width;
+  cairo_move_to( cairo_, x_position, chart_height( y, window_size.second ) );
+}
+
+void Graph::add_segment( const float t, const float x, const float y, const float logical_width )
+{
+  Cairo & cairo_ = current_gc().cairo;
+  const auto & window_size = cairo_.size();
+
+  const double x_position = window_size.first - (t - x) * window_size.first / logical_width;
+  cairo_line_to( cairo_, x_position, chart_height( y, window_size.second ) );
+}
+
+void Graph::end_line( const float t, const float x, const float y, const float logical_width, const bool fill )
+{
+  Cairo & cairo_ = current_gc().cairo;
+  const auto & window_size = cairo_.size();
+
+  cairo_line_to( cairo_, window_size.first, chart_height( y, window_size.second ) );
+
+  if ( fill ) {
+    /* fill the curve */
+    cairo_line_to( cairo_, window_size.first, chart_height( 0, window_size.second ) );
+    cairo_line_to( cairo_, window_size.first - (t - x) * window_size.first / logical_width,
+		   chart_height( 0, window_size.second ) );
+    cairo_fill( cairo_ );
+  } else {
+    cairo_stroke( cairo_ );
+  }
 }
