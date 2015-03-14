@@ -77,7 +77,6 @@ uint64_t BinnedLiveGraph::advance( void )
 
     const uint64_t now_bin = now / bin_width_ms_;
 
-    bool advanced = false;
     while ( current_bin_ < now_bin ) {
         for ( unsigned int i = 0; i < value_this_bin_.size(); i++ ) {
             double value = abs( value_this_bin_[ i ] ) * multiplier_;
@@ -90,11 +89,6 @@ uint64_t BinnedLiveGraph::advance( void )
             initialize_new_bin_( bin_width_ms_, value_this_bin_[ i ] );
         }
         current_bin_++;
-        advanced = true;
-    }
-
-    if ( advanced ) {
-        graph_.set_window( now / 1000.0, logical_width() );
     }
 
     return now;

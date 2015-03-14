@@ -58,22 +58,6 @@ Graph::Graph( const unsigned int initial_width, const unsigned int initial_heigh
   window_.flush();
 }
 
-void Graph::set_window( const float t, const float logical_width )
-{
-  std::unique_lock<std::mutex> ul { data_mutex_ };
-
-  for ( auto & line : data_points_ ) {
-    while ( (line.size() >= 2) and (line.front().first < t - logical_width - 1)
-	    and (line.at( 1 ).first < t - logical_width - 1) ) {
-      line.pop_front();
-    }
-  }
-
-  while ( (not x_tick_labels_.empty()) and (x_tick_labels_.front().first < t - logical_width - 1) ) {
-    x_tick_labels_.pop_front();
-  }
-}
-
 static int to_int( const float x )
 {
   return static_cast<int>( lrintf( x ) );
@@ -82,47 +66,55 @@ static int to_int( const float x )
 bool Graph::blocking_draw( const float t, const float logical_width,
 			   const std::vector<float> & current_values, const double current_weight )
 {
+  std::unique_lock<std::mutex> ul { data_mutex_ }; /* going to read data_points_ */
+  for ( auto & line : data_points_ ) {
+    while ( (line.size() >= 2) and (line.front().first < t - logical_width - 1)
+	    and (line.at( 1 ).first < t - logical_width - 1) ) {
+      line.pop_front();
+    }
+  }
+
+  const auto data_points_snapshot = data_points_;
+  ul.unlock();
+
+  assert( data_points_snapshot.size() == current_values.size() );
   assert( current_weight >= 0 );
   assert( current_weight <= 1 );
-  assert( data_points_.size() == current_values.size() );
 
-  {
-    /* autoscale graph -- but only lines (not filled areas) */
-    float max_value = numeric_limits<float>::min();
-    std::unique_lock<std::mutex> ul { data_mutex_ }; /* going to read data_points_ */
+  /* autoscale graph -- but only lines (not filled areas) */
+  float max_value = numeric_limits<float>::min();
 
-    /* look at historical data points */
-    for ( unsigned int i = 0; i < data_points_.size(); i++ ) {
-      if ( get<4>( styles_.at( i ) ) ) { /* skip filled areas */
-	continue;
-      }
-      for ( const auto & point : data_points_.at( i ) ) {
-	if ( point.second > max_value ) {
-	  max_value = point.second;
-	}
-
-	if ( point.second < target_min_y_ ) {
-	  target_min_y_ = point.second; /* not expecting points below 0, but include if necessary */
-	}
+  /* look at historical data points */
+  for ( unsigned int i = 0; i < data_points_snapshot.size(); i++ ) {
+    if ( get<4>( styles_.at( i ) ) ) { /* skip filled areas */
+      continue;
+    }
+    for ( const auto & point : data_points_snapshot.at( i ) ) {
+      if ( point.second > max_value ) {
+	max_value = point.second;
       }
 
-      /* look at current/provisional data points? */
-      if ( current_weight > 0.4 ) {
-	if ( current_values.at( i ) > max_value ) {
-	  max_value = current_values.at( i );
-	}
+      if ( point.second < target_min_y_ ) {
+	target_min_y_ = point.second; /* not expecting points below 0, but include if necessary */
       }
     }
 
-    /* expansion? */
-    if ( max_value * 1.2 > target_max_y_ ) {
-      target_max_y_ = max( max_value * 1.4f, target_min_y_ + 1 );
+    /* look at current/provisional data points? */
+    if ( current_weight > 0.4 ) {
+      if ( current_values.at( i ) > max_value ) {
+	max_value = current_values.at( i );
+      }
     }
+  }
 
-    /* contraction */
-    if ( max_value * 1.8 < target_max_y_ ) {
-      target_max_y_ = max( max_value * 1.6f, target_min_y_ + 1 );
-    }
+  /* expansion? */
+  if ( max_value * 1.2 > target_max_y_ ) {
+    target_max_y_ = max( max_value * 1.4f, target_min_y_ + 1 );
+  }
+
+  /* contraction */
+  if ( max_value * 1.8 < target_max_y_ ) {
+    target_max_y_ = max( max_value * 1.6f, target_min_y_ + 1 );
   }
 
   /* set scale for this frame (with smoothing) */
@@ -146,6 +138,11 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   cairo_rectangle( cairo_, 0, 0, window_size.first, window_size.second );
   cairo_set_source_rgba( cairo_, 1, 1, 1, 1 );
   cairo_fill( cairo_ );
+
+  /* do we need to delete a label? */
+  while ( (not x_tick_labels_.empty()) and (x_tick_labels_.front().first < t - logical_width - 1) ) {
+    x_tick_labels_.pop_front();
+  }
 
   /* do we need to make a new label? */
   while ( x_tick_labels_.empty() or (x_tick_labels_.back().first < t + 1) ) { /* start when offscreen */
@@ -186,51 +183,47 @@ bool Graph::blocking_draw( const float t, const float logical_width,
   cairo_set_source_rgba( cairo_, 0, 0, 0.4, 1 );
   cairo_fill( cairo_ );
 
-  {
-    std::unique_lock<std::mutex> ul { data_mutex_ };
+  /* draw the data */
+  for ( unsigned int line_no = 0; line_no < data_points_snapshot.size(); line_no++ ) {
+    const auto & line = data_points_snapshot.at( line_no );
 
-    /* draw the data */
-    for ( unsigned int line_no = 0; line_no < data_points_.size(); line_no++ ) {
-      const auto & line = data_points_.at( line_no );
+    if ( line.empty() ) {
+      continue;
+    }
 
-      if ( line.empty() ) {
-	continue;
-      }
+    cairo_identity_matrix( cairo_ );
+    cairo_set_line_width( cairo_, 3 );
 
-      cairo_identity_matrix( cairo_ );
-      cairo_set_line_width( cairo_, 3 );
+    const double x_position = window_size.first - (t - line.front().first) * window_size.first / logical_width;
 
-      const double x_position = window_size.first - (t - line.front().first) * window_size.first / logical_width;
+    cairo_move_to( cairo_, x_position, chart_height( line.front().second, window_size.second ) );
 
-      cairo_move_to( cairo_, x_position, chart_height( line.front().second, window_size.second ) );
+    for ( unsigned int i = 1; i < line.size(); i++ ) {
+      const double x_position = window_size.first - (t - line[ i ].first) * window_size.first / logical_width;
+      cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
+    }
 
-      for ( unsigned int i = 1; i < line.size(); i++ ) {
-	const double x_position = window_size.first - (t - line[ i ].first) * window_size.first / logical_width;
-	cairo_line_to( cairo_, x_position, chart_height( line[ i ].second, window_size.second ) );
-      }
+    cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
+		   chart_height( current_weight * current_values.at( line_no )
+				 + (1 - current_weight) * line.back().second,
+				 window_size.second ) );
 
-      cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
-		     chart_height( current_weight * current_values.at( line_no )
-				   + (1 - current_weight) * line.back().second,
-				   window_size.second ) );
+    cairo_set_source_rgba( cairo_,
+			   get<0>( styles_.at( line_no ) ),
+			   get<1>( styles_.at( line_no ) ),
+			   get<2>( styles_.at( line_no ) ),
+			   get<3>( styles_.at( line_no ) ) );
 
-      cairo_set_source_rgba( cairo_,
-			     get<0>( styles_.at( line_no ) ),
-			     get<1>( styles_.at( line_no ) ),
-			     get<2>( styles_.at( line_no ) ),
-			     get<3>( styles_.at( line_no ) ) );
-
-      if ( get<4>( styles_.at( line_no ) ) ) {
-	/* fill the curve */
+    if ( get<4>( styles_.at( line_no ) ) ) {
+      /* fill the curve */
       
-	cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
-		       chart_height( 0, window_size.second ) );
-	cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
-		       chart_height( 0, window_size.second ) );
-	cairo_fill( cairo_ );
-      } else {
-	cairo_stroke( cairo_ );
-      }
+      cairo_line_to( cairo_, window_size.first - (0) * window_size.first / logical_width,
+		     chart_height( 0, window_size.second ) );
+      cairo_line_to( cairo_, window_size.first - (t - line.front().first) * window_size.first / logical_width,
+		     chart_height( 0, window_size.second ) );
+      cairo_fill( cairo_ );
+    } else {
+      cairo_stroke( cairo_ );
     }
   }
 

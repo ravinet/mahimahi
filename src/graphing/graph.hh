@@ -69,7 +69,6 @@ public:
 	 const std::string & x_label,
 	 const std::string & y_label );
 
-  void set_window( const float t, const float logical_width );
   void add_data_point( const unsigned int num, const float t, const float y ) {
     std::unique_lock<std::mutex> ul { data_mutex_ };
 
