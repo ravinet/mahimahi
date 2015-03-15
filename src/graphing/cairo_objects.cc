@@ -1,6 +1,7 @@
 #define CAIRO_HAS_XCB_SHM_FUNCTIONS 1
 
 #include <stdexcept>
+#include <mutex>
 #include <cairo-xcb.h>
 
 #include "cairo_objects.hh"
@@ -98,10 +99,19 @@ void Pango::set_font( const Pango::Font & font )
   pango_layout_set_font_description( *this, font );
 }
 
+mutex & global_pango_mutex( void )
+{
+  static mutex global_pango_mutex_;
+
+  return global_pango_mutex_;
+}
+
 Pango::Text::Text( Cairo & cairo, Pango & pango, const Font & font, const string & text )
   : path_(),
     extent_( { 0, 0, 0, 0 } )
 {
+  unique_lock<mutex> ul { global_pango_mutex() };
+
   cairo_identity_matrix( cairo );
   cairo_new_path( cairo );
 
