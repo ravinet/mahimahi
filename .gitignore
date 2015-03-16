@@ -23,6 +23,7 @@ compile
 src/protobufs/http_record.pb.cc
 src/protobufs/http_record.pb.h
 src/frontend/mm-delay
+src/frontend/mm-loss
 src/frontend/mm-link
 src/frontend/mm-meter
 src/frontend/mm-webrecord

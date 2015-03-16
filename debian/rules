@@ -15,6 +15,7 @@
 override_dh_fixperms:
 	dh_fixperms
 	chmod 4755 debian/mahimahi/usr/bin/mm-delay
+	chmod 4755 debian/mahimahi/usr/bin/mm-loss
 	chmod 4755 debian/mahimahi/usr/bin/mm-webrecord
 	chmod 4755 debian/mahimahi/usr/bin/mm-webreplay
 	chmod 4755 debian/mahimahi/usr/bin/mm-link

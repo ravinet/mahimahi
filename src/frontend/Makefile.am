@@ -6,6 +6,11 @@ mm_delay_SOURCES = delayshell.cc delay_queue.hh delay_queue.cc
 mm_delay_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 mm_delay_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-loss
+mm_loss_SOURCES = lossshell.cc loss_queue.hh loss_queue.cc
+mm_loss_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
+mm_loss_LDFLAGS = -pthread
+
 bin_PROGRAMS += mm-link
 mm_link_SOURCES = linkshell.cc link_queue.hh link_queue.cc
 mm_link_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
@@ -34,6 +39,8 @@ nph_replayserver_cgi_LDFLAGS = -pthread
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/mm-delay
 	chmod u+s $(DESTDIR)$(bindir)/mm-delay
+	chown root $(DESTDIR)$(bindir)/mm-loss
+	chmod u+s $(DESTDIR)$(bindir)/mm-loss
 	chown root $(DESTDIR)$(bindir)/mm-link
 	chmod u+s $(DESTDIR)$(bindir)/mm-link
 	chown root $(DESTDIR)$(bindir)/mm-meter

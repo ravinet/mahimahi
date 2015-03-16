@@ -16,5 +16,6 @@ std::string::const_iterator write_some( const int fd,
                                         const std::string::const_iterator & begin,
                                         const std::string::const_iterator & end );
 long int myatoi( const std::string & str, const int base = 10 );
+double myatof( const std::string & str );
 
 #endif /* EZIO_HH */
