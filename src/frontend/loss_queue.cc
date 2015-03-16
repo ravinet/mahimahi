@@ -26,7 +26,7 @@ void LossQueue::write_packets( FileDescriptor & fd )
     }
 }
 
-unsigned int LossQueue::wait_time( void ) const
+unsigned int LossQueue::wait_time( void )
 {
     return packet_queue_.empty() ? numeric_limits<uint16_t>::max() : 0;
 }
@@ -34,4 +34,49 @@ unsigned int LossQueue::wait_time( void ) const
 bool IIDLoss::drop_packet( const string & packet __attribute((unused)) )
 {
     return drop_dist_( prng_ );
+}
+
+static const double MS_PER_SECOND = 1000.0;
+
+SwitchingLink::SwitchingLink( const double mean_on_time, const double mean_off_time )
+    : link_is_on_( false ),
+      on_process_( 1.0 / (MS_PER_SECOND * mean_off_time) ),
+      off_process_( 1.0 / (MS_PER_SECOND * mean_on_time) ),
+      next_switch_time_( timestamp() )
+{}
+
+uint64_t bound( const double x )
+{
+    if ( x > (1 << 30) ) {
+        return 1 << 30;
+    }
+
+    return x;
+}
+
+unsigned int SwitchingLink::wait_time( void )
+{
+    const uint64_t now = timestamp();
+
+    while ( next_switch_time_ <= now ) {
+        /* switch */
+        link_is_on_ = !link_is_on_;
+        /* worried about integer overflow when mean time = 0 */
+        next_switch_time_ += bound( (link_is_on_ ? off_process_ : on_process_)( prng_ ) );
+    }
+
+    if ( LossQueue::wait_time() == 0 ) {
+        return 0;
+    }
+
+    if ( next_switch_time_ - now > numeric_limits<uint16_t>::max() ) {
+        return numeric_limits<uint16_t>::max();
+    }
+
+    return next_switch_time_ - now;
+}
+
+bool SwitchingLink::drop_packet( const string & packet __attribute((unused)) )
+{
+    return !link_is_on_;
 }

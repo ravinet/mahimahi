@@ -1,5 +1,6 @@
 mahimahi binary: setuid-binary usr/bin/mm-delay 4755 root/root
 mahimahi binary: setuid-binary usr/bin/mm-loss 4755 root/root
+mahimahi binary: setuid-binary usr/bin/mm-onoff 4755 root/root
 mahimahi binary: setuid-binary usr/bin/mm-webrecord 4755 root/root
 mahimahi binary: setuid-binary usr/bin/mm-webreplay 4755 root/root
 mahimahi binary: setuid-binary usr/bin/mm-link 4755 root/root

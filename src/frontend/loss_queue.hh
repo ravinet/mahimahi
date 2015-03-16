@@ -28,7 +28,7 @@ public:
 
     void write_packets( FileDescriptor & fd );
 
-    virtual unsigned int wait_time( void ) const;
+    unsigned int wait_time( void );
 
     bool pending_output( void ) const { return not packet_queue_.empty(); }
 };
@@ -47,15 +47,20 @@ public:
 class SwitchingLink : public LossQueue
 {
 private:
-    bool link_on_;
-    double mean_on_time_, mean_off_time_;
+    bool link_is_on_;
+    std::exponential_distribution<> on_process_;
+    std::exponential_distribution<> off_process_;
 
     uint64_t next_switch_time_;
+
+    void calculate_next_switch_time( void );
 
     bool drop_packet( const std::string & packet ) override;
 
 public:
     SwitchingLink( const double mean_on_time_, const double mean_off_time );
+
+    unsigned int wait_time( void );
 };
 
 #endif /* LOSS_QUEUE_HH */

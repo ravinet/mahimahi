@@ -11,6 +11,11 @@ mm_loss_SOURCES = lossshell.cc loss_queue.hh loss_queue.cc
 mm_loss_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 mm_loss_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-onoff
+mm_onoff_SOURCES = onoffshell.cc loss_queue.hh loss_queue.cc
+mm_onoff_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
+mm_onoff_LDFLAGS = -pthread
+
 bin_PROGRAMS += mm-link
 mm_link_SOURCES = linkshell.cc link_queue.hh link_queue.cc
 mm_link_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
@@ -41,6 +46,8 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-delay
 	chown root $(DESTDIR)$(bindir)/mm-loss
 	chmod u+s $(DESTDIR)$(bindir)/mm-loss
+	chown root $(DESTDIR)$(bindir)/mm-onoff
+	chmod u+s $(DESTDIR)$(bindir)/mm-onoff
 	chown root $(DESTDIR)$(bindir)/mm-link
 	chmod u+s $(DESTDIR)$(bindir)/mm-link
 	chown root $(DESTDIR)$(bindir)/mm-meter
