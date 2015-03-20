@@ -29,13 +29,13 @@ record and replay multi-origin websites: \fBmm-webrecord\fP, \fBmm-webreplay\fP
 .SH DESCRIPTION
 \fBmahimahi\fP is a suite of user-space tools for network emulation and analysis.
 
-Each mahimahi tool creates a new container, generally connected to the
+Each mahimahi tool spawns a lightweight container, generally connected to the
 outside via a synthetic network device that observes packets in
 transit or emulates a desired behavior.
 
 The tools are composable so that a series of emulated network effects
 can be chained together, with mahimahi containers nested inside each
-other. Each mahimahi tool takes an optional command to execute, so it
+other. Each tool takes an optional command to execute, so it
 is possible to create a series of nested containers with one command
 line.
 
