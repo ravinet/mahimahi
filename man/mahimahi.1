@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH Mahimahi 1 "February 2014"
+.TH MAHIMAHI 1 "March 2015"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,34 +16,218 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-Mahimahi - tools to produce a usable benchmark for Web transport protocols and browser modifications
+\fBmahimahi\fP \- lightweight, composable network-emulation tools
+
+link emulation: \fBmm-delay\fP, \fBmm-loss\fP, \fBmm-onoff\fP, \fBmm-link\fP
+
+analysis scripts: \fBmm-capacity-graph\fP, \fBmm-delay-graph\fP
+
+observation: \fBmm-meter\fP
+
+record and replay multi-origin websites: \fBmm-webrecord\fP, \fBmm-webreplay\fP
+
 .SH DESCRIPTION
-Mahimahi is a set of lightweight tools that can be used to completely record actual Web pages 
-and replay them locally over different emulated links. Mahimahi comprises of four tools:
-\fBmm-delay\fP(1), \fBmm-link\fP(1), \fBmm-webrecord\fP(1), and \fBmm-webreplay\fP(1). 
+\fBmahimahi\fP is a suite of user-space tooks for network emulation and analysis.
 
-\fBmm-delay\fP(1) emulates a link with a fixed minimum round trip time by delaying all network packets to and from a shell by a user-specified amount of time.  
+Each mahimahi tool creates a new container, generally connected to the
+outside via a synthetic network device that observes packets in
+transit or emulates a desired behavior.
 
-\fBmm-link\fP(1) emulates both time-varying links and fixed-speed links by delivering all network packets to and from a shell according to packet-delivery trace files.
+The tools are composable so that a series of emulated network effects
+can be chained together, with mahimahi containers nested inside each
+other. Each mahimahi tool takes an optional command to execute, so it
+is possible to create a series of nested containers with one command
+line.
 
-\fBmm-webrecord\fP(1) records complete Web pages by recording all HTTP content sent to and from a shell running a Web browser.
+.SH LINK EMULATION TOOLS
 
-\fBmm-webreplay\fP(1) replays previously recorded Web pages while accurately mirroring each page's sharding structure. \fBmm-webreplay\fP(1) creates a shell where browsers can load recorded Web pages locally. 
+.SY mm-delay
+.I delay
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+Every packet is delayed by the specified
+.I delay
+(in milliseconds) entering and leaving the container.
+.RE
 
+.SY mm-loss
+uplink|downlink
+.I rate
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
 
-.nf
+Packets are lost at the given
+.I rate
+either when leaving (uplink) or entering (downlink) the container.
+.I rate
+is a number between 0 and 1.
+.RE
+
+.SY mm-onoff
+uplink|downlink
+.I mean-on-time
+.I mean-off-time
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+The uplink or downlink (given as the first argument) will be
+intermittent and will switch between connected and disconnected states
+according to a Poisson point process with specified average durations
+spent "on" and "off".
+.RE
+
+.SY mm-link
+.OP --uplink-log=\fIfilename\fR
+.OP --downlink-log=\fIfilename\fR
+.OP --meter-uplink
+.OP --meter-uplink-delay
+.OP --meter-downlink
+.OP --meter-downlink-delay
+.OP --once
+.I uplink-filename
+.I downlink-filename
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+Emulates a throughput-limited link with a specified packet-delivery schedule. See
+.BR mm-link (1).
+.RE
+
+.SY mm-capacity-graph
+.SY mm-delay-graph
+.YS
+.IP ""
+.RS
+
+These scripts are used to analyze the output of
+.BR mm-link (1).
+.RE
+
+.SH OBSERVATION TOOLS
+
+.SY mm-meter
+.OP --meter-uplink
+.OP --meter-downlink
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+Displays an animated live plot of the transfer rate entering or leaving the container.
+.RE
+
+.SH RECORD AND REPLAY WEBSITES
+
+.SY mm-webrecord
+.I directory
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+Transparently proxies outgoing HTTP and HTTPS connections, saving the
+requests, corresponding responses, and IP address of each Web
+server contacted in the given \fIdirectory\fR. \fBmm-webrecord\fP
+uses a self-signed TLS certificate in its HTTPS proxy, causing typical
+Web browsers to reject it. For testing or debugging purposes, this
+behavior can usually be turned off, e.g.: with the
+\fB--no-check-certificate\fP option to
+.BR wget (1)
+or the \fB--ignore-certificate-errors\fP option to
+.BR chromium-browser (1).
+.RE
+
+.SY mm-webreplay
+.I directory
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+Replays a saved session from a previous run of \fBmm-webrecord\fR.
+Unlike most mahimahi tools, the \fBmm-webreplay\fP container
+does not have a network connection to the outside world. Instead,
+it has dummy network interfaces bound to each IP address on which a
+Web server in the saved session had answered a request. \fPmm-webreplay\fR runs an
+.BR apache2 (8)
+Web server bound to each such IP address inside the container. Each
+Web server emulates the corresponding server from the saved
+session. When receiving a request that matches one in the \fIdirectory\fR, the
+corresponding apache2 replies with the same reply as previously
+captured.
+
+\fBmm-webreplay\fP can be used to measure the performance of Web
+browsers on complex websites and the effect of changes in Web
+protocols (e.g. HTTP, HTTP/2, SPDY, QUIC). Unlike tools like web-page-replay,
+\fBmm-webreplay\fP preserves the sharded structure of a website, binds to
+the actual IP addresses that the real website used, and serves requests from
+real Web servers.
+.RE
+
+.SH EXAMPLES
+
+To spawn a shell with a delayed, lossy link to the Internet:
+
+.IP ""
+.RS
+.EX
+\fB$\fR mm-delay 50 mm-loss uplink 0.1
+\fB[delay 50 ms] [loss up=0.1] $\fR
+.EE
+.RE
+
+To record a page load from \fIwww.nytimes.com\fR:
+
+.IP ""
+.RS
+.EX
+\fB$\fR mm-webrecord /tmp/nytimes chromium-browser --no-check-certificates --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+.EE
+
+The use of \fI--user-data-dir=/tmp/nonexistent$(date +%s%N)\fR is to prevent the browser from reusing an existing chromium-browser process.
+.RE
+
+To make Chrome retrieve the saved website over a delayed, lossy link whose throughput is limited to 1 full-sized packet per millisecond:
+
+.IP ""
+.RS
+.EX
+\fB$\fR mm-webreplay /tmp/nytimes mm-delay 50 mm-loss uplink 0.1 mm-link <(echo 1) <(echo 1) -- chromium-browser --no-check-certificates --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+.EE
+.RE
+
+To emulate a variable cellular network and visualize a process's use of the network:
+
+.IP ""
+.RS
+.EX
+\fB$\fR mm-delay 20 mm-link --meter-uplink --meter-uplink-delay --meter-downlink --meter-downlink-delay /usr/share/mahimahi/traces/VerizonLTE-uplink.ms /usr/share/mahimahi/traces/VerizonLTE-downlink.ms
+\fB[delay 20 ms] [link] $\fR
+.EE
 
 .SH SEE ALSO
-.BR mm-delay (1),
-.BR mm-link (1),
-.BR mm-webrecord (1),
-.BR mm-webreplay (1).
+.BR mm-link (1)
 
 Project home page:
 .I http://mahimahi.mit.edu
 
 .br
 .SH AUTHOR
-Mahimahi was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@mit.edu>.
+Mahimahi was written by Ravi Netravali <ravinet@mit.edu>, Anirudh Sivaraman <anirudh@csail.mit.edu>, and Keith Winstein <keithw@cs.stanford.edu>.
 .SH BUGS
 Please report bugs to \fImahimahi@mit.edu\fP.
