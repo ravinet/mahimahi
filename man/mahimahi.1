@@ -79,7 +79,7 @@ uplink|downlink
 .IP ""
 .RS
 
-The uplink or downlink (given as the first argument) will be
+The uplink or downlink will be
 intermittent and will switch between connected and disconnected states
 according to a Poisson point process with specified average durations
 spent "on" and "off".
@@ -97,21 +97,15 @@ spent "on" and "off".
 .I downlink-filename
 .RI [ command... ]
 .YS
+.SY mm-capacity-graph
+.SY mm-delay-graph
+.YS
 .
 .IP ""
 .RS
 
-Emulates a throughput-limited link with a specified packet-delivery schedule. See
-.BR mm-link (1).
-.RE
-
-.SY mm-capacity-graph
-.SY mm-delay-graph
-.YS
-.IP ""
-.RS
-
-These scripts are used to analyze the output of
+Emulates a throughput-limited link with a specified packet-delivery schedule
+and analyzes the resulting performance. See
 .BR mm-link (1).
 .RE
 
