@@ -98,6 +98,50 @@ LinkQueue::QueuedPacket::QueuedPacket( const string & s_contents, const uint64_t
       arrival_time( s_arrival_time )
 {}
 
+void LinkQueue::record_arrival( const QueuedPacket & packet )
+{
+    /* log it */
+    if ( log_ ) {
+        *log_ << packet.arrival_time << " + " << packet.contents.size() << endl;
+    }
+
+    /* meter it */
+    if ( throughput_graph_ ) {
+        throughput_graph_->add_value_now( 1, packet.contents.size() );
+    }
+}
+
+void LinkQueue::record_departure_opportunity( void )
+{
+    /* log the delivery opportunity */
+    if ( log_ ) {
+        *log_ << next_delivery_time() << " # " << PACKET_SIZE << endl;
+    }
+
+    /* meter the delivery opportunity */
+    if ( throughput_graph_ ) {
+        throughput_graph_->add_value_now( 0, PACKET_SIZE );
+    }    
+}
+
+void LinkQueue::record_departure( const uint64_t departure_time, const QueuedPacket & packet )
+{
+    /* log the delivery */
+    if ( log_ ) {
+        *log_ << departure_time << " - " << packet.contents.size()
+              << " " << departure_time - packet.arrival_time << endl;
+    }
+
+    /* meter the delivery */
+    if ( throughput_graph_ ) {
+        throughput_graph_->add_value_now( 2, packet.contents.size() );
+    }
+
+    if ( delay_graph_ ) {
+        delay_graph_->set_max_value_now( 0, departure_time - packet.arrival_time );
+    }    
+}
+
 void LinkQueue::read_packet( const string & contents )
 {
     const uint64_t now = timestamp();
@@ -108,15 +152,7 @@ void LinkQueue::read_packet( const string & contents )
 
     packet_queue_.emplace( contents, now );
 
-    /* log it */
-    if ( log_ ) {
-        *log_ << now << " + " << contents.size() << endl;
-    }
-
-    /* meter it */
-    if ( throughput_graph_ ) {
-        throughput_graph_->add_value_now( 1, contents.size() );
-    }
+    record_arrival( packet_queue_.back() );
 }
 
 uint64_t LinkQueue::next_delivery_time( void ) const
@@ -126,15 +162,7 @@ uint64_t LinkQueue::next_delivery_time( void ) const
 
 void LinkQueue::use_a_delivery_opportunity( void )
 {
-    /* log the delivery opportunity */
-    if ( log_ ) {
-        *log_ << next_delivery_time() << " # " << PACKET_SIZE << endl;
-    }
-
-    /* meter the delivery opportunity */
-    if ( throughput_graph_ ) {
-        throughput_graph_->add_value_now( 0, PACKET_SIZE );
-    }
+    record_departure_opportunity();
 
     next_delivery_ = (next_delivery_ + 1) % schedule_.size();
 
@@ -169,20 +197,7 @@ void LinkQueue::write_packets( FileDescriptor & fd )
                 /* restore the surplus bytes beyond what the packet requires */
                 bytes_left_in_this_delivery += (- packet_queue_.front().bytes_to_transmit);
 
-                /* log the delivery */
-                if ( log_ ) {
-                    *log_ << this_delivery_time << " - " << packet_queue_.front().contents.size()
-                          << " " << this_delivery_time - packet_queue_.front().arrival_time << endl;
-                }
-
-                /* meter the delivery */
-                if ( throughput_graph_ ) {
-                    throughput_graph_->add_value_now( 2, packet_queue_.front().contents.size() );
-                }
-
-                if ( delay_graph_ ) {
-                    delay_graph_->set_max_value_now( 0, this_delivery_time - packet_queue_.front().arrival_time );
-                }
+                record_departure( this_delivery_time, packet_queue_.front() );
 
                 /* this packet is ready to go */
                 fd.write( packet_queue_.front().contents );

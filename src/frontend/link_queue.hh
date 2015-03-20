@@ -44,6 +44,10 @@ private:
 
     void discard_wasted_opportunities( const uint64_t now );
 
+    void record_arrival( const QueuedPacket & packet );
+    void record_departure_opportunity( void );
+    void record_departure( const uint64_t departure_time, const QueuedPacket & packet );
+
 public:
     LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay );
 
