@@ -46,6 +46,11 @@ int main( int argc, char *argv[] )
             usage( argv[ 0 ] );
         }
 
+        if ( on_time == 0 and off_time == 0 ) {
+            cerr << "Error: mean on-time and off-time cannot both be 0 seconds." << endl;
+            usage( argv[ 0 ] );
+        }
+
         double uplink_on_time = numeric_limits<double>::max(), uplink_off_time = 0;
         double downlink_on_time = numeric_limits<double>::max(), downlink_off_time = 0;
 
