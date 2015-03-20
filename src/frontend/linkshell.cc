@@ -81,8 +81,8 @@ int main( int argc, char *argv[] )
             usage_error( argv[ 0 ] );
         }
 
-        const std::string uplink_filename = argv[ optind ];
-        const std::string downlink_filename = argv[ optind + 1 ];
+        const string uplink_filename = argv[ optind ];
+        const string downlink_filename = argv[ optind + 1 ];
 
         vector< string > command;
 

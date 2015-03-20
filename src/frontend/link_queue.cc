@@ -88,11 +88,11 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
                                                  { make_tuple( 0.0, 0.25, 0.0, 1.0, false ) },
                                                  "queueing delay (ms)",
                                                  1, false, 250,
-                                                 [] ( int, int & x ) { x = -( abs( x ) ); } ) );
+                                                 [] ( int, int & x ) { x = -1; } ) );
     }
 }
 
-LinkQueue::QueuedPacket::QueuedPacket( const std::string & s_contents, const uint64_t s_arrival_time )
+LinkQueue::QueuedPacket::QueuedPacket( const string & s_contents, const uint64_t s_arrival_time )
     : bytes_to_transmit( s_contents.size() ),
       contents( s_contents ),
       arrival_time( s_arrival_time )
