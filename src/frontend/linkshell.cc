@@ -9,7 +9,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-downlink] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 int main( int argc, char *argv[] )
