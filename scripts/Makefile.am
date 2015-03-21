@@ -1,1 +1,1 @@
-dist_bin_SCRIPTS = mm-capacity-graph mm-delay-graph
+dist_bin_SCRIPTS = mm-throughput-graph mm-delay-graph

@@ -32,6 +32,7 @@ my $first_timestamp = undef;
 my $last_timestamp = undef;
 my $base_timestamp = undef;
 my $capacity_sum;
+my $arrival_sum;
 my $departure_sum;
 my @delays;
 my %signal_delay;
@@ -83,6 +84,7 @@ LINE: while ( <> ) {
   # process the event
   if ( $event_type eq q{+} ) {
     $arrivals{ $bin } += $num_bits;
+    $arrival_sum += $num_bits;
   } elsif ( $event_type eq q{#} ) {
     $capacity{ $bin } += $num_bits;
     $capacity_sum += $num_bits;
@@ -130,6 +132,7 @@ sub max {
 # calculate statistics
 my $duration = ($last_timestamp - $first_timestamp) / 1000.0;
 my $average_capacity = ($capacity_sum / $duration) / 1000000.0;
+my $average_ingress = ($arrival_sum / $duration) / 1000000.0;
 my $average_throughput = ($departure_sum / $duration) / 1000000.0;
 
 if ( scalar @delays == 0 ) {
@@ -154,7 +157,7 @@ my @signal_delays = sort { $a <=> $b } values %signal_delay;
 my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
 
 printf STDERR qq{Average capacity: %.2f Mbits/s\n}, $average_capacity;
-printf STDERR qq{Average throughput of measured protocol: %.2f Mbits/s (%.1f%% utilization)\n}, $average_throughput, 100.0 * $average_throughput / $average_capacity;
+printf STDERR qq{Average throughput: %.2f Mbits/s (%.1f%% utilization)\n}, $average_throughput, 100.0 * $average_throughput / $average_capacity;
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
 printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
@@ -174,14 +177,13 @@ print GNUPLOT <<END;
 set xlabel "time (s)"
 set ylabel "throughput (Mbits/s)"
 set key center outside top horizontal
-set style fill solid 0.4 border
-set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid
+set style fill solid 0.2 noborder
+set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid mouse standalone name "Throughput"
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Capacity (mean %.2f Mbits/s)" with filledcurves above x1 lw 0.5, "-" using 1:3 with lines lt 3 lw 2 title "Measured Protocol (mean %.2f Mbits/s)"\n},
-  $first_timestamp / 1000.0, $last_timestamp / 1000.0, $average_capacity, $average_throughput,
-  $pp95;
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Capacity (mean %.2f Mbits/s)" with filledcurves above x1 lw 0.5, "-" using 1:3 with lines lc rgb "#0020a0" lw 4 title "Traffic ingress (mean %.2f Mbits/s)", "-" using 1:4 with lines lc rgb "#ff6040" lw 2 title "Traffic egress (mean %.2f Mbits/s)"\n},
+  $first_timestamp / 1000.0, $last_timestamp / 1000.0, $average_capacity, $average_ingress, $average_throughput;
 
 my $output;
 
@@ -195,6 +197,8 @@ for ( my $bin = $earliest_bin; $bin <= $latest_bin; $bin++ ) {
     $output .= qq{$t $cap $arr $dep $current_buffer_occupancy\n};
 }
 
+print GNUPLOT $output;
+print GNUPLOT qq{\ne\n};
 print GNUPLOT $output;
 print GNUPLOT qq{\ne\n};
 print GNUPLOT $output;

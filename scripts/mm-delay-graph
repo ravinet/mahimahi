@@ -130,7 +130,7 @@ my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
 printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
-my $graph_max = $delays[-1] * 2;
+my $graph_max = $delays[-1] * 1.2;
 
 # make graph
 open GNUPLOT, q{| gnuplot} or die;
@@ -144,11 +144,11 @@ set logscale y
 set yrange [$lower_limit:$graph_max]
 set ytics add ($lower_limit)
 set key center outside top horizontal
-set terminal svg enhanced size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid
+set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid mouse standalone name "Delay"
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Signal delay" with filledcurves above x1 lt 1 fs solid 0.4 border fc rgb "#0000ff" lw 0.5, "-" using 1:2 title "Per-packet delay" with points lt 7 ps 0.33 lc rgb "#00ff0000", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#0000ff" title "95th percentile signal delay (%.0f ms)", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#ff0000" title "95th percentile per-packet delay (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95s*1.05, log($pp95s/1.05)/log(10), $pp95s, $pp95*1.05, log($pp95/1.05)/log(10), $pp95;
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Signal delay" with filledcurves above x1 lt 1 fs solid 0.4 noborder fc rgb "#0000ff" lw 0.5, "-" using 1:2 title "Per-packet delay" with points lt 7 ps 0.33 lc rgb "#00ff0000", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#0000ff" title "95th percentile signal delay (%.0f ms)", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#ff0000" title "95th percentile per-packet delay (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95s*1.05, log($pp95s/1.05)/log(10), $pp95s, $pp95*1.05, log($pp95/1.05)/log(10), $pp95;
 
 print GNUPLOT $signal_delay_points;
 print GNUPLOT "e\n";
