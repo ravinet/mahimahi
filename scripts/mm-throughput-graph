@@ -8,7 +8,7 @@ sub usage
   die qq{Usage: $0 MS_PER_BIN [filename]\n};
 }
 
-if ( scalar @ARGV < 1 ) {
+if ( scalar @ARGV < 1 or scalar @ARGV > 2 ) {
   usage;
 }
 

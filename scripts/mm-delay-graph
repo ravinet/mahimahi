@@ -8,7 +8,7 @@ sub usage
   die qq{Usage: $0 [filename]\n};
 }
 
-if ( scalar @ARGV < 1 ) {
+if ( scalar @ARGV > 1 ) {
   usage;
 }
 
@@ -66,10 +66,7 @@ LINE: while ( <> ) {
       die q{Departure format: timestamp - num_bytes delay};
     }
     push @delays, $delay;
-    $signal_delay{ $timestamp - $delay } = min( $delay,
-						(defined $signal_delay{ $timestamp - $delay })
-						? $signal_delay{ $timestamp - $delay }
-						: POSIX::DBL_MAX );
+    $signal_delay{ $timestamp - $delay } = min( $delay, $signal_delay{ $timestamp - $delay } );
     $points .= ($timestamp - $delay) / 1000.0 . " $delay\n";
   }
 }
@@ -78,6 +75,7 @@ sub max {
   my $maxval = - POSIX::DBL_MAX;
 
   for ( @_ ) {
+    next unless defined $_;
     if ( $_ > $maxval ) {
       $maxval = $_;
     }
@@ -90,6 +88,7 @@ sub min {
   my $minval = POSIX::DBL_MAX;
 
   for ( @_ ) {
+    next unless defined $_;
     if ( $_ < $minval ) {
       $minval = $_;
     }
@@ -130,7 +129,7 @@ my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
 printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
-my $graph_max = $delays[-1] * 1.2;
+my $graph_max = $signal_delays[-1] * 1.2;
 
 # make graph
 open GNUPLOT, q{| gnuplot} or die;
