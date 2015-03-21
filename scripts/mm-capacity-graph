@@ -172,14 +172,14 @@ open GNUPLOT, q{| gnuplot} or die;
 
 print GNUPLOT <<END;
 set xlabel "time (s)"
-set ylabel "throughput (Mbits/s)
-set key right
+set ylabel "throughput (Mbits/s)"
+set key center outside top horizontal
 set style fill solid 0.4 border
 set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Capacity (mean %.2f Mbits/s)" with filledcurves above x1 lw 1, "-" using 1:3 with lines lt 3 lw 2 title "Measured Protocol (mean %.2f Mbits/s)"\n},
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Capacity (mean %.2f Mbits/s)" with filledcurves above x1 lw 0.5, "-" using 1:3 with lines lt 3 lw 2 title "Measured Protocol (mean %.2f Mbits/s)"\n},
   $first_timestamp / 1000.0, $last_timestamp / 1000.0, $average_capacity, $average_throughput,
   $pp95;
 

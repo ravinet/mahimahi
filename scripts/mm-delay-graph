@@ -70,7 +70,7 @@ LINE: while ( <> ) {
 						(defined $signal_delay{ $timestamp - $delay })
 						? $signal_delay{ $timestamp - $delay }
 						: POSIX::DBL_MAX );
-    $points .= $timestamp / 1000.0 . " $delay\n";
+    $points .= ($timestamp - $delay) / 1000.0 . " $delay\n";
   }
 }
 
@@ -107,6 +107,8 @@ if ( scalar @delays == 0 ) {
 
 my $pp95 = $delays[ 0.95 * scalar @delays ];
 
+my $pp50 = $delays[ 0.5 * scalar @delays ];
+
 # measure signal delay every millisecond
 # = minimum time for a message created at time t to get to receiver
 my @signal_delay_samples = sort { $a <=> $b } keys %signal_delay;
@@ -128,23 +130,25 @@ my $pp95s = $signal_delays[ 0.95 * scalar @signal_delays ];
 printf STDERR qq{95th percentile per-packet queueing delay: %.0f ms\n}, $pp95;
 printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 
-my $graph_max = $delays[-1] * 1.2;
+my $graph_max = $delays[-1] * 2;
 
 # make graph
 open GNUPLOT, q{| gnuplot} or die;
 
+my $lower_limit = min( 30, int $pp50 );
+
 print GNUPLOT <<END;
 set xlabel "time (s)"
 set ylabel "delay (ms)
-set key right
-set style fill solid 0.7 noborder
 set logscale y
-set yrange [30:$graph_max]
-set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded dashed
+set yrange [$lower_limit:$graph_max]
+set ytics add ($lower_limit)
+set key center outside top horizontal
+set terminal svg enhanced size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid
 set output "/dev/stdout"
 END
 
-printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Signal delay" with filledcurves above x1 lt 1 lc 3, "-" using 1:2 title "Per-packet delay" with filledcurves above x1 lt 1 lc 1, %f with lines lt 3 lc 3 lw 2.5 title "95th percentile signal delay (%.0f ms)", %f with lines lt 3 lc 1 lw 2.5 title "95th percentile per-packet delay (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95s, $pp95s, $pp95, $pp95;
+printf GNUPLOT qq{plot [%f:%f] "-" using 1:2 title "Signal delay" with filledcurves above x1 lt 1 fs solid 0.4 border fc rgb "#0000ff" lw 0.5, "-" using 1:2 title "Per-packet delay" with points lt 7 ps 0.33 lc rgb "#00ff0000", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#0000ff" title "95th percentile signal delay (%.0f ms)", %f with filledcurves above y1=%f fillstyle solid 0.5 noborder fc rgb "#ff0000" title "95th percentile per-packet delay (%.0f ms)"\n}, $first_timestamp / 1000.0, $last_timestamp / 1000.0, $pp95s*1.05, log($pp95s/1.05)/log(10), $pp95s, $pp95*1.05, log($pp95/1.05)/log(10), $pp95;
 
 print GNUPLOT $signal_delay_points;
 print GNUPLOT "e\n";
