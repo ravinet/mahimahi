@@ -2,6 +2,9 @@
 
 #include <getopt.h>
 
+#include "infinite_packet_queue.hh"
+#include "drop_tail_packet_queue.hh"
+#include "drop_head_packet_queue.hh"
 #include "link_queue.hh"
 #include "packetshell.cc"
 
@@ -10,6 +13,41 @@ using namespace std;
 void usage_error( const string & program_name )
 {
     throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--once] UPLINK DOWNLINK [COMMAND...]" );
+}
+
+std::unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
+{
+    if ( queue_arg.empty() && queue_params.empty() ) {
+        cout<< "defaulting to infinite queue" << endl;
+        return std::unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue() );
+    } else if ( queue_arg.empty() || queue_params.empty() ) {
+        usage_error( program_name );
+    }
+
+    uint64_t params = 0;
+    try {
+        params = stoul( queue_params );
+    } catch (...) {
+        usage_error( program_name );
+    }
+
+    if (!params)
+    {
+        usage_error( program_name );
+    }
+
+    if (queue_arg.compare("droptail_bytelimit") == 0) {
+        return std::unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( 0, params ) );
+    } else if (queue_arg.compare("droptail_packetlimit") == 0) {
+        return std::unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( params, 0 ) );
+    } else if (queue_arg.compare("drophead_bytelimit") == 0) {
+        return std::unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( 0, params ) );
+    } else if (queue_arg.compare("drophead_packetlimit") == 0) {
+        return std::unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( params, 0 ) ); 
+    } 
+
+    usage_error( program_name );
+    return nullptr;
 }
 
 int main( int argc, char *argv[] )
@@ -26,20 +64,26 @@ int main( int argc, char *argv[] )
         }
 
         const option command_line_options[] = {
-            { "uplink-log",     required_argument, nullptr, 'u' },
-            { "downlink-log",   required_argument, nullptr, 'd' },
-            { "once",           no_argument,       nullptr, 'o' },
-            { "meter-uplink",   no_argument,       nullptr, 'm' },
-            { "meter-downlink", no_argument,       nullptr, 'n' },
-            { "meter-uplink-delay",   no_argument,       nullptr, 'x' },
-            { "meter-downlink-delay", no_argument,       nullptr, 'y' },
-            { 0,                0,                 nullptr, 0 }
+            { "uplink-log",           required_argument, nullptr, 'u' },
+            { "downlink-log",         required_argument, nullptr, 'd' },
+            { "once",                       no_argument, nullptr, 'o' },
+            { "meter-uplink",               no_argument, nullptr, 'm' },
+            { "meter-downlink",             no_argument, nullptr, 'n' },
+            { "meter-uplink-delay",         no_argument, nullptr, 'x' },
+            { "meter-downlink-delay",       no_argument, nullptr, 'y' },
+            { "uplink-queue",         required_argument, nullptr, 'q' },
+            { "downlink-queue",       required_argument, nullptr, 'w' },
+            { "uplink-queue-param",   required_argument, nullptr, 'a' },
+            { "downlink-queue-param", required_argument, nullptr, 'b' },
+            { 0,                                      0, nullptr, 0 }
         };
 
         string uplink_logfile, downlink_logfile;
         bool repeat = true;
         bool meter_uplink = false, meter_downlink = false;
         bool meter_uplink_delay = false, meter_downlink_delay = false;
+        string uplink_queue_type, downlink_queue_type,
+               uplink_queue_params, downlink_queue_params;
 
         while ( true ) {
             const int opt = getopt_long( argc, argv, "u:d:", command_line_options, nullptr );
@@ -69,6 +113,18 @@ int main( int argc, char *argv[] )
             case 'y':
                 meter_downlink_delay = true;
                 break;
+            case 'q':
+                uplink_queue_type = optarg; 
+                break;
+            case 'w':
+                downlink_queue_type = optarg;
+                break;
+            case 'a':
+                uplink_queue_params = optarg; 
+                break;
+            case 'b':
+                downlink_queue_params = optarg;
+                break;
             case '?':
                 usage_error( argv[ 0 ] );
                 break;
@@ -94,13 +150,18 @@ int main( int argc, char *argv[] )
             }
         }
 
+        unique_ptr<AbstractPacketQueue> up_q = get_packet_queue( uplink_queue_type, uplink_queue_params, argv[ 0 ] );
+        unique_ptr<AbstractPacketQueue> down_q = get_packet_queue( downlink_queue_type, downlink_queue_params, argv[ 0 ] );
+        assert( up_q );
+        assert( down_q );
+
         PacketShell<LinkQueue> link_shell_app( "link", user_environment );
 
         const string uplink_name = "Uplink", downlink_name = "Downlink";
 
         link_shell_app.start_uplink( "[link] ", command,
-                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay );
-        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay );
+                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay, ref(up_q));
+        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay, ref(down_q));
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );

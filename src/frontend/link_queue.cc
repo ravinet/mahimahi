@@ -7,15 +7,17 @@
 #include "timestamp.hh"
 #include "util.hh"
 #include "ezio.hh"
+#include "abstract_packet_queue.hh"
 
 using namespace std;
 
-LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay )
+LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay, unique_ptr<AbstractPacketQueue> & packet_queue )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
-      packet_queue_(),
+      packet_queue_( packet_queue ),
       packet_in_transit_(),
+      packet_in_transit_bytes_to_transmit(-1),
       output_queue_(),
       log_(),
       throughput_graph_( nullptr ),
@@ -94,22 +96,16 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
     }
 }
 
-LinkQueue::QueuedPacket::QueuedPacket( const string & s_contents, const uint64_t s_arrival_time )
-    : bytes_to_transmit( s_contents.size() ),
-      contents( s_contents ),
-      arrival_time( s_arrival_time )
-{}
-
-void LinkQueue::record_arrival( const QueuedPacket & packet )
+void LinkQueue::record_arrival( const uint64_t arrival_time, const size_t pkt_size )
 {
     /* log it */
     if ( log_ ) {
-        *log_ << packet.arrival_time << " + " << packet.contents.size() << endl;
+        *log_ << arrival_time << " + " << pkt_size << endl;
     }
 
     /* meter it */
     if ( throughput_graph_ ) {
-        throughput_graph_->add_value_now( 1, packet.contents.size() );
+        throughput_graph_->add_value_now( 1, pkt_size );
     }
 }
 
@@ -154,9 +150,8 @@ void LinkQueue::read_packet( const string & contents )
 
     rationalize( now );
 
-    packet_queue_.emplace( contents, now );
-
-    record_arrival( packet_queue_.back() );
+    record_arrival( now, contents.size());
+    packet_queue_->enqueue( QueuedPacket( contents, now ) );
 }
 
 uint64_t LinkQueue::next_delivery_time( void ) const
@@ -180,16 +175,6 @@ void LinkQueue::use_a_delivery_opportunity( void )
     }
 }
 
-void LinkQueue::dequeue_packet( void )
-{
-    assert( not packet_in_transit_ );
-    if ( packet_queue_.empty() ) {
-        return;
-    }
-    packet_in_transit_.reset( new QueuedPacket( move( packet_queue_.front() ) ) );
-    packet_queue_.pop();
-}
-
 /* emulate the link up to the given timestamp */
 /* this function should be called before enqueueing any packets and before
    calculating the wait_time until the next event */
@@ -204,22 +189,24 @@ void LinkQueue::rationalize( const uint64_t now )
 
         while ( bytes_left_in_this_delivery > 0 ) {
             if ( not packet_in_transit_ ) {
-                dequeue_packet();
+                packet_in_transit_ = packet_queue_->dequeue( now );
                 if ( not packet_in_transit_ ) { break; }
+                packet_in_transit_bytes_to_transmit = packet_in_transit_->contents.size();
             }
 
             assert( packet_in_transit_->arrival_time <= this_delivery_time );
+            assert( packet_in_transit_bytes_to_transmit <= PACKET_SIZE );
 
             /* how many bytes of the delivery opportunity can we use? */
             const unsigned int amount_to_send = min( bytes_left_in_this_delivery,
-                                                     packet_in_transit_->bytes_to_transmit );
+                                                     packet_in_transit_bytes_to_transmit );
 
             /* send that many bytes */
-            packet_in_transit_->bytes_to_transmit -= amount_to_send;
+            packet_in_transit_bytes_to_transmit -= amount_to_send;
             bytes_left_in_this_delivery -= amount_to_send;
 
             /* has the packet been fully sent? */
-            if ( packet_in_transit_->bytes_to_transmit == 0 ) {
+            if ( packet_in_transit_bytes_to_transmit == 0 ) {
                 record_departure( this_delivery_time, *packet_in_transit_ );
 
                 /* this packet is ready to go */

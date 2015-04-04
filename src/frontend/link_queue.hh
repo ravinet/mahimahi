@@ -11,27 +11,20 @@
 
 #include "file_descriptor.hh"
 #include "binned_livegraph.hh"
+#include "abstract_packet_queue.hh"
 
 class LinkQueue
 {
 private:
     const static unsigned int PACKET_SIZE = 1504; /* default max TUN payload size */
 
-    struct QueuedPacket
-    {
-        unsigned int bytes_to_transmit;
-        std::string contents;
-        uint64_t arrival_time;
-
-        QueuedPacket( const std::string & s_contents, const uint64_t s_arrival_time );
-    };
-
     unsigned int next_delivery_;
     std::vector<uint64_t> schedule_;
     uint64_t base_timestamp_;
 
-    std::queue<QueuedPacket> packet_queue_;
+    std::unique_ptr<AbstractPacketQueue> &packet_queue_;
     std::unique_ptr<QueuedPacket> packet_in_transit_;
+    unsigned int packet_in_transit_bytes_to_transmit;
     std::queue<std::string> output_queue_;
 
     std::unique_ptr<std::ofstream> log_;
@@ -44,7 +37,7 @@ private:
 
     void use_a_delivery_opportunity( void );
 
-    void record_arrival( const QueuedPacket & packet );
+    void record_arrival( const uint64_t arrival_time, const size_t pkt_size );
     void record_departure_opportunity( void );
     void record_departure( const uint64_t departure_time, const QueuedPacket & packet );
 
@@ -52,7 +45,7 @@ private:
     void dequeue_packet( void );
 
 public:
-    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay );
+    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay, std::unique_ptr<AbstractPacketQueue> & packet_queue);
 
     void read_packet( const std::string & contents );
 

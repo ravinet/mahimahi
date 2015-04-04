@@ -3,4 +3,6 @@ AM_CXXFLAGS = $(PICKY_CXXFLAGS)
 
 noinst_LIBRARIES = libpacket.a
 
-libpacket_a_SOURCES = packetshell.hh packetshell.cc
+libpacket_a_SOURCES = packetshell.hh packetshell.cc queued_packet.hh \
+                      abstract_packet_queue.hh dropping_packet_queue.hh infinite_packet_queue.hh \
+                      drop_tail_packet_queue.hh drop_head_packet_queue.hh 
