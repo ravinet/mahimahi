@@ -93,6 +93,15 @@ LINE: while ( <> ) {
       die q{Departure format: timestamp - num_bytes delay};
     }
     $departures{ $bin } += $num_bits;
+
+    if ( $delay < 0 ) {
+	die qq{Invalid delay: $delay};
+    }
+
+    if ( $timestamp - $delay < 0 ) {
+	die qq{Invalid timestamp and delay: ts=$timestamp, delay=$delay};
+    }
+
     push @delays, $delay;
     $departure_sum += $num_bits;
 
