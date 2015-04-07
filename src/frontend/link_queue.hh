@@ -60,7 +60,7 @@ public:
 
     unsigned int wait_time( void );
 
-    bool pending_output( void );
+    bool pending_output( void ) const;
 };
 
 #endif /* LINK_QUEUE_HH */

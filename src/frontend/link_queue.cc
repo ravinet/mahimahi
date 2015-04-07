@@ -210,12 +210,15 @@ void LinkQueue::rationalize( const uint64_t now )
 
             assert( packet_in_transit_->arrival_time <= this_delivery_time );
 
+            /* how many bytes of the delivery opportunity can we use? */
             const unsigned int amount_to_send = min( bytes_left_in_this_delivery,
                                                      packet_in_transit_->bytes_to_transmit );
 
+            /* send that many bytes */
             packet_in_transit_->bytes_to_transmit -= amount_to_send;
             bytes_left_in_this_delivery -= amount_to_send;
 
+            /* has the packet been fully sent? */
             if ( packet_in_transit_->bytes_to_transmit == 0 ) {
                 record_departure( this_delivery_time, *packet_in_transit_ );
 
@@ -230,7 +233,7 @@ void LinkQueue::rationalize( const uint64_t now )
 void LinkQueue::write_packets( FileDescriptor & fd )
 {
     while ( not output_queue_.empty() ) {
-        fd.write( move( output_queue_.front() ) );
+        fd.write( output_queue_.front() );
         output_queue_.pop();
     }
 }
@@ -248,7 +251,7 @@ unsigned int LinkQueue::wait_time( void )
     }
 }
 
-bool LinkQueue::pending_output( void )
+bool LinkQueue::pending_output( void ) const
 {
     return not output_queue_.empty();
 }
