@@ -31,6 +31,7 @@ private:
     uint64_t base_timestamp_;
 
     std::queue< QueuedPacket > packet_queue_;
+    std::queue< std::string > output_queue_;
 
     std::unique_ptr<std::ofstream> log_;
     std::unique_ptr<BinnedLiveGraph> throughput_graph_;
@@ -42,11 +43,11 @@ private:
 
     void use_a_delivery_opportunity( void );
 
-    void discard_wasted_opportunities( const uint64_t now );
-
     void record_arrival( const QueuedPacket & packet );
     void record_departure_opportunity( void );
     void record_departure( const uint64_t departure_time, const QueuedPacket & packet );
+
+    void rationalize( const uint64_t now );
 
 public:
     LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay );

@@ -15,6 +15,7 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_(),
+      output_queue_(),
       log_(),
       throughput_graph_( nullptr ),
       delay_graph_( nullptr ),
@@ -150,6 +151,8 @@ void LinkQueue::read_packet( const string & contents )
         throw runtime_error( "packet size is greater than maximum" );
     }
 
+    rationalize( now );
+
     packet_queue_.emplace( contents, now );
 
     record_arrival( packet_queue_.back() );
@@ -176,10 +179,8 @@ void LinkQueue::use_a_delivery_opportunity( void )
     }
 }
 
-void LinkQueue::write_packets( FileDescriptor & fd )
+void LinkQueue::rationalize( const uint64_t now )
 {
-    uint64_t now = timestamp();
-
     while ( next_delivery_time() <= now ) {
         const uint64_t this_delivery_time = next_delivery_time();
 
@@ -200,22 +201,18 @@ void LinkQueue::write_packets( FileDescriptor & fd )
                 record_departure( this_delivery_time, packet_queue_.front() );
 
                 /* this packet is ready to go */
-                fd.write( packet_queue_.front().contents );
+                output_queue_.push( move( packet_queue_.front().contents ) );
                 packet_queue_.pop();
             }
         }
     }
 }
 
-void LinkQueue::discard_wasted_opportunities( const uint64_t now )
+void LinkQueue::write_packets( FileDescriptor & fd )
 {
-    const uint64_t discard_before = min( now,
-                                         packet_queue_.empty()
-                                         ? now
-                                         : packet_queue_.front().arrival_time - 1 );
-
-    while ( next_delivery_time() <= discard_before ) {
-        use_a_delivery_opportunity();
+    while ( not output_queue_.empty() ) {
+        fd.write( move( output_queue_.front() ) );
+        output_queue_.pop();
     }
 }
 
@@ -223,17 +220,16 @@ unsigned int LinkQueue::wait_time( void )
 {
     const auto now = timestamp();
 
-    /* pop wasted PDOs */
-    discard_wasted_opportunities( now );
+    rationalize( now );
 
-    return max( uint64_t(0), next_delivery_time() - now );
+    if ( next_delivery_time() <= now ) {
+        return 0;
+    } else {
+        return next_delivery_time() - now;
+    }
 }
 
 bool LinkQueue::pending_output( void )
 {
-    const auto now = timestamp();
-
-    return (not packet_queue_.empty())
-        and (packet_queue_.front().arrival_time <= next_delivery_time())
-        and (next_delivery_time() <= now);
+    return not output_queue_.empty();
 }
