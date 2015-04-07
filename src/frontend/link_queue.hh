@@ -27,12 +27,12 @@ private:
     };
 
     unsigned int next_delivery_;
-    std::vector< uint64_t > schedule_;
+    std::vector<uint64_t> schedule_;
     uint64_t base_timestamp_;
 
-    std::queue< QueuedPacket > packet_queue_;
-    std::unique_ptr< QueuedPacket > packet_in_transit_;
-    std::queue< std::string > output_queue_;
+    std::queue<QueuedPacket> packet_queue_;
+    std::unique_ptr<QueuedPacket> packet_in_transit_;
+    std::queue<std::string> output_queue_;
 
     std::unique_ptr<std::ofstream> log_;
     std::unique_ptr<BinnedLiveGraph> throughput_graph_;
