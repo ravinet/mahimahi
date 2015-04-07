@@ -190,6 +190,9 @@ void LinkQueue::dequeue_packet( void )
     packet_queue_.pop();
 }
 
+/* emulate the link up to the given timestamp */
+/* this function should be called before enqueueing any packets and before
+   calculating the wait_time until the next event */
 void LinkQueue::rationalize( const uint64_t now )
 {
     while ( next_delivery_time() <= now ) {
@@ -204,6 +207,8 @@ void LinkQueue::rationalize( const uint64_t now )
                 dequeue_packet();
                 if ( not packet_in_transit_ ) { break; }
             }
+
+            assert( packet_in_transit_->arrival_time <= this_delivery_time );
 
             packet_in_transit_->bytes_to_transmit -= bytes_left_in_this_delivery;
             bytes_left_in_this_delivery = 0;
