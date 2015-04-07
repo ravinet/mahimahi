@@ -19,7 +19,7 @@ private:
 
     struct QueuedPacket
     {
-        int bytes_to_transmit;
+        unsigned int bytes_to_transmit;
         std::string contents;
         uint64_t arrival_time;
 

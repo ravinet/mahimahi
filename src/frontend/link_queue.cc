@@ -210,13 +210,13 @@ void LinkQueue::rationalize( const uint64_t now )
 
             assert( packet_in_transit_->arrival_time <= this_delivery_time );
 
-            packet_in_transit_->bytes_to_transmit -= bytes_left_in_this_delivery;
-            bytes_left_in_this_delivery = 0;
+            const unsigned int amount_to_send = min( bytes_left_in_this_delivery,
+                                                     packet_in_transit_->bytes_to_transmit );
 
-            if ( packet_in_transit_->bytes_to_transmit <= 0 ) {
-                /* restore the surplus bytes beyond what the packet requires */
-                bytes_left_in_this_delivery += (- packet_in_transit_->bytes_to_transmit);
+            packet_in_transit_->bytes_to_transmit -= amount_to_send;
+            bytes_left_in_this_delivery -= amount_to_send;
 
+            if ( packet_in_transit_->bytes_to_transmit == 0 ) {
                 record_departure( this_delivery_time, *packet_in_transit_ );
 
                 /* this packet is ready to go */
