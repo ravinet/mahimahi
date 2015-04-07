@@ -15,6 +15,7 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_(),
+      packet_in_transit_(),
       output_queue_(),
       log_(),
       throughput_graph_( nullptr ),
@@ -179,6 +180,16 @@ void LinkQueue::use_a_delivery_opportunity( void )
     }
 }
 
+void LinkQueue::dequeue_packet( void )
+{
+    assert( not packet_in_transit_ );
+    if ( packet_queue_.empty() ) {
+        return;
+    }
+    packet_in_transit_.reset( new QueuedPacket( move( packet_queue_.front() ) ) );
+    packet_queue_.pop();
+}
+
 void LinkQueue::rationalize( const uint64_t now )
 {
     while ( next_delivery_time() <= now ) {
@@ -188,21 +199,24 @@ void LinkQueue::rationalize( const uint64_t now )
         unsigned int bytes_left_in_this_delivery = PACKET_SIZE;
         use_a_delivery_opportunity();
 
-        while ( (bytes_left_in_this_delivery > 0)
-                and (not packet_queue_.empty())
-                and (packet_queue_.front().arrival_time <= this_delivery_time) ) {
-            packet_queue_.front().bytes_to_transmit -= bytes_left_in_this_delivery;
+        while ( bytes_left_in_this_delivery > 0 ) {
+            if ( not packet_in_transit_ ) {
+                dequeue_packet();
+                if ( not packet_in_transit_ ) { break; }
+            }
+
+            packet_in_transit_->bytes_to_transmit -= bytes_left_in_this_delivery;
             bytes_left_in_this_delivery = 0;
 
-            if ( packet_queue_.front().bytes_to_transmit <= 0 ) {
+            if ( packet_in_transit_->bytes_to_transmit <= 0 ) {
                 /* restore the surplus bytes beyond what the packet requires */
-                bytes_left_in_this_delivery += (- packet_queue_.front().bytes_to_transmit);
+                bytes_left_in_this_delivery += (- packet_in_transit_->bytes_to_transmit);
 
-                record_departure( this_delivery_time, packet_queue_.front() );
+                record_departure( this_delivery_time, *packet_in_transit_ );
 
                 /* this packet is ready to go */
-                output_queue_.push( move( packet_queue_.front().contents ) );
-                packet_queue_.pop();
+                output_queue_.push( move( packet_in_transit_->contents ) );
+                packet_in_transit_.reset();
             }
         }
     }
