@@ -3,6 +3,7 @@
 # integration test for the packetshells: run a large chain and
 # confirm that ping RTT is within reasonable limits
 
+use warnings;
 use strict;
 use File::Temp;
 
