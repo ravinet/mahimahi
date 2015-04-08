@@ -8,3 +8,4 @@ dist_man_MANS += mm-delay-graph.1
 dist_man_MANS += mm-meter.1
 dist_man_MANS += mm-webrecord.1
 dist_man_MANS += mm-webreplay.1
+dist_man_MANS += nph-replayserver.cgi.1
