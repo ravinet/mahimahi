@@ -136,8 +136,6 @@ int main( int argc, char *argv[] )
         for ( unsigned int server_num = 0; server_num < nameservers.size(); server_num++ ) {
             const string interface_name = "nameserver" + to_string( server_num );
             add_dummy_interface( interface_name, nameservers.at( server_num ) );
-            dnsmasq_args.push_back( "-i" );
-            dnsmasq_args.push_back( interface_name );
         }
 
         /* start dnsmasq */
