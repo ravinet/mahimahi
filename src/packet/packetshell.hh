@@ -17,6 +17,7 @@ template <class FerryQueueType>
 class PacketShell
 {
 private:
+    char ** const user_environment_;
     std::pair<Address, Address> egress_ingress;
     Address nameserver_;
     TunDevice egress_tun_;
@@ -36,7 +37,7 @@ private:
         int loop( FerryQueueType & ferry_queue, FileDescriptor & tun, FileDescriptor & sibling );
     };
 
-    char ** const user_environment_;
+    Address get_mahimahi_base( void ) const;
 
 public:
     PacketShell( const std::string & device_prefix, char ** const user_environment );

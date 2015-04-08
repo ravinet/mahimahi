@@ -22,14 +22,14 @@ using namespace PollerShortNames;
 
 template <class FerryQueueType>
 PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment )
-    : egress_ingress( two_unassigned_addresses() ),
+    : user_environment_( user_environment ),
+      egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       pipe_( UnixDomainSocket::make_pair() ),
-      event_loop_(),
-      user_environment_( user_environment )
+      event_loop_()
 {
     /* make sure environment has been cleared */
     if ( environ != nullptr ) {
@@ -80,6 +80,11 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
             /* restore environment */
             environ = user_environment_;
+
+            /* set MAHIMAHI_BASE if not set already to indicate outermost container */
+            SystemCall( "setenv", setenv( "MAHIMAHI_BASE",
+                                          egress_addr().ip().c_str(),
+                                          false /* don't override */ ) );
 
             inner_ferry.add_child_process( join( command ), [&]() {
                     /* tweak bash prompt */
@@ -149,4 +154,36 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                 [&] () { return ferry_queue.pending_output(); } ) );
 
     return internal_loop( [&] () { return ferry_queue.wait_time(); } );
+}
+
+struct TemporaryEnvironment
+{
+    TemporaryEnvironment( char ** const env )
+    {
+        if ( environ != nullptr ) {
+            throw runtime_error( "TemporaryEnvironment: cannot be entered recursively" );
+        }
+        environ = env;
+    }
+
+    ~TemporaryEnvironment()
+    {
+        environ = nullptr;
+    }
+};
+
+template <class FerryQueueType>
+Address PacketShell<FerryQueueType>::get_mahimahi_base( void ) const
+{
+    /* temporarily break our security rule of not looking
+       at the user's environment before dropping privileges */
+    TemporarilyUnprivileged tu;
+    TemporaryEnvironment te { user_environment_ };
+
+    const char * const mahimahi_base = getenv( "MAHIMAHI_BASE" );
+    if ( not mahimahi_base ) {
+        return Address();
+    }
+
+    return Address( mahimahi_base, 0 );
 }

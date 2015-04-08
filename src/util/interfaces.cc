@@ -19,6 +19,11 @@
 
 using namespace std;
 
+void Interfaces::add_address( const Address & addr )
+{
+    addresses_in_use_.emplace_back( addr );
+}
+
 Interfaces::Interfaces()
     : addresses_in_use_()
 {
@@ -115,9 +120,11 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
     throw runtime_error( "Interfaces: could not find free interface address" );
 }
 
-std::pair< Address, Address > two_unassigned_addresses( void )
+std::pair< Address, Address > two_unassigned_addresses( const Address & avoid )
 {
     Interfaces interfaces;
+
+    interfaces.add_address( avoid );
 
     auto one = interfaces.first_unassigned_address( 1 );
     auto two = interfaces.first_unassigned_address( one.second + 1 );
