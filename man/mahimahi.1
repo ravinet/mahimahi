@@ -190,7 +190,7 @@ To record a page load from \fIwww.nytimes.com\fR:
 .IP ""
 .RS
 .EX
-\fB$\fR mm-webrecord /tmp/nytimes chromium-browser --no-check-certificates --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+\fB$\fR mm-webrecord /tmp/nytimes chromium-browser --ignore-certificate-errors --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
 .EE
 
 The use of \fI--user-data-dir=/tmp/nonexistent$(date +%s%N)\fR is to prevent the browser from reusing an existing chromium-browser process.
@@ -201,7 +201,7 @@ To make Chrome retrieve the saved website over a delayed, lossy link whose throu
 .IP ""
 .RS
 .EX
-\fB$\fR mm-webreplay /tmp/nytimes mm-delay 50 mm-loss uplink 0.1 mm-link <(echo 1) <(echo 1) -- chromium-browser --no-check-certificates --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+\fB$\fR mm-webreplay /tmp/nytimes mm-delay 50 mm-loss uplink 0.1 mm-link <(echo 1) <(echo 1) -- chromium-browser --ignore-certificate-errors --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
 .EE
 .RE
 
