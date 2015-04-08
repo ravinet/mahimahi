@@ -173,6 +173,12 @@ the actual IP addresses that the real website used, and serves requests from
 real Web servers.
 .RE
 
+.SH ENVIRONMENT
+
+The MAHIMAHI_BASE environment variable is set to an IP address of the
+host, outside any container. This can be used to conduct scripted
+measurements over a series of mahimahi containers chained together.
+
 .SH EXAMPLES
 
 To spawn a shell with a delayed, lossy link to the Internet:
@@ -180,8 +186,30 @@ To spawn a shell with a delayed, lossy link to the Internet:
 .IP ""
 .RS
 .EX
-\fB$\fR mm-delay 50 mm-loss uplink 0.1
+\fB$\fR mm-delay 50 mm-loss uplink 0.2
 \fB[delay 50 ms] [loss up=0.1] $\fR
+.EE
+.RE
+
+To run ping over the same link:
+
+.IP ""
+.RS
+.EX
+\fB$\fR mm-delay 50 mm-loss uplink 0.2 sh -c 'ping -c 10 -n $MAHIMAHI_BASE'
+PING 100.64.0.1 (100.64.0.1) 56(84) bytes of data.
+64 bytes from 100.64.0.1: icmp_seq=1 ttl=63 time=101 ms
+64 bytes from 100.64.0.1: icmp_seq=2 ttl=63 time=100 ms
+64 bytes from 100.64.0.1: icmp_seq=4 ttl=63 time=101 ms
+64 bytes from 100.64.0.1: icmp_seq=5 ttl=63 time=100 ms
+64 bytes from 100.64.0.1: icmp_seq=7 ttl=63 time=101 ms
+64 bytes from 100.64.0.1: icmp_seq=8 ttl=63 time=101 ms
+64 bytes from 100.64.0.1: icmp_seq=9 ttl=63 time=101 ms
+64 bytes from 100.64.0.1: icmp_seq=10 ttl=63 time=101 ms
+
+--- 100.64.0.1 ping statistics ---
+10 packets transmitted, 8 received, 20% packet loss, time 8999ms
+rtt min/avg/max/mdev = 100.910/101.009/101.092/0.279 ms
 .EE
 .RE
 
