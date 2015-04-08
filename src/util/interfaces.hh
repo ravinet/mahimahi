@@ -11,7 +11,7 @@
 class Interfaces
 {
 private:
-    std::vector< Address > addresses_in_use;
+    std::vector< Address > addresses_in_use_;
 
 public:
     Interfaces();

@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <sstream>
+#include <memory>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -16,19 +17,21 @@
 using namespace std;
 
 Interfaces::Interfaces()
-    : addresses_in_use()
+    : addresses_in_use_()
 {
     /* add the ones getifaddrs can find */
     {
-        ifaddrs *interface_addresses;
-        SystemCall( "getifaddrs", getifaddrs( &interface_addresses ) );
+        /* do this in the pedantically-correct exception-safe way */
+        ifaddrs *temp;
+        SystemCall( "getifaddrs", getifaddrs( &temp ) );
+        unique_ptr<ifaddrs, function<void(ifaddrs*)>> interface_addresses
+            { temp, []( ifaddrs * x ) { freeifaddrs( x ); } };
 
-        for ( ifaddrs *ifa = interface_addresses; ifa; ifa = ifa->ifa_next ) {
+        for ( ifaddrs *ifa = interface_addresses.get(); ifa; ifa = ifa->ifa_next ) {
             if ( ifa->ifa_addr and ifa->ifa_addr->sa_family == AF_INET ) {
-                addresses_in_use.emplace_back( *ifa->ifa_addr );
+                addresses_in_use_.emplace_back( *ifa->ifa_addr );
             }
         }
-        freeifaddrs( interface_addresses );
     }
 
     /* Now also add route destinations. */
@@ -80,13 +83,13 @@ Interfaces::Interfaces()
         ip.sin_family = AF_INET;
         ip.sin_addr.s_addr = myatoi( dest_address, 16 );
 
-        addresses_in_use.emplace_back( ip );
+        addresses_in_use_.emplace_back( ip );
     }
 }
 
 bool Interfaces::address_in_use( const Address & addr ) const
 {
-    for ( const auto & x : addresses_in_use ) {
+    for ( const auto & x : addresses_in_use_ ) {
         if ( addr == x ) {
             return true;
         }
@@ -110,10 +113,10 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
 
 std::pair< Address, Address > two_unassigned_addresses( void )
 {
-    static Interfaces interface_list_on_program_startup;
+    Interfaces interfaces;
 
-    auto one = interface_list_on_program_startup.first_unassigned_address( 1 );
-    auto two = interface_list_on_program_startup.first_unassigned_address( one.second + 1 );
+    auto one = interfaces.first_unassigned_address( 1 );
+    auto two = interfaces.first_unassigned_address( one.second + 1 );
 
     return make_pair( one.first, two.first );
 }
