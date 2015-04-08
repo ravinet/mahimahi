@@ -106,8 +106,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
     event_loop_.add_child_process( "downlink", [&] () {
             drop_privileges();
 
-            /* restore environment */
-            environ = user_environment_;            
+            /* no need to restore environment */
 
             /* downlink packets go to inner namespace's TUN device */
             FileDescriptor ingress_tun = pipe_.second.recv_fd();
