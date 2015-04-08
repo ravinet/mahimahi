@@ -57,7 +57,7 @@ public:
 };
 
 /* private constructor given ip/host, service/port, and optional hints */
-Address::Address( const string & node, const string & service, const addrinfo * hints )
+Address::Address( const string & node, const string & service, const addrinfo & hints )
     : size_(),
       addr_()
 {
@@ -65,10 +65,10 @@ Address::Address( const string & node, const string & service, const addrinfo * 
     addrinfo *resolved_address;
 
     /* look up the name or names */
-    const int gai_ret = getaddrinfo( node.c_str(), service.c_str(), hints, &resolved_address );
+    const int gai_ret = getaddrinfo( node.c_str(), service.c_str(), &hints, &resolved_address );
     if ( gai_ret ) {
         string explanation = "getaddrinfo(" + node + ":" + service;
-        if ( hints->ai_flags | (AI_NUMERICHOST | AI_NUMERICSERV) ) {
+        if ( hints.ai_flags | (AI_NUMERICHOST | AI_NUMERICSERV) ) {
             explanation += ", numeric";
         }
         explanation += ")";
@@ -97,7 +97,7 @@ Address::Address( const std::string & hostname, const std::string & service )
     zero( hints );
     hints.ai_family = AF_INET;
 
-    *this = Address( hostname, service, &hints );
+    *this = Address( hostname, service, hints );
 }
 
 /* construct with numerical IP address and numeral port number */
@@ -111,7 +111,7 @@ Address::Address( const std::string & ip, const uint16_t port )
     hints.ai_family = AF_INET;
     hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
 
-    *this = Address( ip, ::to_string( port ), &hints );
+    *this = Address( ip, ::to_string( port ), hints );
 }
 
 /* accessors */

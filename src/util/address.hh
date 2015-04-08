@@ -23,7 +23,7 @@ private:
     raw addr_;
 
     /* private constructor given ip/host, service/port, and optional hints */
-    Address( const std::string & node, const std::string & service, const addrinfo * hints );
+    Address( const std::string & node, const std::string & service, const addrinfo & hints );
 
 public:
     /* constructors */
