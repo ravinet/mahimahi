@@ -67,7 +67,12 @@ Address::Address( const string & node, const string & service, const addrinfo * 
     /* look up the name or names */
     const int gai_ret = getaddrinfo( node.c_str(), service.c_str(), hints, &resolved_address );
     if ( gai_ret ) {
-        throw tagged_error( gai_error_category(), "getaddrinfo", gai_ret );
+        string explanation = "getaddrinfo(" + node + ":" + service;
+        if ( hints->ai_flags | (AI_NUMERICHOST | AI_NUMERICSERV) ) {
+            explanation += ", numeric";
+        }
+        explanation += ")";
+        throw tagged_error( gai_error_category(), explanation, gai_ret );
     }
 
     /* if success, should always have at least one entry */
