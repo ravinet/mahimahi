@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+
+# integration test for the packetshells: run a large chain and
+# confirm that ping RTT is within reasonable limits
+
+use strict;
+use File::Temp;
+
+my $tracefile = File::Temp->new();
+syswrite $tracefile, qq{1\n};
+
+my $crazy_command = qx{mm-delay 10 mm-delay 10 mm-link $tracefile $tracefile -- mm-delay 10 mm-delay 10 mm-onoff uplink 1000000.0 0.0 mm-delay 10 mm-delay 10 mm-delay 10 mm-loss uplink 0 mm-delay 10 mm-delay 10 mm-delay 10 sh -c 'ping -c 1 -n \$MAHIMAHI_BASE'};
+
+if ( $crazy_command !~ m{1 packets transmitted, 1 received} ) {
+  die qq{packetshell-test FAILED with not enough packets received};
+}
+
+my ( $rttmin ) = $crazy_command =~ m{rtt min/avg/max/mdev = ([0-9.]+?)/};
+
+if ( not defined $rttmin ) {
+  die qq{packetshell-test FAILED with undefined rttmin};
+}
+
+if ( $rttmin < 200 or $rttmin > 220 ) {
+  die qq{packetshell-test FAILED with rttmin out of range ($rttmin)};
+  exit 1;
+}
+
+print qq{packetshell-test PASSED\n};
+
+exit 0;

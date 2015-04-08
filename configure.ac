@@ -144,6 +144,7 @@ AC_CONFIG_FILES([Makefile
 		 src/httpserver/Makefile
 		 src/frontend/Makefile
 		 src/protobufs/Makefile
+		 src/tests/Makefile
 		 man/Makefile
 		 traces/Makefile
 		 scripts/Makefile])
