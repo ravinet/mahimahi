@@ -1,3 +1,9 @@
+mahimahi (0.90-2) unstable; urgency=low
+
+  * Bump standards version in Debian packaging.
+
+ -- Keith Winstein <keithw@mit.edu>  Wed, 08 Apr 2015 04:41:36 -0700
+
 mahimahi (0.90-1) unstable; urgency=low
 
   * Feature complete and nearing release candidate.
