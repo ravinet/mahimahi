@@ -56,12 +56,8 @@ int main( int argc, char *argv[] )
         const Address nameserver = first_nameserver();
 
         /* set egress and ingress ip addresses */
-        Interfaces interfaces;
-
-        auto egress_octet = interfaces.first_unassigned_address( 1 );
-        auto ingress_octet = interfaces.first_unassigned_address( egress_octet.second + 1 );
-
-        Address egress_addr = egress_octet.first, ingress_addr = ingress_octet.first;
+        Address egress_addr, ingress_addr;
+        tie( egress_addr, ingress_addr ) = two_unassigned_addresses();
 
         /* make pair of devices */
         string egress_name = "veth-" + to_string( getpid() ), ingress_name = "veth-i" + to_string( getpid() );
