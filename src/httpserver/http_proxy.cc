@@ -19,12 +19,13 @@
 #include "temp_file.hh"
 #include "secure_socket.hh"
 #include "backing_store.hh"
+#include "exception.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
 HTTPProxy::HTTPProxy( const Address & listener_addr )
-    : listener_socket_( TCP ),
+    : listener_socket_(),
       server_context_( SERVER ),
       client_context_( CLIENT )
 {
@@ -90,13 +91,13 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
 
 void HTTPProxy::handle_tcp( HTTPBackingStore & backing_store )
 {
-    thread newthread( [&] ( Socket client ) {
+    thread newthread( [&] ( TCPSocket client ) {
             try {
                 /* get original destination for connection request */
                 Address server_addr = client.original_dest();
 
                 /* create socket and connect to original destination and send original request */
-                Socket server( TCP );
+                TCPSocket server;
                 server.connect( server_addr );
 
                 if ( server_addr.port() != 443 ) { /* normal HTTP */

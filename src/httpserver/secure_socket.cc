@@ -74,92 +74,67 @@ public:
     }
 };
 
-SSLContext::SSLContext( const SSL_MODE type )
-    : ctx_()
+SSL_CTX * initialize_new_context( const SSL_MODE type )
 {
     OpenSSL::global_context();
-
-    ctx_ = SSL_CTX_new( type == CLIENT ? TLSv1_client_method() : TLSv1_server_method() );
-
-    if ( not ctx_ ) {
+    SSL_CTX * ret = SSL_CTX_new( type == CLIENT ? TLSv1_client_method() : TLSv1_server_method() );
+    if ( not ret ) {
         throw ssl_error( "SSL_CTL_new" );
     }
+    return ret;
+}
 
+SSLContext::SSLContext( const SSL_MODE type )
+    : ctx_( initialize_new_context( type ) )
+{
     if ( type == SERVER ) {
-        if ( not SSL_CTX_use_certificate_ASN1( ctx_, 678, certificate ) ) {
+        if ( not SSL_CTX_use_certificate_ASN1( ctx_.get(), 678, certificate ) ) {
             throw ssl_error( "SSL_CTX_use_certificate_ASN1" );
         }
 
-        if ( not SSL_CTX_use_RSAPrivateKey_ASN1( ctx_, private_key, 1191 ) ) {
+        if ( not SSL_CTX_use_RSAPrivateKey_ASN1( ctx_.get(), private_key, 1191 ) ) {
             throw ssl_error( "SSL_CTX_use_RSAPrivateKey_ASN1" );
         }
 
         /* check consistency of private key with loaded certificate */
-        if ( not SSL_CTX_check_private_key( ctx_ ) ) {
+        if ( not SSL_CTX_check_private_key( ctx_.get() ) ) {
             throw ssl_error( "SSL_CTX_check_private_key" );
         }
     }
 }
 
-SSLContext::~SSLContext()
-{
-    if ( ctx_ ) {
-        SSL_CTX_free( ctx_ );
-    }
-}
-
-SecureSocket::SecureSocket( Socket && sock, SSL *ssl )
-    : Socket( move( sock ) ),
+SecureSocket::SecureSocket( TCPSocket && sock, SSL * ssl )
+    : TCPSocket( move( sock ) ),
       ssl_( ssl )
 {
     if ( not ssl_ ) {
         throw runtime_error( "SecureSocket: constructor must be passed valid SSL structure" );
     }
 
-    if ( not SSL_set_fd( ssl_, num() ) ) {
+    if ( not SSL_set_fd( ssl_.get(), fd_num() ) ) {
         throw ssl_error( "SSL_set_fd" );
     }
 
     /* enable read/write to return only after handshake/renegotiation and successful completion */
-    SSL_set_mode( ssl_, SSL_MODE_AUTO_RETRY );
+    SSL_set_mode( ssl_.get(), SSL_MODE_AUTO_RETRY );
 }
 
-SecureSocket::~SecureSocket()
+SecureSocket SSLContext::new_secure_socket( TCPSocket && sock )
 {
-    if ( not ssl_ ) { return; }
-
-    /* calling SSL_shutdown seems to raise SIGPIPE */
-
-    SSL_free( ssl_ );
-}
-
-SecureSocket::SecureSocket( SecureSocket && other )
-    : Socket( move( other ) ),
-      ssl_( other.ssl_ )
-{
-    other.ssl_ = nullptr;
-}
-
-SecureSocket SSLContext::new_secure_socket( Socket && sock )
-{
-    SSL *ssl = SSL_new( ctx_ );
-    if ( not ssl ) {
-        throw ssl_error( "SSL_new" );
-    }
-
-    return SecureSocket( move( sock ), ssl );
+    return SecureSocket( move( sock ),
+                         SSL_new( ctx_.get() ) );
 }
 
 void SecureSocket::connect( void )
 {
-    if ( not SSL_connect( ssl_ ) ) {
+    if ( not SSL_connect( ssl_.get() ) ) {
         throw ssl_error( "SSL_connect" );
     }
 }
 
 void SecureSocket::accept( void )
 {
-    const auto ret = SSL_accept( ssl_ );
+    const auto ret = SSL_accept( ssl_.get() );
     if ( ret == 1 ) {
         return;
     } else {
@@ -176,13 +151,13 @@ string SecureSocket::read( void )
 
     char buffer[ SSL_max_record_length ];
 
-    ssize_t bytes_read = SSL_read( ssl_, buffer, SSL_max_record_length );
+    ssize_t bytes_read = SSL_read( ssl_.get(), buffer, SSL_max_record_length );
 
     /* Make sure that we really are reading from the underlying fd */
-    assert( 0 == SSL_pending( ssl_ ) );
+    assert( 0 == SSL_pending( ssl_.get() ) );
 
     if ( bytes_read == 0 ) {
-        int error_return = SSL_get_error( ssl_, bytes_read );
+        int error_return = SSL_get_error( ssl_.get(), bytes_read );
         if ( SSL_ERROR_ZERO_RETURN == error_return ) { /* Clean SSL close */
             set_eof();
         } else if ( SSL_ERROR_SYSCALL == error_return ) { /* Underlying TCP connection close */
@@ -204,7 +179,7 @@ string SecureSocket::read( void )
 void SecureSocket::write(const string & message )
 {
     /* SSL_write returns with success if complete contents of message are written */
-    ssize_t bytes_written = SSL_write( ssl_, message.c_str(), message.length() );
+    ssize_t bytes_written = SSL_write( ssl_.get(), message.data(), message.length() );
 
     if ( bytes_written < 0 ) {
         throw ssl_error( "SSL_write" );

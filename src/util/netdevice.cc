@@ -39,37 +39,37 @@ void interface_ioctl( FileDescriptor & fd, const int request,
 
     ifr_adjustment( ifr );
 
-    SystemCall( "ioctl " + name, ioctl( fd.num(), request, static_cast<void *>( &ifr ) ) );
+    SystemCall( "ioctl " + name, ioctl( fd.fd_num(), request, static_cast<void *>( &ifr ) ) );
 }
 
-void interface_ioctl( FileDescriptor && fd, const int request,
+void interface_ioctl( const int request,
                       const string & name,
                       function<void( ifreq &ifr )> ifr_adjustment)
 {
-    interface_ioctl( fd, request, name, ifr_adjustment );
+    /* use a temporary socket */
+    UDPSocket temp;
+    interface_ioctl( temp, request, name, ifr_adjustment );
 }
 
 void assign_address( const string & device_name, const Address & addr, const Address & peer )
 {
-    Socket ioctl_socket( UDP );
-
     /* assign address */
-    interface_ioctl( ioctl_socket, SIOCSIFADDR, device_name,
+    interface_ioctl( SIOCSIFADDR, device_name,
                      [&] ( ifreq &ifr )
-                     { ifr.ifr_addr = addr.raw_sockaddr(); } );
+                     { ifr.ifr_addr = addr.to_sockaddr(); } );
 
     /* destination */
-    interface_ioctl( ioctl_socket, SIOCSIFDSTADDR, device_name,
+    interface_ioctl( SIOCSIFDSTADDR, device_name,
                      [&] ( ifreq &ifr )
-                     { ifr.ifr_addr = peer.raw_sockaddr(); } );
+                     { ifr.ifr_addr = peer.to_sockaddr(); } );
 
     /* netmask */
-    interface_ioctl( ioctl_socket, SIOCSIFNETMASK, device_name,
+    interface_ioctl( SIOCSIFNETMASK, device_name,
                      [&] ( ifreq &ifr )
-                     { ifr.ifr_netmask = Address( "255.255.255.255", 0 ).raw_sockaddr(); } );
+                     { ifr.ifr_netmask = Address( "255.255.255.255", 0 ).to_sockaddr(); } );
 
     /* bring interface up */
-    interface_ioctl( ioctl_socket, SIOCSIFFLAGS, device_name,
+    interface_ioctl( SIOCSIFFLAGS, device_name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 }
 

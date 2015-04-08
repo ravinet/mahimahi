@@ -18,7 +18,7 @@ class HTTPResponseParser;
 class HTTPProxy
 {
 private:
-    Socket listener_socket_;
+    TCPSocket listener_socket_;
 
     template <class SocketType>
     void loop( SocketType & server, SocketType & client, HTTPBackingStore & backing_store );
@@ -28,7 +28,7 @@ private:
 public:
     HTTPProxy( const Address & listener_addr );
 
-    Socket & tcp_listener( void ) { return listener_socket_; }
+    TCPSocket & tcp_listener( void ) { return listener_socket_; }
 
     void handle_tcp( HTTPBackingStore & backing_store );
 

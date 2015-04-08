@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <net/route.h>
+#include <fcntl.h>
 
 #include <vector>
 #include <set>
@@ -14,6 +15,7 @@
 #include "temp_file.hh"
 #include "http_response.hh"
 #include "dns_server.hh"
+#include "exception.hh"
 
 #include "http_record.pb.h"
 
@@ -25,12 +27,10 @@ void add_dummy_interface( const string & name, const Address & addr )
 {
     run( { IP, "link", "add", name, "type", "dummy" } );
 
-    Socket ioctl_socket( UDP );
-
-    interface_ioctl( ioctl_socket, SIOCSIFFLAGS, name,
+    interface_ioctl( SIOCSIFFLAGS, name,
                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
-    interface_ioctl( ioctl_socket, SIOCSIFADDR, name,
-                     [&] ( ifreq &ifr ) { ifr.ifr_addr = addr.raw_sockaddr(); } );
+    interface_ioctl( SIOCSIFADDR, name,
+                     [&] ( ifreq &ifr ) { ifr.ifr_addr = addr.to_sockaddr(); } );
 }
 
 int main( int argc, char *argv[] )
@@ -72,7 +72,7 @@ int main( int argc, char *argv[] )
         SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
-        interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
+        interface_ioctl( SIOCSIFFLAGS, "lo",
                          [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
         /* provide seed for random number generator used to create apache pid files */
@@ -93,7 +93,7 @@ int main( int argc, char *argv[] )
                 FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
 
                 MahimahiProtobufs::RequestResponse protobuf;
-                if ( not protobuf.ParseFromFileDescriptor( fd.num() ) ) {
+                if ( not protobuf.ParseFromFileDescriptor( fd.fd_num() ) ) {
                     throw runtime_error( filename + ": invalid HTTP request/response" );
                 }
 

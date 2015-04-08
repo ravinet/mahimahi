@@ -12,27 +12,20 @@
 
 enum SSL_MODE { CLIENT, SERVER };
 
-class SecureSocket : public Socket
+class SecureSocket : public TCPSocket
 {
     friend class SSLContext;
 
 private:
-    SSL *ssl_;
+    struct SSL_deleter { void operator()( SSL * x ) const { SSL_free( x ); } };
+    typedef std::unique_ptr<SSL, SSL_deleter> SSL_handle;
+    SSL_handle ssl_;
 
-    SecureSocket( Socket && sock, SSL *ssl );
+    SecureSocket( TCPSocket && sock, SSL * ssl );
 
 public:
-    ~SecureSocket();
-
     void connect( void );
     void accept( void );
-
-    /* forbid copying or assignment */
-    SecureSocket( const SecureSocket & ) = delete;
-    SecureSocket & operator=( const SecureSocket & ) = delete;
-
-    /* allow moving */
-    SecureSocket( SecureSocket && other );
 
     std::string read( void );
     void write( const std::string & message );
@@ -41,17 +34,14 @@ public:
 class SSLContext
 {
 private:
-    SSL_CTX *ctx_;
+    struct CTX_deleter { void operator()( SSL_CTX * x ) const { SSL_CTX_free( x ); } };
+    typedef std::unique_ptr<SSL_CTX, CTX_deleter> CTX_handle;
+    CTX_handle ctx_;
 
 public:
     SSLContext( const SSL_MODE type );
-    ~SSLContext();
 
-    SecureSocket new_secure_socket( Socket && sock );
-
-    /* forbid copying or assignment */
-    SSLContext( const SSLContext & ) = delete;
-    SSLContext & operator=( const SSLContext & ) = delete;
+    SecureSocket new_secure_socket( TCPSocket && sock );
 };
 
 #endif

@@ -2,147 +2,189 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <linux/netfilter_ipv4.h>
-#include <cassert>
 
 #include "socket.hh"
+#include "util.hh"
+#include "timestamp.hh"
 #include "exception.hh"
-#include "address.hh"
-#include "ezio.hh"
 
 using namespace std;
 
-Socket::Socket( const SocketType & socket_type )
-    : FileDescriptor( SystemCall( "socket", socket( AF_INET, socket_type, 0 ) ) ),
-      local_addr_(),
-      peer_addr_()
+/* default constructor for socket of (subclassed) domain and type */
+Socket::Socket( const int domain, const int type )
+    : FileDescriptor( SystemCall( "socket", socket( domain, type, 0 ) ) )
+{}
+
+/* construct from file descriptor */
+Socket::Socket( FileDescriptor && fd, const int domain, const int type )
+    : FileDescriptor( move( fd ) )
 {
+    int actual_value;
+    socklen_t len;
+
+    /* verify domain */
+    len = getsockopt( SOL_SOCKET, SO_DOMAIN, actual_value );
+    if ( (len != sizeof( actual_value )) or (actual_value != domain) ) {
+        throw runtime_error( "socket domain mismatch" );
+    }
+
+    /* verify type */
+    len = getsockopt( SOL_SOCKET, SO_TYPE, actual_value );
+    if ( (len != sizeof( actual_value )) or (actual_value != type) ) {
+        throw runtime_error( "socket type mismatch" );
+    }
 }
 
-Socket::Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr )
-  : FileDescriptor( move( s_fd ) ),
-    local_addr_( s_local_addr ),
-    peer_addr_( s_peer_addr )
+/* get the local or peer address the socket is connected to */
+Address Socket::get_address( const std::string & name_of_function,
+                             const std::function<int(int, sockaddr *, socklen_t *)> & function ) const
 {
+    Address::raw address;
+    socklen_t size = sizeof( address );
+
+    SystemCall( name_of_function, function( fd_num(),
+                                            &address.as_sockaddr,
+                                            &size ) );
+
+    return Address( address, size );
 }
 
-void Socket::bind( const Address & addr )
+Address Socket::local_address( void ) const
 {
-    /* make local address to listen on */
-    local_addr_ = addr;
- 
-    /* bind the socket to listen_addr */
-    SystemCall( "bind", ::bind( num(),
-                                &local_addr_.raw_sockaddr(),
-                                sizeof( local_addr_.raw_sockaddr() ) ) );
-
-    /* set local_addr to the address we actually were bound to */
-    sockaddr_in new_local_addr;
-    socklen_t new_local_addr_len = sizeof( new_local_addr );
-
-    SystemCall( "getsockname", ::getsockname( num(),
-                                              reinterpret_cast<sockaddr *>( &new_local_addr ),
-                                              &new_local_addr_len ) );
-
-    local_addr_ = Address( new_local_addr );
+    return get_address( "getsockname", getsockname );
 }
 
-static const int listen_backlog_ = 16;
-
-void Socket::listen( void )
+Address Socket::peer_address( void ) const
 {
-    SystemCall( "listen", ::listen( num(), listen_backlog_ ) );
+    return get_address( "getpeername", getpeername );
 }
 
-Socket Socket::accept( void )
+/* bind socket to a specified local address (usually to listen/accept) */
+void Socket::bind( const Address & address )
 {
-  /* make new socket address for connection */
-  sockaddr_in new_connection_addr;
-  socklen_t new_connection_addr_size = sizeof( new_connection_addr );
-
-  /* wait for client connection */
-  FileDescriptor new_fd( SystemCall( "accept",
-                                     ::accept( num(),
-                                               reinterpret_cast<sockaddr *>( &new_connection_addr ),
-                                               &new_connection_addr_size ) ) );
-
-  // verify length is what we expected 
-  if ( new_connection_addr_size != sizeof( new_connection_addr ) ) {
-    throw runtime_error( "sockaddr size mismatch" );
-  }
-
-  register_read();
-  
-  return Socket( move( new_fd ), local_addr_, Address( new_connection_addr ) );
+    SystemCall( "bind", ::bind( fd_num(),
+                                &address.to_sockaddr(),
+                                address.size() ) );
 }
 
-void Socket::connect( const Address & addr )
+/* connect socket to a specified peer address */
+void Socket::connect( const Address & address )
 {
-    peer_addr_ = addr;
-
-    SystemCall( "connect", ::connect( num(),
-                                      &peer_addr_.raw_sockaddr(),
-                                      sizeof( peer_addr_.raw_sockaddr() ) ) );
+    SystemCall( "connect", ::connect( fd_num(),
+                                      &address.to_sockaddr(),
+                                      address.size() ) );
 }
 
-pair< Address, string > Socket::recvfrom( void )
+/* send datagram to specified address */
+void UDPSocket::sendto( const Address & destination, const string & payload )
 {
-    static const ssize_t RECEIVE_MTU = 2048;
+    const ssize_t bytes_sent =
+        SystemCall( "sendto", ::sendto( fd_num(),
+                                        payload.data(),
+                                        payload.size(),
+                                        0,
+                                        &destination.to_sockaddr(),
+                                        destination.size() ) );
+
+    register_write();
+
+    if ( size_t( bytes_sent ) != payload.size() ) {
+        throw runtime_error( "datagram payload too big for sendto()" );
+    }
+}
+
+/* send datagram to connected address */
+void UDPSocket::send( const string & payload )
+{
+    const ssize_t bytes_sent =
+        SystemCall( "send", ::send( fd_num(),
+                                    payload.data(),
+                                    payload.size(),
+                                    0 ) );
+
+    register_write();
+
+    if ( size_t( bytes_sent ) != payload.size() ) {
+        throw runtime_error( "datagram payload too big for send()" );
+    }
+}
+
+/* mark the socket as listening for incoming connections */
+void TCPSocket::listen( const int backlog )
+{
+    SystemCall( "listen", ::listen( fd_num(), backlog ) );
+}
+
+/* accept a new incoming connection */
+TCPSocket TCPSocket::accept( void )
+{
+    register_read();
+    return TCPSocket( FileDescriptor( SystemCall( "accept", ::accept( fd_num(), nullptr, nullptr ) ) ) );
+}
+
+/* get socket option */
+template <typename option_type>
+socklen_t Socket::getsockopt( const int level, const int option, option_type & option_value ) const
+{
+    socklen_t optlen = sizeof( option_value );
+    SystemCall( "getsockopt", ::getsockopt( fd_num(), level, option,
+                                            &option_value, &optlen ) );
+    return optlen;
+}
+
+/* set socket option */
+template <typename option_type>
+void Socket::setsockopt( const int level, const int option, const option_type & option_value )
+{
+    SystemCall( "setsockopt", ::setsockopt( fd_num(), level, option,
+                                            &option_value, sizeof( option_value ) ) );
+}
+
+/* allow local address to be reused sooner, at the cost of some robustness */
+void Socket::set_reuseaddr( void )
+{
+    setsockopt( SOL_SOCKET, SO_REUSEADDR, int( true ) );
+}
+
+/* turn on timestamps on receipt */
+void UDPSocket::set_timestamps( void )
+{
+    setsockopt( SOL_SOCKET, SO_TIMESTAMPNS, int( true ) );
+}
+
+pair<Address, string> UDPSocket::recvfrom( void )
+{
+    static const ssize_t RECEIVE_MTU = 65536;
 
     /* receive source address and payload */
-    sockaddr_in packet_remote_addr;
-    char buf[ RECEIVE_MTU ];
+    Address::raw datagram_source_address;
+    char buffer[ RECEIVE_MTU ];
 
-    socklen_t fromlen = sizeof( packet_remote_addr );
+    socklen_t fromlen = sizeof( datagram_source_address );
 
-    ssize_t recv_len = ::recvfrom( num(),
-                                   buf,
-                                   sizeof( buf ),
-                                   MSG_TRUNC,
-                                   reinterpret_cast< sockaddr * >( &packet_remote_addr ),
-                                   &fromlen );
+    ssize_t recv_len = SystemCall( "recvfrom",
+                                   ::recvfrom( fd_num(),
+                                               buffer,
+                                               sizeof( buffer ),
+                                               MSG_TRUNC,
+                                               &datagram_source_address.as_sockaddr,
+                                               &fromlen ) );
 
-    if ( recv_len < 0 ) {
-        throw unix_error( "recvfrom" );
-    } else if ( recv_len > RECEIVE_MTU ) {
-        throw unix_error( "recvfrom (oversized datagram)" );
+    if ( recv_len > RECEIVE_MTU ) {
+        throw runtime_error( "recvfrom (oversized datagram)" );
     }
 
     register_read();
 
-    return make_pair( Address( packet_remote_addr ),
-                      string( buf, recv_len ) );
+    return make_pair( Address( datagram_source_address, fromlen ),
+                      string( buffer, recv_len ) );
 }
 
-void Socket::sendto( const Address & destination, const string & payload )
+Address TCPSocket::original_dest( void ) const
 {
-    SystemCall( "sendto", ::sendto( num(),
-                                    payload.data(),
-                                    payload.size(),
-                                    0,
-                                    &destination.raw_sockaddr(),
-                                    sizeof( destination.raw_sockaddr() ) ) );
+    Address::raw dstaddr;
+    socklen_t len = getsockopt( SOL_IP, SO_ORIGINAL_DST, dstaddr );
 
-    register_write();
+    return Address( dstaddr, len );
 }
-
-void Socket::getsockopt( const int level, const int optname,
-                        void *optval, socklen_t *optlen ) const
-{
-    SystemCall( "getsockopt", ::getsockopt( const_cast<Socket &>( *this ).num(), level, optname, optval, optlen ) );
-}
-
-Address Socket::original_dest( void ) const
-{
-    sockaddr_in dstaddr;
-    socklen_t destlen = sizeof( dstaddr );
-    getsockopt( SOL_IP, SO_ORIGINAL_DST, &dstaddr, &destlen );
-    assert( destlen == sizeof( dstaddr ) );
-    return dstaddr;
-}
-
-Socket::Socket( Socket && other )
-    : FileDescriptor( move( other ) ),
-      local_addr_( other.local_addr_),
-      peer_addr_( other.peer_addr_ ) {}

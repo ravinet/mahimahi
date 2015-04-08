@@ -8,6 +8,7 @@
 
 #include "loss_queue.hh"
 #include "util.hh"
+#include "ezio.hh"
 #include "packetshell.cc"
 
 using namespace std;

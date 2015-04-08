@@ -16,6 +16,7 @@
 #include "socketpair.hh"
 #include "config.h"
 #include "backing_store.hh"
+#include "exception.hh"
 
 using namespace std;
 
@@ -76,7 +77,7 @@ int main( int argc, char *argv[] )
         HTTPProxy http_proxy( egress_addr );
 
         /* set up dnat */
-        DNAT dnat( http_proxy.tcp_listener().local_addr(), egress_name );
+        DNAT dnat( http_proxy.tcp_listener().local_address(), egress_name );
 
         /* prepare event loop */
         EventLoop outer_event_loop;
@@ -91,7 +92,7 @@ int main( int argc, char *argv[] )
                     pipe.second.read();
 
                     /* bring up localhost */
-                    interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
+                    interface_ioctl( SIOCSIFFLAGS, "lo",
                                      [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
                     /* bring up veth device */
@@ -101,16 +102,16 @@ int main( int argc, char *argv[] )
                     rtentry route;
                     zero( route );
 
-                    route.rt_gateway = egress_addr.raw_sockaddr();
-                    route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+                    route.rt_gateway = egress_addr.to_sockaddr();
+                    route.rt_dst = route.rt_genmask = Address().to_sockaddr();
                     route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-                    SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
+                    SystemCall( "ioctl SIOCADDRT", ioctl( UDPSocket().fd_num(), SIOCADDRT, &route ) );
 
                     /* create DNS proxy if nameserver address is local */
                     auto dns_inside = DNSProxy::maybe_proxy( nameserver,
-                                                             dns_outside.udp_listener().local_addr(),
-                                                             dns_outside.tcp_listener().local_addr() );
+                                                             dns_outside.udp_listener().local_address(),
+                                                             dns_outside.tcp_listener().local_address() );
 
                     /* Fork again after dropping root privileges */
                     drop_privileges();

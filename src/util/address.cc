@@ -1,43 +1,147 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <string>
+#include <cstring>
+#include <memory>
+#include <cassert>
+
 #include <netdb.h>
-#include <assert.h>
-#include <arpa/inet.h>
 
 #include "address.hh"
-#include "exception.hh"
-#include "socket.hh"
 #include "util.hh"
+#include "exception.hh"
+#include "ezio.hh"
 
 using namespace std;
 
-Address::Address( const sockaddr_in & s_addr )
-    : addr_( s_addr )
-{
-}
-
-Address::Address( const sockaddr & s_addr )
-    : addr_()
-{
-    if ( s_addr.sa_family != AF_INET ) {
-        throw runtime_error( "Address(): sockaddr is not of family AF_INET" );
-    }
-
-    addr_ = *reinterpret_cast<const sockaddr_in *>( &s_addr );
-}
+/* constructors */
 
 Address::Address()
-    : addr_()
+    : Address( "0", 0 )
+{}
+
+Address::Address( const raw & addr, const size_t size )
+    : Address( addr.as_sockaddr, size )
+{}
+
+Address::Address( const sockaddr & addr, const size_t size )
+    : size_( size ),
+      addr_()
 {
-    zero( addr_ );
-    addr_.sin_family = AF_INET;
+    /* make sure proposed sockaddr can fit */
+    if ( size > sizeof( addr_ ) ) {
+        throw runtime_error( "invalid sockaddr size" );
+    }
+
+    memcpy( &addr_, &addr, size_ );
 }
 
+Address::Address( const sockaddr_in & addr )
+    : size_( sizeof( sockaddr_in ) ),
+      addr_()
+{
+    assert( size_ <= sizeof( addr_ ) );
+
+    memcpy( &addr_, &addr, size_ );
+}
+
+/* error category for getaddrinfo and getnameinfo */
+class gai_error_category : public error_category
+{
+public:
+    const char * name( void ) const noexcept override { return "gai_error_category"; }
+    string message( const int return_value ) const noexcept override
+    {
+        return gai_strerror( return_value );
+    }
+};
+
+/* private constructor given ip/host, service/port, and optional hints */
+Address::Address( const string & node, const string & service, const addrinfo * hints )
+    : size_(),
+      addr_()
+{
+    /* prepare for the answer */
+    addrinfo *resolved_address;
+
+    /* look up the name or names */
+    const int gai_ret = getaddrinfo( node.c_str(), service.c_str(), hints, &resolved_address );
+    if ( gai_ret ) {
+        throw tagged_error( gai_error_category(), "getaddrinfo", gai_ret );
+    }
+
+    /* if success, should always have at least one entry */
+    if ( not resolved_address ) {
+        throw runtime_error( "getaddrinfo returned successfully but with no results" );
+    }
+  
+    /* put resolved_address in a wrapper so it will get freed if we have to throw an exception */
+    unique_ptr<addrinfo, function<void(addrinfo*)>> wrapped_address
+        { resolved_address, []( addrinfo * x ) { freeaddrinfo( x ); } };
+
+    /* assign to our private members (making sure size fits) */
+    *this = Address( *wrapped_address->ai_addr, wrapped_address->ai_addrlen );
+}
+
+/* construct by resolving host name and service name */
+Address::Address( const std::string & hostname, const std::string & service )
+    : size_(),
+      addr_()
+{
+    addrinfo hints;
+    zero( hints );
+    hints.ai_family = AF_INET;
+
+    *this = Address( hostname, service, &hints );
+}
+
+/* construct with numerical IP address and numeral port number */
+Address::Address( const std::string & ip, const uint16_t port )
+    : size_(),
+      addr_()
+{
+    /* tell getaddrinfo that we don't want to resolve anything */
+    addrinfo hints;
+    zero( hints );
+    hints.ai_family = AF_INET;
+    hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+    *this = Address( ip, ::to_string( port ), &hints );
+}
+
+/* accessors */
+
+pair<string, uint16_t> Address::ip_port( void ) const
+{
+    char ip[ NI_MAXHOST ], port[ NI_MAXSERV ];
+
+    const int gni_ret = getnameinfo( &to_sockaddr(),
+                                     size_,
+                                     ip, sizeof( ip ),
+                                     port, sizeof( port ),
+                                     NI_NUMERICHOST | NI_NUMERICSERV );
+    if ( gni_ret ) {
+        throw tagged_error( gai_error_category(), "getnameinfo", gni_ret );
+    }
+
+    return make_pair( ip, myatoi( port ) );
+}
+
+string Address::str( const string port_separator ) const
+{
+    const auto ip_and_port = ip_port();
+    return ip_and_port.first + port_separator + to_string( ip_and_port.second );
+}
+
+const sockaddr & Address::to_sockaddr( void ) const
+{
+    return addr_.as_sockaddr;
+}
+
+/* comparisons */
 bool Address::operator==( const Address & other ) const
 {
-    return 0 == memcmp( &addr_, &other.addr_, sizeof( addr_ ) );
+    return 0 == memcmp( &addr_, &other.addr_, size_ );
 }
 
 bool Address::operator<( const Address & other ) const
@@ -45,80 +149,8 @@ bool Address::operator<( const Address & other ) const
     return (memcmp( &addr_, &other.addr_, sizeof( addr_ ) ) < 0 );
 }
 
-Address::Address( const string & ip, const uint16_t port )
-    : addr_()
-{
-    addr_.sin_family = AF_INET;
-
-    if ( 1 != inet_pton( AF_INET, ip.c_str(), &addr_.sin_addr ) ) {
-        throw unix_error( "inet_pton (" + ip + ")" );
-    }
-
-    addr_.sin_port = htons( port );
-}
-
+/* generate carrier-grade NAT address */
 Address Address::cgnat( const uint8_t last_octet )
 {
     return Address( "100.64.0." + to_string( last_octet ), 0 );
-}
-
-/* error category for getaddrinfo */
-class gai_error_category : public error_category
-{
-public:
-    const char * name( void ) const noexcept override { return "getaddrinfo"; }
-    string message( const int gai_ret ) const noexcept override
-    {
-        return gai_strerror( gai_ret );
-    }
-};
-
-Address::Address( const string & hostname, const string & service )
-  : addr_()
-{
-  /* give hints to resolver */
-  addrinfo hints;
-  zero( hints );
-  hints.ai_family = AF_INET;
-
-  /* prepare for the answer */
-  addrinfo *res;
-
-  /* look up the name or names */
-  int gai_ret = getaddrinfo( hostname.c_str(), service.c_str(), &hints, &res );
-  if ( gai_ret != 0 ) {
-      throw tagged_error( gai_error_category(), "getaddrinfo", gai_ret );
-  }
-
-  /* if success, should always have at least one entry */
-  assert( res );
-  
-  /* should match our request */
-  assert( res->ai_family == AF_INET );
-  assert( res->ai_addrlen == sizeof( addr_ ) );
-
-  /* assign to our private member variable */
-  addr_ = *reinterpret_cast<sockaddr_in *>( res->ai_addr );
-
-  freeaddrinfo( res );
-}
-
-string Address::str( const string port_separator ) const
-{
-  return ip() + port_separator + to_string( port() );
-}
-
-uint16_t Address::port( void ) const
-{
-  return ntohs( addr_.sin_port );
-}
-
-string Address::ip( void ) const
-{
-    char addrstr[ INET_ADDRSTRLEN ] = {};
-    if ( nullptr == inet_ntop( AF_INET, &addr_.sin_addr, addrstr, INET_ADDRSTRLEN ) ) {
-        throw unix_error( "inet_ntop" );
-    }
-
-    return addrstr;
 }

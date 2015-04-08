@@ -77,7 +77,7 @@ void ByteStreamQueue::pop( FileDescriptor & fd )
 
     assert( end_of_pop >= pop_iterator );
 
-    pop_iterator = fd.write_some( pop_iterator, end_of_pop );
+    pop_iterator = fd.write( pop_iterator, end_of_pop );
 
     next_byte_to_pop = pop_iterator - buffer_.begin();
     assert( next_byte_to_pop <= buffer_.size() );

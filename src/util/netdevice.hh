@@ -17,7 +17,7 @@ void interface_ioctl( FileDescriptor & fd, const int request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 
-void interface_ioctl( FileDescriptor && fd, const int request,
+void interface_ioctl( const int request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 

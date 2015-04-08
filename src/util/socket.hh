@@ -3,47 +3,85 @@
 #ifndef SOCKET_HH
 #define SOCKET_HH
 
-#include <cstdint>
-#include <string>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <functional>
 
 #include "address.hh"
 #include "file_descriptor.hh"
-#include "socket_type.hh"
 
+/* class for network sockets (UDP, TCP, etc.) */
 class Socket : public FileDescriptor
 {
 private:
-    Address local_addr_, peer_addr_;
+    /* get the local or peer address the socket is connected to */
+    Address get_address( const std::string & name_of_function,
+                         const std::function<int(int, sockaddr *, socklen_t *)> & function ) const;
 
-    void getsockopt( const int level, const int optname,
-                     void *optval, socklen_t *optlen ) const;
+protected:
+    /* default constructor */
+    Socket( const int domain, const int type );
+
+    /* construct from file descriptor */
+    Socket( FileDescriptor && s_fd, const int domain, const int type );
+
+    /* get and set socket option */
+    template <typename option_type>
+    socklen_t getsockopt( const int level, const int option, option_type & option_value ) const;
+
+    template <typename option_type>
+    void setsockopt( const int level, const int option, const option_type & option_value );
 
 public:
-    Socket( const SocketType & socket_type );
+    /* bind socket to a specified local address (usually to listen/accept) */
+    void bind( const Address & address );
 
-    Socket( FileDescriptor && s_fd, const Address & s_local_addr, const Address & s_peer_addr );
+    /* connect socket to a specified peer address */
+    void connect( const Address & address );
 
-    /* forbid copying or assignment */
-    Socket( const Socket & other ) = delete;
-    const Socket & operator=( const Socket & other ) = delete;
+    /* accessors */
+    Address local_address( void ) const;
+    Address peer_address( void ) const;
 
-    /* allow moving */
-    Socket( Socket && other );
+    /* allow local address to be reused sooner, at the cost of some robustness */
+    void set_reuseaddr( void );
+};
 
-    void bind( const Address & addr );
-    void connect( const Address & addr );
-    void listen( void );
-    Socket accept( void );
+/* UDP socket */
+class UDPSocket : public Socket
+{
+public:
+    UDPSocket() : Socket( AF_INET, SOCK_DGRAM ) {}
 
-    const Address & local_addr( void ) const { return local_addr_; }
-    const Address & peer_addr( void ) const { return peer_addr_; }
+    /* receive datagram and where it came from */
+    std::pair<Address, std::string> recvfrom( void );
 
-    std::pair< Address, std::string > recvfrom( void );
-    void sendto( const Address & destination, const std::string & payload );
+    /* send datagram to specified address */
+    void sendto( const Address & peer, const std::string & payload );
 
+    /* send datagram to connected address */
+    void send( const std::string & payload );
+
+    /* turn on timestamps on receipt */
+    void set_timestamps( void );
+};
+
+/* TCP socket */
+class TCPSocket : public Socket
+{
+protected:
+    /* constructor used by accept() and SecureSocket() */
+    TCPSocket( FileDescriptor && fd ) : Socket( std::move( fd ), AF_INET, SOCK_STREAM ) {}
+
+public:
+    TCPSocket() : Socket( AF_INET, SOCK_STREAM ) {}
+
+    /* mark the socket as listening for incoming connections */
+    void listen( const int backlog = 16 );
+
+    /* accept a new incoming connection */
+    TCPSocket accept( void );
+
+    /* original destination of a DNAT connection */
     Address original_dest( void ) const;
 };
 
-#endif
+#endif /* SOCKET_HH */

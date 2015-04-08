@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <sys/types.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <paths.h>
@@ -121,7 +122,7 @@ vector< Address > all_nameservers( void )
     /* iterate through the nameservers */
     for ( unsigned int i = 0; i < MAXNS; i++ ) {
         if ( _res.nsaddr_list[ i ].sin_port ) {
-            nameservers.emplace_back( Address( inet_ntoa( _res.nsaddr_list[ i ].sin_addr ), ntohs( _res.nsaddr_list[ i ].sin_port ) ) );
+            nameservers.emplace_back( _res.nsaddr_list[ i ] );
         }
     }
     return nameservers;

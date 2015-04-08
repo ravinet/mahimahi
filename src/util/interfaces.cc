@@ -2,17 +2,20 @@
 
 #include <sstream>
 #include <memory>
+#include <cassert>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <fcntl.h>
 
 #include "interfaces.hh"
 #include "exception.hh"
 #include "file_descriptor.hh"
 #include "util.hh"
+#include "ezio.hh"
 
 using namespace std;
 
@@ -29,7 +32,7 @@ Interfaces::Interfaces()
 
         for ( ifaddrs *ifa = interface_addresses.get(); ifa; ifa = ifa->ifa_next ) {
             if ( ifa->ifa_addr and ifa->ifa_addr->sa_family == AF_INET ) {
-                addresses_in_use_.emplace_back( *ifa->ifa_addr );
+                addresses_in_use_.emplace_back( *ifa->ifa_addr, sizeof( sockaddr_in ) );
             }
         }
     }
@@ -90,7 +93,7 @@ Interfaces::Interfaces()
 bool Interfaces::address_in_use( const Address & addr ) const
 {
     for ( const auto & x : addresses_in_use_ ) {
-        if ( addr == x ) {
+        if ( addr.ip() == x.ip() ) {
             return true;
         }
     }
@@ -103,6 +106,7 @@ pair< Address, uint16_t > Interfaces::first_unassigned_address( uint16_t last_oc
     while ( last_octet <= 255 ) {
         Address candidate = Address::cgnat( last_octet );
         if ( !address_in_use( candidate ) ) {
+            assert( candidate.port() == 0 );
             return make_pair( candidate, last_octet );
         }
         last_octet++;

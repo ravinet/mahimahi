@@ -12,14 +12,15 @@ class EventLoop;
 class DNSProxy
 {
 private:
-    Socket udp_listener_, tcp_listener_;
+    UDPSocket udp_listener_;
+    TCPSocket tcp_listener_;
     Address udp_target_, tcp_target_;
 
 public:
     DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target );
 
-    Socket & udp_listener( void ) { return udp_listener_; }
-    Socket & tcp_listener( void ) { return tcp_listener_; }
+    UDPSocket & udp_listener( void ) { return udp_listener_; }
+    TCPSocket & tcp_listener( void ) { return tcp_listener_; }
 
     void handle_udp( void );
     void handle_tcp( void );

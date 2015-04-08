@@ -6,12 +6,13 @@
 #include "poller.hh"
 #include "bytestream_queue.hh"
 #include "event_loop.hh"
+#include "exception.hh"
 
 using namespace std;
 using namespace PollerShortNames;
 
 DNSProxy::DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target )
-    : udp_listener_( UDP ), tcp_listener_( TCP ),
+    : udp_listener_(), tcp_listener_(),
       udp_target_( s_udp_target ), tcp_target_( s_tcp_target )
 {
     udp_listener_.bind( listen_address );
@@ -28,7 +29,7 @@ void DNSProxy::handle_udp( void )
     thread newthread( [&] ( pair< Address, string > request ) {
             try {
                 /* send request to the DNS server */
-                Socket dns_server( UDP );
+                UDPSocket dns_server;
                 dns_server.connect( udp_target_ );
                 dns_server.write( request.second );
 
@@ -54,19 +55,21 @@ void DNSProxy::handle_udp( void )
     newthread.detach();
 }
 
+const static size_t BUFFER_SIZE = 1024 * 1024;
+
 void DNSProxy::handle_tcp( void )
 {
     /* start a new thread to handle request/reply */
     thread newthread( [&] ( Socket client ) {
             try {
                 /* connect to DNS server */
-                Socket dns_server( TCP );
+                TCPSocket dns_server;
                 dns_server.connect( tcp_target_ );
 
                 Poller poller;
 
                 /* Make bytestreams */
-                ByteStreamQueue from_client( ezio::read_chunk_size ), from_server( ezio::read_chunk_size );
+                ByteStreamQueue from_client( BUFFER_SIZE ), from_server( BUFFER_SIZE );
 
                 poller.add_action( Poller::Action( dns_server, Direction::In,
                                                    [&] () { return eof( from_server.push( dns_server ) ) ? ResultType::Cancel : ResultType::Continue; },

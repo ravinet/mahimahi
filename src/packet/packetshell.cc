@@ -14,6 +14,7 @@
 #include "address.hh"
 #include "dns_server.hh"
 #include "timestamp.hh"
+#include "exception.hh"
 #include "config.h"
 
 using namespace std;
@@ -24,7 +25,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
     : egress_ingress( two_unassigned_addresses() ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
-      dns_outside_( Address( egress_addr().ip(), 0 ), nameserver_, nameserver_ ),
+      dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       pipe_( UnixDomainSocket::make_pair() ),
       event_loop_(),
@@ -55,24 +56,24 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
-            interface_ioctl( Socket( UDP ), SIOCSIFFLAGS, "lo",
+            interface_ioctl( SIOCSIFFLAGS, "lo",
                              [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
 
             /* create default route */
             rtentry route;
             zero( route );
 
-            route.rt_gateway = egress_addr().raw_sockaddr();
-            route.rt_dst = route.rt_genmask = Address().raw_sockaddr();
+            route.rt_gateway = egress_addr().to_sockaddr();
+            route.rt_dst = route.rt_genmask = Address().to_sockaddr();
             route.rt_flags = RTF_UP | RTF_GATEWAY;
 
-            SystemCall( "ioctl SIOCADDRT", ioctl( Socket( UDP ).num(), SIOCADDRT, &route ) );
+            SystemCall( "ioctl SIOCADDRT", ioctl( UDPSocket().fd_num(), SIOCADDRT, &route ) );
 
             Ferry inner_ferry;
 
             /* run dnsmasq as local caching nameserver */
             inner_ferry.add_child_process( start_dnsmasq( {
-                        "-S", dns_outside_.udp_listener().local_addr().str( "#" ) } ) );
+                        "-S", dns_outside_.udp_listener().local_address().str( "#" ) } ) );
 
             /* Fork again after dropping root privileges */
             drop_privileges();

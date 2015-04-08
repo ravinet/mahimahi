@@ -118,7 +118,7 @@ int main( void )
         for ( const auto filename : files ) {
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
-            if ( not current_record.ParseFromFileDescriptor( fd.num() ) ) {
+            if ( not current_record.ParseFromFileDescriptor( fd.fd_num() ) ) {
                 throw runtime_error( filename + ": invalid HTTP request/response" );
             }
 

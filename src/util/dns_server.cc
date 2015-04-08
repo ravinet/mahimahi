@@ -26,7 +26,7 @@ ChildProcess start_dnsmasq( const vector< string > & extra_arguments )
     ChildProcess dnsmasq( "dnsmasq", [&] () { return ezexec( args ); }, false, SIGTERM );
 
     /* busy-wait for dnsmasq to start answering DNS queries */
-    Socket server( UDP );
+    UDPSocket server;
     server.connect( Address( "0", "domain" ) );
 
     unsigned int attempts = 0;

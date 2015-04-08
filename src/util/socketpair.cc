@@ -6,6 +6,7 @@
 
 #include "socketpair.hh"
 #include "util.hh"
+#include "exception.hh"
 
 using namespace std;
 
@@ -21,18 +22,18 @@ void UnixDomainSocket::send_fd( FileDescriptor & fd )
     msghdr message_header;
     zero( message_header );
 
-    char control_buffer[ CMSG_SPACE( sizeof( fd.num() ) ) ];
+    char control_buffer[ CMSG_SPACE( sizeof( fd.fd_num() ) ) ];
     message_header.msg_control = control_buffer;
     message_header.msg_controllen = sizeof( control_buffer );
 
     cmsghdr * const control_message = CMSG_FIRSTHDR( &message_header );
     control_message->cmsg_level = SOL_SOCKET;
     control_message->cmsg_type = SCM_RIGHTS;
-    control_message->cmsg_len = CMSG_LEN( sizeof( fd.num() ) );
-    *reinterpret_cast<int *>( CMSG_DATA( control_message ) ) = fd.num();
+    control_message->cmsg_len = CMSG_LEN( sizeof( fd.fd_num() ) );
+    *reinterpret_cast<int *>( CMSG_DATA( control_message ) ) = fd.fd_num();
     message_header.msg_controllen = control_message->cmsg_len;
 
-    if ( 0 != SystemCall( "sendmsg", sendmsg( num(), &message_header, 0 ) ) ) {
+    if ( 0 != SystemCall( "sendmsg", sendmsg( fd_num(), &message_header, 0 ) ) ) {
         throw runtime_error( "send_fd: sendmsg unexpectedly sent data" );
     }
 
@@ -48,7 +49,7 @@ FileDescriptor UnixDomainSocket::recv_fd( void )
     message_header.msg_control = control_buffer;
     message_header.msg_controllen = sizeof( control_buffer );
 
-    if ( 0 != SystemCall( "recvmsg", recvmsg( num(), &message_header, 0 ) ) ) {
+    if ( 0 != SystemCall( "recvmsg", recvmsg( fd_num(), &message_header, 0 ) ) ) {
         throw runtime_error( "recv_fd: recvmsg unexpectedly received data" );
     }
 

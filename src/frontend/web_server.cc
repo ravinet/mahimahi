@@ -2,12 +2,14 @@
 
 #include <string>
 #include <iostream>
+#include <unistd.h>
 
 #include "web_server.hh"
 #include "apache_configuration.hh"
 #include "system_runner.hh"
 #include "config.h"
 #include "util.hh"
+#include "exception.hh"
 
 using namespace std;
 
