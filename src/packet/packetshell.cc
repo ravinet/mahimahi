@@ -24,7 +24,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
     : egress_ingress( two_unassigned_addresses() ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
-      dns_outside_( Address( egress_addr().ip(), "0" ), nameserver_, nameserver_ ),
+      dns_outside_( Address( egress_addr().ip(), 0 ), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       pipe_( UnixDomainSocket::make_pair() ),
       event_loop_(),
