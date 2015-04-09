@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: mahimahi
-Source: http://github.com/ravinet/mahimahi
+Source: https://github.com/keithw/mahimahi
 
 Files: *
 Copyright: 2013 The Mahimahi Authors <mahimahi@mit.edu>
