@@ -1,3 +1,9 @@
+mahimahi (0.90-3) unstable; urgency=low
+
+  * [Packaging] Update VCS pointers to current source location.
+
+ -- Keith Winstein <keithw@mit.edu>  Sat, 11 Apr 2015 23:13:33 -0700
+
 mahimahi (0.90-2) unstable; urgency=low
 
   * Bump standards version in Debian packaging.
