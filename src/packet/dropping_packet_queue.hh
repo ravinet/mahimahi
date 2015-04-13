@@ -4,7 +4,7 @@
 #define DROPPING_PACKET_QUEUE_HH
 
 #include <queue>
-#include <iostream>
+#include <memory>
 #include <assert.h>
 
 #include "queued_packet.hh"

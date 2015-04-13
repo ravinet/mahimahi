@@ -15,7 +15,8 @@ class DropTailPacketQueue : public DroppingPacketQueue
     void enqueue( const QueuedPacket && p )
     {
         if ( (byte_limit_ && ( queue_size_ + p.contents.size() ) <= byte_limit_ )
-            || ( packet_limit_ && queue_size_ < packet_limit_ ) ) {
+                || ( packet_limit_ && queue_size_ < packet_limit_ ) )
+        {
             queue_size_ += byte_limit_ ? p.contents.size() : 1;
             internal_queue_.emplace( new QueuedPacket( p ) );
         }

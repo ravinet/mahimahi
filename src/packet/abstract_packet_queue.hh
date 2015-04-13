@@ -3,17 +3,14 @@
 #ifndef ABSTRACT_PACKET_QUEUE
 #define ABSTRACT_PACKET_QUEUE
 
-#include <cmath>
-#include <string>
 #include <queue>
-#include <map>
 #include <memory>
 
 #include "queued_packet.hh"
 
 class AbstractPacketQueue
 {
-public:
+    public:
     virtual void enqueue( const QueuedPacket && p ) = 0;
 
     virtual std::unique_ptr<QueuedPacket> dequeue( const uint64_t ) = 0;
