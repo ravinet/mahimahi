@@ -16,7 +16,7 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_( packet_queue ),
-      packet_in_transit_(),
+      packet_in_transit_( nullptr ),
       packet_in_transit_bytes_to_transmit(-1),
       output_queue_(),
       log_(),
