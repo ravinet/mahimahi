@@ -12,7 +12,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-param=NUMBER] [--downlink-queue-param=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 std::unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
