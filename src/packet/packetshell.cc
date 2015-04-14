@@ -47,9 +47,9 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                                                 Targs&&... Fargs )
 {
     /* g++ bug 55914 makes this hard before version 4.9 */
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) {
-            return FerryQueueType( forward<Targs>( Fargs )... );
-        }, forward<Targs>( Fargs )... );
+    auto ferry_maker = [&]() {
+        return FerryQueueType( forward<Targs>( Fargs )... );
+    };
 
     /* Fork */
     event_loop_.add_child_process( "packetshell", [&]() {
@@ -105,9 +105,9 @@ template <class FerryQueueType>
 template <typename... Targs>
 void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
 {
-    auto ferry_maker = std::bind( []( Targs&&... Fargs ) {
-            return FerryQueueType( forward<Targs>( Fargs )... );
-        }, forward<Targs>( Fargs )... );
+    auto ferry_maker = [&]() {
+        return FerryQueueType( forward<Targs>( Fargs )... );
+    };
 
     event_loop_.add_child_process( "downlink", [&] () {
             drop_privileges();

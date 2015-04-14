@@ -11,11 +11,13 @@
 
 using namespace std;
 
-LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay, unique_ptr<AbstractPacketQueue> & packet_queue )
+LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile,
+                      const bool repeat, const bool graph_throughput, const bool graph_delay,
+                      unique_ptr<AbstractPacketQueue> && packet_queue )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
-      packet_queue_( packet_queue ),
+      packet_queue_( move( packet_queue ) ),
       packet_in_transit_( "", 0 ),
       packet_in_transit_bytes_left_( 0 ),
       output_queue_(),

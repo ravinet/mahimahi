@@ -22,7 +22,7 @@ private:
     std::vector<uint64_t> schedule_;
     uint64_t base_timestamp_;
 
-    std::unique_ptr<AbstractPacketQueue> &packet_queue_;
+    std::unique_ptr<AbstractPacketQueue> packet_queue_;
     QueuedPacket packet_in_transit_;
     unsigned int packet_in_transit_bytes_left_;
     std::queue<std::string> output_queue_;
@@ -45,7 +45,9 @@ private:
     void dequeue_packet( void );
 
 public:
-    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile, const bool repeat, const bool graph_throughput, const bool graph_delay, std::unique_ptr<AbstractPacketQueue> & packet_queue);
+    LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile,
+               const bool repeat, const bool graph_throughput, const bool graph_delay,
+               std::unique_ptr<AbstractPacketQueue> && packet_queue );
 
     void read_packet( const std::string & contents );
 

@@ -15,11 +15,11 @@ void usage_error( const string & program_name )
     throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-param=NUMBER] [--downlink-queue-param=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
-std::unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
+unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
 {
     if ( queue_arg.empty() && queue_params.empty() ) {
         cout<< "defaulting to infinite queue" << endl;
-        return std::unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue() );
+        return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue() );
     } else if ( queue_arg.empty() || queue_params.empty() ) {
         usage_error( program_name );
     }
@@ -37,13 +37,13 @@ std::unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg,
     }
 
     if (queue_arg.compare("droptail_bytelimit") == 0) {
-        return std::unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( 0, params ) );
+        return unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( 0, params ) );
     } else if (queue_arg.compare("droptail_packetlimit") == 0) {
-        return std::unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( params, 0 ) );
+        return unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( params, 0 ) );
     } else if (queue_arg.compare("drophead_bytelimit") == 0) {
-        return std::unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( 0, params ) );
+        return unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( 0, params ) );
     } else if (queue_arg.compare("drophead_packetlimit") == 0) {
-        return std::unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( params, 0 ) ); 
+        return unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( params, 0 ) ); 
     } 
 
     usage_error( program_name );
@@ -150,18 +150,17 @@ int main( int argc, char *argv[] )
             }
         }
 
-        unique_ptr<AbstractPacketQueue> up_q = get_packet_queue( uplink_queue_type, uplink_queue_params, argv[ 0 ] );
-        unique_ptr<AbstractPacketQueue> down_q = get_packet_queue( downlink_queue_type, downlink_queue_params, argv[ 0 ] );
-        assert( up_q );
-        assert( down_q );
-
         PacketShell<LinkQueue> link_shell_app( "link", user_environment );
 
         const string uplink_name = "Uplink", downlink_name = "Downlink";
 
         link_shell_app.start_uplink( "[link] ", command,
-                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay, ref(up_q));
-        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay, ref(down_q));
+                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
+                                     get_packet_queue( uplink_queue_type, uplink_queue_params, argv[ 0 ] ) );
+
+        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
+                                       get_packet_queue( downlink_queue_type, downlink_queue_params, argv[ 0 ] ) );
+
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );
