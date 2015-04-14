@@ -4,34 +4,35 @@
 #define INFINITE_PACKET_QUEUE_HH
 
 #include <queue>
+#include <cassert>
 
 #include "queued_packet.hh"
 #include "abstract_packet_queue.hh"
 
 class InfinitePacketQueue : public AbstractPacketQueue
 {
-    std::queue<std::unique_ptr<QueuedPacket>> internal_queue_;
+private:
+    std::queue<QueuedPacket> internal_queue_ {};
 
-    public:
-    InfinitePacketQueue() : internal_queue_() {} 
-
-    void enqueue( const QueuedPacket && p )
+public:
+    void enqueue( QueuedPacket && p ) override
     {
-        internal_queue_.emplace( new QueuedPacket( std::move(p) ) );
+        internal_queue_.emplace( std::move( p ) );
     }
 
-    std::unique_ptr<QueuedPacket> dequeue( const uint64_t )
+    QueuedPacket dequeue( void ) override
     {
-        if (internal_queue_.empty()) {
-            return nullptr;
-        } else {
-            std::unique_ptr<QueuedPacket> ret(std::move(internal_queue_.front()));
-            internal_queue_.pop();
-            return ret;
-        }
+        assert( not internal_queue_.empty() );
+
+        QueuedPacket ret = std::move( internal_queue_.front() );
+        internal_queue_.pop();
+        return ret;
     }
 
-    ~InfinitePacketQueue() {}
+    bool empty( void ) const override
+    {
+        return internal_queue_.empty();
+    }
 };
 
 #endif /* INFINITE_PACKET_QUEUE_HH */ 

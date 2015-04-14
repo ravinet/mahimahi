@@ -10,7 +10,9 @@ struct QueuedPacket
     uint64_t arrival_time;
     std::string contents;
 
-    QueuedPacket( const std::string & s_contents, uint64_t s_arrival_time ) : arrival_time( s_arrival_time ), contents( s_contents ) {};
+    QueuedPacket( const std::string & s_contents, uint64_t s_arrival_time )
+        : arrival_time( s_arrival_time ), contents( s_contents )
+    {}
 };
 
 #endif /* QUEUED_PACKET_HH */

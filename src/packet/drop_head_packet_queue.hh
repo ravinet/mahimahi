@@ -7,21 +7,17 @@
 
 class DropHeadPacketQueue : public DroppingPacketQueue
 {
-    public:
-    DropHeadPacketQueue( uint64_t s_packet_limit, uint64_t s_byte_limit)
-        : DroppingPacketQueue(s_packet_limit, s_byte_limit)
-    {}
+public:
+    using DroppingPacketQueue::DroppingPacketQueue;
 
-    void enqueue( const QueuedPacket && p )
+    void enqueue( QueuedPacket && p ) override
     {
-        queue_size_ += byte_limit_? p.contents.size() : 1;
-        internal_queue_.emplace( new QueuedPacket( p ) );
+        /* always accept the packet */
+        accept( std::move( p ) );
 
-        while ( (byte_limit_ && ( queue_size_ + p.contents.size() ) > byte_limit_ )
-                || ( packet_limit_ && queue_size_ > packet_limit_ ) )
-        {
-            queue_size_ -= byte_limit_ ? internal_queue_.front()->contents.size() : 1;
-            internal_queue_.pop();
+        /* do we need to drop from the head? */
+        while ( not good() ) {
+            dequeue();
         }
     }
 };

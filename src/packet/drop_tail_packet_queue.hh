@@ -7,19 +7,26 @@
 
 class DropTailPacketQueue : public DroppingPacketQueue
 {
-    public:
-    DropTailPacketQueue( uint64_t s_packet_limit, uint64_t s_byte_limit)
-        : DroppingPacketQueue(s_packet_limit, s_byte_limit)
-    {}
+public:
+    using DroppingPacketQueue::DroppingPacketQueue;
 
-    void enqueue( const QueuedPacket && p )
+    void enqueue( QueuedPacket && p ) override
     {
-        if ( (byte_limit_ && ( queue_size_ + p.contents.size() ) <= byte_limit_ )
-                || ( packet_limit_ && queue_size_ < packet_limit_ ) )
-        {
-            queue_size_ += byte_limit_ ? p.contents.size() : 1;
-            internal_queue_.emplace( new QueuedPacket( p ) );
+        bool accept_packet = true;
+
+        if ( byte_limit_ ) {
+            accept_packet &= ( size_bytes() + p.contents.size() <= byte_limit_ );
         }
+
+        if ( packet_limit_ ) {
+            accept_packet &= ( size_packets() + 1 <= packet_limit_ );
+        }
+
+        if ( accept_packet ) {
+            accept( std::move( p ) );
+        }
+
+        assert( good() );
     }
 };
 

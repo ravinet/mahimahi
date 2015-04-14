@@ -16,8 +16,8 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
       schedule_(),
       base_timestamp_( timestamp() ),
       packet_queue_( packet_queue ),
-      packet_in_transit_( nullptr ),
-      packet_in_transit_bytes_to_transmit(-1),
+      packet_in_transit_( "", 0 ),
+      packet_in_transit_bytes_left_( 0 ),
       output_queue_(),
       log_(),
       throughput_graph_( nullptr ),
@@ -188,30 +188,33 @@ void LinkQueue::rationalize( const uint64_t now )
         use_a_delivery_opportunity();
 
         while ( bytes_left_in_this_delivery > 0 ) {
-            if ( not packet_in_transit_ ) {
-                packet_in_transit_ = packet_queue_->dequeue( now );
-                if ( not packet_in_transit_ ) { break; }
-                packet_in_transit_bytes_to_transmit = packet_in_transit_->contents.size();
+            if ( not packet_in_transit_bytes_left_ ) {
+                if ( packet_queue_->empty() ) {
+                    break;
+                }
+                packet_in_transit_ = packet_queue_->dequeue();
+                packet_in_transit_bytes_left_ = packet_in_transit_.contents.size();
             }
 
-            assert( packet_in_transit_->arrival_time <= this_delivery_time );
-            assert( packet_in_transit_bytes_to_transmit <= PACKET_SIZE );
+            assert( packet_in_transit_.arrival_time <= this_delivery_time );
+            assert( packet_in_transit_bytes_left_ <= PACKET_SIZE );
+            assert( packet_in_transit_bytes_left_ > 0 );
+            assert( packet_in_transit_bytes_left_ <= packet_in_transit_.contents.size() );
 
             /* how many bytes of the delivery opportunity can we use? */
             const unsigned int amount_to_send = min( bytes_left_in_this_delivery,
-                                                     packet_in_transit_bytes_to_transmit );
+                                                     packet_in_transit_bytes_left_ );
 
             /* send that many bytes */
-            packet_in_transit_bytes_to_transmit -= amount_to_send;
+            packet_in_transit_bytes_left_ -= amount_to_send;
             bytes_left_in_this_delivery -= amount_to_send;
 
             /* has the packet been fully sent? */
-            if ( packet_in_transit_bytes_to_transmit == 0 ) {
-                record_departure( this_delivery_time, *packet_in_transit_ );
+            if ( packet_in_transit_bytes_left_ == 0 ) {
+                record_departure( this_delivery_time, packet_in_transit_ );
 
                 /* this packet is ready to go */
-                output_queue_.push( move( packet_in_transit_->contents ) );
-                packet_in_transit_.reset();
+                output_queue_.push( move( packet_in_transit_.contents ) );
             }
         }
     }

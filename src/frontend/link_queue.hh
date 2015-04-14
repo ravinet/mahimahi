@@ -23,8 +23,8 @@ private:
     uint64_t base_timestamp_;
 
     std::unique_ptr<AbstractPacketQueue> &packet_queue_;
-    std::unique_ptr<QueuedPacket> packet_in_transit_;
-    unsigned int packet_in_transit_bytes_to_transmit;
+    QueuedPacket packet_in_transit_;
+    unsigned int packet_in_transit_bytes_left_;
     std::queue<std::string> output_queue_;
 
     std::unique_ptr<std::ofstream> log_;
