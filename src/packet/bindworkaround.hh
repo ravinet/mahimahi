@@ -8,62 +8,38 @@
 /* the bug causes g++ not to expand parameter packs
    (variadic template arguments) within a lambda */
 
-/* std::bind can be used as a workaround, but it does
-   not support perfect forwarding (so can't be used
-   with move-only objects like unique_ptr) */
+/* std::bind can be used as a workaround, but it can't
+   be used with move-only objects like unique_ptr */
 
 /* this is a workaround based on
-   http://code-slim-jim.blogspot.jp/2012/11/perfect-forwarding-bind-compatable-with.html */
+   http://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer */
+
+/* see also
+   http://stackoverflow.com/questions/4871273/passing-rvalues-through-stdbind */
+
+#include <tuple>
 
 namespace BindWorkAround
 {
-    /* general list type */
-    template <class Object, typename Car, typename... Cdr>
-    struct list
-    {
-        Car car_;                    /* first/this element */
-        list<Object, Cdr...> cdr_;   /* rest of the elements */
+    /* recursive case */
+    template <int First, int... Rest>
+    struct ints_0_to_N : ints_0_to_N<First-1, First, Rest...> {};
 
-        /* construct by initializing this element and rest */
-        list( Car&& car, Cdr&&... cdr )
-            : car_( std::forward<Car>( car ) ),
-              cdr_( std::forward<Cdr>( cdr )... )
-        {}
-
-        /* construct the target object by appending our
-           element to the parameters until we reach the end */
-        template <typename... Targs>
-        Object construct( Targs&&... Fargs )
-        {
-            return cdr_.construct( std::forward<Targs>( Fargs )...,
-                                   std::forward<Car>( car_ ) );
-        }
-    };
-
-    /* base case: one-element list */
-    template <class Object, typename Car>
-    struct list<Object, Car>
-    {
-        Car car_;
-
-        list( Car&& car )
-            : car_( std::forward<Car>( car ) )
-        {}
-
-        template <typename... Targs>
-        Object construct( Targs&&... Fargs )
-        {
-            /* finally construct the target object */
-            return Object( std::forward<Targs>( Fargs )...,
-                           std::forward<Car>( car_ ) );
-        }
-    };
+    /* base case */
+    template <int... Rest>
+    struct ints_0_to_N<0, Rest...> { typedef ints_0_to_N<0, Rest...> type; };
 
     template <typename Object, typename... Targs>
     class bind
     {
     private:
-        list<Object, Targs...> bound_arguments_;
+        std::tuple<Targs...> bound_arguments_;
+
+        template <int... S>
+        Object construct( ints_0_to_N<S...> )
+        {
+            return Object( std::move( std::get<S>( bound_arguments_ ) )... );
+        }
 
     public:
         bind( Targs&&... Fargs )
@@ -72,7 +48,7 @@ namespace BindWorkAround
 
         Object operator()( void )
         {
-            return bound_arguments_.construct();
+            return construct( typename ints_0_to_N<sizeof...( Targs ) - 1>::type() );
         }
     };
 }
