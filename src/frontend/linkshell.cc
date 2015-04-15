@@ -12,7 +12,7 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-param=NUMBER] [--downlink-queue-param=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-args=NUMBER] [--downlink-queue-args=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
 unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
@@ -73,8 +73,8 @@ int main( int argc, char *argv[] )
             { "meter-downlink-delay",       no_argument, nullptr, 'y' },
             { "uplink-queue",         required_argument, nullptr, 'q' },
             { "downlink-queue",       required_argument, nullptr, 'w' },
-            { "uplink-queue-param",   required_argument, nullptr, 'a' },
-            { "downlink-queue-param", required_argument, nullptr, 'b' },
+            { "uplink-queue-args",    required_argument, nullptr, 'a' },
+            { "downlink-queue-args",  required_argument, nullptr, 'b' },
             { 0,                                      0, nullptr, 0 }
         };
 
@@ -83,7 +83,7 @@ int main( int argc, char *argv[] )
         bool meter_uplink = false, meter_downlink = false;
         bool meter_uplink_delay = false, meter_downlink_delay = false;
         string uplink_queue_type, downlink_queue_type,
-               uplink_queue_params, downlink_queue_params;
+               uplink_queue_args, downlink_queue_args;
 
         while ( true ) {
             const int opt = getopt_long( argc, argv, "u:d:", command_line_options, nullptr );
@@ -120,16 +120,16 @@ int main( int argc, char *argv[] )
                 downlink_queue_type = optarg;
                 break;
             case 'a':
-                uplink_queue_params = optarg; 
+                uplink_queue_args = optarg;
                 break;
             case 'b':
-                downlink_queue_params = optarg;
+                downlink_queue_args = optarg;
                 break;
             case '?':
                 usage_error( argv[ 0 ] );
                 break;
             default:
-                throw runtime_error( "getopt_log: unexpected return value " + to_string( opt ) );
+                throw runtime_error( "getopt_long: unexpected return value " + to_string( opt ) );
             }
         }
 
@@ -152,14 +152,12 @@ int main( int argc, char *argv[] )
 
         PacketShell<LinkQueue> link_shell_app( "link", user_environment );
 
-        const string uplink_name = "Uplink", downlink_name = "Downlink";
-
         link_shell_app.start_uplink( "[link] ", command,
-                                     uplink_name, uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
-                                     get_packet_queue( uplink_queue_type, uplink_queue_params, argv[ 0 ] ) );
+                                     "Uplink", uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
+                                     get_packet_queue( uplink_queue_type, uplink_queue_args, argv[ 0 ] ) );
 
-        link_shell_app.start_downlink( downlink_name, downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
-                                       get_packet_queue( downlink_queue_type, downlink_queue_params, argv[ 0 ] ) );
+        link_shell_app.start_downlink( "Downlink", downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
+                                       get_packet_queue( downlink_queue_type, downlink_queue_args, argv[ 0 ] ) );
 
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
