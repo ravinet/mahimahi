@@ -12,7 +12,19 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-args=NUMBER] [--downlink-queue-args=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
+    cerr << "Usage: " << program_name << " UPLINK DOWNLINK [OPTION]... [COMMAND]" << endl;
+    cerr << endl;
+    cerr << "Options =\t--once" << endl;
+    cerr << "\t\t--uplink-log=FILENAME --downlink-log=FILENAME" << endl;
+    cerr << "\t\t--meter-uplink --meter-uplink-delay" << endl;
+    cerr << "\t\t--meter-downlink --meter-downlink-delay" << endl;
+    cerr << "\t\t--meter-all" << endl;
+    cerr << "\t\t--uplink-queue=(infinite|droptail|drophead) --downlink-queue=(infinite|droptail|drophead)" << endl;
+    cerr << "\t\t--uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
+    cerr << endl;
+    cerr << "\t\t" << "QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\" (with NAME = bytes|packets)" << endl << endl;
+
+    throw runtime_error( "invalid arguments" );
 }
 
 unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const string & args, const string & program_name )
@@ -53,6 +65,7 @@ int main( int argc, char *argv[] )
             { "meter-downlink",             no_argument, nullptr, 'n' },
             { "meter-uplink-delay",         no_argument, nullptr, 'x' },
             { "meter-downlink-delay",       no_argument, nullptr, 'y' },
+            { "meter-all",                  no_argument, nullptr, 'z' },
             { "uplink-queue",         required_argument, nullptr, 'q' },
             { "downlink-queue",       required_argument, nullptr, 'w' },
             { "uplink-queue-args",    required_argument, nullptr, 'a' },
@@ -94,6 +107,11 @@ int main( int argc, char *argv[] )
                 break;
             case 'y':
                 meter_downlink_delay = true;
+                break;
+            case 'z':
+                meter_uplink = meter_downlink
+                    = meter_uplink_delay = meter_downlink_delay
+                    = true;
                 break;
             case 'q':
                 uplink_queue_type = optarg; 
