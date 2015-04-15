@@ -1,0 +1,19 @@
+These trace files represent the time-varying capacity of U.S. cellular
+networks as experienced by a mobile user. They were recorded using the
+"Saturator" tool described in the research paper:
+
+K. Winstein, A. Sivaraman, and H. Balakrishnan, "Stochastic Forecasts
+Achieve High Throughput and Low Delay over Cellular Networks", USENIX
+NSDI 2013, https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/winstein
+
+Each line gives a timestamp in milliseconds (from the beginning of the
+trace) and represents an opportunity for one 1500-byte packet to be
+drained from the bottleneck queue and cross the link. If more than one
+MTU-sized packet can be transmitted in a particular millisecond, the
+same timestamp is repeated on multiple lines.
+
+A fixed-rate link may also be represented a trace file. For example, a
+link that can pass one MTU-sized packet per millisecond (12 Mbps) can
+be represented by a file that contains just "1". By default, mm-link
+will repeat the trace file when it reaches the end, so this trace
+would represent one packet per millisecond.
