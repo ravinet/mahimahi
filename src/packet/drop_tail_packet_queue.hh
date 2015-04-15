@@ -19,17 +19,8 @@ public:
 
     void enqueue( QueuedPacket && p ) override
     {
-        bool accept_packet = true;
-
-        if ( byte_limit_ ) {
-            accept_packet &= ( size_bytes() + p.contents.size() <= byte_limit_ );
-        }
-
-        if ( packet_limit_ ) {
-            accept_packet &= ( size_packets() + 1 <= packet_limit_ );
-        }
-
-        if ( accept_packet ) {
+        if ( good_with( size_bytes() + p.contents.size(),
+                        size_packets() + 1 ) ) {
             accept( std::move( p ) );
         }
 

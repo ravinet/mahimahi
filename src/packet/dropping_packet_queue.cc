@@ -69,19 +69,25 @@ bool DroppingPacketQueue::empty( void ) const
     return internal_queue_.empty();
 }
 
-bool DroppingPacketQueue::good( void ) const
+bool DroppingPacketQueue::good_with( const unsigned int size_in_bytes,
+                                     const unsigned int size_in_packets ) const
 {
     bool ret = true;
 
     if ( byte_limit_ ) {
-        ret &= ( size_bytes() <= byte_limit_ );
+        ret &= ( size_in_bytes <= byte_limit_ );
     }
 
     if ( packet_limit_ ) {
-        ret &= ( size_packets() <= packet_limit_ );
+        ret &= ( size_in_packets <= packet_limit_ );
     }
 
     return ret;
+}
+
+bool DroppingPacketQueue::good( void ) const
+{
+    return good_with( size_bytes(), size_packets() );
 }
 
 unsigned int DroppingPacketQueue::size_bytes( void ) const

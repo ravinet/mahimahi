@@ -29,6 +29,8 @@ protected:
 
     /* are the limits currently met? */
     bool good( void ) const;
+    bool good_with( const unsigned int size_in_bytes,
+                    const unsigned int size_in_packets ) const;
 
 public:
     DroppingPacketQueue( const std::string & args );
