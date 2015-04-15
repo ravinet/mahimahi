@@ -15,38 +15,20 @@ void usage_error( const string & program_name )
     throw runtime_error( "Usage: " + program_name + " [--uplink-log=FILENAME] [--downlink-log=FILENAME] [--meter-uplink] [--meter-uplink-delay] [--meter-downlink] [--meter-downlink-delay] [--uplink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--downlink-queue=droptail_bytelimit|droptail_packetlimit|drophead_bytelimit|drophead_packetlimit] [--uplink-queue-args=NUMBER] [--downlink-queue-args=NUMBER] [--once] UPLINK DOWNLINK [COMMAND...]" );
 }
 
-unique_ptr<AbstractPacketQueue> get_packet_queue( const string & queue_arg, const string & queue_params, const string & program_name )
+unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const string & args, const string & program_name )
 {
-    if ( queue_arg.empty() && queue_params.empty() ) {
-        cout<< "defaulting to infinite queue" << endl;
+    if ( type == "infinite" ) {
         return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue() );
-    } else if ( queue_arg.empty() || queue_params.empty() ) {
-        usage_error( program_name );
+    } else if ( type == "droptail" ) {
+        return unique_ptr<AbstractPacketQueue>( new DropTailPacketQueue( args ) );
+    } else if ( type == "drophead" ) {
+        return unique_ptr<AbstractPacketQueue>( new DropHeadPacketQueue( args ) );
+    } else {
+        cerr << "Unknown queue type: " << type << endl;
     }
-
-    uint64_t params = 0;
-    try {
-        params = stoul( queue_params );
-    } catch (...) {
-        usage_error( program_name );
-    }
-
-    if (!params)
-    {
-        usage_error( program_name );
-    }
-
-    if (queue_arg.compare("droptail_bytelimit") == 0) {
-        return unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( 0, params ) );
-    } else if (queue_arg.compare("droptail_packetlimit") == 0) {
-        return unique_ptr<AbstractPacketQueue>(new DropTailPacketQueue( params, 0 ) );
-    } else if (queue_arg.compare("drophead_bytelimit") == 0) {
-        return unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( 0, params ) );
-    } else if (queue_arg.compare("drophead_packetlimit") == 0) {
-        return unique_ptr<AbstractPacketQueue>(new DropHeadPacketQueue( params, 0 ) ); 
-    } 
 
     usage_error( program_name );
+
     return nullptr;
 }
 
@@ -82,7 +64,7 @@ int main( int argc, char *argv[] )
         bool repeat = true;
         bool meter_uplink = false, meter_downlink = false;
         bool meter_uplink_delay = false, meter_downlink_delay = false;
-        string uplink_queue_type, downlink_queue_type,
+        string uplink_queue_type = "infinite", downlink_queue_type = "infinite",
                uplink_queue_args, downlink_queue_args;
 
         while ( true ) {

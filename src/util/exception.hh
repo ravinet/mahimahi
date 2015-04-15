@@ -5,6 +5,9 @@
 
 #include <system_error>
 #include <iostream>
+#include <typeinfo>
+
+#include <cxxabi.h>
 
 class tagged_error : public std::system_error
 {
@@ -36,7 +39,7 @@ public:
 
 inline void print_exception( const std::exception & e )
 {
-    std::cerr << e.what() << std::endl;
+    std::cerr << "Died on " << abi::__cxa_demangle( typeid( e ).name(), nullptr, nullptr, nullptr ) << ": " << e.what() << std::endl;
 }
 
 /* error-checking wrapper for most syscalls */
