@@ -3,6 +3,8 @@
 #ifndef ABSTRACT_PACKET_QUEUE
 #define ABSTRACT_PACKET_QUEUE
 
+#include <string>
+
 #include "queued_packet.hh"
 
 class AbstractPacketQueue
@@ -15,6 +17,8 @@ public:
     virtual bool empty( void ) const = 0;
 
     virtual ~AbstractPacketQueue() = default;
+
+    virtual std::string to_string( void ) const = 0;
 };
 
 #endif /* ABSTRACT_PACKET_QUEUE */ 

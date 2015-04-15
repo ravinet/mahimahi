@@ -4,17 +4,39 @@
 
 #include "dropping_packet_queue.hh"
 #include "exception.hh"
+#include "ezio.hh"
 
 using namespace std;
 
 static unsigned int get_arg( const string & args, const string & name )
 {
-    const auto offset = args.find( name );
+    auto offset = args.find( name );
     if ( offset == string::npos ) {
         return 0; /* default value */
     } else {
         /* extract the value */
-        return stoul( args.substr( offset + name.size() + 1 ) );
+
+        /* advance by length of name */
+        offset += name.size();
+
+        /* make sure next char is "=" */
+        if ( args.substr( offset, 1 ) != "=" ) {
+            throw runtime_error( "could not parse queue arguments: " + args );
+        }
+
+        /* advance by length of "=" */
+        offset++;
+
+        /* find the first non-digit character */
+        auto offset2 = args.substr( offset ).find_first_not_of( "0123456789" );
+
+        auto digit_string = args.substr( offset ).substr( 0, offset2 );
+
+        if ( digit_string.empty() ) {
+            throw runtime_error( "could not parse queue arguments: " + args );
+        }
+
+        return myatoi( digit_string );
     }
 }
 
@@ -80,4 +102,25 @@ void DroppingPacketQueue::accept( QueuedPacket && p )
     queue_size_in_bytes_ += p.contents.size();
     queue_size_in_packets_++;
     internal_queue_.emplace( std::move( p ) );
+}
+
+string DroppingPacketQueue::to_string( void ) const
+{
+    string ret = type() + " [";
+
+    if ( byte_limit_ ) {
+        ret += string( "bytes=" ) + ::to_string( byte_limit_ );
+    }
+
+    if ( packet_limit_ ) {
+        if ( byte_limit_ ) {
+            ret += ", ";
+        }
+
+        ret += string( "packets=" ) + ::to_string( packet_limit_ );
+    }
+
+    ret += "]";
+
+    return ret;
 }

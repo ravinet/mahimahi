@@ -7,6 +7,13 @@
 
 class DropHeadPacketQueue : public DroppingPacketQueue
 {
+private:
+    virtual const std::string & type( void ) const override
+    {
+        static const std::string type_ { "drophead" };
+        return type_;
+    }
+
 public:
     using DroppingPacketQueue::DroppingPacketQueue;
 

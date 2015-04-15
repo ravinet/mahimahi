@@ -13,7 +13,8 @@ using namespace std;
 
 LinkQueue::LinkQueue( const string & link_name, const string & filename, const string & logfile,
                       const bool repeat, const bool graph_throughput, const bool graph_delay,
-                      unique_ptr<AbstractPacketQueue> && packet_queue )
+                      unique_ptr<AbstractPacketQueue> && packet_queue,
+                      const string & command_line )
     : next_delivery_( 0 ),
       schedule_(),
       base_timestamp_( timestamp() ),
@@ -69,6 +70,8 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         }
 
         *log_ << "# mahimahi mm-link (" << link_name << ") [" << filename << "] > " << logfile << endl;
+        *log_ << "# command line: " << command_line << endl;
+        *log_ << "# queue: " << packet_queue_->to_string() << endl;
         *log_ << "# base timestamp: " << base_timestamp_ << endl;
         const char * prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
         if ( prefix ) {

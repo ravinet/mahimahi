@@ -15,6 +15,8 @@ private:
 
     std::queue<QueuedPacket> internal_queue_ {};
 
+    virtual const std::string & type( void ) const = 0;
+
 protected:
     const unsigned int packet_limit_;
     const unsigned int byte_limit_;
@@ -36,6 +38,8 @@ public:
     QueuedPacket dequeue( void ) override;
 
     bool empty( void ) const override;
+
+    std::string to_string( void ) const override;
 };
 
 #endif /* DROPPING_PACKET_QUEUE_HH */ 

@@ -47,7 +47,8 @@ private:
 public:
     LinkQueue( const std::string & link_name, const std::string & filename, const std::string & logfile,
                const bool repeat, const bool graph_throughput, const bool graph_delay,
-               std::unique_ptr<AbstractPacketQueue> && packet_queue );
+               std::unique_ptr<AbstractPacketQueue> && packet_queue,
+               const std::string & command_line );
 
     void read_packet( const std::string & contents );
 

@@ -44,6 +44,21 @@ unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const str
     return nullptr;
 }
 
+string shell_quote( const string & arg )
+{
+    string ret = "'";
+    for ( const auto & ch : arg ) {
+        if ( ch != '\'' ) {
+            ret.push_back( ch );
+        } else {
+            ret += "'\\''";
+        }
+    }
+    ret += "'";
+
+    return ret;
+}
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -55,6 +70,11 @@ int main( int argc, char *argv[] )
 
         if ( argc < 3 ) {
             usage_error( argv[ 0 ] );
+        }
+
+        string command_line { shell_quote( argv[ 0 ] ) }; /* for the log file */
+        for ( int i = 1; i < argc; i++ ) {
+            command_line += string( " " ) + shell_quote( argv[ i ] );
         }
 
         const option command_line_options[] = {
@@ -140,7 +160,7 @@ int main( int argc, char *argv[] )
         const string uplink_filename = argv[ optind ];
         const string downlink_filename = argv[ optind + 1 ];
 
-        vector< string > command;
+        vector<string> command;
 
         if ( optind + 2 == argc ) {
             command.push_back( shell_path() );
@@ -154,10 +174,12 @@ int main( int argc, char *argv[] )
 
         link_shell_app.start_uplink( "[link] ", command,
                                      "Uplink", uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
-                                     get_packet_queue( uplink_queue_type, uplink_queue_args, argv[ 0 ] ) );
+                                     get_packet_queue( uplink_queue_type, uplink_queue_args, argv[ 0 ] ),
+                                     command_line );
 
         link_shell_app.start_downlink( "Downlink", downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
-                                       get_packet_queue( downlink_queue_type, downlink_queue_args, argv[ 0 ] ) );
+                                       get_packet_queue( downlink_queue_type, downlink_queue_args, argv[ 0 ] ),
+                                       command_line );
 
         return link_shell_app.wait_for_exit();
     } catch ( const exception & e ) {

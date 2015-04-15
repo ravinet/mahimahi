@@ -33,6 +33,11 @@ public:
     {
         return internal_queue_.empty();
     }
+
+    std::string to_string( void ) const override
+    {
+        return "infinite";
+    }
 };
 
 #endif /* INFINITE_PACKET_QUEUE_HH */ 
