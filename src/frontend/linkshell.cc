@@ -12,17 +12,19 @@ using namespace std;
 
 void usage_error( const string & program_name )
 {
-    cerr << "Usage: " << program_name << " UPLINK DOWNLINK [OPTION]... [COMMAND]" << endl;
+    cerr << "Usage: " << program_name << " UPLINK-TRACE DOWNLINK-TRACE [OPTION]... [COMMAND]" << endl;
     cerr << endl;
-    cerr << "Options =\t--once" << endl;
-    cerr << "\t\t--uplink-log=FILENAME --downlink-log=FILENAME" << endl;
-    cerr << "\t\t--meter-uplink --meter-uplink-delay" << endl;
-    cerr << "\t\t--meter-downlink --meter-downlink-delay" << endl;
-    cerr << "\t\t--meter-all" << endl;
-    cerr << "\t\t--uplink-queue=(infinite|droptail|drophead) --downlink-queue=(infinite|droptail|drophead)" << endl;
-    cerr << "\t\t--uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
+    cerr << "Options = --once" << endl;
+    cerr << "          --uplink-log=FILENAME --downlink-log=FILENAME" << endl;
+    cerr << "          --meter-uplink --meter-uplink-delay" << endl;
+    cerr << "          --meter-downlink --meter-downlink-delay" << endl;
+    cerr << "          --meter-all" << endl;
+    cerr << "          --uplink-queue=QUEUE_TYPE --downlink-queue=QUEUE_TYPE" << endl;
+    cerr << "          --uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
     cerr << endl;
-    cerr << "\t\t" << "QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\" (with NAME = bytes|packets)" << endl << endl;
+    cerr << "          QUEUE_TYPE = infinite | droptail | drophead" << endl;
+    cerr << "          QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\"" << endl;
+    cerr << "              (with NAME = bytes | packets)" << endl << endl;
 
     throw runtime_error( "invalid arguments" );
 }
@@ -30,7 +32,7 @@ void usage_error( const string & program_name )
 unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const string & args, const string & program_name )
 {
     if ( type == "infinite" ) {
-        return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue() );
+        return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue( args ) );
     } else if ( type == "droptail" ) {
         return unique_ptr<AbstractPacketQueue>( new DropTailPacketQueue( args ) );
     } else if ( type == "drophead" ) {

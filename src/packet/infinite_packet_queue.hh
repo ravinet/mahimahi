@@ -8,6 +8,7 @@
 
 #include "queued_packet.hh"
 #include "abstract_packet_queue.hh"
+#include "exception.hh"
 
 class InfinitePacketQueue : public AbstractPacketQueue
 {
@@ -15,6 +16,13 @@ private:
     std::queue<QueuedPacket> internal_queue_ {};
 
 public:
+    InfinitePacketQueue( const std::string & args )
+    {
+        if ( not args.empty() ) {
+            throw std::runtime_error( "InfinitePacketQueue does not take arguments." );
+        }
+    }
+
     void enqueue( QueuedPacket && p ) override
     {
         internal_queue_.emplace( std::move( p ) );
