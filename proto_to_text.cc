@@ -78,18 +78,26 @@ int main( int argc, char *argv[] )
            top_html = "index";
         }
 
+        /* get the name of the object */
+        string html_name = "";
+        if ( object_type == "html" ) {
+            string complete_name = protobuf.request().first_line();
+            string remove_first_space = complete_name.substr(complete_name.find(" ")+1);
+            html_name = remove_first_space.substr(0, remove_first_space.find(" "));
+        }
+
         /* check if we found that it was gzipped, if not then print not gzipped */
         if ( gzipped ) {
             if ( chunked ) {
-                cout << object_type << top_html << "chunked,gzipped" << endl;
+                cout << object_type << top_html << "chunked,gzipped,name=" << html_name << endl;
             } else {
-                cout << object_type << top_html << ",gzipped" << endl;
+                cout << object_type << top_html << ",gzipped,name=" << html_name << endl;
             }
         } else {
             if ( chunked ) {
-                cout << object_type << top_html << ",chunked,not gzipped" << endl;
+                cout << object_type << top_html << ",chunked,not gzipped,name=" << html_name << endl;
             } else {
-                cout << object_type << top_html << ",not gzipped" << endl;
+                cout << object_type << top_html << ",not gzipped,name=" << html_name << endl;
             }
         }
 
