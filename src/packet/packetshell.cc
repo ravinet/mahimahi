@@ -169,6 +169,13 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                 },
                                 [&] () { return ferry_queue.pending_output(); } ) );
 
+    /* exit if finished */
+    add_action( Poller::Action( sibling, Direction::Out,
+                                [&] () {
+                                    return ResultType::Exit;
+                                },
+                                [&] () { return ferry_queue.finished(); } ) );
+
     return internal_loop( [&] () { return ferry_queue.wait_time(); } );
 }
 

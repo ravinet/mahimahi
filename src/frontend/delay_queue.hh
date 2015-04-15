@@ -26,6 +26,8 @@ public:
     unsigned int wait_time( void ) const;
 
     bool pending_output( void ) const { return wait_time() <= 0; }
+
+    static bool finished( void ) { return false; }
 };
 
 #endif /* DELAY_QUEUE_HH */

@@ -31,6 +31,8 @@ public:
     unsigned int wait_time( void );
 
     bool pending_output( void ) const { return not packet_queue_.empty(); }
+
+    static bool finished( void ) { return false; }
 };
 
 class IIDLoss : public LossQueue

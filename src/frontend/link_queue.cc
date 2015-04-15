@@ -25,7 +25,8 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
       log_(),
       throughput_graph_( nullptr ),
       delay_graph_( nullptr ),
-      repeat_( repeat )
+      repeat_( repeat ),
+      finished_( false )
 {
     assert_not_root();
 
@@ -161,7 +162,11 @@ void LinkQueue::read_packet( const string & contents )
 
 uint64_t LinkQueue::next_delivery_time( void ) const
 {
-    return schedule_.at( next_delivery_ ) + base_timestamp_;
+    if ( finished_ ) {
+        return -1;
+    } else {
+        return schedule_.at( next_delivery_ ) + base_timestamp_;
+    }
 }
 
 void LinkQueue::use_a_delivery_opportunity( void )
@@ -175,7 +180,7 @@ void LinkQueue::use_a_delivery_opportunity( void )
         if ( repeat_ ) {
             base_timestamp_ += schedule_.back();
         } else {
-            throw runtime_error( "LinkQueue: reached end of link recording" );
+            finished_ = true;
         }
     }
 }

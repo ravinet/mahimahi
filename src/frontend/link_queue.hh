@@ -32,6 +32,7 @@ private:
     std::unique_ptr<BinnedLiveGraph> delay_graph_;
 
     bool repeat_;
+    bool finished_;
 
     uint64_t next_delivery_time( void ) const;
 
@@ -57,6 +58,8 @@ public:
     unsigned int wait_time( void );
 
     bool pending_output( void ) const;
+
+    bool finished( void ) const { return finished_; }
 };
 
 #endif /* LINK_QUEUE_HH */
