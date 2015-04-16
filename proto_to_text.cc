@@ -85,6 +85,13 @@ int main( int argc, char *argv[] )
             string remove_first_space = complete_name.substr(complete_name.find(" ")+1);
             html_name = remove_first_space.substr(0, remove_first_space.find(" "));
         }
+        if ( html_name != "" ) {
+            if ( html_name.at(0) == '/' ) {
+                if ( html_name != "/" ) {
+                    html_name = html_name.substr(1);
+                }
+            }
+        }
 
         /* check if we found that it was gzipped, if not then print not gzipped */
         if ( gzipped ) {
