@@ -1,35 +1,5 @@
-mahimahi (0.90-3) unstable; urgency=low
-
-  * [Packaging] Update VCS pointers to current source location.
-
- -- Keith Winstein <keithw@mit.edu>  Sat, 11 Apr 2015 23:13:33 -0700
-
-mahimahi (0.90-2) unstable; urgency=low
-
-  * Bump standards version in Debian packaging.
-
- -- Keith Winstein <keithw@mit.edu>  Wed, 08 Apr 2015 04:41:36 -0700
-
 mahimahi (0.90-1) unstable; urgency=low
 
-  * Feature complete and nearing release candidate.
+  * Initial release. (Closes: #782413)
 
- -- Keith Winstein <keithw@mit.edu>  Wed, 08 Apr 2015 03:56:47 -0700
-
-mahimahi (0.12-1) unstable; urgency=low
-
-  * Rename programs to start with "mm-" consistently.
-
- -- Keith Winstein <keithw@mit.edu>  Mon, 09 Feb 2015 02:47:40 -0800
-
-mahimahi (0.11-1) unstable; urgency=low
-
-  * Bump version number for repository migration.
-
- -- Keith Winstein <keithw@mit.edu>  Tue, 04 Nov 2014 08:58:36 -0800
-
-mahimahi (0.1-1) unstable; urgency=low
-
-  * First packaging.
-
- -- Keith Winstein <keithw@mit.edu>  Sat, 05 Oct 2013 04:22:57 -0400
+ -- Keith Winstein <keithw@mit.edu>  Tue, 21 Apr 2015 00:48:16 -0700

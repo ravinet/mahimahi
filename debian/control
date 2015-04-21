@@ -11,7 +11,7 @@ Vcs-Browser: https://github.com/keithw/mahimahi
 Package: mahimahi
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin, gnuplot, iproute2
-Description: Tools for network emulation and analysis
+Description: tools for network emulation and analysis
  Mahimahi is a suite of user-space tools for network emulation and analysis.
  .
  Each mahimahi tool spawns a lightweight container, generally connected

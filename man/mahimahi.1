@@ -196,7 +196,7 @@ To run ping over the same link:
 .IP ""
 .RS
 .EX
-\fB$\fR mm-delay 50 mm-loss uplink 0.2 sh -c 'ping -c 10 -n $MAHIMAHI_BASE'
+\fB$\fR mm\-delay 50 mm\-loss uplink 0.2 sh \-c 'ping \-c 10 \-n $MAHIMAHI_BASE'
 PING 100.64.0.1 (100.64.0.1) 56(84) bytes of data.
 64 bytes from 100.64.0.1: icmp_seq=1 ttl=63 time=101 ms
 64 bytes from 100.64.0.1: icmp_seq=2 ttl=63 time=100 ms
@@ -218,10 +218,10 @@ To record a page load from \fIwww.nytimes.com\fR:
 .IP ""
 .RS
 .EX
-\fB$\fR mm-webrecord /tmp/nytimes chromium-browser --ignore-certificate-errors --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+\fB$\fR mm\-webrecord /tmp/nytimes chromium-browser \-\-ignore\-certificate\-errors \-\-user\-data\-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
 .EE
 
-The use of \fI--user-data-dir=/tmp/nonexistent$(date +%s%N)\fR is to prevent the browser from reusing an existing chromium-browser process.
+The use of \fI\-\-user\-data\-dir=/tmp/nonexistent$(date +%s%N)\fR is to prevent the browser from reusing an existing chromium-browser process.
 .RE
 
 To make Chrome retrieve the saved website over a delayed, lossy link whose throughput is limited to 1 full-sized packet per millisecond:
@@ -229,7 +229,7 @@ To make Chrome retrieve the saved website over a delayed, lossy link whose throu
 .IP ""
 .RS
 .EX
-\fB$\fR mm-webreplay /tmp/nytimes mm-delay 50 mm-loss uplink 0.1 mm-link <(echo 1) <(echo 1) -- chromium-browser --ignore-certificate-errors --user-data-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
+\fB$\fR mm\-webreplay /tmp/nytimes mm\-delay 50 mm\-loss uplink 0.1 mm-link <(echo 1) <(echo 1) \-\- chromium-browser \-\-ignore\-certificate\-errors \-\-user\-data\-dir=/tmp/nonexistent$(date +%s%N) www.nytimes.com
 .EE
 .RE
 
@@ -238,7 +238,7 @@ To emulate a variable cellular network and visualize a process's use of the netw
 .IP ""
 .RS
 .EX
-\fB$\fR mm-delay 20 mm-link --meter-all /usr/share/mahimahi/traces/Verizon-LTE-short.up /usr/share/mahimahi/traces/Verizon-LTE-short.down
+\fB$\fR mm\-delay 20 mm\-link \-\-meter-all /usr/share/mahimahi/traces/Verizon-LTE-short.up /usr/share/mahimahi/traces/Verizon-LTE-short.down
 \fB[delay 20 ms] [link] $\fR
 .EE
 
