@@ -30,7 +30,7 @@ namespace BindWorkAround
     struct ints_0_to_N<0, Rest...>
     {
         typedef ints_0_to_N<0, Rest...> type;
-        virtual ~ints_0_to_N() {}; /* for g++ 4.8 -Weffc++ :-( */
+        virtual ~ints_0_to_N() {} /* for g++ 4.8 -Weffc++ :-( */
     };
 
     template <typename Object, typename... Targs>
