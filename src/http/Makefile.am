@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(srcdir)/../util -I../protobufs
+AM_CPPFLAGS = -I$(srcdir)/../util -I../protobufs $(CXX11_FLAGS)
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
 
 noinst_LIBRARIES = libhttp.a

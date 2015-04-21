@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(srcdir)/../util
+AM_CPPFLAGS = -I$(srcdir)/../util $(CXX11_FLAGS)
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
 
 noinst_LIBRARIES = libpacket.a
