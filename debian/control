@@ -11,6 +11,7 @@ Vcs-Browser: https://github.com/keithw/mahimahi
 Package: mahimahi
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin, gnuplot, iproute2
+Recommends: mahimahi-traces
 Description: tools for network emulation and analysis
  Mahimahi is a suite of user-space tools for network emulation and analysis.
  .
@@ -22,3 +23,19 @@ Description: tools for network emulation and analysis
  can be chained together, with mahimahi containers nested inside each
  other. Each tool takes an optional command to execute, so it is possible
  to create a series of nested containers with one command line.
+
+Package: mahimahi-traces
+Architecture: all
+Depends: ${misc:Depends}
+Recommends: mahimahi
+Description: network traces for the mahimahi toolkit
+ These trace files represent the time-varying capacity of U.S. cellular
+ networks as experienced by a mobile user. They were recorded using the
+ "Saturator" tool described in the research paper:
+ .
+ K. Winstein, A. Sivaraman, and H. Balakrishnan, "Stochastic Forecasts
+ Achieve High Throughput and Low Delay over Cellular Networks", USENIX
+ NSDI 2013.
+ .
+ The traces can be played back by the mm-link network emulator,
+ part of the mahimahi toolkit.
