@@ -86,10 +86,17 @@ storesite_SOURCES = $(common_source) $(http_source) store_site.cc
 storesite_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 storesite_LDFLAGS = -pthread
 
+bin_PROGRAMS += dottourls
+dottourls_SOURCES = $(common_source) $(http_source) dot_to_urls.cc
+dottourls_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+dottourls_LDFLAGS = -pthread
+
 bin_PROGRAMS += protototext
 protototext_SOURCES = $(common_source) $(http_source) proto_to_text.cc
 protototext_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 protototext_LDFLAGS = -pthread
+
+
 
 bin_PROGRAMS += texttoproto
 texttoproto_SOURCES = $(common_source) $(http_source) text_to_proto.cc
