@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <sys/syscall.h>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "child_process.hh"
 #include "exception.hh"
@@ -14,15 +17,30 @@
 
 using namespace std;
 
+int do_clone( const bool new_namespace )
+{
+    /* Verify that process is single-threaded before forking */
+    {
+        struct stat my_stat;
+        SystemCall( "stat", stat( "/proc/self/task", &my_stat ) );
+
+        if ( my_stat.st_nlink != 3 ) {
+            throw runtime_error( "ChildProcess constructed in multi-threaded program" );
+        }
+    }
+
+    return SystemCall( "clone", syscall( SYS_clone,
+                                         SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
+                                         nullptr, nullptr, nullptr, nullptr ) );
+}
+
 /* start up a child process running the supplied lambda */
 /* the return value of the lambda is the child's exit status */
 ChildProcess::ChildProcess( const string & name,
                             function<int()> && child_procedure, const bool new_namespace,
                             const int termination_signal )
     : name_( name ),
-      pid_( SystemCall( "clone", syscall( SYS_clone,
-                                          SIGCHLD | (new_namespace ? CLONE_NEWNET : 0),
-                                          nullptr, nullptr, nullptr, nullptr ) ) ),
+      pid_( do_clone( new_namespace ) ),
       running_( true ),
       terminated_( false ),
       exit_status_(),
