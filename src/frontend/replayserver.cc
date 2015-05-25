@@ -136,10 +136,13 @@ int main( void )
             cout << "HTTP/1.1 404 Not Found" << CRLF;
             cout << "Content-Type: text/plain" << CRLF << CRLF;
             cout << "replayserver: could not find a match for " << request_line << CRLF;
-            throw runtime_error( "replayserver: Could not find match for request: " + request_line );
+            return EXIT_FAILURE;
         }
     } catch ( const exception & e ) {
-        print_exception( e );
+        cout << "HTTP/1.1 500 Internal Server Error" << CRLF;
+        cout << "Content-Type: text/plain" << CRLF << CRLF;
+        cout << "mahimahi mm-webreplay received an exception:" << CRLF << CRLF;
+        print_exception( e, cout );
         return EXIT_FAILURE;
     }
 }
