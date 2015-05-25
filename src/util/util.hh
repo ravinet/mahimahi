@@ -20,7 +20,8 @@ std::vector< Address > all_nameservers( void );
 std::vector< std::string > list_directory_contents( const std::string & dir );
 void prepend_shell_prefix( const std::string & str );
 template <typename T> void zero( T & x ) { memset( &x, 0, sizeof( x ) ); }
-const std::string join( const std::vector< std::string > & command );
+std::string join( const std::vector< std::string > & command );
+std::string get_working_directory( void );
 
 class TemporarilyUnprivileged {
 private:

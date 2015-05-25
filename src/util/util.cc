@@ -185,10 +185,24 @@ TemporarilyUnprivileged::~TemporarilyUnprivileged()
     SystemCall( "setegid", setegid( orig_egid ) );
 }
 
-const string join( const vector< string > & command )
+string join( const vector< string > & command )
 {
     return accumulate( command.begin() + 1, command.end(),
                        command.front(),
                        []( const string & a, const string & b )
                        { return a + " " + b; } );
+}
+
+string get_working_directory( void )
+{
+    struct Free {
+        void operator()( char *x ) const { free( x ); }
+    };
+
+    unique_ptr<char, Free> cwd_ptr { get_current_dir_name() };
+    if ( not cwd_ptr ) {
+        throw unix_error( "getcwd" );
+    }
+
+    return cwd_ptr.get();
 }

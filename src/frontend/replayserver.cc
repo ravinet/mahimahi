@@ -104,18 +104,23 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 int main( void )
 {
     try {
-        const string recording_directory = safe_getenv( "RECORD_FOLDER" );
+        assert_not_root();
+
+        const string working_directory = safe_getenv( "MAHIMAHI_CHDIR" );
+        const string recording_directory = safe_getenv( "MAHIMAHI_RECORD_PATH" );
         const string request_line = safe_getenv( "REQUEST_METHOD" )
             + " " + safe_getenv( "REQUEST_URI" )
             + " " + safe_getenv( "SERVER_PROTOCOL" );
         const bool is_https = getenv( "HTTPS" );
+
+        SystemCall( "chdir", chdir( working_directory.c_str() ) );
 
         const vector< string > files = list_directory_contents( recording_directory );
 
         unsigned int best_score = 0;
         MahimahiProtobufs::RequestResponse best_match;
 
-        for ( const auto filename : files ) {
+        for ( const auto & filename : files ) {
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
             if ( not current_record.ParseFromFileDescriptor( fd.fd_num() ) ) {

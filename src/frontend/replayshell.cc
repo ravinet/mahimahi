@@ -58,6 +58,12 @@ int main( int argc, char *argv[] )
             directory.append( "/" );
         }
 
+        /* get working directory */
+        const string working_directory { get_working_directory() };
+
+        /* chdir to result of getcwd just in case */
+        SystemCall( "chdir", chdir( working_directory.c_str() ) );
+
         /* what command will we run inside the container? */
         vector< string > command;
         if ( argc == 2 ) {
@@ -117,7 +123,7 @@ int main( int argc, char *argv[] )
         /* set up web servers */
         vector< WebServer > servers;
         for ( const auto ip_port : unique_ip_and_port ) {
-            servers.emplace_back( ip_port, directory );
+            servers.emplace_back( ip_port, working_directory, directory );
         }
 
         /* set up DNS server */

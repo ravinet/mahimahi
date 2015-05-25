@@ -13,11 +13,14 @@
 
 using namespace std;
 
-WebServer::WebServer( const Address & addr, const string & record_folder )
+WebServer::WebServer( const Address & addr, const string & working_directory, const string & record_path )
     : config_file_( "/tmp/replayshell_apache_config" ),
       moved_away_( false )
 {
-    config_file_.write( apache_main_config + record_folder + "\n" );
+    config_file_.write( apache_main_config );
+
+    config_file_.write( "SetEnv MAHIMAHI_CHDIR " + working_directory + "\n" );
+    config_file_.write( "SetEnv MAHIMAHI_RECORD_PATH " + record_path + "\n" );
 
     /* if port 443, add ssl components */
     if ( addr.port() == 443 ) { /* ssl */
