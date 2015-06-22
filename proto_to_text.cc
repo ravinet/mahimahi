@@ -43,6 +43,11 @@ int main( int argc, char *argv[] )
         /* write just the response body to the specific file in readable format */
         messages.write( string( protobuf.response().body() ) );
 
+        string scheme = "http://";
+        if ( protobuf.scheme() == MahimahiProtobufs::RequestResponse_Scheme_HTTPS ) {
+            scheme = "https://";
+        }
+
         /* check if response is gzipped, if object is html or javascript, and if chunked */
         bool gzipped = false;
         bool chunked = false;
@@ -60,6 +65,8 @@ int main( int argc, char *argv[] )
                     object_type = "javascript";
                 } else if ( current_header.value().find( "html" ) != string::npos ) { /* html */
                     object_type = "html";
+                } else if (current_header.value().find("css") != string::npos ) { /* css */
+                    object_type = "css";
                 } else {
                     object_type = "neither";
                 }
@@ -80,11 +87,18 @@ int main( int argc, char *argv[] )
 
         /* get the name of the object */
         string html_name = "";
-        if ( object_type == "html" ) {
-            string complete_name = protobuf.request().first_line();
-            string remove_first_space = complete_name.substr(complete_name.find(" ")+1);
-            html_name = remove_first_space.substr(0, remove_first_space.find(" "));
+        string host = "";
+        for ( int i = 0; i < protobuf.request().header_size(); i++ ) {
+            HTTPHeader current_header( protobuf.request().header(i) );
+            if ( HTTPMessage::equivalent_strings( current_header.key(), "Host" ) ) {
+                host = current_header.value();
+            }
         }
+
+        string complete_name = protobuf.request().first_line();
+        string remove_first_space = complete_name.substr(complete_name.find(" ")+1);
+        html_name = remove_first_space.substr(0, remove_first_space.find(" "));
+        html_name = scheme + host + html_name;
         //if ( html_name != "" ) {
         //    if ( html_name.at(0) == '/' ) {
         //        if ( html_name != "/" ) {
@@ -96,15 +110,15 @@ int main( int argc, char *argv[] )
         /* check if we found that it was gzipped, if not then print not gzipped */
         if ( gzipped ) {
             if ( chunked ) {
-                cout << object_type << top_html << "chunked,gzipped,name=" << html_name << endl;
+                cout << "type=" << object_type << "*" << "chunked=true*gzipped=true*name=" << html_name << endl;
             } else {
-                cout << object_type << top_html << ",gzipped,name=" << html_name << endl;
+                cout << "type=" << object_type << "*" << top_html << "chunked=false*gzipped=true*name=" << html_name << endl;
             }
         } else {
             if ( chunked ) {
-                cout << object_type << top_html << ",chunked,not gzipped,name=" << html_name << endl;
+                cout << "type=" << object_type << "*" << top_html << "chunked=true*gzipped=false*name=" << html_name << endl;
             } else {
-                cout << object_type << top_html << ",not gzipped,name=" << html_name << endl;
+                cout << "type=" << object_type << "*" << top_html << "chunked=false*gzipped=false*name=" << html_name << endl;
             }
         }
 
