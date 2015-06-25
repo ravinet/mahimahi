@@ -67,6 +67,8 @@ int main( int argc, char *argv[] )
                     object_type = "html";
                 } else if (current_header.value().find("css") != string::npos ) { /* css */
                     object_type = "css";
+                } else if (current_header.value().find("woff") != string::npos ) { /* font file */
+                    object_type = "woff";
                 } else {
                     object_type = "neither";
                 }
