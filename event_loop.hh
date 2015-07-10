@@ -3,9 +3,8 @@
 #ifndef EVENT_LOOP_HH
 #define EVENT_LOOP_HH
 
+#include <vector>
 #include <functional>
-#include <utility>
-#include <list>
 
 #include "poller.hh"
 #include "file_descriptor.hh"
@@ -18,7 +17,7 @@ class EventLoop
 private:
     SignalMask signals_;
     Poller poller_;
-    std::list<std::pair<ChildProcess, bool>> child_processes_;
+    std::vector<ChildProcess> child_processes_;
     PollerShortNames::Result handle_signal( const signalfd_siginfo & sig );
 
 protected:
@@ -31,9 +30,10 @@ public:
 
     void add_simple_input_handler( FileDescriptor & fd, const Poller::Action::CallbackType & callback );
 
-    void add_child_process( ChildProcess && child_process, bool exit_when_terminated = true )
+    template <typename... Targs>
+    void add_child_process( Targs&&... Fargs )
     {
-        child_processes_.emplace_back( std::make_pair( std::move( child_process ), exit_when_terminated ) );
+        child_processes_.emplace_back( std::forward<Targs>( Fargs )... );
     }
 
     int loop( void ) { return internal_loop( [] () { return -1; } ); } /* no timeout */

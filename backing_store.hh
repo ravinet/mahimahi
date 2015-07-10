@@ -9,14 +9,12 @@
 #include "http_request.hh"
 #include "http_response.hh"
 #include "address.hh"
-#include "socket.hh"
 
 /* abstract base class to store an HTTP request/response from a particular server address */
 class HTTPBackingStore
 {
 public:
     virtual void save( const HTTPResponse & response, const Address & server_address ) = 0;
-    virtual void serialize_to_socket( Socket && client ) = 0;
 };
 
 class HTTPDiskStore : public HTTPBackingStore
@@ -28,7 +26,6 @@ private:
 public:
     HTTPDiskStore( const std::string & record_folder );
     void save( const HTTPResponse & response, const Address & server_address ) override;
-    void serialize_to_socket( Socket && client ) override;
 };
 
 #endif /* BACKING_STORE_HH */

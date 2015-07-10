@@ -141,10 +141,10 @@ int main( int argc, char *argv[] )
         }
 
         /* start dnsmasq */
-        event_loop.add_child_process( ChildProcess( start_dnsmasq( dnsmasq_args ) ) );
+        event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
         /* start shell */
-        event_loop.add_child_process( ChildProcess( join( command ), [&]() {
+        event_loop.add_child_process( join( command ), [&]() {
                 drop_privileges();
 
                 /* restore environment and tweak bash prompt */
@@ -152,7 +152,7 @@ int main( int argc, char *argv[] )
                 prepend_shell_prefix( "[replay] " );
 
                 return ezexec( command, true );
-        } ) );
+        } );
 
         return event_loop.loop();
     } catch ( const Exception & e ) {

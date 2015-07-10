@@ -25,7 +25,7 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
     case SIGCONT:
         /* resume child processes too */
         for ( auto & x : child_processes_ ) {
-            x.first.resume();
+            x.resume();
         }
         break;
 
@@ -33,29 +33,23 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
         {
             /* find which children are waitable */
             /* we can't count on getting exactly one SIGCHLD per waitable event, so search */
-            list<pair<ChildProcess, bool>>::iterator x = child_processes_.begin();
-            while ( x != child_processes_.end() ) {
-                if ( x->first.waitable() ) {
-                    x->first.wait( true ); /* nonblocking */
-                    if ( x->first.terminated() ) {
-                        if ( x->first.exit_status() != 0 ) {
-                            x->first.throw_exception();
-                        } else { /* exit event loop */
-                            if ( x->second ) {
-                                return ResultType::Exit;
-                            } else { /* remove child process but don't exit eventloop */
-                                x = child_processes_.erase( x );
-                                return ResultType::Continue;
-                            }
+            for ( auto & x : child_processes_ ) {
+                if ( x.waitable() ) {
+                    x.wait( true ); /* nonblocking */
+
+                    if ( x.terminated() ) {
+                        if ( x.exit_status() != 0 ) {
+                            x.throw_exception();
+                        } else {
+                            return ResultType::Exit;
                         }
-                    } else if ( !x->first.running() ) {
+                    } else if ( !x.running() ) {
                         /* suspend parent too */
                         SystemCall( "raise", raise( SIGSTOP ) );
                     }
 
                     break;
                 }
-                x++;
             }
         }
 

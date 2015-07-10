@@ -184,21 +184,6 @@ TemporarilyUnprivileged::~TemporarilyUnprivileged()
     SystemCall( "setegid", setegid( orig_egid ) );
 }
 
-TemporarilyRoot::TemporarilyRoot()
-    : orig_euid( geteuid() )
-{
-    SystemCall( "seteuid", seteuid( 0 ) );
-
-    const char *fake_argv[] = { "progname", nullptr };
-
-    check_requirements( 1, fake_argv );
-}
-
-TemporarilyRoot::~TemporarilyRoot()
-{
-    SystemCall( "seteuid", seteuid( orig_euid ) );
-}
-
 const string join( const vector< string > & command )
 {
     return accumulate( command.begin() + 1, command.end(),
