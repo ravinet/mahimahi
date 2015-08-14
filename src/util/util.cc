@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <paths.h>
 #include <cstdlib>
+#include <cassert>
 #include <fstream>
 #include <resolv.h>
 #include <sys/stat.h>
@@ -17,10 +18,8 @@
 #include "util.hh"
 #include "exception.hh"
 #include "file_descriptor.hh"
-#include "poller.hh"
 
 using namespace std;
-using namespace PollerShortNames;
 
 /* Get the user's shell */
 string shell_path( void )
