@@ -7,7 +7,6 @@
 
 #include "child_process.hh"
 #include "system_runner.hh"
-#include "util.hh"
 #include "exception.hh"
 #include "socket.hh"
 

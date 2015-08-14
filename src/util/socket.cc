@@ -5,7 +5,6 @@
 #include <linux/netfilter_ipv4.h>
 
 #include "socket.hh"
-#include "util.hh"
 #include "timestamp.hh"
 #include "exception.hh"
 

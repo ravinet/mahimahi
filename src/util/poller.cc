@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include "poller.hh"
-#include "util.hh"
 #include "exception.hh"
 
 using namespace std;

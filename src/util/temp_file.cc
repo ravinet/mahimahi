@@ -7,7 +7,6 @@
 
 #include "temp_file.hh"
 #include "exception.hh"
-#include "util.hh"
 
 using namespace std;
 
