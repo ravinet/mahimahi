@@ -61,6 +61,11 @@ nph_replayserver_cgi_SOURCES = $(common_source) $(http_source) replayserver.cc
 nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
+bin_PROGRAMS += findmatch
+findmatch_SOURCES = $(common_source) $(http_source) findmatch.cc
+findmatch_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
+findmatch_LDFLAGS = -pthread
+
 bin_PROGRAMS += remote_proxy
 remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) remote_proxy.cc phantomjs_configuration.hh
 remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
