@@ -115,9 +115,11 @@ int main( int argc, char *argv[] )
         }
 
         /* set up web servers */
-        vector< WebServer > servers;
+        //vector< WebServer > servers;
         for ( const auto ip_port : unique_ip_and_port ) {
-            servers.emplace_back( ip_port, directory );
+            string cmd = "sudo /usr/bin/python python_server_cgi.py " + ip_port.ip() + " " + to_string(ip_port.port()) + " " + directory;
+            FILE* foo = popen(cmd.c_str(), "r");
+            (void) foo;
         }
 
         /* set up DNS server */
