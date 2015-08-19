@@ -42,8 +42,8 @@ int main( int argc, char *argv[] )
             total += (str + "\n");
             getline( in, str );
         }
-        /* remove extra /n at the end */
-        total = total.substr( 0, total.size() - 1 );
+        ///* remove extra /n at the end */
+        //total = total.substr( 0, total.size() - 1 );
 
         MahimahiProtobufs::RequestResponse protobuf;
 
@@ -54,6 +54,23 @@ int main( int argc, char *argv[] )
             if ( not protobuf.ParseFromFileDescriptor( old.num() ) ) {
                 throw Exception( proto_file, "invalid HTTP request/response" );
             }
+        }
+
+        // check if gzipped (if yes, remove endline in body that was read in)
+        bool is_gzipped = false;
+        MahimahiProtobufs::HTTPMessage old_one( protobuf.response() );
+        for ( int i = 0; i < old_one.header_size(); i++ ) {
+            HTTPHeader current_header( old_one.header(i) );
+            if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Encoding" ) ) {
+               if ( current_header.value().find("gzip") != string::npos ) {
+                    cout << "IS GZIPPED" << endl;
+                }
+            }
+        }
+
+        if ( is_gzipped ) {
+           /* remove extra /n at the end */
+           total = total.substr( 0, total.size() - 1 );
         }
 
         MahimahiProtobufs::RequestResponse final_protobuf;
