@@ -39,6 +39,22 @@ class Request_Handler(BaseHTTPRequestHandler):
         body = out.split("\r\n\r\n")[1]
         self.wfile.write(body)
 
+    def do_POST(self):
+        command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
+        proc = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True)
+        (out,err) = proc.communicate()
+        y = out.split("\r\n")
+        status = y[0].split(" ")[1]
+        self.send_response(int(status))
+        for x in range(1, len(y)-1):
+            if ( y[x] == '' ):
+                break
+            res = parse_header(y[x])
+            self.send_header(res[0], res[1])
+        self.end_headers()
+        body = out.split("\r\n\r\n")[1]
+        self.wfile.write(body)
+
 def run(ip, port, server_class=HTTPServer, handler_class=Request_Handler):
     server_address = (ip, port)
     httpd = ThreadingSimpleServer(server_address, handler_class)
