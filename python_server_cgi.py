@@ -19,8 +19,8 @@ def parse_header(x):
         val = val[1:]
     return [head, val]
 
-#could use ForkingMixIn to spawn another process rather than another thread
-class ThreadingSimpleServer(SocketServer.ThreadingMixIn,
+#could use ForkingMixIn to spawn another process rather than another thread (or ThreadingMixIn)
+class ThreadingSimpleServer(SocketServer.ForkingMixIn,
                             BaseHTTPServer.HTTPServer):
     pass
 
