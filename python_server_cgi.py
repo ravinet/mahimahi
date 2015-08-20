@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import BaseHTTPServer
-import SimpleHTTPServer
+#import SimpleHTTPServer
 import SocketServer
 import base64
 import urllib
 import sys
 import subprocess
+import time
 
 def parse_header(x):
     pieces = x.split(":")
@@ -18,26 +19,28 @@ def parse_header(x):
         val = val[1:]
     return [head, val]
 
+#could use ForkingMixIn to spawn another process rather than another thread
 class ThreadingSimpleServer(SocketServer.ThreadingMixIn,
-                   BaseHTTPServer.HTTPServer):
+                            BaseHTTPServer.HTTPServer):
     pass
 
 class Request_Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
     def do_GET(self):
         command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
         proc = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
+        self.wfile.write(out)
+        # check if server wants to close connection, if yes- close it
         y = out.split("\r\n")
-        status = y[0].split(" ")[1]
-        self.send_response(int(status))
         for x in range(1, len(y)-1):
             if ( y[x] == '' ):
                 break
             res = parse_header(y[x])
-            self.send_header(res[0], res[1])
-        self.end_headers()
-        body = out.split("\r\n\r\n")[1]
-        self.wfile.write(body)
+            if ( res[0].lower() == "connection" ):
+                if ( res[1].lower() == "close" ):
+                    self.close_connection = 1
+        return
 
     def do_POST(self):
         command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
@@ -54,6 +57,7 @@ class Request_Handler(BaseHTTPRequestHandler):
         self.end_headers()
         body = out.split("\r\n\r\n")[1]
         self.wfile.write(body)
+        return
 
 def run(ip, port, server_class=HTTPServer, handler_class=Request_Handler):
     server_address = (ip, port)
