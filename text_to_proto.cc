@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
             HTTPHeader current_header( old_one.header(i) );
             if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Encoding" ) ) {
                if ( current_header.value().find("gzip") != string::npos ) {
-                    cout << "IS GZIPPED" << endl;
+                    is_gzipped = true;
                 }
             }
         }
