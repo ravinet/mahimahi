@@ -40,6 +40,8 @@ class Request_Handler(BaseHTTPRequestHandler):
             if ( res[0].lower() == "connection" ):
                 if ( res[1].lower() == "close" ):
                     self.close_connection = 1
+                #elif ( res[1].lower() == "keep-alive" ):
+                #    self.close_connection = 0
         return
 
     def do_POST(self):
