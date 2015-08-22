@@ -8,6 +8,7 @@ import urllib
 import sys
 import subprocess
 import time
+import socket
 
 def parse_header(x):
     pieces = x.split(":")
@@ -30,6 +31,7 @@ class Request_Handler(BaseHTTPRequestHandler):
         command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
         proc = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
+        self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.wfile.write(out)
         # check if server wants to close connection, if yes- close it
         y = out.split("\r\n")
