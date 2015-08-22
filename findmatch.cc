@@ -134,9 +134,9 @@ int main( int argc, char *argv[] )
             cout << HTTPResponse( best_match.response() ).str();
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
-            cout << "HTTP/1.1 404 Not Found" << CRLF;
-            cout << "Content-Type: text/plain" << CRLF << CRLF;
-            cout << "replayshell: could not find a match for " << request_line << CRLF;
+            string cnf = "replayshell: could not find a match for " + request_line + CRLF;
+            string cnf_total = "HTTP/1.1 404 Not Found" + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + to_string(cnf.length()) + CRLF + CRLF + cnf;
+            cout << cnf_total;
             throw Exception( "replayserver", "Could not find match for request: " + request_line );
         }
     } catch ( const Exception & e ) {
