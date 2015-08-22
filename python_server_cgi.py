@@ -28,7 +28,7 @@ class ThreadingSimpleServer(SocketServer.ForkingMixIn,
 class Request_Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     def do_GET(self):
-        command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
+        command = "findmatch " + dir_to_use + " \"" + self.requestline + "\""
         proc = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
         self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -62,6 +62,8 @@ class Request_Handler(BaseHTTPRequestHandler):
                     self.close_connection = 1
         return
 
+    def log_message(self, format, *args):
+        return
 
 def run(ip, port, server_class=HTTPServer, handler_class=Request_Handler):
     server_address = (ip, port)
