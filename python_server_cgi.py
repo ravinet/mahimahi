@@ -47,9 +47,10 @@ class Request_Handler(BaseHTTPRequestHandler):
         return
 
     def do_POST(self):
-        command = "findmatch " + dir_to_use + " '" + self.requestline + "'"
+        command = "findmatch " + dir_to_use + " \"" + self.requestline + "\""
         proc = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
+        self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.wfile.write(out)
         # check if server wants to close connection, if yes- close it
         y = out.split("\r\n")
@@ -60,7 +61,8 @@ class Request_Handler(BaseHTTPRequestHandler):
             if ( res[0].lower() == "connection" ):
                 if ( res[1].lower() == "close" ):
                     self.close_connection = 1
-        return
+                #elif ( res[1].lower() == "keep-alive" ):
+                #    self.close_connection = 0
 
     def log_message(self, format, *args):
         return
