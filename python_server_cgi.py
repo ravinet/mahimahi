@@ -42,6 +42,8 @@ class Request_Handler(BaseHTTPRequestHandler):
             if ( res[0].lower() == "connection" ):
                 if ( res[1].lower() == "close" ):
                     self.close_connection = 1
+                else:
+                    self.connection.settimeout(5)
                 #elif ( res[1].lower() == "keep-alive" ):
                 #    self.close_connection = 0
         return
@@ -61,6 +63,8 @@ class Request_Handler(BaseHTTPRequestHandler):
             if ( res[0].lower() == "connection" ):
                 if ( res[1].lower() == "close" ):
                     self.close_connection = 1
+                else:
+                    self.connection.settimeout(5)
                 #elif ( res[1].lower() == "keep-alive" ):
                 #    self.close_connection = 0
 
