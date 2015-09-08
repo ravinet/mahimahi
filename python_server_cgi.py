@@ -9,6 +9,7 @@ import sys
 import subprocess
 import time
 import socket
+import ssl
 
 def parse_header(x):
     pieces = x.split(":")
@@ -75,6 +76,9 @@ def run(ip, port, server_class=HTTPServer, handler_class=Request_Handler):
     server_address = (ip, port)
     httpd = ThreadingSimpleServer(server_address, handler_class)
     #httpd = server_class(server_address, handler_class)
+    if ( port == 443 ):
+        httpd.socket = ssl.wrap_socket(httpd.socket, certfile='/etc/ssl/certs/ssl-cert-snakeoil.pem', server_side=True, keyfile='/etc/ssl/private/ssl-cert-snakeoil.key')
+        print "here"
     print 'Listening on port ' + str(port)
     httpd.serve_forever()
 

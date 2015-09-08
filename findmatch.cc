@@ -67,13 +67,13 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     const HTTPRequest saved_request( saved_record.request() );
 
     /* match HTTP/HTTPS */
-    if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
-        return 0;
-    }
-
-    if ( (not is_https) and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTP) ) {
-        return 0;
-    }
+//    if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
+//        return 0;
+//    }
+//
+//    if ( (not is_https) and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTP) ) {
+//        return 0;
+//    }
 
     /* match host header */
 //    if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
@@ -98,7 +98,11 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
         }
     }
 
-    return max_match;
+    if ( is_https ) {
+        return max_match;
+    } else {
+        return max_match;
+    }
 }
 
 int main( int argc, char *argv[] )
