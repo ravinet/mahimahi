@@ -10,6 +10,9 @@ import subprocess
 import time
 import socket
 import ssl
+import uuid
+import os
+import atexit
 
 def parse_header(x):
     pieces = x.split(":")
@@ -72,21 +75,33 @@ class Request_Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
+    def exit_handler():
+        os.system("sudo rm -rf /home/ravi/mahimahi/certificates")
+        os.system("mkdir /home/ravi/mahimahi/certificates")
+    atexit.register(exit_handler)
+
 def run(ip, port, server_class=HTTPServer, handler_class=Request_Handler):
     server_address = (ip, port)
     httpd = ThreadingSimpleServer(server_address, handler_class)
     #httpd = server_class(server_address, handler_class)
     if ( port == 443 ):
-        httpd.socket = ssl.wrap_socket(httpd.socket, certfile='/etc/ssl/certs/ssl-cert-snakeoil.pem', server_side=True, keyfile='/etc/ssl/private/ssl-cert-snakeoil.key')
+        httpd.socket = ssl.wrap_socket(httpd.socket, certfile=cert_path, server_side=True, keyfile='/home/ravi/ssl-cert.key')
         print "here"
     print 'Listening on port ' + str(port)
     httpd.serve_forever()
 
 if __name__ == "__main__":
     from sys import argv
-    if len(argv) == 4:
+    if len(argv) == 5:
         global dir_to_use
-        dir_to_use = argv[3]
+        dir_to_use = argv[4]
+        global cert_path
+        domain = argv[3]
+        unique = str(uuid.uuid4())
+        cert_path = "/home/ravi/mahimahi/certificates/" + unique + ".crt"
+        csr_path = "/home/ravi/mahimahi/certificates/" + unique + ".csr"
+        os.system("openssl req -new -key /home/ravi/ssl-cert.key -out " + csr_path + " -subj /CN=" + domain)
+        os.system("openssl x509 -req -in " + csr_path + " -CA /home/ravi/rootCA.crt -CAkey /home/ravi/rootCA.key -CAcreateserial -out " + cert_path + " -days 500")
         run(ip=argv[1], port=int(argv[2]))
     else:
         print "ERROR"

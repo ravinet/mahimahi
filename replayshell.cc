@@ -117,7 +117,18 @@ int main( int argc, char *argv[] )
         /* set up web servers */
         //vector< WebServer > servers;
         for ( const auto ip_port : unique_ip_and_port ) {
-            string cmd = "sudo /usr/bin/python python_server_cgi.py " + ip_port.ip() + " " + to_string(ip_port.port()) + " " + directory;
+            vector<string> poss;
+            for ( const auto dnsmap : hostname_to_ip ) {
+                if ( dnsmap.second.ip() == ip_port.ip() ) {
+                    poss.emplace_back(dnsmap.first);
+                }
+            }
+            string cert_domain = poss.at(0);
+            //if ( poss.size() > 1 ) {
+            //    // may have to figure out what possibilities are and make special *.google.com type domain
+            //}
+            cout << cert_domain << " " << ip_port.ip() << endl;
+            string cmd = "sudo /usr/bin/python /home/ravi/mahimahi/python_server_cgi.py " + ip_port.ip() + " " + to_string(ip_port.port()) + " " + cert_domain + " " + directory;
             FILE* foo = popen(cmd.c_str(), "r");
             (void) foo;
         }
