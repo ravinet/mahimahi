@@ -1,5 +1,8 @@
 *.a
 *.o
+*.lo
+*.la
+*.slo
 .deps
 Makefile
 Makefile.in
@@ -10,14 +13,20 @@ Makefile.in
 /autom4te.cache
 /config.h
 /config.h.in
+/config.h.in~
 /config.log
 /config.status
+/config.guess
+/config.sub
 /configure
 /depcomp
 /install-sh
 /missing
 /mahimahi-*.tar.gz
 /stamp-h1
+/libtool
+/ltmain.sh
+/m4/
 
 compile
 src/protobufs/http_record.pb.cc
@@ -29,4 +38,5 @@ src/frontend/mm-onoff
 src/frontend/mm-meter
 src/frontend/mm-webrecord
 src/frontend/mm-webreplay
-src/frontend/nph-replayserver.cgi
+src/frontend/mm-replayserver
+src/frontend/.libs

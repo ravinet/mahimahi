@@ -1,4 +1,4 @@
-dist_man_MANS = mahimahi.1 mm-link.1 nph-replayserver.cgi.1
+dist_man_MANS = mahimahi.1 mm-link.1 mm-replayserver.1
 
 # the rest just link to one of the above
 dist_man_MANS += mm-delay.1

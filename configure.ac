@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/frontend/delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
+LT_INIT
+AC_CONFIG_MACRO_DIR([m4])
+
 # Add picky CXXFLAGS
 CXX11_FLAGS="-std=c++11 -pthread"
 PICKY_CXXFLAGS="-pedantic -Wall -Wextra -Weffc++ -Werror"
@@ -15,7 +18,6 @@ AC_SUBST([PICKY_CXXFLAGS])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_RANLIB
 
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
@@ -53,6 +55,14 @@ AC_CHECK_FILE([/usr/lib/apache2], [APACHE_NAME="apache2"],
   [AC_CHECK_FILE([/usr/lib/httpd], [APACHE_NAME="httpd"],
     [AC_MSG_ERROR([apache module directory not found])])])
 
+AC_CHECK_FILE(
+  [/usr/include/apache2],
+  [AC_SUBST([APACHE2_INCLUDE], [/usr/include/apache2])],
+  [AC_MSG_ERROR([apache2-dev is required])]
+)
+
+AC_SUBST([APR_INCLUDE], [/usr/include/apr-1.0])
+
 # Checks for apache configuration modules
 AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_dir.so], [],
               [AC_MSG_ERROR([apache2 mod_dir.so is required])])
@@ -74,21 +84,6 @@ AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_authz_core.so], [],
 
 AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/$APACHE_NAME/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
 
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_cgi.so], [],
-              [AC_MSG_ERROR([apache2 mod_cgi.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_CGI], ["/usr/lib/$APACHE_NAME/modules/mod_cgi.so"], [path to apache2 mod_cgi])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_rewrite.so], [],
-              [AC_MSG_ERROR([apache2 mod_rewrite.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_REWRITE], ["/usr/lib/$APACHE_NAME/modules/mod_rewrite.so"], [path to apache2 mod_rewrite])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_env.so], [],
-	      [AC_MSG_ERROR([apache2 mod_env.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_ENV], ["/usr/lib/$APACHE_NAME/modules/mod_env.so"], [path to apache2 mod_env])
-
 AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_ssl.so], [],
               [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
 
@@ -102,11 +97,13 @@ AC_DEFINE_UNQUOTED([MOD_SSL_CERTIFICATE_FILE], ["/etc/ssl/certs/ssl-cert-snakeoi
 
 AC_DEFINE_UNQUOTED([MOD_SSL_KEY], ["/etc/ssl/private/ssl-cert-snakeoil.key"], [path to ssl key])
 
-# Set path to replayshell cgi script
+# Set path to mm-replayserver script
 if test "${prefix}" = "NONE"; then
     prefix=$ac_default_prefix
 fi
-AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/nph-replayserver.cgi"], [path to nph-replayserver.cgi])
+AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/mm-replayserver"], [path to mm-replayserver])
+
+AC_DEFINE_UNQUOTED([MOD_DEEPCGI], ["${prefix}/lib/libmod_deepcgi.so"], [path to apache2 mod_deepcgi])
 
 # Set path to directory with installed executable programs
 AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with installed executable programs])
