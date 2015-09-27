@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/frontend/delayshell.cc])
 AC_CONFIG_HEADERS([config.h])
 
+LT_INIT
+AC_CONFIG_MACRO_DIR([m4])
+
 # Add picky CXXFLAGS
 CXX11_FLAGS="-std=c++11 -pthread"
 PICKY_CXXFLAGS="-pedantic -Wall -Wextra -Weffc++ -Werror"
@@ -15,7 +18,6 @@ AC_SUBST([PICKY_CXXFLAGS])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_RANLIB
 
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
@@ -52,6 +54,14 @@ AS_IF([test x"$PROTOC" = x],
 AC_CHECK_FILE([/usr/lib/apache2], [APACHE_NAME="apache2"],
   [AC_CHECK_FILE([/usr/lib/httpd], [APACHE_NAME="httpd"],
     [AC_MSG_ERROR([apache module directory not found])])])
+
+AC_CHECK_FILE(
+  [/usr/include/apache2],
+  [AC_SUBST([APACHE2_INCLUDE], [/usr/include/apache2])],
+  [AC_MSG_ERROR([apache2-dev is required])]
+)
+
+AC_SUBST([APR_INCLUDE], [/usr/include/apr-1.0])
 
 # Checks for apache configuration modules
 AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_dir.so], [],
@@ -106,7 +116,9 @@ AC_DEFINE_UNQUOTED([MOD_SSL_KEY], ["/etc/ssl/private/ssl-cert-snakeoil.key"], [p
 if test "${prefix}" = "NONE"; then
     prefix=$ac_default_prefix
 fi
-AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/nph-replayserver.cgi"], [path to nph-replayserver.cgi])
+AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/mm-replayserver"], [path to mm-replayserver])
+
+AC_DEFINE_UNQUOTED([MOD_STDOUTREADER], ["${prefix}/lib/libmod_stdoutreader.so"], [path to apache2 mod_stdoutreader])
 
 # Set path to directory with installed executable programs
 AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with installed executable programs])

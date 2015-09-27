@@ -104,6 +104,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 int main( void )
 {
     try {
+        drop_privileges();
         assert_not_root();
 
         const string working_directory = safe_getenv( "MAHIMAHI_CHDIR" );
@@ -135,7 +136,16 @@ int main( void )
         }
 
         if ( best_score > 0 ) { /* give client the best match */
-            cout << HTTPResponse( best_match.response() ).str();
+            string best_response = HTTPResponse( best_match.response() ).str();
+            // Remove first line if status line is first
+            int pos = best_response.find( "\n" );
+            string first_line = best_response.substr( 0, pos );
+            if ( first_line.find( "HTTP" ) == 0 ) {
+                int start_pos = first_line.find( ' ' );
+                cout << "Status: " << first_line.substr( start_pos+1, 3 );
+                best_response = best_response.substr( pos+1 );
+            }
+            cout << best_response;
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
             cout << "HTTP/1.1 404 Not Found" << CRLF;

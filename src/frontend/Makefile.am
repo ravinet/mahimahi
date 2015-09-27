@@ -36,10 +36,15 @@ mm_webreplay_SOURCES = replayshell.cc web_server.hh web_server.cc
 mm_webreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_webreplay_LDFLAGS = -pthread
 
-bin_PROGRAMS += nph-replayserver.cgi
-nph_replayserver_cgi_SOURCES = replayserver.cc
-nph_replayserver_cgi_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
-nph_replayserver_cgi_LDFLAGS = -pthread
+bin_PROGRAMS += mm-replayserver
+mm_replayserver_SOURCES = replayserver.cc
+mm_replayserver_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
+mm_replayserver_LDFLAGS = -pthread
+
+lib_LTLIBRARIES = libmod_stdoutreader.la
+libmod_stdoutreader_la_SOURCES = mod_stdoutreader.c
+libmod_stdoutreader_la_CFLAGS = -I@APACHE2_INCLUDE@ -I@APR_INCLUDE@
+libmod_stdoutreader_la_CPPFLAGS = # empty
 
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/mm-delay
@@ -56,3 +61,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-webrecord
 	chown root $(DESTDIR)$(bindir)/mm-webreplay
 	chmod u+s $(DESTDIR)$(bindir)/mm-webreplay
+	chown root $(DESTDIR)$(bindir)/mm-replayserver
+	chmod u+s $(DESTDIR)$(bindir)/mm-replayserver
