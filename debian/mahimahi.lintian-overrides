@@ -10,3 +10,12 @@ mahimahi binary: setuid-binary usr/bin/mm-meter 4755 root/root
 #
 # These programs drop permissions before executing the user's command
 # and run in a sanitized environment.
+
+mahimahi binary: package-name-doesnt-match-sonames
+# The deepcgi Apache module is loaded only when Apache is run by mm-webreplay.
+# (not installed with dh-apache2 because it doesn't belong in the
+#  Apache modules directory for general use)
+
+mahimahi binary: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libmod_deepcgi.so.0.0.0 usr/lib/x86_64-linux-gnu/libmod_deepcgi.so
+# The deepcgi Apache module is used by mm-webreplay.
+# The module is not intended for other developers to link against.

@@ -43,7 +43,7 @@ mm_replayserver_LDFLAGS = -pthread
 
 lib_LTLIBRARIES = libmod_deepcgi.la
 libmod_deepcgi_la_SOURCES = mod_deepcgi.c replayserver_filename.cc
-libmod_deepcgi_la_CFLAGS = -I@APACHE2_INCLUDE@ -I@APR_INCLUDE@
+libmod_deepcgi_la_CFLAGS = -I@APACHE2_INCLUDE@ $(libapr1_CFLAGS)
 libmod_deepcgi_la_CPPFLAGS = # empty
 
 install-exec-hook:

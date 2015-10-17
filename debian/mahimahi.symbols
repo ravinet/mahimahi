@@ -1,0 +1,5 @@
+libmod_deepcgi.so.0 mahimahi #MINVER#
+ deepcgi_module@Base 0
+ deepcgi_set_recordingdir@Base 0
+ deepcgi_set_workingdir@Base 0
+ replayserver_filename@Base 0

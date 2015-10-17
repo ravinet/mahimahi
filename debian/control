@@ -3,14 +3,15 @@ Section: net
 Priority: optional
 Maintainer: Keith Winstein <keithw@mit.edu>
 Homepage: http://mahimahi.mit.edu
-Build-Depends: debhelper (>= 9), autotools-dev, dh-autoreconf, iptables, protobuf-compiler, libprotobuf-dev, pkg-config, libssl-dev, dnsmasq-base, apache2-bin, ssl-cert, libxcb-present-dev, libcairo2-dev, libpango1.0-dev, iproute2
+Build-Depends: debhelper (>= 9), autotools-dev, dh-autoreconf, iptables, protobuf-compiler, libprotobuf-dev, pkg-config, libssl-dev, dnsmasq-base, ssl-cert, libxcb-present-dev, libcairo2-dev, libpango1.0-dev, iproute2, apache2-dev
 Standards-Version: 3.9.6
-Vcs-Git: git://github.com/keithw/mahimahi.git
-Vcs-Browser: https://github.com/keithw/mahimahi
+Vcs-Git: git://github.com/ravinet/mahimahi.git
+Vcs-Browser: https://github.com/ravinet/mahimahi
 
 Package: mahimahi
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin, gnuplot, iproute2
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, iptables, dnsmasq-base, apache2-bin, gnuplot, iproute2, apache2-api-20120211
 Recommends: mahimahi-traces
 Description: tools for network emulation and analysis
  Mahimahi is a suite of user-space tools for network emulation and analysis.

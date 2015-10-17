@@ -51,43 +51,26 @@ AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
 
-AC_CHECK_FILE([/usr/lib/apache2], [APACHE_NAME="apache2"],
-  [AC_CHECK_FILE([/usr/lib/httpd], [APACHE_NAME="httpd"],
-    [AC_MSG_ERROR([apache module directory not found])])])
+AC_PATH_PROG([APXS], [apxs], [])
+AS_IF([test x"$APXS" = x],
+  [AC_MSG_ERROR([cannot find apxs, the Apache extension tool])])
 
-AC_CHECK_FILE(
-  [/usr/include/apache2],
-  [AC_SUBST([APACHE2_INCLUDE], [/usr/include/apache2])],
-  [AC_MSG_ERROR([apache2-dev is required])]
-)
-
-AC_SUBST([APR_INCLUDE], [/usr/include/apr-1.0])
+AC_SUBST([APACHE2_MODULE_DIR], [$(apxs -q exp_libexecdir)])
+AC_SUBST([APACHE2_INCLUDE], [$(apxs -q exp_includedir)])
 
 # Checks for apache configuration modules
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_dir.so], [],
-              [AC_MSG_ERROR([apache2 mod_dir.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_DIR], ["/usr/lib/$APACHE_NAME/modules/mod_dir.so"], [path to apache2 mod_dir])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_mpm_prefork.so], [],
+AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_mpm_prefork.so],
+	      [AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["$APACHE2_MODULE_DIR/mod_mpm_prefork.so"], [mod_prefork.so])],
               [AC_MSG_ERROR([apache2 mod_mpm_prefork.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["/usr/lib/$APACHE_NAME/modules/mod_mpm_prefork.so"], [path to apache2 mod_mpm_prefork])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_mime.so], [],
-              [AC_MSG_ERROR([apache2 mod_mime.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_MIME], ["/usr/lib/$APACHE_NAME/modules/mod_mime.so"], [path to apache2 mod_mime])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_authz_core.so], [],
+AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_authz_core.so],
+	      [AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["$APACHE2_MODULE_DIR/mod_authz_core.so"], [mod_authz_core.so])],
               [AC_MSG_ERROR([apache2 mod_authz_core.so is required])])
 
-AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["/usr/lib/$APACHE_NAME/modules/mod_authz_core.so"], [path to apache2 mod_authz_core])
-
-AC_CHECK_FILE([/usr/lib/$APACHE_NAME/modules/mod_ssl.so], [],
+AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_ssl.so],
+	      [AC_DEFINE_UNQUOTED([MOD_SSL], ["$APACHE2_MODULE_DIR/mod_ssl.so"], [mod_ssl.so])],
               [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
-
-AC_DEFINE_UNQUOTED([MOD_SSL], ["/usr/lib/$APACHE_NAME/modules/mod_ssl.so"], [path to apache2 mod_ssl])
 
 # Checks for SSL certificate file
 AC_CHECK_FILE([/etc/ssl/certs/ssl-cert-snakeoil.pem], [],
@@ -103,18 +86,18 @@ if test "${prefix}" = "NONE"; then
 fi
 AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/mm-replayserver"], [path to mm-replayserver])
 
-AC_DEFINE_UNQUOTED([MOD_DEEPCGI], ["${prefix}/lib/libmod_deepcgi.so"], [path to apache2 mod_deepcgi])
-
-# Set path to directory with installed executable programs
-AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with installed executable programs])
+AC_DEFINE_UNQUOTED([MOD_DEEPCGI], ["${prefix}/lib/${DEB_HOST_MULTIARCH}/libmod_deepcgi.so"], [path to apache2 mod_deepcgi])
 
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
 PKG_CHECK_MODULES([libssl], [libcrypto libssl])
+PKG_CHECK_MODULES([libapr1], [apr-1])
+PKG_CHECK_MODULES([XCBPRESENT], [xcb-present])
+PKG_CHECK_MODULES([PANGOCAIRO], [pangocairo])
 
 # Checks for header files.
 AC_HEADER_RESOLV
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h paths.h sys/ioctl.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h paths.h sys/ioctl.h sys/socket.h unistd.h], [], [AC_MSG_ERROR([Missing required header file.])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -130,8 +113,6 @@ AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([clock_gettime inet_ntoa memset mkdir setenv socket strerror strtol])
-PKG_CHECK_MODULES([XCBPRESENT], [xcb-present])
-PKG_CHECK_MODULES([PANGOCAIRO], [pangocairo])
 
 AC_CONFIG_FILES([Makefile
 		 src/Makefile
