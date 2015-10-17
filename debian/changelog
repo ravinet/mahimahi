@@ -1,3 +1,9 @@
+mahimahi (0.91-1) unstable; urgency=low
+
+  * mm-webreplay now supports persistent HTTP connections (Deepak Narayanan)
+
+ -- Keith Winstein <keithw@mit.edu>  Sat, 17 Oct 2015 05:47:59 -0700
+
 mahimahi (0.90-1) unstable; urgency=low
 
   * Initial release. (Closes: #782413)
