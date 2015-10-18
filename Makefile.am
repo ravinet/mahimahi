@@ -101,12 +101,20 @@ protototext_SOURCES = $(common_source) $(http_source) proto_to_text.cc
 protototext_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 protototext_LDFLAGS = -pthread
 
-
-
 bin_PROGRAMS += texttoproto
 texttoproto_SOURCES = $(common_source) $(http_source) text_to_proto.cc
 texttoproto_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 texttoproto_LDFLAGS = -pthread
+
+bin_PROGRAMS += findgzip
+findgzip_SOURCES = $(common_source) $(http_source) find_gzip.cc
+findgzip_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+findgzip_LDFLAGS = -pthread
+
+bin_PROGRAMS += findcacheable
+findcacheable_SOURCES = $(common_source) $(http_source) find_cacheable.cc
+findcacheable_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+findcacheable_LDFLAGS = -pthread
 
 bin_PROGRAMS += changeheader
 changeheader_SOURCES = $(common_source) $(http_source) change_header.cc
