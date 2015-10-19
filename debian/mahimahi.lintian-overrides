@@ -16,7 +16,7 @@ mahimahi binary: package-name-doesnt-match-sonames
 # (not installed with dh-apache2 because it doesn't belong in the
 #  Apache modules directory for general use)
 
-mahimahi binary: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libmod_deepcgi.so.0.0.0 usr/lib/x86_64-linux-gnu/libmod_deepcgi.so
-mahimahi binary: non-dev-pkg-with-shlib-symlink usr/lib/i386-linux-gnu/libmod_deepcgi.so.0.0.0 usr/lib/i386-linux-gnu/libmod_deepcgi.so
+mahimahi [amd64] binary: non-dev-pkg-with-shlib-symlink usr/lib/x86_64-linux-gnu/libmod_deepcgi.so.0.0.0 usr/lib/x86_64-linux-gnu/libmod_deepcgi.so
+mahimahi [i386] binary: non-dev-pkg-with-shlib-symlink usr/lib/i386-linux-gnu/libmod_deepcgi.so.0.0.0 usr/lib/i386-linux-gnu/libmod_deepcgi.so
 # The deepcgi Apache module is used by mm-webreplay.
 # The module is not intended for other developers to link against.
