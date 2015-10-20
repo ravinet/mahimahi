@@ -101,7 +101,10 @@ protototext_SOURCES = $(common_source) $(http_source) proto_to_text.cc
 protototext_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 protototext_LDFLAGS = -pthread
 
-
+bin_PROGRAMS += connanalysis
+connanalysis_SOURCES = $(common_source) $(http_source) conn_analysis.cc
+connanalysis_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+connanalysis_LDFLAGS = -pthread
 
 bin_PROGRAMS += texttoproto
 texttoproto_SOURCES = $(common_source) $(http_source) text_to_proto.cc

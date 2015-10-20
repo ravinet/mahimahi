@@ -26,6 +26,9 @@ message RequestResponse {
 
     optional HTTPMessage request = 4;
     optional HTTPMessage response = 5;
+
+    optional string clientip = 6;
+    optional uint32 clientport = 7;
 }
 
 message BulkRequest {
