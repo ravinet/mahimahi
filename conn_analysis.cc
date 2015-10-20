@@ -28,7 +28,6 @@ int main( int argc, char *argv[] )
         }
 
         string proto_file = argv[ 1 ];
-        string new_file = argv[ 2 ];
 
         FileDescriptor fd( SystemCall( "open", open( proto_file.c_str(), O_RDONLY ) ) );
 
@@ -38,7 +37,7 @@ int main( int argc, char *argv[] )
             throw Exception( proto_file, "invalid HTTP request/response" );
         }
 
-        cout << protobuf.clientip();
+        cout << protobuf.clientip() << " " << protobuf.clientport() << endl;
     } catch ( const Exception & e ) {
         e.perror();
         return EXIT_FAILURE;
