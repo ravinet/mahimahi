@@ -13,8 +13,14 @@
 #include "file_descriptor.hh"
 #include "google/protobuf/io/gzip_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "http_message.hh"
+#include "webp/encode.h"
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include "webp/decode.h"
 
 using namespace std;
+//using namespace cv;
 
 HTTPMemoryStore::HTTPMemoryStore()
     : mutex_(),
@@ -28,7 +34,45 @@ void HTTPMemoryStore::save( const HTTPResponse & response, const Address & serve
 
     /* Add the current request to requests BulkMessage and current response to responses BulkMessage */
     requests.add_msg()->CopyFrom( response.request().toprotobuf() );
-    responses.add_msg()->CopyFrom( response.toprotobuf() );
+    if ( response.has_header("Content-Type") ) {
+        if ( HTTPMessage::equivalent_strings(response.get_header_value("Content-Type"), "image/jpeg") || HTTPMessage::equivalent_strings(response.get_header_value("Content-Type"), "image/png") ) {
+            /* create new protobuf after converting image to webP format (also must change content length) */
+            MahimahiProtobufs::HTTPMessage converted;
+            MahimahiProtobufs::HTTPMessage original = response.toprotobuf();
+
+            /* convert body to webp and get new content length */
+            cv::Mat img = cv::imread(original.body().c_str() );
+            uint8_t* output;
+            //auto datasize = WebPEncodeRGB((uint8_t*)(uchar *)img->imageData, img->width, img->height, img->widthStep, 0.9, &output);
+            auto datasize = WebPEncodeRGB(img.data, img.size().width, img.size().height, img.step, 0.9, &output);
+
+            //string o( (char *)output, (int)datasize );
+            converted.set_first_line( original.first_line() );
+            converted.set_body( reinterpret_cast<char*>(output) );
+            /* copy all headers except Content-Type (change it to webP) */
+            for ( int i = 0; i < original.header_size(); i++ ) {
+                HTTPHeader current_header( original.header(i) );
+                if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Type" ) ) {
+                    /* this is the value we want to change */
+                    string new_vals = current_header.key() + ": " + "image/webp,*/*;q=0.8";
+                    HTTPHeader new_header( new_vals );
+                    converted.add_header()->CopyFrom( new_header.toprotobuf() );
+                } else if ( HTTPMessage::equivalent_strings( current_header.key(), "Content-Length" ) ) {
+                    /* this is the value we want to change */
+                    string new_vals = current_header.key() + ": " + to_string(datasize);
+                    HTTPHeader new_header( new_vals );
+                    converted.add_header()->CopyFrom( new_header.toprotobuf() );
+                } else {
+                    converted.add_header()->CopyFrom( current_header.toprotobuf() );
+                }
+            }
+            responses.add_msg()->CopyFrom( converted );
+        } else {
+            responses.add_msg()->CopyFrom( response.toprotobuf() );
+        }
+    } else {
+        responses.add_msg()->CopyFrom( response.toprotobuf() );
+    }
 }
 
 void HTTPMemoryStore::serialize_to_socket( Socket && client )

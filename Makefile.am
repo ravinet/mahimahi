@@ -52,48 +52,48 @@ local_proxy_source = local_proxy.hh local_proxy.cc
 
 bin_PROGRAMS += recordshell
 recordshell_SOURCES = $(common_source) $(http_source) $(http_server_source) $(http_recorder_source) $(bulk_message_source) recordshell.cc
-recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+recordshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 recordshell_LDFLAGS = -pthread
 archive_source = archive.hh archive.cc
 
 bin_PROGRAMS += replayshell
 replayshell_SOURCES = $(common_source) $(http_source) replayshell.cc web_server.hh web_server.cc
-replayshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
+replayshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 replayshell_LDFLAGS = -pthread
 
 bin_PROGRAMS += nph-replayserver.cgi
 nph_replayserver_cgi_SOURCES = $(common_source) $(http_source) replayserver.cc
-nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS)
+nph_replayserver_cgi_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 nph_replayserver_cgi_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy
 remote_proxy_SOURCES = $(common_source) $(http_server_source) $(http_source) $(http_recorder_source) $(bulk_message_source) remote_proxy.cc phantomjs_configuration.hh
-remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+remote_proxy_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 remote_proxy_LDFLAGS = -pthread
 
 bin_PROGRAMS += remote_proxy_test_client
 remote_proxy_test_client_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) remote_proxy_test_client.cc
-remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+remote_proxy_test_client_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(opencv_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 remote_proxy_test_client_LDFLAGS = -pthread
 
 bin_PROGRAMS += localproxy_bin
 localproxy_bin_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) $(local_proxy_source) $(archive_source) local_proxy_bin.cc
-localproxy_bin_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+localproxy_bin_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(opencv_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 localproxy_bin_LDFLAGS = -pthread
 
 bin_PROGRAMS += bulkresponseparser
 bulkresponseparser_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) bulkresponseparser.cc
-bulkresponseparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+bulkresponseparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 bulkresponseparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += bulkrequestparser
 bulkrequestparser_SOURCES = $(common_source) $(http_server_source) $(http_source) $(bulk_message_source) bulkrequestparser.cc
-bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+bulkrequestparser_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 bulkrequestparser_LDFLAGS = -pthread
 
 bin_PROGRAMS += localproxyshell
 localproxyshell_SOURCES = $(common_source) $(http_source) $(http_server_source)  $(http_recorder_source) $(bulk_message_source) $(local_proxy_source) $(archive_source) localproxyshell.cc
-localproxyshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+localproxyshell_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS) $(libwebp_LIBS) $(opencv_LIBS)
 localproxyshell_LDFLAGS = -pthread
 
 install-exec-hook:

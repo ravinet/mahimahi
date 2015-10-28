@@ -116,6 +116,8 @@ AC_DEFINE_UNQUOTED([EXEC_DIR], ["${prefix}/bin/"], [path to directory with insta
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
 PKG_CHECK_MODULES([libssl], [libssl])
+PKG_CHECK_MODULES([libwebp], [libwebp])
+PKG_CHECK_MODULES([opencv], [opencv])
 
 # Checks for header files.
 AC_HEADER_RESOLV
