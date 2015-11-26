@@ -29,7 +29,7 @@ TunDevice::TunDevice( const string & name,
     assign_address( name, addr, peer );
 }
 
-void interface_ioctl( FileDescriptor & fd, const int request,
+void interface_ioctl( FileDescriptor & fd, const unsigned long request,
                       const string & name,
                       function<void( ifreq &ifr )> ifr_adjustment)
 {
@@ -42,7 +42,7 @@ void interface_ioctl( FileDescriptor & fd, const int request,
     SystemCall( "ioctl " + name, ioctl( fd.fd_num(), request, static_cast<void *>( &ifr ) ) );
 }
 
-void interface_ioctl( const int request,
+void interface_ioctl( const unsigned long request,
                       const string & name,
                       function<void( ifreq &ifr )> ifr_adjustment)
 {

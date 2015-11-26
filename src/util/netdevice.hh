@@ -13,11 +13,11 @@
 #include "address.hh"
 
 /* general helpers */
-void interface_ioctl( FileDescriptor & fd, const int request,
+void interface_ioctl( FileDescriptor & fd, const unsigned long request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 
-void interface_ioctl( const int request,
+void interface_ioctl( const unsigned long request,
                       const std::string & name,
                       std::function<void( ifreq &ifr )> ifr_adjustment);
 
