@@ -1,3 +1,9 @@
+mahimahi (0.91a-1) unstable; urgency=low
+
+  * Fix Debian build failure on some 64-bit platforms
+
+ -- Keith Winstein <keithw@mit.edu>  Thu, 26 Nov 2015 11:35:47 -0800
+
 mahimahi (0.91-1) unstable; urgency=low
 
   * mm-webreplay now supports persistent HTTP connections (Deepak Narayanan)
