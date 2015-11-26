@@ -14,7 +14,7 @@ export DEB_HOST_MULTIARCH = $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 %:
 	dh $@ --with autoreconf
 
-override_dh_fixperms:
+override_dh_fixperms-arch:
 	dh_fixperms
 	chmod 4755 debian/mahimahi/usr/bin/mm-delay
 	chmod 4755 debian/mahimahi/usr/bin/mm-loss

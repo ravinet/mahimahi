@@ -1,6 +1,7 @@
 mahimahi (0.91a-1) unstable; urgency=low
 
-  * Fix Debian build failure on some 64-bit platforms
+  * Fix Debian build failure on some 64-bit platforms (#806368)
+  * Fix Debian build failure for source-only uploads (#806072)
 
  -- Keith Winstein <keithw@mit.edu>  Thu, 26 Nov 2015 11:35:47 -0800
 
