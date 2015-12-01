@@ -38,4 +38,5 @@ Makefile.in
 /src/frontend/mm-webrecord
 /src/frontend/mm-webreplay
 /src/frontend/mm-replayserver
+/src/frontend/gh-client
 /src/frontend/.libs
