@@ -46,6 +46,11 @@ gh_client_SOURCES = gh-client.cc trivial_queue.hh
 gh_client_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 gh_client_LDFLAGS = -pthread
 
+bin_PROGRAMS += gh-server
+gh_server_SOURCES = gh-server.cc trivial_queue.hh
+gh_server_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
+gh_server_LDFLAGS = -pthread
+
 lib_LTLIBRARIES = libmod_deepcgi.la
 libmod_deepcgi_la_SOURCES = mod_deepcgi.c replayserver_filename.cc
 libmod_deepcgi_la_CFLAGS = -I@APACHE2_INCLUDE@ $(libapr1_CFLAGS)
@@ -68,3 +73,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-webreplay
 	chown root $(DESTDIR)$(bindir)/gh-client
 	chmod u+s $(DESTDIR)$(bindir)/gh-client
+	chown root $(DESTDIR)$(bindir)/gh-server
+	chmod u+s $(DESTDIR)$(bindir)/gh-server
