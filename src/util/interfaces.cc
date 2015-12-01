@@ -58,6 +58,11 @@ Interfaces::Interfaces()
         all_routes += new_chunk;
     }
 
+    if ( all_routes.empty() ) {
+        /* there are no routes, so Linux does not even make a header line! */
+        return;
+    }
+
     istringstream all_routes_stream;
     all_routes_stream.str( all_routes );
 
