@@ -19,23 +19,24 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 3 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " IP PORT [command...]" );
+        if ( argc < 4 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " IP PORT PRIVATE-IP [command...]" );
         }
 
 	const Address server{ argv[ 1 ], argv[ 2 ] };
+	const Address private_address { argv[ 3 ], "0" };
 
         vector< string > command;
 
-        if ( argc == 3 ) {
+        if ( argc == 4 ) {
             command.push_back( shell_path() );
         } else {
-            for ( int i = 3; i < argc; i++ ) {
+            for ( int i = 4; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
             }
         }
 
-        TunnelClient<TrivialQueue> tunnelled_app( user_environment, server );
+        TunnelClient<TrivialQueue> tunnelled_app( user_environment, server, private_address );
 
         tunnelled_app.start_uplink( "[tunnel " + server.str() + "] ",
 				    command, 57  );

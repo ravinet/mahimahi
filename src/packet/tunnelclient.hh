@@ -38,7 +38,8 @@ private:
     Address get_mahimahi_base( void ) const;
 
 public:
-    TunnelClient( char ** const user_environment, const Address & server_address );
+    TunnelClient( char ** const user_environment, const Address & server_address,
+                  const Address & private_address );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,

@@ -43,6 +43,8 @@ TunnelServer<FerryQueueType>::TunnelServer( const std::string & device_prefix, c
     /* bind the listening socket to an available address/port, and print out what was bound */
     listening_socket_.bind( Address() );
     cout << "Listener bound to port " << listening_socket_.local_address().port() << endl;
+
+    cout << "Client's private address should be: " << ingress_addr().ip() << endl;
 }
 
 template <class FerryQueueType>
