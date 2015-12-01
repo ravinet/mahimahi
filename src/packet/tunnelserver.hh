@@ -43,11 +43,6 @@ public:
     TunnelServer( const std::string & device_prefix, char ** const user_environment );
 
     template <typename... Targs>
-    void start_uplink( const std::string & shell_prefix,
-                       const std::vector< std::string > & command,
-                       Targs&&... Fargs );
-
-    template <typename... Targs>
     void start_downlink( Targs&&... Fargs );
 
     int wait_for_exit( void );
