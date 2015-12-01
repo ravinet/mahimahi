@@ -9,9 +9,9 @@
 #include "nat.hh"
 #include "util.hh"
 #include "address.hh"
-#include "dns_proxy.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
+#include "socket.hh"
 
 template <class FerryQueueType>
 class TunnelClient
@@ -20,8 +20,6 @@ private:
     char ** const user_environment_;
     std::pair<Address, Address> egress_ingress;
     Address nameserver_;
-    TunDevice egress_tun_;
-    DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
     UDPSocket server_socket_;
@@ -40,7 +38,7 @@ private:
     Address get_mahimahi_base( void ) const;
 
 public:
-    TunnelClient( const std::string & device_prefix, char ** const user_environment, const Address & server_address );
+    TunnelClient( char ** const user_environment, const Address & server_address );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,

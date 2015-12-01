@@ -35,7 +35,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        TunnelClient<TrivialQueue> tunnelled_app( "tunnel", user_environment, server );
+        TunnelClient<TrivialQueue> tunnelled_app( user_environment, server );
 
         tunnelled_app.start_uplink( "[tunnel " + server.str() + "] ",
 				    command, 57  );

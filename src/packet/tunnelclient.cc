@@ -12,7 +12,6 @@
 #include "util.hh"
 #include "interfaces.hh"
 #include "address.hh"
-#include "dns_server.hh"
 #include "timestamp.hh"
 #include "exception.hh"
 #include "bindworkaround.hh"
@@ -22,13 +21,11 @@ using namespace std;
 using namespace PollerShortNames;
 
 template <class FerryQueueType>
-TunnelClient<FerryQueueType>::TunnelClient( const std::string & device_prefix, char ** const user_environment,
+TunnelClient<FerryQueueType>::TunnelClient( char ** const user_environment,
                                             const Address & server_address )
     : user_environment_( user_environment ),
       egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
       nameserver_( first_nameserver() ),
-      egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
-      dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
       server_socket_(),
       event_loop_()
@@ -82,10 +79,6 @@ void TunnelClient<FerryQueueType>::start_uplink( const string & shell_prefix,
             SystemCall( "ioctl SIOCADDRT", ioctl( UDPSocket().fd_num(), SIOCADDRT, &route ) );
 
             Ferry inner_ferry;
-
-            /* run dnsmasq as local caching nameserver */
-            inner_ferry.add_child_process( start_dnsmasq( {
-                        "-S", dns_outside_.udp_listener().local_address().str( "#" ) } ) );
 
             /* Fork again after dropping root privileges */
             drop_privileges();
