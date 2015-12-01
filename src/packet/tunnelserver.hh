@@ -1,7 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-#ifndef PACKETSHELL_HH
-#define PACKETSHELL_HH
+#ifndef TUNNELSERVER_HH
+#define TUNNELSERVER_HH
 
 #include <string>
 
@@ -14,7 +14,7 @@
 #include "socketpair.hh"
 
 template <class FerryQueueType>
-class PacketShell
+class TunnelServer
 {
 private:
     char ** const user_environment_;
@@ -40,7 +40,7 @@ private:
     Address get_mahimahi_base( void ) const;
 
 public:
-    PacketShell( const std::string & device_prefix, char ** const user_environment );
+    TunnelServer( const std::string & device_prefix, char ** const user_environment );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
@@ -52,8 +52,8 @@ public:
 
     int wait_for_exit( void );
 
-    PacketShell( const PacketShell & other ) = delete;
-    PacketShell & operator=( const PacketShell & other ) = delete;
+    TunnelServer( const TunnelServer & other ) = delete;
+    TunnelServer & operator=( const TunnelServer & other ) = delete;
 };
 
-#endif
+#endif /* TUNNELSERVER_HH */

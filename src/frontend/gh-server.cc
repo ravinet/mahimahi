@@ -6,7 +6,7 @@
 #include "trivial_queue.hh"
 #include "util.hh"
 #include "ezio.hh"
-#include "tunnelclient.cc"
+#include "tunnelserver.cc"
 
 using namespace std;
 
@@ -19,26 +19,12 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 3 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " IP PORT [command...]" );
+        if ( argc != 1 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) );
         }
 
-	const Address server{ argv[ 1 ], argv[ 2 ] };
+        TunnelServer<TrivialQueue> tunnelled_app( "tunnel", user_environment );
 
-        vector< string > command;
-
-        if ( argc == 3 ) {
-            command.push_back( shell_path() );
-        } else {
-            for ( int i = 3; i < argc; i++ ) {
-                command.push_back( argv[ i ] );
-            }
-        }
-
-        TunnelClient<TrivialQueue> tunnelled_app( "tunnel", user_environment, server );
-
-        tunnelled_app.start_uplink( "[tunnel " + server.str() + "] ",
-				    command, 57  );
         return tunnelled_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );

@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <net/route.h>
 
-#include "packetshell.hh"
+#include "tunnelserver.hh"
 #include "netdevice.hh"
 #include "nat.hh"
 #include "util.hh"
@@ -22,7 +22,7 @@ using namespace std;
 using namespace PollerShortNames;
 
 template <class FerryQueueType>
-PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment )
+TunnelServer<FerryQueueType>::TunnelServer( const std::string & device_prefix, char ** const user_environment )
     : user_environment_( user_environment ),
       egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
       nameserver_( first_nameserver() ),
@@ -34,7 +34,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
 {
     /* make sure environment has been cleared */
     if ( environ != nullptr ) {
-        throw runtime_error( "PacketShell: environment was not cleared" );
+        throw runtime_error( "TunnelServer: environment was not cleared" );
     }
 
     /* initialize base timestamp value before any forking */
@@ -43,7 +43,7 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
 
 template <class FerryQueueType>
 template <typename... Targs>
-void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
+void TunnelServer<FerryQueueType>::start_uplink( const string & shell_prefix,
                                                 const vector< string > & command,
                                                 Targs&&... Fargs )
 {
@@ -108,7 +108,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
 template <class FerryQueueType>
 template <typename... Targs>
-void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
+void TunnelServer<FerryQueueType>::start_downlink( Targs&&... Fargs )
 {
     /* g++ bug 55914 makes this hard before version 4.9 */
     BindWorkAround::bind<FerryQueueType, Targs&&...> ferry_maker( forward<Targs>( Fargs )... );
@@ -138,13 +138,13 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
 }
 
 template <class FerryQueueType>
-int PacketShell<FerryQueueType>::wait_for_exit( void )
+int TunnelServer<FerryQueueType>::wait_for_exit( void )
 {
     return event_loop_.loop();
 }
 
 template <class FerryQueueType>
-int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
+int TunnelServer<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                               FileDescriptor & tun,
                                               FileDescriptor & sibling )
 {
@@ -197,7 +197,7 @@ struct TemporaryEnvironment
 };
 
 template <class FerryQueueType>
-Address PacketShell<FerryQueueType>::get_mahimahi_base( void ) const
+Address TunnelServer<FerryQueueType>::get_mahimahi_base( void ) const
 {
     /* temporarily break our security rule of not looking
        at the user's environment before dropping privileges */
