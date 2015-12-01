@@ -24,7 +24,7 @@ private:
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
-    std::pair<UnixDomainSocket, UnixDomainSocket> pipe_;
+    UDPSocket listening_socket_;
 
     EventLoop event_loop_;
 

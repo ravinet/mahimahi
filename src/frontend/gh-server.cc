@@ -24,6 +24,7 @@ int main( int argc, char *argv[] )
         }
 
         TunnelServer<TrivialQueue> tunnelled_app( "tunnel", user_environment );
+        tunnelled_app.start_downlink( 100 );
 
         return tunnelled_app.wait_for_exit();
     } catch ( const exception & e ) {

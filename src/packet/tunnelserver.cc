@@ -29,7 +29,7 @@ TunnelServer<FerryQueueType>::TunnelServer( const std::string & device_prefix, c
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
-      pipe_( UnixDomainSocket::make_pair() ),
+      listening_socket_(),
       event_loop_()
 {
     /* make sure environment has been cleared */
@@ -39,6 +39,10 @@ TunnelServer<FerryQueueType>::TunnelServer( const std::string & device_prefix, c
 
     /* initialize base timestamp value before any forking */
     initial_timestamp();
+
+    /* bind the listening socket to an available address/port, and print out what was bound */
+    listening_socket_.bind( Address() );
+    cout << "Listener bound to port " << listening_socket_.local_address().port() << endl;
 }
 
 template <class FerryQueueType>
@@ -68,7 +72,7 @@ void TunnelServer<FerryQueueType>::start_downlink( Targs&&... Fargs )
             dns_outside_.register_handlers( outer_ferry );
 
             FerryQueueType downlink_queue { ferry_maker() };
-            return outer_ferry.loop( downlink_queue, egress_tun_, pipe_.second );
+            return outer_ferry.loop( downlink_queue, egress_tun_, listening_socket_ );
         } );
 }
 
