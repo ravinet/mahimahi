@@ -12,6 +12,7 @@
 #include "dns_proxy.hh"
 #include "event_loop.hh"
 #include "socketpair.hh"
+#include "autosocket.hh"
 
 template <class FerryQueueType>
 class TunnelServer
@@ -24,7 +25,7 @@ private:
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
-    UDPSocket listening_socket_;
+    AutoSocket listening_socket_;
 
     EventLoop event_loop_;
 

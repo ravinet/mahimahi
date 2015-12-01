@@ -14,4 +14,4 @@ libutil_a_SOURCES = exception.hh ezio.cc ezio.hh                               \
         poller.hh poller.cc bytestream_queue.hh bytestream_queue.cc            \
         event_loop.hh event_loop.cc                                            \
         temp_file.hh temp_file.cc dns_server.hh dns_server.cc                  \
-        socketpair.hh socketpair.cc
+        socketpair.hh socketpair.cc autosocket.hh
