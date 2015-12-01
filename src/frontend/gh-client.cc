@@ -6,7 +6,7 @@
 #include "trivial_queue.hh"
 #include "util.hh"
 #include "ezio.hh"
-#include "packetshell.cc"
+#include "tunnelclient.cc"
 
 using namespace std;
 
@@ -35,7 +35,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<TrivialQueue> tunnelled_app( "tunnel", user_environment );
+        TunnelClient<TrivialQueue> tunnelled_app( "tunnel", user_environment );
 
         tunnelled_app.start_uplink( "[tunnel " + server.str() + "] ",
 				    command, 57  );
