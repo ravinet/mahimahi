@@ -24,7 +24,7 @@ private:
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
 
-    std::pair<UnixDomainSocket, UnixDomainSocket> pipe_;
+    UDPSocket server_socket_;
 
     EventLoop event_loop_;
 
@@ -40,15 +40,12 @@ private:
     Address get_mahimahi_base( void ) const;
 
 public:
-    TunnelClient( const std::string & device_prefix, char ** const user_environment );
+    TunnelClient( const std::string & device_prefix, char ** const user_environment, const Address & server_address );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
                        const std::vector< std::string > & command,
                        Targs&&... Fargs );
-
-    template <typename... Targs>
-    void start_downlink( Targs&&... Fargs );
 
     int wait_for_exit( void );
 

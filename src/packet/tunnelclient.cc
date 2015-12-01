@@ -22,14 +22,15 @@ using namespace std;
 using namespace PollerShortNames;
 
 template <class FerryQueueType>
-TunnelClient<FerryQueueType>::TunnelClient( const std::string & device_prefix, char ** const user_environment )
+TunnelClient<FerryQueueType>::TunnelClient( const std::string & device_prefix, char ** const user_environment,
+                                            const Address & server_address )
     : user_environment_( user_environment ),
       egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
-      pipe_( UnixDomainSocket::make_pair() ),
+      server_socket_(),
       event_loop_()
 {
     /* make sure environment has been cleared */
@@ -39,6 +40,9 @@ TunnelClient<FerryQueueType>::TunnelClient( const std::string & device_prefix, c
 
     /* initialize base timestamp value before any forking */
     initial_timestamp();
+
+    /* connect the server_socket to the server_address */
+    server_socket_.connect( server_address );
 }
 
 template <class FerryQueueType>
@@ -102,39 +106,8 @@ void TunnelClient<FerryQueueType>::start_uplink( const string & shell_prefix,
                 } );
 
             FerryQueueType uplink_queue { ferry_maker() };
-            return inner_ferry.loop( uplink_queue, ingress_tun, pipe_.first );
+            return inner_ferry.loop( uplink_queue, ingress_tun, server_socket_ );
         }, true );  /* new network namespace */
-}
-
-template <class FerryQueueType>
-template <typename... Targs>
-void TunnelClient<FerryQueueType>::start_downlink( Targs&&... Fargs )
-{
-    /* g++ bug 55914 makes this hard before version 4.9 */
-    BindWorkAround::bind<FerryQueueType, Targs&&...> ferry_maker( forward<Targs>( Fargs )... );
-
-    /*
-      This is a replacement for expanding the parameter pack
-      inside the lambda, e.g.:
-
-    auto ferry_maker = [&]() {
-        return FerryQueueType( forward<Targs>( Fargs )... );
-    };
-    */
-
-    event_loop_.add_child_process( "downlink", [&] () {
-            drop_privileges();
-
-            /* restore environment */
-            environ = user_environment_;
-
-            Ferry outer_ferry;
-
-            dns_outside_.register_handlers( outer_ferry );
-
-            FerryQueueType downlink_queue { ferry_maker() };
-            return outer_ferry.loop( downlink_queue, egress_tun_, pipe_.second );
-        } );
 }
 
 template <class FerryQueueType>

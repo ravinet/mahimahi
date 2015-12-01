@@ -35,11 +35,10 @@ int main( int argc, char *argv[] )
             }
         }
 
-        TunnelClient<TrivialQueue> tunnelled_app( "tunnel", user_environment );
+        TunnelClient<TrivialQueue> tunnelled_app( "tunnel", user_environment, server );
 
         tunnelled_app.start_uplink( "[tunnel " + server.str() + "] ",
 				    command, 57  );
-        tunnelled_app.start_downlink( 92 );
         return tunnelled_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );
