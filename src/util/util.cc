@@ -79,9 +79,11 @@ void check_requirements( const int argc, const char * const argv[] )
         throw runtime_error( string( argv[ 0 ] ) + ": needs to be installed setuid root" );
     }
 
+    /* XXX
     if ( (getuid() == 0) || (getgid() == 0) ) {
         throw runtime_error( string( argv[ 0 ] ) + ": please run as non-root" );
     }
+    */
 
     /* verify environment has been cleared */
     if ( environ ) {
@@ -163,9 +165,11 @@ vector< string > list_directory_contents( const string & dir )
 
 void assert_not_root( void )
 {
+    /* XXX
     if ( ( geteuid() == 0 ) or ( getegid() == 0 ) ) {
         throw runtime_error( "BUG: privileges not dropped in sensitive region" );
     }
+    */
 }
 
 TemporarilyUnprivileged::TemporarilyUnprivileged()
