@@ -49,7 +49,7 @@ int ezexec( const vector< string > & command, const bool path_search )
     }
     argv.push_back( 0 ); /* null-terminate */
 
-    SystemCall( path_search ? "execvpe" : "execve",
+    SystemCall( argv.front(), /* the program being called */
                 (path_search ? execvpe : execve )( &argv[ 0 ][ 0 ], &argv[ 0 ], environ ) );
     throw runtime_error( "execve: failed" );
 }
