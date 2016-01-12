@@ -83,6 +83,19 @@ int deepcgi_handler( request_rec* inpRequest )
         setenv( "HTTP_USER_AGENT", user_agent, TRUE );
     }
 
+    /* check if connection is HTTPS */
+    /* see bug report at http://modpython.org/pipermail/mod_python/2006-February/020197.html */
+    /* taken from fix at https://issues.apache.org/jira/secure/attachment/12321011/requestobject.c.patch */
+    APR_DECLARE_OPTIONAL_FN(int, ssl_is_https, (conn_rec *));
+    APR_OPTIONAL_FN_TYPE(ssl_is_https) *optfn_is_https
+      = APR_RETRIEVE_OPTIONAL_FN(ssl_is_https);
+
+    if ( optfn_is_https ) {
+      if ( optfn_is_https( inpRequest->connection ) ) {
+	setenv( "HTTPS", "1", TRUE );
+      }
+    }
+
     FILE* fp = popen( replayserver_filename, "r" );
     if ( fp == NULL ) {
         // "Error encountered while running script"
