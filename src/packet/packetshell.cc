@@ -60,7 +60,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
     */
 
     /* Fork */
-    event_loop_.add_child_process( "packetshell", [&]() {
+    event_loop_.add_special_child_process( 77, "packetshell", [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
 
             /* bring up localhost */
@@ -125,7 +125,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
     };
     */
 
-    event_loop_.add_child_process( "downlink", [&] () {
+    event_loop_.add_special_child_process( 77, "downlink", [&] () {
             drop_privileges();
 
             /* restore environment */
@@ -172,7 +172,7 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
     /* exit if finished */
     add_action( Poller::Action( sibling, Direction::Out,
                                 [&] () {
-                                    return ResultType::Exit;
+                                    return Result( ResultType::Exit, 77 );
                                 },
                                 [&] () { return ferry_queue.finished(); } ) );
 

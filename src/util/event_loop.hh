@@ -17,7 +17,7 @@ class EventLoop
 private:
     SignalMask signals_;
     Poller poller_;
-    std::vector<ChildProcess> child_processes_;
+    std::vector<std::pair<int, ChildProcess>> child_processes_;
     PollerShortNames::Result handle_signal( const signalfd_siginfo & sig );
 
 protected:
@@ -33,7 +33,16 @@ public:
     template <typename... Targs>
     void add_child_process( Targs&&... Fargs )
     {
-        child_processes_.emplace_back( std::forward<Targs>( Fargs )... );
+        child_processes_.emplace_back( -1,
+                                       ChildProcess( std::forward<Targs>( Fargs )... ) );
+    }
+
+    template <typename... Targs>
+    void add_special_child_process( const int continue_status,
+                                    Targs&&... Fargs )
+    {
+        /* parent won't quit when this process quits */
+        child_processes_.emplace_back( continue_status, ChildProcess( std::forward<Targs>( Fargs )... ) );
     }
 
     int loop( void ) { return internal_loop( [] () { return -1; } ); } /* no timeout */

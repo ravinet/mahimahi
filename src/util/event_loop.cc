@@ -1,5 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <algorithm>
+
 #include "event_loop.hh"
 #include "exception.hh"
 
@@ -26,31 +28,41 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
     case SIGCONT:
         /* resume child processes too */
         for ( auto & x : child_processes_ ) {
-            x.resume();
+            x.second.resume();
         }
         break;
 
     case SIGCHLD:
-        {
-            /* find which children are waitable */
-            /* we can't count on getting exactly one SIGCHLD per waitable event, so search */
-            for ( auto & x : child_processes_ ) {
-                if ( x.waitable() ) {
-                    x.wait( true ); /* nonblocking */
+        if ( child_processes_.empty() ) {
+            throw runtime_error( "received SIGCHLD without any managed children" );
+        }
 
-                    if ( x.terminated() ) {
-                        if ( x.exit_status() != 0 ) {
-                            x.throw_exception();
-                        } else {
-                            return ResultType::Exit;
-                        }
-                    } else if ( !x.running() ) {
-                        /* suspend parent too */
-                        SystemCall( "raise", raise( SIGSTOP ) );
-                    }
+        /* find which children are waitable */
+        /* we can't count on getting exactly one SIGCHLD per waitable event, so search */
+        for ( auto & procpair : child_processes_ ) {
+            ChildProcess & proc = procpair.second;
+            if ( proc.terminated() or ( !proc.waitable() ) ) {
+                continue; /* not the process we're looking for */
+            }
 
-                    break;
+            proc.wait( true ); /* get process's change of state.
+                               true => throws exception if no change available */
+
+            if ( proc.terminated() ) {
+                if ( proc.exit_status() != 0 and proc.exit_status() != procpair.first ) {
+                    proc.throw_exception();
                 }
+
+                /* quit if all children have quit */
+                if ( all_of( child_processes_.begin(), child_processes_.end(),
+                             [] ( pair<int, ChildProcess> & x ) { return x.second.terminated(); } ) ) {
+                    return ResultType::Exit;
+                }
+
+                return proc.exit_status() == procpair.first ? ResultType::Continue : ResultType::Exit;
+            } else if ( !proc.running() ) {
+                /* suspend parent too */
+                SystemCall( "raise", raise( SIGSTOP ) );
             }
         }
 
