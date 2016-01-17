@@ -1,3 +1,11 @@
+mahimahi (0.92-1) unstable; urgency=low
+
+  * Fix bug when /proc/net/route is empty
+  * Fix bug preventing HTTPS resources from working in mm-webreplay
+  * mm-link --once now quits only when both uplink and downlink have
+
+ -- Keith Winstein <keithw@mit.edu>  Sat, 16 Jan 2016 18:47:17 -0800
+
 mahimahi (0.91a-1) unstable; urgency=low
 
   * Fix Debian build failure on some 64-bit platforms (#806368)
