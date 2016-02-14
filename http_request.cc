@@ -24,6 +24,19 @@ void HTTPRequest::calculate_expected_body_size( void )
     }
 }
 
+std::string HTTPRequest::get_url( void ) const
+{
+    string host = get_header_value( "Host" );
+    string obj = "";
+    if ( first_line_.substr( 0, 4 ) == "GET " ) {
+        obj = first_line_.substr( 4, first_line_.find("HTTP")-5 );
+    }
+    if ( first_line_.substr( 0, 5 ) == "POST " ) {
+        obj = first_line_.substr( 5, first_line_.find("HTTP")-6 );
+    }
+    return host + obj;
+}
+
 size_t HTTPRequest::read_in_complex_body( const std::string & )
 {
     /* we don't support complex bodies */

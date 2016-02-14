@@ -19,10 +19,10 @@
 #include "temp_file.hh"
 #include "secure_socket.hh"
 #include "backing_store.hh"
+#include "timestamp.hh"
 
 using namespace std;
 using namespace PollerShortNames;
-
 HTTPProxy::HTTPProxy( const Address & listener_addr )
     : listener_socket_( TCP ),
       server_context_( SERVER ),
@@ -39,6 +39,9 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
 
     HTTPRequestParser request_parser;
     HTTPResponseParser response_parser;
+
+    //std::map<string,uint64_t> req_times;
+    //std::map<string,uint64_t>::iterator it;
 
     const Address server_addr = client.original_dest();
 
@@ -64,6 +67,13 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
     /* completed requests from client are serialized and sent to server */
     poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
+                                           uint64_t time = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+
+                                           cout << "Request," << request_parser.front().get_url() << "," << time << endl;
+                                           //it = req_times.find(request_parser.front().get_url());
+                                           //if (it != req_times.end()) {
+                                           //    req_times[request_parser.front().get_url()] = time;
+                                           //}
                                            server.write( request_parser.front().str() );
                                            response_parser.new_request_arrived( request_parser.front() );
                                            request_parser.pop();
@@ -74,6 +84,11 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
     /* completed responses from server are serialized and sent to client */
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
+                                           unsigned long rtime = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                                           cout << "Response," << response_parser.front().request().get_url() << "," << rtime << endl;
+                                           //it = req_times.find(response_parser.front().request().get_url());
+                                           //cout << it->second;
+                                           //cout << response_parser.front().request().get_url() << "," << it->second << "," << rtime << endl;
                                            client.write( response_parser.front().str() );
                                            backing_store.save( response_parser.front(), server_addr );
                                            response_parser.pop();

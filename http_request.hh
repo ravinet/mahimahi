@@ -19,7 +19,7 @@ private:
 
 public:
     bool is_head( void ) const;
-
+    std::string get_url( void ) const;
     using HTTPMessage::HTTPMessage;
 };
 
