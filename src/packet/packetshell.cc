@@ -79,9 +79,24 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
             Ferry inner_ferry;
 
+            /* dnsmasq doesn't distinguish between UDP and TCP forwarding nameservers,
+               so use a DNSProxy that listens on the same UDP and TCP port */
+
+            UDPSocket dns_udp_listener;
+            dns_udp_listener.bind( ingress_addr() );
+
+            TCPSocket dns_tcp_listener;
+            dns_tcp_listener.bind( dns_udp_listener.local_address() );
+
+            DNSProxy dns_inside_ { move( dns_udp_listener ), move( dns_tcp_listener ),
+                    dns_outside_.udp_listener().local_address(),
+                    dns_outside_.tcp_listener().local_address() };
+
+            dns_inside_.register_handlers( inner_ferry );
+
             /* run dnsmasq as local caching nameserver */
             inner_ferry.add_child_process( start_dnsmasq( {
-                        "-S", dns_outside_.udp_listener().local_address().str( "#" ) } ) );
+                        "-S", dns_inside_.udp_listener().local_address().str( "#" ) } ) );
 
             /* Fork again after dropping root privileges */
             drop_privileges();

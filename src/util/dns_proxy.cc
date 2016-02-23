@@ -11,12 +11,33 @@
 using namespace std;
 using namespace PollerShortNames;
 
+template <typename SocketType>
+SocketType make_bound_socket( const Address & listen_address )
+{
+    SocketType sock;
+    sock.bind( listen_address );
+    return sock;
+}
+
 DNSProxy::DNSProxy( const Address & listen_address, const Address & s_udp_target, const Address & s_tcp_target )
-    : udp_listener_(), tcp_listener_(),
+    : DNSProxy( make_bound_socket<UDPSocket>( listen_address ),
+                make_bound_socket<TCPSocket>( listen_address ),
+                s_udp_target, s_tcp_target )
+{}
+
+DNSProxy::DNSProxy( UDPSocket && udp_listener, TCPSocket && tcp_listener, const Address & s_udp_target, const Address & s_tcp_target )
+    : udp_listener_( move( udp_listener ) ), tcp_listener_( move( tcp_listener ) ),
       udp_target_( s_udp_target ), tcp_target_( s_tcp_target )
 {
-    udp_listener_.bind( listen_address );
-    tcp_listener_.bind( listen_address );
+    /* make sure the sockets are bound to something */
+    if ( udp_listener_.local_address() == Address() ) {
+        throw runtime_error( "DNSProxy internal error: udp_listener must be bound" );
+    }
+
+    if ( tcp_listener_.local_address() == Address() ) {
+        throw runtime_error( "DNSProxy internal error: tcp_listener must be bound" );
+    }
+
     tcp_listener_.listen();
 }
 
