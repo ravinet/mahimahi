@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <fstream>
 
 #include <iostream>
 #include <vector>
@@ -101,6 +102,12 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     return max_match;
 }
 
+bool fexists(string filename)
+{
+    ifstream ifile(filename);
+    return ifile;
+}
+
 int main( void )
 {
     try {
@@ -129,7 +136,35 @@ int main( void )
             }
         }
 
+        std::map <string, float> comp_delays;
+        /* check if computation file exists (must be record_folder + "_comp") */
+        string comp_file = recording_directory.substr(0, recording_directory.find_last_of("/")) + "_comp";
+        if ( fexists( comp_file ) ) {
+            ifstream ifile;
+            ifile.open( comp_file );
+            string curr_line;
+            while ( getline( ifile, curr_line ) ) {
+                string url = curr_line.substr(0, curr_line.find(" "));
+                float time = stof(curr_line.substr(curr_line.find(" ")));
+                comp_delays[url] = time;
+                cerr << "ADDED url: " << url << " with time: " << time << endl;
+            }
+            ifile.close();
+        }
+
         if ( best_score > 0 ) { /* give client the best match */
+            //string req_url = "http://";
+            //if ( is_https ) {
+            //    req_url = "https://";
+            //}
+            string req_url = "";
+            const HTTPRequest best_request( best_match.request() );
+            req_url = req_url + best_request.get_header_value("Host") + safe_getenv("REQUEST_URI");
+            std::map<string, float>::iterator it;
+            it = comp_delays.find(req_url);
+            if ( it != comp_delays.end() ) {
+                usleep((it->second)*1000);
+            }
             cout << HTTPResponse( best_match.response() ).str();
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
