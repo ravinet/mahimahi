@@ -46,8 +46,8 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 5 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_key nghttpx_cert" );
+        if ( argc < 6 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert" );
         }
 
         /* clean directory name */
@@ -83,7 +83,9 @@ int main( int argc, char *argv[] )
         /* set up NAT between egress and eth0 */
         NAT nat_rule( ingress_addr );
 
-        DNAT dnat( Address(ingress_addr.ip(), 8080), "eth0" );
+        /* set up DNAT between eth0 to ingress address. */
+        int nghttpx_port = atoi(argv[3]);
+        DNAT dnat( Address(ingress_addr.ip(), nghttpx_port), "eth0" );
 
         EventLoop outer_event_loop;
         
@@ -169,23 +171,23 @@ int main( int argc, char *argv[] )
 
               /* set up nghttp2 proxy */
               string nghttpx_path = string(argv[ 2 ]);
-              string nghttpx_key_path = string(argv[ 3 ]);
-              string nghttpx_cert_path = string(argv[ 4 ]);
+              string nghttpx_key_path = string(argv[ 4 ]);
+              string nghttpx_cert_path = string(argv[ 5 ]);
 
               /* Command: ./nghttpx -f'0.0.0.0,10000' -b'...' [key_path] [cert_path] */
               vector< string > command;
-              // command.push_back(nghttpx_path);
-              // command.push_back("-f0.0.0.0,10000");
-              // for (const auto mapping : hostname_to_ip_set ) {
-              //   stringstream backend_args;
-              //   backend_args << "-b" << mapping.second.ip() << ",80;" << mapping.first << "";
-              //   command.push_back(backend_args.str());
-              // }
-              // // Default catch-all address.
-              // command.push_back("-b127.0.0.1,80");
-              // command.push_back(nghttpx_key_path);
-              // command.push_back(nghttpx_cert_path);
-              command.push_back("bash");
+              command.push_back(nghttpx_path);
+              command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
+              for (const auto mapping : hostname_to_ip_set ) {
+                stringstream backend_args;
+                backend_args << "-b" << mapping.second.ip() << ",80;" << mapping.first << "";
+                command.push_back(backend_args.str());
+              }
+              // Default catch-all address.
+              command.push_back("-b127.0.0.1,80");
+              command.push_back(nghttpx_key_path);
+              command.push_back(nghttpx_cert_path);
+              // command.push_back("bash");
 
 
               /* initialize event loop */
