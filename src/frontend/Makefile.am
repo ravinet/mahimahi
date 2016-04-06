@@ -41,6 +41,11 @@ mm_replayserver_SOURCES = replayserver.cc
 mm_replayserver_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_replayserver_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-proxyreplay
+mm_proxyreplay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc
+mm_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
+mm_proxyreplay_LDFLAGS = -pthread
+
 lib_LTLIBRARIES = libmod_deepcgi.la
 libmod_deepcgi_la_SOURCES = mod_deepcgi.c replayserver_filename.cc
 libmod_deepcgi_la_CFLAGS = -I@APACHE2_INCLUDE@ $(libapr1_CFLAGS)
@@ -61,3 +66,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-webrecord
 	chown root $(DESTDIR)$(bindir)/mm-webreplay
 	chmod u+s $(DESTDIR)$(bindir)/mm-webreplay
+	chown root $(DESTDIR)$(bindir)/mm-proxyreplay
+	chmod u+s $(DESTDIR)$(bindir)/mm-proxyreplay
