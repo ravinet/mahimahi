@@ -42,7 +42,7 @@ mm_replayserver_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/li
 mm_replayserver_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-proxyreplay
-mm_proxyreplay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc
+mm_proxyreplay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc reverse_proxy.cc
 mm_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_proxyreplay_LDFLAGS = -pthread
 
