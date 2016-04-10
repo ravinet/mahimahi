@@ -44,3 +44,8 @@ DNAT::DNAT( const Address & listener, const string & interface )
     : rule_( { "PREROUTING", "-p", "TCP", "-i", interface, "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
+
+DNAT::DNAT( const Address & listener, const uint16_t port )
+    : rule_( { "PREROUTING", "-p", "TCP", "--dport", to_string(port), "-j", "DNAT",
+                "--to-destination", listener.str() } )
+{}

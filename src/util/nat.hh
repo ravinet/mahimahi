@@ -44,6 +44,7 @@ private:
 
 public:
     DNAT( const Address & listener, const std::string & interface );
+    DNAT( const Address & listener, const uint16_t port);
 };
 
 #endif /* NAT_HH */

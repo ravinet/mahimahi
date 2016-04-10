@@ -86,7 +86,7 @@ int main( int argc, char *argv[] )
 
         /* set up DNAT between eth0 to ingress address. */
         int nghttpx_port = atoi(argv[3]);
-        DNAT dnat( Address(ingress_addr.ip(), nghttpx_port), "eth0" );
+        DNAT dnat( Address(ingress_addr.ip(), nghttpx_port), nghttpx_port );
 
         EventLoop outer_event_loop;
         
