@@ -139,6 +139,10 @@ sub max {
   return $maxval;
 }
 
+if ( not defined $first_timestamp ) {
+    die q{Must have at least one event};
+}
+
 # calculate statistics
 my $duration = ($last_timestamp - $first_timestamp) / 1000.0;
 my $average_capacity = ($capacity_sum / $duration) / 1000000.0;
