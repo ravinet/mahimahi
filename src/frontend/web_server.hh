@@ -18,6 +18,9 @@ private:
 
 public:
     WebServer( const Address & addr, const std::string & working_directory, const std::string & record_path );
+
+    WebServer( const Address & addr, const std::string & working_directory, const std::string & record_path, const std::string & ssl_key, const std::string & ssl_cert );
+
     ~WebServer();
 
     /* ban copying */
