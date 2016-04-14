@@ -159,3 +159,8 @@ Address Address::cgnat( const uint8_t last_octet )
 {
     return Address( "100.64.0." + to_string( last_octet ), 0 );
 }
+
+Address Address::reverse_proxy( const uint8_t last_octet, const uint16_t port )
+{
+    return Address( "101.64.0." + to_string(last_octet), port);
+}

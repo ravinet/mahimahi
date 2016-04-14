@@ -53,6 +53,9 @@ public:
 
     /* generate carrier-grade NAT address */
     static Address cgnat( const uint8_t last_octet );
+
+    /* generate address for reverse proxy */
+    static Address reverse_proxy( const uint8_t last_octet, const uint16_t port );
 };
 
 #endif /* ADDRESS_HH */
