@@ -19,6 +19,13 @@ public:
                   const std::string & path_to_proxy,
                   const std::string & path_to_proxy_key,
                   const std::string & path_to_proxy_cert);
+
+    ReverseProxy( const Address & frontend_address, 
+                  const Address & backend_address, 
+                  const std::string & path_to_proxy,
+                  const std::string & path_to_proxy_key,
+                  const std::string & path_to_proxy_cert);
+
     ~ReverseProxy();
 
     /* ban copying */

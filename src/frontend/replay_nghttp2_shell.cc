@@ -21,8 +21,7 @@
 #include "interfaces.hh"
 #include "nat.hh"
 #include "socketpair.hh"
-#include "reverse_proxy.hh"
-#include "vpn.hh"
+#include "squid_proxy.hh"
 
 #include "http_record.pb.h"
 
@@ -49,8 +48,8 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 7 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path openvpn_port nghttpx_key nghttpx_cert path_to_security_files" );
+        if ( argc < 6 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert" );
         }
 
         /* clean directory name */
@@ -64,7 +63,6 @@ int main( int argc, char *argv[] )
         string nghttpx_path = string(argv[ 2 ]);
         string nghttpx_key_path = string(argv[ 4 ]);
         string nghttpx_cert_path = string(argv[ 5 ]);
-        string path_to_security_files = string(argv[ 6 ]);
 
         /* make sure directory ends with '/' so we can prepend directory to file name for storage */
         if ( directory.back() != '/' ) {
@@ -93,8 +91,8 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up DNAT between eth0 to ingress address. */
-        int openvpn_port = atoi(argv[3]);
-        DNAT dnat( Address(ingress_addr.ip(), openvpn_port), "UDP", openvpn_port );
+        int nghttpx_port = atoi(argv[3]);
+        DNAT dnat( Address(ingress_addr.ip(), nghttpx_port), nghttpx_port );
 
         EventLoop outer_event_loop;
         
@@ -174,46 +172,58 @@ int main( int argc, char *argv[] )
               for ( const auto ip_port : unique_ip_and_port ) {
                   auto port = ip_port.port();
                   if (port == 443) {
-                      servers.emplace_back( ip_port, working_directory, directory, "/home/ubuntu/build/certs/reddit_key.pem", "/home/ubuntu/build/certs/reddit_cert.pem" );
+                      servers.emplace_back( ip_port, working_directory, directory );
                   } else {
                       servers.emplace_back( ip_port, working_directory, directory );
                   }
               }
 
-              /* set up dummy interfaces */
-              vector< pair<Address, Address> > reverse_proxy_addresses;
-              vector< pair<string, Address> > hostname_to_reverse_proxy_mapping;
-              unsigned int reverse_proxy_counter = 2;
-              for ( const auto hostname_to_address : hostname_to_ip_set ) {
-                  Address proxy_address = Address::reverse_proxy(reverse_proxy_counter, hostname_to_address.second.port());
-                  add_dummy_interface( "reverse_proxy" + to_string( reverse_proxy_counter ), proxy_address );
-                  reverse_proxy_addresses.push_back(make_pair(hostname_to_address.second, proxy_address));
-                  hostname_to_reverse_proxy_mapping.push_back(
-                      make_pair(hostname_to_address.first, proxy_address));
-                  reverse_proxy_counter++;
-              }
+              // /* set up dummy interfaces */
+              // vector< pair<Address, Address> > reverse_proxy_addresses;
+              // vector< pair<string, Address> > hostname_to_reverse_proxy_mapping;
+              // unsigned int reverse_proxy_counter = 2;
+              // for ( const auto hostname_to_address : hostname_to_ip_set ) {
+              //     Address proxy_address = Address::reverse_proxy(reverse_proxy_counter, hostname_to_address.second.port());
+              //     add_dummy_interface( "reverse_proxy" + to_string( reverse_proxy_counter ), proxy_address );
+              //     reverse_proxy_addresses.push_back(make_pair(hostname_to_address.second, proxy_address));
+              //     hostname_to_reverse_proxy_mapping.push_back(
+              //         make_pair(hostname_to_address.first, proxy_address));
+              //     reverse_proxy_counter++;
+              // }
 
-              /* set up reverse proxies */
-              vector< ReverseProxy > reverse_proxies;
-              for (const auto hostname_to_reverse_proxy : hostname_to_reverse_proxy_mapping) {
-                  string hostname = hostname_to_reverse_proxy.first;
-                  Address webserver_address = hostname_to_address_map[hostname];
-                  Address proxy_address = hostname_to_reverse_proxy.second;
-                  reverse_proxies.emplace_back(proxy_address,
-                                               webserver_address,
-                                               hostname,
-                                               nghttpx_path,
-                                               nghttpx_key_path,
-                                               nghttpx_cert_path);
-              }
+              // /* set up reverse proxies */
+              // vector< ReverseProxy > reverse_proxies;
+              // for (const auto hostname_to_reverse_proxy : hostname_to_reverse_proxy_mapping) {
+              //     string hostname = hostname_to_reverse_proxy.first;
+              //     Address webserver_address = hostname_to_address_map[hostname];
+              //     Address proxy_address = hostname_to_reverse_proxy.second;
+              //     reverse_proxies.emplace_back(proxy_address,
+              //                                  webserver_address,
+              //                                  hostname,
+              //                                  nghttpx_path,
+              //                                  nghttpx_key_path,
+              //                                  nghttpx_cert_path);
+              // }
+              //
+              /* set up Squid Proxy */
+              SquidProxy squid_proxy("/home/ubuntu/build/etc/squid.conf");
+              squid_proxy.run_squid();
+              cout << "Started Squid..." << endl;
 
+              // /* set up DNS server */
+              // TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
+              // cout << "DNS Filename: " << dnsmasq_hosts.name() << endl;
+              // for ( const auto mapping : hostname_to_reverse_proxy_mapping ) {
+              //     string dns_entry = mapping.second.ip() + " " + mapping.first + "\n";
+              //     cout << dns_entry;
+              //     dnsmasq_hosts.write( dns_entry );
+              // }
+              
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
               cout << "DNS Filename: " << dnsmasq_hosts.name() << endl;
-              for ( const auto mapping : hostname_to_reverse_proxy_mapping ) {
-                  string dns_entry = mapping.second.ip() + " " + mapping.first + "\n";
-                  cout << dns_entry;
-                  dnsmasq_hosts.write( dns_entry );
+              for ( const auto mapping : hostname_to_ip ) {
+                dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
               }
 
               /* initialize event loop */
@@ -231,8 +241,15 @@ int main( int argc, char *argv[] )
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
-              VPN vpn(path_to_security_files, ingress_addr, nameservers);
-              vector< string > command = vpn.start_command();
+              // VPN vpn(path_to_security_files, ingress_addr, nameservers);
+              // vector< string > command = vpn.start_command();
+              vector< string > command;
+              command.push_back(nghttpx_path);
+              command.push_back("-s");
+              command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
+              command.push_back("-b127.0.0.1,3128");
+              command.push_back(nghttpx_key_path);
+              command.push_back(nghttpx_cert_path);
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {

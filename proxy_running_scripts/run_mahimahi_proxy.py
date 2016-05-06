@@ -37,7 +37,7 @@ def start_proxy():
                                            proxy_config[NGHTTPX_KEY], \
                                            proxy_config[NGHTTPX_CERT])
     print command
-    # process = subprocess.Popen(command, shell=True)
+    process = subprocess.Popen(command, shell=True)
     return 'Proxy Started'
 
 @app.route("/stop_proxy")

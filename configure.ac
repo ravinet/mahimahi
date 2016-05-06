@@ -55,6 +55,13 @@ if test "$OPENVPN" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([OPENVPN], ["$OPENVPN"], [path to openvpn])
 
+AC_ARG_VAR([SQUID], [path to squid])
+AC_PATH_PROG([SQUID], [squid], [no], [${prefix}/sbin])
+if test "$SQUID" = "no"; then
+  AC_MSG_ERROR([squid is required])
+fi
+AC_DEFINE_UNQUOTED([SQUID], ["$SQUID"], [path to squid])
+
 AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])

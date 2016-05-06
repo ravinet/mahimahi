@@ -130,6 +130,7 @@ unique_ptr<DNSProxy> DNSProxy::maybe_proxy( const Address & listen_address, cons
         return unique_ptr<DNSProxy>( new DNSProxy( listen_address, s_udp_target, s_tcp_target ) );
     } catch ( const exception & e ) {
         if ( string( e.what() ).substr( 0, 5 ) == "bind:" ) {
+            cout << "DNSProxy returned null" << endl;
             return nullptr;
         } else {
             throw;

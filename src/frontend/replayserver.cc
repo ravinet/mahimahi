@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <limits>
@@ -35,17 +36,28 @@ bool header_match( const string & env_var_name,
 {
     const char * const env_value = getenv( env_var_name.c_str() );
 
+    ofstream myfile;
+    myfile.open("test.txt", ios::app);
+
     /* case 1: neither header exists (OK) */
     if ( (not env_value) and (not saved_request.has_header( header_name )) ) {
+        myfile.close();
         return true;
     }
 
     /* case 2: headers both exist (OK if values match) */
     if ( env_value and saved_request.has_header( header_name ) ) {
+        myfile << "Recorded value: " 
+               << saved_request.get_header_value(header_name)
+               << " Request value: "
+               << string(env_value)
+               << endl;
+        myfile.close();
         return saved_request.get_header_value( header_name ) == string( env_value );
     }
 
     /* case 3: one exists but the other doesn't (failure) */
+    myfile.close();
     return false;
 }
 
@@ -65,7 +77,12 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
                           const bool is_https )
 {
     const HTTPRequest saved_request( saved_record.request() );
-
+    
+    ofstream myfile;
+    myfile.open("test2.txt", ios::app);
+    myfile << "Saved request: " << saved_request.first_line() << " Request Line: " << request_line << endl;
+    myfile.close();
+    
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
         return 0;
@@ -81,9 +98,9 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     }
 
     /* match user agent */
-    if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
-        return 0;
-    }
+    // if ( not header_match( "HTTP_USER_AGENT", "User-Agent", saved_request ) ) {
+    //     return 0;
+    // }
 
     /* must match first line up to "?" at least */
     if ( strip_query( request_line ) != strip_query( saved_request.first_line() ) ) {
@@ -120,7 +137,10 @@ int main( void )
         unsigned int best_score = 0;
         MahimahiProtobufs::RequestResponse best_match;
 
+        ofstream myfile;
+        myfile.open("filenames.txt");
         for ( const auto & filename : files ) {
+            myfile << filename << endl;
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
             if ( not current_record.ParseFromFileDescriptor( fd.fd_num() ) ) {
@@ -133,6 +153,7 @@ int main( void )
                 best_score = score;
             }
         }
+        myfile.close();
 
         if ( best_score > 0 ) { /* give client the best match */
             cout << HTTPResponse( best_match.response() ).str();

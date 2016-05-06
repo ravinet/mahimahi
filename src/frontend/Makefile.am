@@ -31,6 +31,12 @@ mm_webrecord_SOURCES = recordshell.cc
 mm_webrecord_LDADD = -lrt ../httpserver/libhttpserver.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a ../util/libutil.a $(protobuf_LIBS) $(libcrypto_LIBS) $(libssl_LIBS)
 mm_webrecord_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-phone-webrecord
+mm_phone_webrecord_SOURCES = phone_recordshell.cc squid_proxy.hh squid_proxy.cc
+mm_phone_webrecord_LDADD = -lrt ../httpserver/libhttpserver.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a ../util/libutil.a $(protobuf_LIBS) $(libcrypto_LIBS) $(libssl_LIBS)
+mm_phone_webrecord_LDFLAGS = -pthread
+
+
 bin_PROGRAMS += mm-webreplay
 mm_webreplay_SOURCES = replayshell.cc web_server.hh web_server.cc
 mm_webreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
@@ -42,7 +48,7 @@ mm_replayserver_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/li
 mm_replayserver_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-proxyreplay
-mm_proxyreplay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc reverse_proxy.cc
+mm_proxyreplay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc reverse_proxy.cc squid_proxy.hh squid_proxy.cc
 mm_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_proxyreplay_LDFLAGS = -pthread
 
@@ -68,3 +74,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-webreplay
 	chown root $(DESTDIR)$(bindir)/mm-proxyreplay
 	chmod u+s $(DESTDIR)$(bindir)/mm-proxyreplay
+	chown root $(DESTDIR)$(bindir)/mm-phone-webrecord
+	chmod u+s $(DESTDIR)$(bindir)/mm-phone-webrecord
