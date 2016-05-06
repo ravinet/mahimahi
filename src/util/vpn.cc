@@ -7,10 +7,36 @@
 
 using namespace std;
 
+VPN::VPN( const string & path_to_security_files, const Address & ingress) 
+  : config_file_("/tmp/openvpn_config")
+{
+  vector<Address> nameservers;
+  write_config_file(path_to_security_files, ingress, nameservers);
+}
+
+VPN::VPN( const string & path_to_security_files, const Address & ingress,
+   const Address & nameserver ) 
+  : config_file_("/tmp/openvpn_config")
+{
+  vector<Address> nameservers;
+  nameservers.push_back(nameserver);
+  write_config_file(path_to_security_files, ingress, nameservers);
+}
+
 VPN::VPN( const string & path_to_security_files, const Address & ingress,
    const vector<Address> & nameservers ) 
   : config_file_("/tmp/openvpn_config")
 {
+  write_config_file(path_to_security_files, ingress, nameservers);
+}
+
+VPN::~VPN() {
+
+}
+
+void VPN::write_config_file(const string & path_to_security_files, 
+                            const Address & ingress, 
+                            const vector<Address> & nameservers) {
   cout << "OpenVPN config file: " << config_file_.name() << endl;
   config_file_.write("port 1194\n");  // Just listen to the default port.
   config_file_.write("proto udp\n");  // On UDP
@@ -44,11 +70,6 @@ VPN::VPN( const string & path_to_security_files, const Address & ingress,
   config_file_.write("persist-tun\n");
   config_file_.write("status openvpn-status.log\n");
   config_file_.write("verb 3\n");
-
-}
-
-VPN::~VPN() {
-
 }
 
 vector<string> VPN::start_command() {
