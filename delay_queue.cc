@@ -26,7 +26,11 @@ void DelayQueue::read_packet( const string & contents )
         it = delay_map.find(inet_ntoa(dest.sin_addr));
         if ( it != delay_map.end() ) {
             //cout << "delaying by: " << it->second << "for SYN: " << tcph->syn << ", DEST: " << inet_ntoa(dest.sin_addr) << ", PROT: " << iph->protocol << "PORT: " << ntohs(tcph->dest) << endl;
-            usleep((it->second)*1000);
+            if ( ntohs(tcph->dest) == 443 ) {
+                usleep((it->second)*2000);
+            } else {
+                usleep((it->second)*1000);
+            }
         }
     }
     //cout << "SYN: " << tcph->syn << ", DEST: " << inet_ntoa(dest.sin_addr) << ", PROT: " << (unsigned int) iph->protocol << "PORT: " << ntohs(tcph->dest) << endl;
