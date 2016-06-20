@@ -19,6 +19,8 @@ AC_SUBST([PICKY_CXXFLAGS])
 # Checks for programs.
 AC_PROG_CXX
 
+AC_DEFINE_UNQUOTED([PATH_PREFIX], ["${prefix}"], [path prefix])
+
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
 if test "$IPTABLES" = "no"; then
@@ -47,13 +49,6 @@ if test "$DNSMASQ" = "no"; then
   AC_MSG_ERROR([dnsmasq is required])
 fi
 AC_DEFINE_UNQUOTED([DNSMASQ], ["$DNSMASQ"], [path to dnsmasq])
-
-AC_ARG_VAR([OPENVPN], [path to openvpn])
-AC_PATH_PROG([OPENVPN], [openvpn], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
-if test "$OPENVPN" = "no"; then
-  AC_MSG_ERROR([openvpn is required])
-fi
-AC_DEFINE_UNQUOTED([OPENVPN], ["$OPENVPN"], [path to openvpn])
 
 AC_ARG_VAR([SQUID], [path to squid])
 AC_PATH_PROG([SQUID], [squid], [no], [${prefix}/sbin])
@@ -87,9 +82,9 @@ AC_CHECK_FILE([${prefix}/modules/mod_ssl.so],
 	      [AC_DEFINE_UNQUOTED([MOD_SSL], ["${prefix}/modules/mod_ssl.so"], [mod_ssl.so])],
               [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
 
-AC_CHECK_FILE([${prefix}/modules/mod_http2.so],
-	      [AC_DEFINE_UNQUOTED([MOD_HTTP2], ["${prefix}/modules/mod_http2.so"], [mod_http2.so])],
-              [AC_MSG_ERROR([apache2 mod_http2.so is required])])
+# AC_CHECK_FILE([${prefix}/modules/mod_http2.so],
+# 	      [AC_DEFINE_UNQUOTED([MOD_HTTP2], ["${prefix}/modules/mod_http2.so"], [mod_http2.so])],
+#               [AC_MSG_ERROR([apache2 mod_http2.so is required])])
 
 # Checks for SSL certificate file
 AC_CHECK_FILE([/etc/ssl/certs/ssl-cert-snakeoil.pem], [],

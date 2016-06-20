@@ -20,8 +20,9 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
     cout << "Apache Config File: " << config_file_.name() << " listening on: " << addr.str() <<  endl;
     config_file_.write( apache_main_config );
 
-    config_file_.write("LoadModule unixd_module /home/ubuntu/build/modules/mod_unixd.so\n");
-    config_file_.write("LoadModule log_config_module /home/ubuntu/build/modules/mod_log_config.so\n");
+    string path_prefix = PATH_PREFIX;
+    config_file_.write("LoadModule unixd_module " + path_prefix + "/modules/mod_unixd.so\n");
+    config_file_.write("LoadModule log_config_module " + path_prefix + "/modules/mod_log_config.so\n");
 
     config_file_.write( "WorkingDir " + working_directory + "\n" );
     config_file_.write( "RecordingDir " + record_path + "\n" );
@@ -58,8 +59,9 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
     cout << "Apache Config File: " << config_file_.name() << " listening on: " << addr.str() <<  endl;
     config_file_.write( apache_main_config );
 
-    config_file_.write("LoadModule unixd_module /home/ubuntu/build/modules/mod_unixd.so\n");
-    config_file_.write("LoadModule log_config_module /home/ubuntu/build/modules/mod_log_config.so\n");
+    string path_prefix = PATH_PREFIX;
+    config_file_.write("LoadModule unixd_module " + path_prefix + "/modules/mod_unixd.so\n");
+    config_file_.write("LoadModule log_config_module " + path_prefix + "/modules/mod_log_config.so\n");
 
     config_file_.write( "WorkingDir " + working_directory + "\n" );
     config_file_.write( "RecordingDir " + record_path + "\n" );
