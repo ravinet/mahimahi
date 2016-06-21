@@ -130,7 +130,8 @@ int main( int argc, char *argv[] )
                     /* Fork again after dropping root privileges */
                     drop_privileges();
 
-                    SquidProxy squid_proxy("/home/ubuntu/build/etc/squid.conf");
+                    string path_prefix = PATH_PREFIX;
+                    SquidProxy squid_proxy(path_prefix + "/etc/squid.conf");
                     vector<string> command = squid_proxy.command();
                     // command.push_back(shell_path());
 

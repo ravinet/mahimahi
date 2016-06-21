@@ -66,7 +66,7 @@ def start_recording():
     subprocess.call(mkdir_cmd, shell=True)
     record_path = os.path.join(proxy_config[BASE_RECORD_DIR], request_time, escape_page(page))
     if os.path.exists(record_path):
-        rm_cmd = 'rm -r {0}'.format()
+        rm_cmd = 'rm -r {0}'.format(record_path)
         subprocess.call(rm_cmd, shell=True)
     command = '{0} {1} {2}'.format(
                             proxy_config[PHONE_RECORD_PATH], \

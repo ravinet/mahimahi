@@ -23,6 +23,7 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
     string path_prefix = PATH_PREFIX;
     config_file_.write("LoadModule unixd_module " + path_prefix + "/modules/mod_unixd.so\n");
     config_file_.write("LoadModule log_config_module " + path_prefix + "/modules/mod_log_config.so\n");
+    config_file_.write("LoadModule mpm_prefork_module " + path_prefix + "/modules/mod_mpm_prefork.so\n");
 
     config_file_.write( "WorkingDir " + working_directory + "\n" );
     config_file_.write( "RecordingDir " + record_path + "\n" );
@@ -39,9 +40,9 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
 
     config_file_.write( "ServerName mahimahi.\n" );
 
-    config_file_.write( "ErrorLog /dev/null\n" );
+    config_file_.write( "ErrorLog " + path_prefix + "/logs/apache_errors.log\n" );
 
-    config_file_.write( "CustomLog /dev/null common\n" );
+    config_file_.write( "CustomLog " + path_prefix + "/logs/custom.log common\n" );
 
     config_file_.write( "User #" + to_string( getuid() ) + "\n" );
 
@@ -62,6 +63,7 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
     string path_prefix = PATH_PREFIX;
     config_file_.write("LoadModule unixd_module " + path_prefix + "/modules/mod_unixd.so\n");
     config_file_.write("LoadModule log_config_module " + path_prefix + "/modules/mod_log_config.so\n");
+    config_file_.write("LoadModule mpm_prefork_module " + path_prefix + "/modules/mod_mpm_prefork.so\n");
 
     config_file_.write( "WorkingDir " + working_directory + "\n" );
     config_file_.write( "RecordingDir " + record_path + "\n" );

@@ -206,7 +206,8 @@ int main( int argc, char *argv[] )
               // }
               //
               /* set up Squid Proxy */
-              SquidProxy squid_proxy("/home/ubuntu/build/etc/squid.conf");
+              string path_prefix = PATH_PREFIX;
+              SquidProxy squid_proxy(path_prefix + "/etc/squid.conf");
               squid_proxy.run_squid();
               cout << "Started Squid..." << endl;
 
@@ -248,6 +249,7 @@ int main( int argc, char *argv[] )
               command.push_back("-s");
               command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
               command.push_back("-b127.0.0.1,3128");
+              // command.push_back("-b31.13.73.7,80");
               command.push_back(nghttpx_key_path);
               command.push_back(nghttpx_cert_path);
 
