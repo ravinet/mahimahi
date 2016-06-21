@@ -61,12 +61,12 @@ AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
 
-AC_PATH_PROG([APXS], [apxs], [])
+AC_PATH_PROG([APXS], [apxs], [no], [${prefix}/bin])
 AS_IF([test x"$APXS" = x],
   [AC_MSG_ERROR([cannot find apxs, the Apache extension tool])])
 
-AC_SUBST([APACHE2_MODULE_DIR], [$(apxs -q exp_libexecdir)])
-AC_SUBST([APACHE2_INCLUDE], [$(apxs -q exp_includedir)])
+AC_SUBST([APACHE2_MODULE_DIR], [$(${prefix}/bin/apxs -q exp_libexecdir)])
+AC_SUBST([APACHE2_INCLUDE], [$(${prefix}/bin/apxs -q exp_includedir)])
 
 # Checks for apache configuration modules
 
