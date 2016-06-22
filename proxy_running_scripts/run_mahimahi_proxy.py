@@ -1,15 +1,18 @@
-from flask import Flask, request
+from flask import Flask, request, g
 from ConfigParser import ConfigParser
 from argparse import ArgumentParser
 
 import subprocess
 import os
+import signal
 import time
 
 CONFIG = 'proxy_running_config'
 
+BUILD_PREFIX = 'build-prefix'
 PROXY_REPLAY_PATH = 'mm-proxyreplay'
 PHONE_RECORD_PATH = 'mm-phone-webrecord'
+DELAYSHELL_WITH_PORT_FORWARDED = 'mm-delayshell-with-port-forwarded'
 NGHTTPX_PATH = 'nghttpx'
 NGHTTPX_PORT = 'nghttpx_port'
 NGHTTPX_KEY = 'nghttpx_key'
@@ -19,6 +22,7 @@ BASE_RESULT_DIR = 'base_result_dir'
 
 MM_PROXYREPLAY = 'mm-proxyreplay'
 MM_PHONE_WEBRECORD = 'mm-phone-webrecord'
+MM_DELAYSHELL_WITH_PORT_FORWARDED = 'mm-delayshell-port-forwarded'
 NGHTTPX = 'nghttpx'
 APACHE = 'apache'
 PAGE = 'page'
@@ -26,8 +30,11 @@ SQUID_PORT = 'squid_port'
 SQUID = 'squid'
 
 TIME = 'time'
+DELAY = 'delay'
 
-CONFIG_FIELDS = [ PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, SQUID_PORT, BASE_RESULT_DIR ]
+CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
+                  NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
+                  SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED ]
 
 app = Flask(__name__)
 
@@ -36,15 +43,15 @@ def start_proxy():
     print proxy_config
     page = request.args[PAGE]
     request_time = request.args[TIME]
-    path_to_recorded_page = os.path.join(proxy_config[BASE_RECORD_DIR], request_time, escape_page(page))
+    path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
     # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
     command = '{0} {1} {2} {3} {4} {5}'.format(
-                                           proxy_config[PROXY_REPLAY_PATH], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
                                            path_to_recorded_page, \
-                                           proxy_config[NGHTTPX_PATH], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
                                            proxy_config[NGHTTPX_PORT], \
-                                           proxy_config[NGHTTPX_KEY], \
-                                           proxy_config[NGHTTPX_CERT])
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT])
     print command
     process = subprocess.Popen(command, shell=True)
     return 'Proxy Started'
@@ -55,6 +62,34 @@ def stop_proxy():
     for process in processes:
         command = 'pkill {0}'.format(process)
         subprocess.Popen(command, shell=True)
+    return 'Proxy Stopped'
+
+@app.route("/start_delay_replay_proxy")
+def start_delay_replay_proxy():
+    print proxy_config
+    page = request.args[PAGE]
+    request_time = request.args[TIME]
+    delay = request.args[DELAY]
+    path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
+    # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
+    command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
+                                           proxy_config[BUILD_PREFIX] + proxy_config[DELAYSHELL_WITH_PORT_FORWARDED], \
+                                           delay, proxy_config[NGHTTPX_PORT], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
+                                           path_to_recorded_page, \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
+                                           proxy_config[NGHTTPX_PORT], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT])
+    print command
+    g._running_delay_proxy_process = subprocess.Popen(command, shell=True, preexec_fn=os.setsid)
+    return 'Proxy Started'
+
+@app.route("/stop_delay_replay_proxy")
+def stop_delay_replay_proxy():
+    command = 'pkill {0}'.format(MM_DELAYSHELL_WITH_PORT_FORWARDED)
+    subprocess.Popen(command, shell=True)
+    stop_proxy()
     return 'Proxy Stopped'
 
 @app.route("/start_recording")
@@ -69,7 +104,7 @@ def start_recording():
         rm_cmd = 'rm -r {0}'.format(record_path)
         subprocess.call(rm_cmd, shell=True)
     command = '{0} {1} {2}'.format(
-                            proxy_config[PHONE_RECORD_PATH], \
+                            proxy_config[BUILD_PREFIX] + proxy_config[PHONE_RECORD_PATH], \
                             os.path.join(proxy_config[BASE_RECORD_DIR], request_time, escape_page(page)), \
                             proxy_config[SQUID_PORT])
     process = subprocess.Popen(command, shell=True)
