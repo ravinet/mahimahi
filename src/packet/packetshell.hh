@@ -28,9 +28,6 @@ private:
 
     EventLoop event_loop_;
 
-    const Address & egress_addr( void ) { return egress_ingress.first; }
-    const Address & ingress_addr( void ) { return egress_ingress.second; }
-
     class Ferry : public EventLoop
     {
     public:
@@ -58,6 +55,9 @@ public:
     void start_downlink( Targs&&... Fargs );
 
     int wait_for_exit( void );
+
+    const Address & egress_addr( void ) { return egress_ingress.first; }
+    const Address & ingress_addr( void ) { return egress_ingress.second; }
 
     PacketShell( const PacketShell & other ) = delete;
     PacketShell & operator=( const PacketShell & other ) = delete;

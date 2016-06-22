@@ -7,6 +7,7 @@
    and then look for the mark on output. */
 
 #include <unistd.h>
+#include <iostream>
 
 #include "nat.hh"
 #include "exception.hh"
@@ -19,6 +20,10 @@ NATRule::NATRule( const vector< string > & s_args )
 {
     vector< string > command = { IPTABLES, "-w", "-t", "nat", "-A" };
     command.insert( command.end(), arguments.begin(), arguments.end() );
+    cout << "command: ";
+    for (auto i = command.begin(); i != command.end(); ++i)
+         cout << *i << ' ';
+    cout << endl;
     run( command );
 }
 

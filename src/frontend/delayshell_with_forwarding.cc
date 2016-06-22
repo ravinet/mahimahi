@@ -44,6 +44,10 @@ int main( int argc, char *argv[] )
                                       command,
                                       delay_ms );
         delay_shell_app.start_downlink( delay_ms );
+
+	/* Forward the packets to the specified port. */
+	DNAT dnat( Address(delay_shell_app.ingress_addr().ip(), destination_port), destination_port );
+	
         return delay_shell_app.wait_for_exit();
     } catch ( const exception & e ) {
         print_exception( e );

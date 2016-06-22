@@ -63,6 +63,9 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets
     */
     cout << "ingress: " << ingress_addr().str() << " egress: " << egress_addr().str() << endl;
 
+    /* Forward the packets to the specified port. */
+    DNAT dnat( Address(ingress_addr().ip(), destination_port), destination_port );
+
     /* Fork */
     event_loop_.add_special_child_process( 77, "packetshell", [&]() {
             TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
@@ -127,8 +130,6 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets
             return inner_ferry.loop( uplink_queue, ingress_tun, egress_tun_ );
         }, true );  /* new network namespace */
 
-	/* Forward the packets to the specified port. */
-        DNAT dnat( Address(ingress_addr().ip(), destination_port), destination_port );
 }
 
 template <class FerryQueueType>
