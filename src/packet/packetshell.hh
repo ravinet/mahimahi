@@ -48,6 +48,13 @@ public:
                        Targs&&... Fargs );
 
     template <typename... Targs>
+    void start_uplink_and_forward_packets
+   		     ( const std::string & shell_prefix,
+		       const int destination_port,
+                       const std::vector< std::string > & command,
+                       Targs&&... Fargs );
+
+    template <typename... Targs>
     void start_downlink( Targs&&... Fargs );
 
     int wait_for_exit( void );

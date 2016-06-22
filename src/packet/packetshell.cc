@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 #include <sys/socket.h>
 #include <net/route.h>
@@ -43,6 +44,95 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
 
 template <class FerryQueueType>
 template <typename... Targs>
+void PacketShell<FerryQueueType>::start_uplink_and_forward_packets
+					      ( const string & shell_prefix,
+						const int destination_port,
+                                                const vector< string > & command,
+                                                Targs&&... Fargs )
+{
+    /* g++ bug 55914 makes this hard before version 4.9 */
+    BindWorkAround::bind<FerryQueueType, Targs&&...> ferry_maker( forward<Targs>( Fargs )... );
+
+    /*
+      This is a replacement for expanding the parameter pack
+      inside the lambda, e.g.:
+
+    auto ferry_maker = [&]() {
+        return FerryQueueType( forward<Targs>( Fargs )... );
+    };
+    */
+    cout << "ingress: " << ingress_addr().str() << " egress: " << egress_addr().str() << endl;
+
+    /* Fork */
+    event_loop_.add_special_child_process( 77, "packetshell", [&]() {
+            TunDevice ingress_tun( "ingress", ingress_addr(), egress_addr() );
+
+            /* bring up localhost */
+            interface_ioctl( SIOCSIFFLAGS, "lo",
+                             [] ( ifreq &ifr ) { ifr.ifr_flags = IFF_UP; } );
+
+            /* create default route */
+            rtentry route;
+            zero( route );
+
+            route.rt_gateway = egress_addr().to_sockaddr();
+            route.rt_dst = route.rt_genmask = Address().to_sockaddr();
+            route.rt_flags = RTF_UP | RTF_GATEWAY;
+
+            SystemCall( "ioctl SIOCADDRT", ioctl( UDPSocket().fd_num(), SIOCADDRT, &route ) );
+
+            Ferry inner_ferry;
+
+            /* dnsmasq doesn't distinguish between UDP and TCP forwarding nameservers,
+               so use a DNSProxy that listens on the same UDP and TCP port */
+
+            UDPSocket dns_udp_listener;
+            dns_udp_listener.bind( ingress_addr() );
+
+            TCPSocket dns_tcp_listener;
+            dns_tcp_listener.bind( dns_udp_listener.local_address() );
+
+            DNSProxy dns_inside_ { move( dns_udp_listener ), move( dns_tcp_listener ),
+                    dns_outside_.udp_listener().local_address(),
+                    dns_outside_.tcp_listener().local_address() };
+
+            dns_inside_.register_handlers( inner_ferry );
+
+            /* run dnsmasq as local caching nameserver */
+            inner_ferry.add_child_process( start_dnsmasq( {
+                        "-S", dns_inside_.udp_listener().local_address().str( "#" ) } ) );
+
+            /* Fork again after dropping root privileges */
+            drop_privileges();
+
+            /* restore environment */
+            environ = user_environment_;
+
+            /* set MAHIMAHI_BASE if not set already to indicate outermost container */
+            SystemCall( "setenv", setenv( "MAHIMAHI_BASE",
+                                          egress_addr().ip().c_str(),
+                                          false /* don't override */ ) );
+
+            inner_ferry.add_child_process( join( command ), [&]() {
+                    /* tweak bash prompt */
+                    prepend_shell_prefix( shell_prefix );
+
+                    return ezexec( command, true );
+                } );
+
+            /* allow downlink to write directly to inner namespace's TUN device */
+            pipe_.first.send_fd( ingress_tun );
+
+            FerryQueueType uplink_queue { ferry_maker() };
+            return inner_ferry.loop( uplink_queue, ingress_tun, egress_tun_ );
+        }, true );  /* new network namespace */
+
+	/* Forward the packets to the specified port. */
+        DNAT dnat( Address(ingress_addr().ip(), destination_port), destination_port );
+}
+
+template <class FerryQueueType>
+template <typename... Targs>
 void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
                                                 const vector< string > & command,
                                                 Targs&&... Fargs )
@@ -58,6 +148,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
         return FerryQueueType( forward<Targs>( Fargs )... );
     };
     */
+    cout << "ingress: " << ingress_addr().str() << " egress: " << egress_addr().str() << endl;
 
     /* Fork */
     event_loop_.add_special_child_process( 77, "packetshell", [&]() {

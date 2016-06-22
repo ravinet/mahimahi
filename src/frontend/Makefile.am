@@ -36,6 +36,10 @@ mm_phone_webrecord_SOURCES = phone_recordshell.cc squid_proxy.hh squid_proxy.cc
 mm_phone_webrecord_LDADD = -lrt ../httpserver/libhttpserver.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a ../util/libutil.a $(protobuf_LIBS) $(libcrypto_LIBS) $(libssl_LIBS)
 mm_phone_webrecord_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-delayshell-port-forwarded
+mm_delayshell_port_forwarded_SOURCES = delayshell_with_forwarding.cc delay_queue.hh delay_queue.cc
+mm_delayshell_port_forwarded_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
+mm_delayshell_port_forwarded_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-webreplay
 mm_webreplay_SOURCES = replayshell.cc web_server.hh web_server.cc
@@ -74,5 +78,7 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-webreplay
 	chown root $(DESTDIR)$(bindir)/mm-proxyreplay
 	chmod u+s $(DESTDIR)$(bindir)/mm-proxyreplay
+	chown root $(DESTDIR)$(bindir)/mm-delayshell-port-forwarded
+	chmod u+s $(DESTDIR)$(bindir)/mm-delayshell-port-forwarded
 	chown root $(DESTDIR)$(bindir)/mm-phone-webrecord
 	chmod u+s $(DESTDIR)$(bindir)/mm-phone-webrecord
