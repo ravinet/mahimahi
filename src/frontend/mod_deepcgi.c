@@ -131,7 +131,7 @@ int deepcgi_handler( request_rec* inpRequest )
     } while ( num_bytes_read == HUGE_STRING_LEN );
 
     // To ensure that connection is kept-alive
-    ap_set_keepalive( inpRequest );
+    // ap_set_keepalive( inpRequest );
 
     pclose( fp );
 

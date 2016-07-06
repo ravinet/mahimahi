@@ -11,6 +11,7 @@ CONFIG = 'proxy_running_config'
 
 BUILD_PREFIX = 'build-prefix'
 PROXY_REPLAY_PATH = 'mm-proxyreplay'
+HTTP1_PROXY_REPLAY_PATH = 'mm-http1-proxyreplay'
 PHONE_RECORD_PATH = 'mm-phone-webrecord'
 DELAYSHELL_WITH_PORT_FORWARDED = 'mm-delayshell-with-port-forwarded'
 NGHTTPX_PATH = 'nghttpx'
@@ -31,10 +32,12 @@ SQUID = 'squid'
 
 TIME = 'time'
 DELAY = 'delay'
+HTTP_VERSION = 'http'
 
 CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
-                  SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED ]
+                  SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
+                  HTTP1_PROXY_REPLAY_PATH ]
 
 app = Flask(__name__)
 
@@ -58,7 +61,7 @@ def start_proxy():
 
 @app.route("/stop_proxy")
 def stop_proxy():
-    processes = [ MM_PROXYREPLAY, NGHTTPX, APACHE ]
+    processes = [ MM_PROXYREPLAY, NGHTTPX, SQUID ]
     for process in processes:
         command = 'pkill {0}'.format(process)
         subprocess.Popen(command, shell=True)
@@ -70,18 +73,36 @@ def start_delay_replay_proxy():
     page = request.args[PAGE]
     request_time = request.args[TIME]
     delay = request.args[DELAY]
-    path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
-    # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
-    command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
-                                           proxy_config[BUILD_PREFIX] + proxy_config[DELAYSHELL_WITH_PORT_FORWARDED], \
-                                           delay, proxy_config[NGHTTPX_PORT], \
-                                           proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
-                                           path_to_recorded_page, \
-                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
-                                           proxy_config[NGHTTPX_PORT], \
-                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
-                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT])
-    print command
+    http_version = request.args.get(HTTP_VERSION)
+    if http_version is None:
+        http_version = 2
+    else:
+        http_version = int(http_version)
+    
+    if http_version == 1:
+        path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
+        # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
+        command = '{0} {1} {2} {3} {4}'.format(
+                                               proxy_config[BUILD_PREFIX] + proxy_config[DELAYSHELL_WITH_PORT_FORWARDED], \
+                                               delay, \
+                                               proxy_config[SQUID_PORT], \
+                                               proxy_config[BUILD_PREFIX] + proxy_config[HTTP1_PROXY_REPLAY_PATH], \
+                                               path_to_recorded_page)
+    elif http_version == 2:
+        path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
+        # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
+        command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
+                                               proxy_config[BUILD_PREFIX] + proxy_config[DELAYSHELL_WITH_PORT_FORWARDED], \
+                                               delay, \
+                                               proxy_config[NGHTTPX_PORT], \
+                                               proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
+                                               path_to_recorded_page, \
+                                               proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
+                                               proxy_config[NGHTTPX_PORT], \
+                                               proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
+                                               proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT])
+        print command
+
     g._running_delay_proxy_process = subprocess.Popen(command, shell=True, preexec_fn=os.setsid)
     return 'Proxy Started'
 
