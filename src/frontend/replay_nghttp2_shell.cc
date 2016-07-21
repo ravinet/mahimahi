@@ -207,7 +207,8 @@ int main( int argc, char *argv[] )
               //
               /* set up Squid Proxy */
               string path_prefix = PATH_PREFIX;
-              SquidProxy squid_proxy(path_prefix + "/etc/squid.conf");
+              Address squid_address("0.0.0.0", 3128);
+              SquidProxy squid_proxy(squid_address);
               squid_proxy.run_squid();
               cout << "Started Squid..." << endl;
 

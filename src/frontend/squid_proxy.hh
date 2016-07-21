@@ -4,15 +4,18 @@
 #include <string>
 #include <vector>
 
+#include "address.hh"
+#include "temp_file.hh"
+
 class SquidProxy {
 
 private:
     /* each apache instance needs unique configuration file, error/access logs, and pid file */
-    std::string config_filename_;
+    TempFile config_file_;
     bool moved_away_;
 
 public:
-    SquidProxy( const std::string & squid_config_filename );
+    SquidProxy( const Address & addr );
     ~SquidProxy();
 
     SquidProxy( const SquidProxy & other ) = delete;

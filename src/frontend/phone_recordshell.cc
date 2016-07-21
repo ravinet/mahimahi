@@ -131,7 +131,8 @@ int main( int argc, char *argv[] )
                     drop_privileges();
 
                     string path_prefix = PATH_PREFIX;
-                    SquidProxy squid_proxy(path_prefix + "/etc/squid.conf");
+                    Address squid_address("0.0.0.0", 3128);
+                    SquidProxy squid_proxy(squid_address);
                     vector<string> command = squid_proxy.command();
                     // command.push_back(shell_path());
 

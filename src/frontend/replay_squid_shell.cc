@@ -210,7 +210,8 @@ int main( int argc, char *argv[] )
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
-              SquidProxy squid_proxy(path_prefix + "/etc/squid.conf");
+              Address squid_address("0.0.0.0", 3128);
+              SquidProxy squid_proxy(squid_address);
               vector< string > command = squid_proxy.command();
 
               /* start shell */
