@@ -76,7 +76,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
                           const string & request_line,
                           const bool is_https )
 {
-    const HTTPRequest saved_request( saved_record.request() );
+    HTTPRequest saved_request( saved_record.request() );
     
     ofstream myfile;
     myfile.open("test2.txt", ios::app);

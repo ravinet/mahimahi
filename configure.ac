@@ -50,6 +50,13 @@ if test "$DNSMASQ" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([DNSMASQ], ["$DNSMASQ"], [path to dnsmasq])
 
+AC_ARG_VAR([OPENVPN], [path to openvpn])
+AC_PATH_PROG([OPENVPN], [openvpn], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$OPENVPN" = "no"; then
+  AC_MSG_ERROR([openvpn is required])
+fi
+AC_DEFINE_UNQUOTED([OPENVPN], ["$OPENVPN"], [path to openvpn])
+
 AC_ARG_VAR([SQUID], [path to squid])
 AC_PATH_PROG([SQUID], [squid], [no], [${prefix}/sbin])
 if test "$SQUID" = "no"; then

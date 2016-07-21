@@ -245,13 +245,14 @@ int main( int argc, char *argv[] )
               // VPN vpn(path_to_security_files, ingress_addr, nameservers);
               // vector< string > command = vpn.start_command();
               vector< string > command;
-              command.push_back(nghttpx_path);
-              command.push_back("-s");
-              command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
-              command.push_back("-b127.0.0.1,3128");
-              // command.push_back("-b31.13.73.7,80");
-              command.push_back(nghttpx_key_path);
-              command.push_back(nghttpx_cert_path);
+              // command.push_back(nghttpx_path);
+              // command.push_back("-s");
+              // command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
+              // command.push_back("-b127.0.0.1,3128");
+              // // command.push_back("-b31.13.73.7,80");
+              // command.push_back(nghttpx_key_path);
+              // command.push_back(nghttpx_cert_path);
+              command.push_back("bash");
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {

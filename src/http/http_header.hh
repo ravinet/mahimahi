@@ -18,6 +18,8 @@ public:
     const std::string & key( void ) const { return key_; }
     const std::string & value( void ) const { return value_; }
 
+    void set_value( const std::string & value );
+
     std::string str( void ) const { return key_ + ": " + value_; }
 
     HTTPHeader( const MahimahiProtobufs::HTTPHeader & proto );

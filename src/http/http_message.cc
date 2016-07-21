@@ -151,6 +151,15 @@ const string & HTTPMessage::get_header_value( const std::string & header_name ) 
     throw runtime_error( "HTTPMessage header not found: " + header_name );
 }
 
+void HTTPMessage::set_header_value( const std::string & header_name, const std::string & value )
+{
+    for ( auto & header : headers_ ) {
+        if ( equivalent_strings( header.key(), header_name ) ) {
+            header.set_value(value);
+        }
+    }
+}
+
 /* serialize the request or response as one string */
 std::string HTTPMessage::str( void ) const
 {
