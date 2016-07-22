@@ -112,15 +112,15 @@ int main( int argc, char *argv[] )
         /* check if we found that it was gzipped, if not then print not gzipped */
         if ( gzipped ) {
             if ( chunked ) {
-                cout << "type=" << object_type << "*" << "chunked=true*gzipped=true*na--me=" << html_name << endl;
+                cout << "type=" << object_type << top_html << "*chunked=true*gzipped=true*na--me=" << html_name << endl;
             } else {
-                cout << "type=" << object_type << "*" << top_html << "chunked=false*gzipped=true*na--me=" << html_name << endl;
+                cout << "type=" << object_type << top_html << "*chunked=false*gzipped=true*na--me=" << html_name << endl;
             }
         } else {
             if ( chunked ) {
-                cout << "type=" << object_type << "*" << top_html << "chunked=true*gzipped=false*na--me=" << html_name << endl;
+                cout << "type=" << object_type << top_html << "*chunked=true*gzipped=false*na--me=" << html_name << endl;
             } else {
-                cout << "type=" << object_type << "*" << top_html << "chunked=false*gzipped=false*na--me=" << html_name << endl;
+                cout << "type=" << object_type << top_html << "*chunked=false*gzipped=false*na--me=" << html_name << endl;
             }
         }
 
