@@ -233,6 +233,11 @@ int main( int argc, char *argv[] )
               }
 
               // Create a NAT to the first nameserver.
+              /* set up NAT between egress and eth0 */
+              NAT nat_rule( nameservers[0] );
+
+              /* set up DNAT between tunnel and the nameserver. */
+              DNAT dnat( Address(nameservers[0].ip(), 53), "udp", 53 );
 
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
