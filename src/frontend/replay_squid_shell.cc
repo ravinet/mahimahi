@@ -211,7 +211,7 @@ int main( int argc, char *argv[] )
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
               Address squid_address("0.0.0.0", 3128);
-              SquidProxy squid_proxy(squid_address);
+              SquidProxy squid_proxy(squid_address, false);
               vector< string > command = squid_proxy.command();
 
               /* start shell */

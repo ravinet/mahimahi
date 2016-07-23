@@ -7,6 +7,8 @@
 #include <set>
 #include <map>
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 #include "util.hh"
 #include "netdevice.hh"
@@ -22,6 +24,7 @@
 #include "nat.hh"
 #include "socketpair.hh"
 #include "squid_proxy.hh"
+#include "reverse_proxy.hh"
 
 #include "http_record.pb.h"
 
@@ -48,8 +51,8 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 6 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert" );
+        if ( argc < 7 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port" );
         }
 
         /* clean directory name */
@@ -91,9 +94,10 @@ int main( int argc, char *argv[] )
         NAT nat_rule( ingress_addr );
 
         /* set up DNAT between eth0 to ingress address. */
-        int nghttpx_port = atoi(argv[3]);
-        DNAT dnat( Address(ingress_addr.ip(), nghttpx_port), nghttpx_port );
+        int vpn_port = atoi(argv[6]);
+        DNAT dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
 
+        // int nghttpx_port = atoi(argv[3]);
         EventLoop outer_event_loop;
         
         /* Fork */
@@ -136,7 +140,7 @@ int main( int argc, char *argv[] )
                   /* would be privilege escalation if we let the user read directories or open files as root */
 
                   const vector< string > files = list_directory_contents( directory  );
-
+  
                   for ( const auto filename : files ) {
                       FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
 
@@ -150,81 +154,69 @@ int main( int argc, char *argv[] )
                       unique_ip.emplace( address.ip(), 0 );
                       unique_ip_and_port.emplace( address );
 
-                      hostname_to_ip.emplace_back( HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
-                                                   address );
+                      string hostname = HTTPRequest( protobuf.request() ).get_header_value( "Host" );
+                      hostname_to_ip.emplace_back( hostname, address );
                       cout << "Request first line: " << HTTPRequest( protobuf.request() ).first_line() << " IP:port: " << address.str() << endl;
-                      hostname_to_ip_set.insert( make_pair(HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
-                                              address) );
-                      hostname_to_address_map.insert( make_pair(HTTPRequest( protobuf.request() ).get_header_value( "Host" ),
-                                              address) );
+                      hostname_to_ip_set.insert( make_pair(hostname, address) );
+                      hostname_to_address_map.insert( make_pair(hostname, address) );
                   }
               }
 
               /* set up dummy interfaces */
               unsigned int interface_counter = 0;
-              for ( const auto ip : unique_ip ) {
+              unsigned int squid_proxy_base_port = 3128;
+              vector< Address > reverse_proxy_addresses;
+              vector< Address > squid_addresses;
+              vector< pair< string, Address > > hostname_to_reverse_proxy_addresses;
+              for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
+                  it != hostname_to_ip_set.end();
+                  ++it) {
+                  auto hostname = it->first;
+                  auto ip = it->second;
+                  auto port = it->second.port();
                   add_dummy_interface( "sharded" + to_string( interface_counter ), ip );
+                  uint16_t squid_port = squid_proxy_base_port + interface_counter;
+                  Address reverse_proxy_address = Address::reverse_proxy(interface_counter, port);
+                  add_dummy_interface( "reverse" + to_string( interface_counter ), reverse_proxy_address);
+                  squid_addresses.push_back(Address("127.0.0.1", squid_port));
+                  cout << "Hostname: " << hostname << " reverse proxy addr: " << reverse_proxy_address.str() << endl;
+                  hostname_to_reverse_proxy_addresses.push_back(make_pair(hostname, reverse_proxy_address));
                   interface_counter++;
               }
 
               /* set up web servers */
               vector< WebServer > servers;
               for ( const auto ip_port : unique_ip_and_port ) {
-                  auto port = ip_port.port();
-                  if (port == 443) {
-                      servers.emplace_back( ip_port, working_directory, directory );
-                  } else {
-                      servers.emplace_back( ip_port, working_directory, directory );
-                  }
+                  servers.emplace_back( ip_port, working_directory, directory );
               }
 
-              // /* set up dummy interfaces */
-              // vector< pair<Address, Address> > reverse_proxy_addresses;
-              // vector< pair<string, Address> > hostname_to_reverse_proxy_mapping;
-              // unsigned int reverse_proxy_counter = 2;
-              // for ( const auto hostname_to_address : hostname_to_ip_set ) {
-              //     Address proxy_address = Address::reverse_proxy(reverse_proxy_counter, hostname_to_address.second.port());
-              //     add_dummy_interface( "reverse_proxy" + to_string( reverse_proxy_counter ), proxy_address );
-              //     reverse_proxy_addresses.push_back(make_pair(hostname_to_address.second, proxy_address));
-              //     hostname_to_reverse_proxy_mapping.push_back(
-              //         make_pair(hostname_to_address.first, proxy_address));
-              //     reverse_proxy_counter++;
-              // }
-
-              // /* set up reverse proxies */
-              // vector< ReverseProxy > reverse_proxies;
-              // for (const auto hostname_to_reverse_proxy : hostname_to_reverse_proxy_mapping) {
-              //     string hostname = hostname_to_reverse_proxy.first;
-              //     Address webserver_address = hostname_to_address_map[hostname];
-              //     Address proxy_address = hostname_to_reverse_proxy.second;
-              //     reverse_proxies.emplace_back(proxy_address,
-              //                                  webserver_address,
-              //                                  hostname,
-              //                                  nghttpx_path,
-              //                                  nghttpx_key_path,
-              //                                  nghttpx_cert_path);
-              // }
-              //
               /* set up Squid Proxy */
               string path_prefix = PATH_PREFIX;
-              Address squid_address("0.0.0.0", 3128);
-              SquidProxy squid_proxy(squid_address);
-              squid_proxy.run_squid();
-              cout << "Started Squid..." << endl;
+              vector< SquidProxy > squid_proxies;
+              for ( const auto squid_address : squid_addresses ) {
+                squid_proxies.emplace_back(squid_address, true);
+                // cout << "Started Squid with port: " << squid_address.port() << endl;
+                this_thread::sleep_for(chrono::milliseconds(500));
+              }
 
-              // /* set up DNS server */
-              // TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
-              // cout << "DNS Filename: " << dnsmasq_hosts.name() << endl;
-              // for ( const auto mapping : hostname_to_reverse_proxy_mapping ) {
-              //     string dns_entry = mapping.second.ip() + " " + mapping.first + "\n";
-              //     cout << dns_entry;
-              //     dnsmasq_hosts.write( dns_entry );
-              // }
-              
+              /* set up nghttpx proxies */
+              vector< ReverseProxy > reverse_proxies;
+              for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
+                auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
+                auto reverse_proxy_address = hostname_to_reverse_proxy.second;
+                auto squid_proxy_address = squid_addresses[i];
+                cout << "ReverseProxy address: " << reverse_proxy_address.str() << " SquidProxy address: " << squid_proxy_address.str() << endl;
+                reverse_proxies.emplace_back(reverse_proxy_address,
+                                          squid_proxy_address,
+                                          nghttpx_path,
+                                          nghttpx_key_path,
+                                          nghttpx_cert_path);
+              }
+
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
-              cout << "DNS Filename: " << dnsmasq_hosts.name() << endl;
-              for ( const auto mapping : hostname_to_ip ) {
+              for ( const auto mapping : hostname_to_reverse_proxy_addresses ) {
+                cout << "IP: " << mapping.second.ip() << " domain: " << mapping.first << endl;
                 dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
               }
 
@@ -239,6 +231,8 @@ int main( int argc, char *argv[] )
                   const string interface_name = "nameserver" + to_string( server_num );
                   add_dummy_interface( interface_name, nameservers.at( server_num ) );
               }
+
+              // Create a NAT to the first nameserver.
 
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );

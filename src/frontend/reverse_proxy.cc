@@ -69,13 +69,6 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     backend_arg << "-b" << backend_address.ip() << ","
                 // << backend_address.port() << ";" << associated_domain;
                 << backend_address.port();
-    
-    if (backend_address.port() == 443) {
-      backend_arg << ";tls";
-    }
-  
-    string backend_catchall_arg = "-b127.0.0.1,80";
-
    
     // string private_key = "--client-private-key-file=" + string(MOD_SSL_KEY);
     // string cert = "--client-cert-file=" + string(MOD_SSL_CERTIFICATE_FILE);
@@ -85,8 +78,8 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     // run( { path_to_proxy, frontend_arg.str(), backend_arg.str(), backend_catchall_arg,
     //     path_to_proxy_key, path_to_proxy_cert, "--daemon", private_key, cert } );
     
-    run( { path_to_proxy, frontend_arg.str(), backend_arg.str(), backend_catchall_arg,
-      path_to_proxy_key, path_to_proxy_cert, "--daemon", "-k" } );
+    run( { path_to_proxy, frontend_arg.str(), backend_arg.str(),
+      path_to_proxy_key, path_to_proxy_cert, "--daemon" } );
 }
 
 ReverseProxy::~ReverseProxy()
