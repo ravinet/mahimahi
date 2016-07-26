@@ -78,7 +78,7 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     // run( { path_to_proxy, frontend_arg.str(), backend_arg.str(), backend_catchall_arg,
     //     path_to_proxy_key, path_to_proxy_cert, "--daemon", private_key, cert } );
     
-    run( { path_to_proxy, frontend_arg.str(), backend_arg.str(),
+    run( { path_to_proxy, "-s", frontend_arg.str(), backend_arg.str(),
       path_to_proxy_key, path_to_proxy_cert, "--daemon" } );
 }
 

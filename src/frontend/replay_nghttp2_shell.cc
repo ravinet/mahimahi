@@ -25,6 +25,7 @@
 #include "socketpair.hh"
 #include "squid_proxy.hh"
 #include "reverse_proxy.hh"
+#include "pac_file.hh"
 
 #include "http_record.pb.h"
 
@@ -97,7 +98,7 @@ int main( int argc, char *argv[] )
         int vpn_port = atoi(argv[6]);
         DNAT dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
 
-        // int nghttpx_port = atoi(argv[3]);
+        int nghttpx_port = atoi(argv[3]);
         EventLoop outer_event_loop;
         
         /* Fork */
@@ -168,19 +169,19 @@ int main( int argc, char *argv[] )
               vector< Address > reverse_proxy_addresses;
               vector< Address > squid_addresses;
               vector< pair< string, Address > > hostname_to_reverse_proxy_addresses;
+              vector< pair< Address, Address > > webserver_to_reverse_proxy_addresses;
               for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
-                  it != hostname_to_ip_set.end();
-                  ++it) {
+                  it != hostname_to_ip_set.end(); ++it) {
                   auto hostname = it->first;
-                  auto ip = it->second;
-                  auto port = it->second.port();
-                  add_dummy_interface( "sharded" + to_string( interface_counter ), ip );
+                  auto address = it->second;
+                  add_dummy_interface( "sharded" + to_string( interface_counter ), address );
                   uint16_t squid_port = squid_proxy_base_port + interface_counter;
-                  Address reverse_proxy_address = Address::reverse_proxy(interface_counter, port);
+                  Address reverse_proxy_address = Address::reverse_proxy(interface_counter, nghttpx_port + interface_counter);
                   add_dummy_interface( "reverse" + to_string( interface_counter ), reverse_proxy_address);
                   squid_addresses.push_back(Address("127.0.0.1", squid_port));
                   cout << "Hostname: " << hostname << " reverse proxy addr: " << reverse_proxy_address.str() << endl;
                   hostname_to_reverse_proxy_addresses.push_back(make_pair(hostname, reverse_proxy_address));
+                  webserver_to_reverse_proxy_addresses.push_back(make_pair(address, reverse_proxy_address));
                   interface_counter++;
               }
 
@@ -205,6 +206,7 @@ int main( int argc, char *argv[] )
                 auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
                 auto reverse_proxy_address = hostname_to_reverse_proxy.second;
                 auto squid_proxy_address = squid_addresses[i];
+                // auto webserver_address = webserver_to_reverse_proxy_addresses[i].first;
                 cout << "ReverseProxy address: " << reverse_proxy_address.str() << " SquidProxy address: " << squid_proxy_address.str() << endl;
                 reverse_proxies.emplace_back(reverse_proxy_address,
                                           squid_proxy_address,
@@ -212,6 +214,9 @@ int main( int argc, char *argv[] )
                                           nghttpx_key_path,
                                           nghttpx_cert_path);
               }
+
+              PacFile pac_file("/home/vaspol/Sites/test.pac");
+              pac_file.WriteProxies(hostname_to_reverse_proxy_addresses);
 
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
