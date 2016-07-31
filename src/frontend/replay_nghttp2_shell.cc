@@ -26,6 +26,7 @@
 #include "squid_proxy.hh"
 #include "reverse_proxy.hh"
 #include "pac_file.hh"
+#include "vpn.hh"
 
 #include "http_record.pb.h"
 
@@ -52,8 +53,8 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 7 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port" );
+        if ( argc < 8 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port path_to_dependency_file" );
         }
 
         /* clean directory name */
@@ -170,18 +171,23 @@ int main( int argc, char *argv[] )
               vector< Address > squid_addresses;
               vector< pair< string, Address > > hostname_to_reverse_proxy_addresses;
               vector< pair< Address, Address > > webserver_to_reverse_proxy_addresses;
+              vector< pair< string, string > > hostname_to_reverse_proxy_names;
+              vector< pair< string, Address > > reverse_proxy_names_to_reverse_proxy_addresses;
               for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
                   it != hostname_to_ip_set.end(); ++it) {
                   auto hostname = it->first;
                   auto address = it->second;
                   add_dummy_interface( "sharded" + to_string( interface_counter ), address );
                   uint16_t squid_port = squid_proxy_base_port + interface_counter;
-                  Address reverse_proxy_address = Address::reverse_proxy(interface_counter, nghttpx_port + interface_counter);
-                  add_dummy_interface( "reverse" + to_string( interface_counter ), reverse_proxy_address);
+                  string reverse_proxy_name = to_string( interface_counter ) + ".reverse.com";
+                  Address reverse_proxy_address = Address::reverse_proxy(interface_counter + 1, nghttpx_port + interface_counter);
+                  add_dummy_interface( reverse_proxy_name, reverse_proxy_address);
                   squid_addresses.push_back(Address("127.0.0.1", squid_port));
                   cout << "Hostname: " << hostname << " reverse proxy addr: " << reverse_proxy_address.str() << endl;
                   hostname_to_reverse_proxy_addresses.push_back(make_pair(hostname, reverse_proxy_address));
+                  hostname_to_reverse_proxy_names.push_back(make_pair(hostname, reverse_proxy_name));
                   webserver_to_reverse_proxy_addresses.push_back(make_pair(address, reverse_proxy_address));
+                  reverse_proxy_names_to_reverse_proxy_addresses.push_back(make_pair(reverse_proxy_name, reverse_proxy_address));
                   interface_counter++;
               }
 
@@ -201,6 +207,7 @@ int main( int argc, char *argv[] )
               }
 
               /* set up nghttpx proxies */
+              string path_to_dependency_file = argv[ 7 ];
               vector< ReverseProxy > reverse_proxies;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
                 auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
@@ -212,17 +219,23 @@ int main( int argc, char *argv[] )
                                           squid_proxy_address,
                                           nghttpx_path,
                                           nghttpx_key_path,
-                                          nghttpx_cert_path);
+                                          nghttpx_cert_path,
+                                          path_to_dependency_file);
               }
 
-              PacFile pac_file("/home/vaspol/Sites/test.pac");
-              pac_file.WriteProxies(hostname_to_reverse_proxy_addresses);
+              PacFile pac_file("/home/ubuntu/Sites/config_testing.pac");
+              cout << hostname_to_reverse_proxy_addresses.size() << endl;
+              pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
+                                    hostname_to_reverse_proxy_names);
 
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
-              for ( const auto mapping : hostname_to_reverse_proxy_addresses ) {
+              uint8_t counter = 0;
+              for ( const auto mapping : reverse_proxy_names_to_reverse_proxy_addresses ) {
+              // for ( const auto mapping : hostname_to_reverse_proxy_addresses ) {
                 cout << "IP: " << mapping.second.ip() << " domain: " << mapping.first << endl;
-                dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
+                dnsmasq_hosts.write( mapping.second.ip() + " " + to_string(counter) + ".reverse.com\n" );
+                counter++;
               }
 
               /* initialize event loop */
@@ -247,17 +260,18 @@ int main( int argc, char *argv[] )
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
-              // VPN vpn(path_to_security_files, ingress_addr, nameservers);
-              // vector< string > command = vpn.start_command();
-              vector< string > command;
+              string path_to_security_files = "/etc/openvpn/";
+              VPN vpn(path_to_security_files, ingress_addr, nameservers);
+              vector< string > command = vpn.start_command();
+              // vector< string > command;
               // command.push_back(nghttpx_path);
               // command.push_back("-s");
               // command.push_back("-f0.0.0.0," + std::to_string(nghttpx_port));
               // command.push_back("-b127.0.0.1,3128");
-              // // command.push_back("-b31.13.73.7,80");
+              // command.push_back("-b31.13.73.7,80");
               // command.push_back(nghttpx_key_path);
               // command.push_back(nghttpx_cert_path);
-              command.push_back("bash");
+              // command.push_back("bash");
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {

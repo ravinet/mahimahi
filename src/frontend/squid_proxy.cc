@@ -18,7 +18,7 @@ SquidProxy::SquidProxy( const Address & addr,
   std::string listening_port = std::to_string(addr.port());
   std::string path_prefix = PATH_PREFIX;
   config_file_.write("http_access allow all\n");
-  config_file_.write("cache_effective_user vaspol\n");
+  config_file_.write("cache_effective_user ubuntu\n");
   config_file_.write("http_port " + listening_port + " ssl-bump cert=" + path_prefix + "/certs/apple-pi.eecs.umich.edu.pem.crt key=" + path_prefix + "/certs/apple-pi.eecs.umich.edu.pk generate-host-certificates=on version=1 options=NO_SSLv2,NO_SSLv3,SINGLE_DH_USE\n");
   config_file_.write("sslproxy_cert_error allow all\n");
   config_file_.write("ssl_bump bump all\n");

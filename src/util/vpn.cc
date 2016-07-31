@@ -1,5 +1,6 @@
 #include "vpn.hh"
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -31,7 +32,13 @@ VPN::VPN( const string & path_to_security_files, const Address & ingress,
 }
 
 VPN::~VPN() {
-
+  ifstream pid_file("/tmp/openvpn.pid");
+  if (pid_file.is_open()) {
+    string line;
+    getline(pid_file, line);
+    cout << line << endl;
+  }
+  pid_file.close();
 }
 
 void VPN::write_config_file(const string & path_to_security_files, 
@@ -65,11 +72,12 @@ void VPN::write_config_file(const string & path_to_security_files,
   config_file_.write("user nobody\n");
   config_file_.write("group nogroup\n");
 
-  config_file_.write("com-lzo\n");
+  config_file_.write("comp-lzo\n");
   config_file_.write("persist-key\n");
   config_file_.write("persist-tun\n");
   config_file_.write("status openvpn-status.log\n");
   config_file_.write("verb 3\n");
+  config_file_.write("writepid /tmp/openvpn.pid\n");
 }
 
 vector<string> VPN::start_command() {
@@ -77,7 +85,7 @@ vector<string> VPN::start_command() {
   result.push_back("sudo");
   result.push_back(OPENVPN);
   result.push_back("--config");
-  result.push_back("/home/ubuntu/build/conf/openvpn.conf");
+  result.push_back(config_file_.name());
   return result;
 }
 

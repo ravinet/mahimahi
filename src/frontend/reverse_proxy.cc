@@ -1,5 +1,8 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
+#include <cstdlib>
+#include <csignal>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -15,13 +18,14 @@ using namespace std;
 
 ReverseProxy::ReverseProxy( const Address & frontend_address, 
                             const Address & backend_address, 
-                            const string & associated_domain,
                             const string & path_to_proxy,
                             const string & path_to_proxy_key,
                             const string & path_to_proxy_cert)
-  : moved_away_(false)
+  : pidfile_("/tmp/replayshell_nghttpx.pid"),
+    moved_away_(false)
 {
-    cout << "Proxy key: " << path_to_proxy_key << " Proxy cert: " << path_to_proxy_cert << " Associated domain: " << associated_domain << endl;
+    cout << "Frontend: " << frontend_address.str() << " backend: " << backend_address.str() << endl;
+    cout << "Proxy key: " << path_to_proxy_key << " Proxy cert: " << path_to_proxy_cert << endl;
     stringstream frontend_arg;
     frontend_arg << "-f" << frontend_address.ip() << ","
                  // << frontend_address.port() << ";no-tls";
@@ -30,14 +34,7 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     stringstream backend_arg;
     backend_arg << "-b" << backend_address.ip() << ","
                 // << backend_address.port() << ";" << associated_domain;
-                << backend_address.port() << ";" << associated_domain;
-    
-    if (backend_address.port() == 443) {
-      backend_arg << ";tls";
-    }
-  
-    string backend_catchall_arg = "-b127.0.0.1,80";
-
+                << backend_address.port();
    
     // string private_key = "--client-private-key-file=" + string(MOD_SSL_KEY);
     // string cert = "--client-cert-file=" + string(MOD_SSL_CERTIFICATE_FILE);
@@ -46,17 +43,18 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
 
     // run( { path_to_proxy, frontend_arg.str(), backend_arg.str(), backend_catchall_arg,
     //     path_to_proxy_key, path_to_proxy_cert, "--daemon", private_key, cert } );
-    
-    run( { path_to_proxy, "--log-level=INFO", frontend_arg.str(), backend_arg.str(), backend_catchall_arg,
-      path_to_proxy_key, path_to_proxy_cert, "--daemon", "-k" } );
+    run( { path_to_proxy, "-s", frontend_arg.str(), backend_arg.str(),
+      path_to_proxy_key, path_to_proxy_cert, "--daemon", "--pid-file=" + pidfile_.name() } );
 }
 
 ReverseProxy::ReverseProxy( const Address & frontend_address, 
                             const Address & backend_address, 
                             const string & path_to_proxy,
                             const string & path_to_proxy_key,
-                            const string & path_to_proxy_cert)
-  : moved_away_(false)
+                            const string & path_to_proxy_cert,
+                            const string & path_to_dependency_file)
+  : pidfile_("/tmp/replayshell_nghttpx.pid"),
+    moved_away_(false)
 {
     cout << "Frontend: " << frontend_address.str() << " backend: " << backend_address.str() << endl;
     cout << "Proxy key: " << path_to_proxy_key << " Proxy cert: " << path_to_proxy_cert << endl;
@@ -79,7 +77,9 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     //     path_to_proxy_key, path_to_proxy_cert, "--daemon", private_key, cert } );
     
     run( { path_to_proxy, "-s", frontend_arg.str(), backend_arg.str(),
-      path_to_proxy_key, path_to_proxy_cert, "--daemon" } );
+      path_to_proxy_key, path_to_proxy_cert, 
+      "--dependency-filename", path_to_dependency_file, "--daemon",
+      "--pid-file=" + pidfile_.name() } );
 }
 
 ReverseProxy::~ReverseProxy()
@@ -87,14 +87,22 @@ ReverseProxy::~ReverseProxy()
     if ( moved_away_ ) { return; }
 
     try {
-        run( { "pkill", "nghttpx" } );
+      ifstream pidfile (pidfile_.name());
+      string line;
+      if (pidfile.is_open()) {
+        getline(pidfile, line);
+      }
+      pidfile.close();
+      int pid_int = atoi(line.c_str());
+      kill(pid_int, SIGKILL);
     } catch ( const exception & e ) {
       print_exception( e );
     }
 }
 
 ReverseProxy::ReverseProxy( ReverseProxy && other )
-    : moved_away_( false )
+    : pidfile_( move( other.pidfile_ ) ),
+      moved_away_( false )
 {
     other.moved_away_ = true;
 }
