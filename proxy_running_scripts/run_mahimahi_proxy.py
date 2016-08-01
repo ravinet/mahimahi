@@ -20,6 +20,7 @@ NGHTTPX_KEY = 'nghttpx_key'
 NGHTTPX_CERT = 'nghttpx_cert'
 BASE_RECORD_DIR = 'base_record_dir'
 BASE_RESULT_DIR = 'base_result_dir'
+DEPENDENCY_DIRECTORY_PATH = 'dependency_directory_path'
 
 MM_PROXYREPLAY = 'mm-proxyreplay'
 MM_PHONE_WEBRECORD = 'mm-phone-webrecord'
@@ -29,6 +30,7 @@ APACHE = 'apache'
 PAGE = 'page'
 SQUID_PORT = 'squid_port'
 SQUID = 'squid'
+OPENVPN_PORT = 'openvpn_port'
 
 TIME = 'time'
 DELAY = 'delay'
@@ -37,7 +39,7 @@ HTTP_VERSION = 'http'
 CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
                   SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
-                  HTTP1_PROXY_REPLAY_PATH ]
+                  HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH ]
 
 app = Flask(__name__)
 
@@ -46,15 +48,20 @@ def start_proxy():
     print proxy_config
     page = request.args[PAGE]
     request_time = request.args[TIME]
-    path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escape_page(page))
+    escaped_page = escape_page(page)
+    path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
     # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
-    command = '{0} {1} {2} {3} {4} {5}'.format(
+    # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
+    dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
+    command = '{0} {1} {2} {3} {4} {5} {6} {7}'.format(
                                            proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
                                            path_to_recorded_page, \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
                                            proxy_config[NGHTTPX_PORT], \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
-                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT])
+                                           proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT], \
+                                           proxy_config[OPENVPN_PORT], \
+                                           dependency_filename)
     print command
     process = subprocess.Popen(command, shell=True)
     return 'Proxy Started'
@@ -149,10 +156,53 @@ def is_recording():
 
 @app.route("/is_proxy_running")
 def is_proxy_running():
+    result = ''
     command = 'pgrep "mm-proxyreplay"'
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    return stdout
+    splitted_stdout = stdout.split('\n')
+    if len(splitted_stdout) > 1:
+        result += 'mm-proxyreplay YES\n'
+    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+        result += 'mm-proxyreplay YES\n'
+    else:
+        result += 'mm-proxyreplay NO\n'
+
+    command = 'pgrep "squid"'
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    splitted_stdout = stdout.split('\n')
+    if len(splitted_stdout) > 1:
+        result += 'squid YES\n'
+    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+        result += 'squid YES\n'
+    else:
+        result += 'squid NO\n'
+
+    command = 'pgrep "nghttpx"'
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    splitted_stdout = stdout.split('\n')
+    if len(splitted_stdout) > 1:
+        result += 'nghttpx YES\n'
+    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+        result += 'nghttpx YES\n'
+    else:
+        result += 'nghttpx NO\n'
+
+    command = 'pgrep "openvpn"'
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    print 'openvpn: ' + stdout
+    splitted_stdout = stdout.split('\n')
+    if len(splitted_stdout) > 1:
+        result += 'openvpn YES\n'
+    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+        result += 'openvpn YES\n'
+    else:
+        result += 'openvpn NO\n'
+
+    return result.strip()
 
 @app.route("/done")
 def done():
