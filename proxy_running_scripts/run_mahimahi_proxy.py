@@ -50,7 +50,6 @@ def start_proxy():
     request_time = request.args[TIME]
     escaped_page = escape_page(page)
     path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
-    # cmd: ./mm-proxyreplay ../../page_loads/apple.com/ ./nghttpx 10000 ../certs/nghttpx_key.pem ../certs/nghttpx_cert.pem
     # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
     dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
     command = '{0} {1} {2} {3} {4} {5} {6} {7}'.format(
@@ -144,65 +143,41 @@ def stop_recording():
     for process in processes:
         command = 'pkill {0}'.format(process)
         print command
-        subprocess.Popen(command, shell=True)
+        subprocess.Popen(command.split())
     return 'Proxy Stopped'
 
-@app.route("/is_recording")
-def is_recording():
-    command = 'pgrep "mm-phone-webrecord"'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    return stdout
-
-@app.route("/is_proxy_running")
-def is_proxy_running():
+@app.route("/is_record_proxy_running")
+def is_record_proxy_running():
+    process_names = [ 'mm-phone-webrecord', 'squid' ]
     result = ''
-    command = 'pgrep "mm-proxyreplay"'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    splitted_stdout = stdout.split('\n')
-    if len(splitted_stdout) > 1:
-        result += 'mm-proxyreplay YES\n'
-    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-        result += 'mm-proxyreplay YES\n'
-    else:
-        result += 'mm-proxyreplay NO\n'
-
-    command = 'pgrep "squid"'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    splitted_stdout = stdout.split('\n')
-    if len(splitted_stdout) > 1:
-        result += 'squid YES\n'
-    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-        result += 'squid YES\n'
-    else:
-        result += 'squid NO\n'
-
-    command = 'pgrep "nghttpx"'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    splitted_stdout = stdout.split('\n')
-    if len(splitted_stdout) > 1:
-        result += 'nghttpx YES\n'
-    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-        result += 'nghttpx YES\n'
-    else:
-        result += 'nghttpx NO\n'
-
-    command = 'pgrep "openvpn"'
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    print 'openvpn: ' + stdout
-    splitted_stdout = stdout.split('\n')
-    if len(splitted_stdout) > 1:
-        result += 'openvpn YES\n'
-    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-        result += 'openvpn YES\n'
-    else:
-        result += 'openvpn NO\n'
+    for process_name in process_names:
+        result += check_process(process_name)
 
     return result.strip()
+
+@app.route("/is_replay_proxy_running")
+def is_replay_proxy_running():
+    process_names = [ 'mm-proxyreplay', 'nghttpx', 'openvpn' ]
+    result = ''
+    for process_name in process_names:
+        result += check_process(process_name)
+
+    return result.strip()
+
+def check_process(process_name):
+    command = 'pgrep "{0}"'.format(process_name)
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    splitted_stdout = stdout.split('\n')
+    result = ''
+    if len(splitted_stdout) > 1:
+        result += '{0} YES\n'.format(process_name)
+    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+        result += '{0} YES\n'.format(process_name)
+    else:
+        result += '{0} NO\n'.format(process_name)
+    return result
+
 
 @app.route("/done")
 def done():
