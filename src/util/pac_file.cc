@@ -21,9 +21,15 @@ void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses)
     auto hostname = hostname_to_address_pair.first;
     auto address = hostname_to_address_pair.second;
     ss << "if (shExpMatch(url, \"";
-    ss << "*" << hostname_to_address_pair.first << "*";
+    ss << ((address.port() == 80) ? "http:*" : "https:*");
+    ss << hostname_to_address_pair.first << "*";
     ss << "\"))";
-    ss << "\treturn \"HTTPS " << address.str() << "\";" << endl;
+    if (address.port() == 80) {
+      ss << "\treturn \"HTTPS " << address.str() << "\";" << endl;
+    } else if (address.port() == 443) {
+      // We don't need to connect via proxy if it is already a HTTPS request.
+      ss << "\treturn \"DIRECT\";" << endl;
+    }
   }
 
   ss << "}";
@@ -48,9 +54,14 @@ void PacFile::WriteProxies(
     auto address = hostname_to_address_pair.second;
     auto hostname_to_reverse_server_name_pair = hostnames_to_reverse_proxy_name[i];
     ss << "if (shExpMatch(url, \"";
-    ss << "*" << hostname_to_address_pair.first << "*";
+    ss << ((address.port() == 80) ? "http:*" : "https:*");
+    ss << hostname_to_address_pair.first << "*";
     ss << "\"))";
-    ss << "\treturn \"HTTPS " << hostname_to_reverse_server_name_pair.second << ":" << to_string(address.port()) << "\";" << endl;
+    if (address.port() == 80) {
+      ss << "\treturn \"HTTPS " << hostname_to_reverse_server_name_pair.second << ":" << to_string(address.port()) << "\";" << endl;
+    } else {
+      ss << "\treturn \"DIRECT\";" << endl;
+    }
   }
 
   ss << "}";
