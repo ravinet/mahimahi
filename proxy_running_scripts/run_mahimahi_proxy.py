@@ -31,6 +31,7 @@ PAGE = 'page'
 SQUID_PORT = 'squid_port'
 SQUID = 'squid'
 OPENVPN_PORT = 'openvpn_port'
+START_TCPDUMP = 'start_tcpdump'
 
 TIME = 'time'
 DELAY = 'delay'
@@ -39,15 +40,16 @@ HTTP_VERSION = 'http'
 CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
                   SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
-                  HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH ]
+                  HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH, \
+                  START_TCPDUMP ]
 
 app = Flask(__name__)
 
 @app.route("/start_proxy")
 def start_proxy():
     print proxy_config
-    page = request.args[PAGE]
     request_time = request.args[TIME]
+    page = request.args[PAGE]
     escaped_page = escape_page(page)
     path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
     # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
@@ -63,6 +65,7 @@ def start_proxy():
                                            dependency_filename)
     print command
     process = subprocess.Popen(command, shell=True)
+
     return 'Proxy Started'
 
 @app.route("/stop_proxy")
@@ -71,7 +74,21 @@ def stop_proxy():
     for process in processes:
         command = 'pkill {0}'.format(process)
         subprocess.Popen(command, shell=True)
+
     return 'Proxy Stopped'
+
+def start_tcpdump():
+    command = 'sudo tcpdump -i eth0 -w capture.pcap port 80'
+    subprocess.Popen(command.split())
+
+def stop_tcpdump(pcap_directory, page_name):
+    command = 'sudo pkill -sigint tcpdump'
+    process = subprocess.Popen(command.split())
+    process.wait()
+    dst = os.path.join(pcap_directory, page_name + '.pcap')
+    command = 'mv -v capture.pcap {0}'.format(dst)
+    process = subprocess.Popen(command.split())
+    process.wait()
 
 @app.route("/start_delay_replay_proxy")
 def start_delay_replay_proxy():
@@ -135,6 +152,11 @@ def start_recording():
                             os.path.join(proxy_config[BASE_RECORD_DIR], request_time, escape_page(page)), \
                             proxy_config[SQUID_PORT])
     process = subprocess.Popen(command, shell=True)
+
+    # Start tcpdump, if necessary.
+    if proxy_config[START_TCPDUMP] == 'True':
+        start_tcpdump()
+
     return 'Proxy Started'
 
 @app.route("/stop_recording")
@@ -144,11 +166,23 @@ def stop_recording():
         command = 'pkill {0}'.format(process)
         print command
         subprocess.Popen(command.split())
+
+    print proxy_config[START_TCPDUMP]
+    if proxy_config[START_TCPDUMP] == 'True':
+        print 'Stopping tcpdump'
+        request_time = request.args[TIME]
+        page = request.args[PAGE]
+        page_name = escape_page(page)
+        pcap_directory = os.path.join(proxy_config[BASE_RECORD_DIR], request_time, 'pcap')
+        if not os.path.exists(pcap_directory):
+            os.mkdir(pcap_directory)
+        stop_tcpdump(pcap_directory, page_name)
+
     return 'Proxy Stopped'
 
 @app.route("/is_record_proxy_running")
 def is_record_proxy_running():
-    process_names = [ 'mm-phone-webrecord', 'squid' ]
+    process_names = [ 'squid' ]
     result = ''
     for process_name in process_names:
         result += check_process(process_name)
@@ -166,7 +200,8 @@ def is_replay_proxy_running():
 
 def check_process(process_name):
     command = 'pgrep "{0}"'.format(process_name)
-    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    print command
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdout, stderr = process.communicate()
     splitted_stdout = stdout.split('\n')
     result = ''
@@ -177,7 +212,6 @@ def check_process(process_name):
     else:
         result += '{0} NO\n'.format(process_name)
     return result
-
 
 @app.route("/done")
 def done():
