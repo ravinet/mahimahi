@@ -30,12 +30,24 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
     frontend_arg << "-f" << frontend_address.ip() << ","
                  << frontend_address.port();
 
-    stringstream backend_arg;
-    backend_arg << "-b" << backend_address.ip() << ","
-                << backend_address.port();
-   
-    run( { path_to_proxy, "-s", frontend_arg.str(), backend_arg.str(),
-      path_to_proxy_key, path_to_proxy_cert, "--daemon", "--pid-file=" + pidfile_.name() } );
+    if (backend_address.port() == 443) {
+      // Handle HTTPS
+      stringstream https_backend_arg;
+      https_backend_arg << "-b" << backend_address.ip() << ","
+                        << backend_address.port() << ";tls";
+      stringstream http_backend_arg;
+      http_backend_arg << "-b" << backend_address.ip() << ",80";
+      run( { path_to_proxy, "-s", frontend_arg.str(), https_backend_arg.str(),
+        http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
+        "--daemon", "--pid-file=" + pidfile_.name() } );
+    } else {
+      // Handle HTTP case
+      stringstream http_backend_arg;
+      http_backend_arg << "-b" << backend_address.ip() << ",80";
+      run( { path_to_proxy, "-s", frontend_arg.str(), 
+          http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
+          "--daemon", "--pid-file=" + pidfile_.name() } );
+    }
 }
 
 ReverseProxy::ReverseProxy( const Address & frontend_address, 
