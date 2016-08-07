@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <sstream>
 
 #include "util.hh"
 #include "http_record.pb.h"
@@ -57,6 +58,7 @@ bool header_match( const string & env_var_name,
     }
 
     /* case 3: one exists but the other doesn't (failure) */
+    myfile << "Failed to find the request for " << string(env_value) << endl;
     myfile.close();
     return false;
 }
@@ -71,6 +73,48 @@ string strip_query( const string & request_line )
     }
 }
 
+string extract_url_from_request_line( const string & request_line ) {
+  vector< string > elems;
+  stringstream ss(request_line);
+  string item;
+  while (getline(ss, item, ' ')) {
+    elems.push_back(item);
+  }
+  return elems[1];
+}
+
+string strip_hostname( const string & request_line, const string & path ) {
+  string http = "http://";
+  string https = "https://";
+  if ( (request_line.find( http ) == 0 && path.find( http ) == 0) ||
+       (request_line.find( https ) == 0 && path.find( https ) == 0 )) {
+    return request_line;
+  }
+
+  string retval = request_line;
+  if ( request_line.find( http ) == 0 ) {
+    retval = request_line.substr( http.length(), request_line.length() );
+  } else if ( request_line.find( https ) == 0 ) {
+    retval = request_line.substr( https.length(), request_line.length() );
+  }
+
+  string www = "www.";
+  if ( retval.find( www ) == 0 ) {
+    retval = retval.substr( www.length(), retval.length() );
+  }
+
+  const auto index = retval.find( "/" );
+  retval = retval.substr( index, retval.length() );
+  
+  // if ( request_line.find( path ) != string::npos ) {
+  //   return path;
+  // } else {
+  //   return request_line;
+  // }
+
+  return retval;
+}
+
 /* compare request_line and certain headers of incoming request and stored request */
 unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_record,
                           const string & request_line,
@@ -80,8 +124,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     
     ofstream myfile;
     myfile.open("test2.txt", ios::app);
-    myfile << "Saved request: " << saved_request.first_line() << " Request Line: " << request_line << endl;
-    myfile.close();
+    myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
     
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
@@ -103,17 +146,27 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     // }
 
     /* must match first line up to "?" at least */
-    if ( strip_query( request_line ) != strip_query( saved_request.first_line() ) ) {
-        return 0;
+    myfile << "URL: " << strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line())) << " saved request: " << extract_url_from_request_line(saved_request.first_line()) << endl;
+    myfile << "Matching " << strip_hostname(strip_query(request_line), extract_url_from_request_line(strip_query(saved_request.first_line()) )) << " to " << strip_query(saved_request.first_line()) << endl;
+    string request_url = strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line()));
+    string saved_request_url = extract_url_from_request_line(saved_request.first_line());
+    if ( request_url != saved_request_url ) {
+      return 0;
     }
+    // if ( strip_hostname(strip_query( request_line ), strip_query(saved_request.first_line())) != strip_query( saved_request.first_line() ) ) {
+    //     return 0;
+    // }
 
+    myfile << "Matched " << request_url << " to " << saved_request_url << endl;
     /* success! return size of common prefix */
-    const auto max_match = min( request_line.size(), saved_request.first_line().size() );
+    const auto max_match = min( request_url.size(), saved_request_url.size() );
     for ( unsigned int i = 0; i < max_match; i++ ) {
-        if ( request_line.at( i ) != saved_request.first_line().at( i ) ) {
+        if ( request_url.at( i ) != saved_request_url.at( i ) ) {
             return i;
         }
     }
+
+    myfile.close();
 
     return max_match;
 }
