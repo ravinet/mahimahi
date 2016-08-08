@@ -174,6 +174,7 @@ int main( int argc, char *argv[] )
               vector< pair< string, string > > hostname_to_reverse_proxy_names;
               vector< pair< string, Address > > reverse_proxy_names_to_reverse_proxy_addresses;
               vector< pair< string, Address > > name_resolution_pairs;
+              set< string > added_ip_addresses;
               for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
                   it != hostname_to_ip_set.end(); ++it) {
                   // Get the appropriate variables.
@@ -181,7 +182,10 @@ int main( int argc, char *argv[] )
                   auto address = it->second;
 
                   // Setup the interface for each of the webserver.
-                  add_dummy_interface( "sharded" + to_string( interface_counter ), address );
+                  if ( added_ip_addresses.count(address.ip()) == 0 ) {
+                    add_dummy_interface( "sharded" + to_string( interface_counter ), address );
+                  }
+                  added_ip_addresses.insert( address.ip() );
 
                   // Setup squid instances
                   uint16_t squid_port = squid_proxy_base_port + interface_counter;
@@ -189,8 +193,9 @@ int main( int argc, char *argv[] )
 
                   // Setup interfaces for reverse proxies.
                   string reverse_proxy_name = to_string( interface_counter ) + ".reverse.com";
+                  string reverse_proxy_device_name = "reverse" + to_string( interface_counter );
                   Address reverse_proxy_address = Address::reverse_proxy(interface_counter + 1, address.port());
-                  add_dummy_interface( reverse_proxy_name, reverse_proxy_address);
+                  add_dummy_interface( reverse_proxy_device_name, reverse_proxy_address);
 
                   // Populuate name resolution pairs.
                   if (reverse_proxy_address.port() == 80) {
@@ -238,6 +243,11 @@ int main( int argc, char *argv[] )
                 auto webserver_address = webserver_to_reverse_proxy_addresses[i].first;
                 // cout << "ReverseProxy address: " << reverse_proxy_address.str() << " SquidProxy address: " << squid_proxy_address.str() << endl;
                 cout << "ReverseProxy address: " << reverse_proxy_address.str() << " Webserver address: " << webserver_address.str() << endl;
+                // reverse_proxies.emplace_back(reverse_proxy_address,
+                //                           webserver_address,
+                //                           nghttpx_path,
+                //                           nghttpx_key_path,
+                //                           nghttpx_cert_path);
                 reverse_proxies.emplace_back(reverse_proxy_address,
                                           webserver_address,
                                           nghttpx_path,
@@ -290,6 +300,7 @@ int main( int argc, char *argv[] )
               VPN vpn(path_to_security_files, ingress_addr, nameservers);
               vector< string > command = vpn.start_command();
               // vector< string > command;
+              // command.push_back("bash");
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {
