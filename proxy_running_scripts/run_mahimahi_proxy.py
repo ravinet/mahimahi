@@ -72,7 +72,7 @@ def start_proxy():
 def stop_proxy():
     processes = [ MM_PROXYREPLAY, NGHTTPX, SQUID ]
     for process in processes:
-        command = 'pkill {0}'.format(process)
+        command = 'sudo pkill -SIGINT {0}'.format(process)
         subprocess.Popen(command, shell=True)
 
     return 'Proxy Stopped'
@@ -163,7 +163,7 @@ def start_recording():
 def stop_recording():
     processes = [ MM_PHONE_WEBRECORD, SQUID ]
     for process in processes:
-        command = 'pkill {0}'.format(process)
+        command = 'sudo pkill {0}'.format(process)
         print command
         subprocess.Popen(command.split())
 
