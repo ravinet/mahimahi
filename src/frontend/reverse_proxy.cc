@@ -34,12 +34,14 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       // Handle HTTPS
       stringstream https_backend_arg;
       https_backend_arg << "-b" << backend_address.ip() << ","
-                        << backend_address.port() << ";tls";
-      stringstream http_backend_arg;
-      http_backend_arg << "-b" << backend_address.ip() << ",80";
+                        << backend_address.port() << ";/;tls";
+
+      stringstream client_cert_arg;
+      client_cert_arg << "--client-cert-file=" << string(MOD_SSL_CERTIFICATE_FILE);
+
       run( { path_to_proxy, frontend_arg.str(), https_backend_arg.str(),
-        http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
-        "--daemon", "--pid-file=" + pidfile_.name() } );
+          path_to_proxy_key, path_to_proxy_cert, client_cert_arg.str(),
+          "-k", "--daemon", "--pid-file=" + pidfile_.name() } );
     } else {
       // Handle HTTP case
       stringstream http_backend_arg;
@@ -69,13 +71,14 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       // Handle HTTPS
       stringstream https_backend_arg;
       https_backend_arg << "-b" << backend_address.ip() << ","
-                        << backend_address.port() << ";tls";
-      stringstream http_backend_arg;
-      http_backend_arg << "-b" << backend_address.ip() << ",80";
+                        << backend_address.port() << ";/;tls";
+      stringstream client_cert_arg;
+      client_cert_arg << "--client-cert-file=" << string(MOD_SSL_CERTIFICATE_FILE);
+
       run( { path_to_proxy, frontend_arg.str(), https_backend_arg.str(),
-        http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
+        path_to_proxy_key, path_to_proxy_cert, client_cert_arg.str(),
         "--dependency-filename", path_to_dependency_file, "--daemon",
-        "--pid-file=" + pidfile_.name() } );
+        "-k", "--pid-file=" + pidfile_.name() } );
     } else {
       // Handle HTTP case
       stringstream http_backend_arg;
