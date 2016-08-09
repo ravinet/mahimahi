@@ -61,6 +61,11 @@ mm_http1_proxyreplay_SOURCES = replay_squid_shell.cc web_server.hh web_server.cc
 mm_http1_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_http1_proxyreplay_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-per-packet-delay-replay
+mm_per_packet_delay_replay_SOURCES = replay_nghttp2_shell.cc web_server.hh web_server.cc reverse_proxy.cc squid_proxy.hh squid_proxy.cc
+mm_per_packet_delay_replay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
+mm_per_packet_delay_replay_LDFLAGS = -pthread
+
 lib_LTLIBRARIES = libmod_deepcgi.la
 libmod_deepcgi_la_SOURCES = mod_deepcgi.c replayserver_filename.cc
 libmod_deepcgi_la_CFLAGS = -I@APACHE2_INCLUDE@ $(libapr1_CFLAGS)
@@ -89,3 +94,5 @@ install-exec-hook:
 	chmod u+s $(DESTDIR)$(bindir)/mm-delayshell-port-forwarded
 	chown root $(DESTDIR)$(bindir)/mm-phone-webrecord
 	chmod u+s $(DESTDIR)$(bindir)/mm-phone-webrecord
+	chown root $(DESTDIR)$(bindir)/mm-per-packet-delay-replay
+	chmod u+s $(DESTDIR)$(bindir)/mm-per-packet-delay-replay
