@@ -59,3 +59,9 @@ DNAT::DNAT( const Address & listener, const string & protocol, const uint16_t po
     : rule_( { "PREROUTING", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
+
+DNATWithPostrouting::DNATWithPostrouting( const Address & listener, const string & protocol, const uint16_t port )
+    : rule_( { "PREROUTING", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
+                "--to-destination", listener.str() } ),
+      post_( { "POSTROUTING", "-j", "MASQUERADE" } )
+{}

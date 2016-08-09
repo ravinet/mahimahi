@@ -48,4 +48,14 @@ public:
     DNAT( const Address & listener, const std::string & protocol, const uint16_t port);
 };
 
+class DNATWithPostrouting
+{
+private:
+    NATRule rule_;
+    NATRule post_;
+
+public:
+    DNATWithPostrouting( const Address & listener, const std::string & protocol, const uint16_t port);
+};
+
 #endif /* NAT_HH */
