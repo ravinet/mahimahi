@@ -54,7 +54,7 @@ def start_proxy():
     path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
     # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
     dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
-    command = '{0} {1} {2} {3} {4} {5} {6} {7}'.format(
+    command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
                                            proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
                                            path_to_recorded_page, \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
@@ -62,7 +62,8 @@ def start_proxy():
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT], \
                                            proxy_config[OPENVPN_PORT], \
-                                           dependency_filename)
+                                           dependency_filename,
+                                           'regular_replay')
     print command
     process = subprocess.Popen(command, shell=True)
 

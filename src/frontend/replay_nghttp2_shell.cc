@@ -2,6 +2,7 @@
 
 #include <net/route.h>
 #include <fcntl.h>
+#include <fstream>
 
 #include <vector>
 #include <set>
@@ -54,7 +55,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc < 8 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port path_to_dependency_file" );
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port path_to_dependency_file mode" );
         }
 
         /* clean directory name */
@@ -296,11 +297,31 @@ int main( int argc, char *argv[] )
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
+              string mode = argv[8];
+
+              cout << "mode: " << mode << endl;
+
+              // vector< string > command;
+              // if (mode == "regular_replay") {
+              //   cout << "regular_replay" << endl;
+              //   string path_to_security_files = "/etc/openvpn/";
+              //   VPN vpn(path_to_security_files, ingress_addr, nameservers);
+              //   command = vpn.start_command();
+              // } else if (mode == "per_packet_delay") {
+              //   command.push_back("./mm-delayshell-port-forwarded");
+              //   command.push_back("0");
+              //   command.push_back(nameservers[0].ip());
+              // } else {
+              //   command.push_back("bash");
+              // }
+
+              // ifstream f(command[command.size() - 1].c_str());
+              // if (!f.good()) {
+              //   cout << "OpenVPN config file not found." << endl;
+              // }
               string path_to_security_files = "/etc/openvpn/";
               VPN vpn(path_to_security_files, ingress_addr, nameservers);
               vector< string > command = vpn.start_command();
-              // vector< string > command;
-              // command.push_back("bash");
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {
