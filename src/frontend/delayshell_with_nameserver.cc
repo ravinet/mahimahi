@@ -32,7 +32,7 @@ int main( int argc, char *argv[] )
 
         vector< string > command; // This should be OpenVPN but will be handled in packetshell
 
-        PacketShell<DelayQueue> delay_shell_app( "delay", user_environment );
+        PacketShell<DelayQueue> delay_shell_app( "delay", user_environment, 1194 );
 
         delay_shell_app.start_uplink_and_forward_packets_with_nameserver
           ( "[delay " + to_string( delay_ms ) + " ms] ",

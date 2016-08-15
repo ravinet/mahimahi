@@ -18,21 +18,45 @@ using namespace std;
 NATRule::NATRule( const vector< string > & s_args )
     : arguments( s_args )
 {
-    vector< string > command = { IPTABLES, "-w", "-t", "nat", "-A" };
+    if (!arguments.empty()) {
+      vector< string > command = { IPTABLES, "-w", "-t", "nat", "-A" };
+      command.insert( command.end(), arguments.begin(), arguments.end() );
+      cout << "command: ";
+      for (auto i = command.begin(); i != command.end(); ++i)
+           cout << *i << ' ';
+      cout << endl;
+      run( command );
+    }
+}
+
+NATRule::NATRule( const vector< string > & s_args, bool as_sudo )
+    : arguments( s_args )
+{
+  if (!arguments.empty()) {
+    vector< string > command;
+    if (as_sudo) {
+      command = { "sudo", IPTABLES, "-w", "-t", "nat", "-A" };
+    } else {
+      command = { IPTABLES, "-w", "-t", "nat", "-A" };
+    }
     command.insert( command.end(), arguments.begin(), arguments.end() );
     cout << "command: ";
     for (auto i = command.begin(); i != command.end(); ++i)
          cout << *i << ' ';
     cout << endl;
     run( command );
+  }
 }
 
 NATRule::~NATRule()
 {
     try {
+      if (!arguments.empty()) {
+        cout << "[nat] Removing NAT rule" << endl;
         vector< string > command = { IPTABLES, "-w", "-t", "nat", "-D" };
         command.insert( command.end(), arguments.begin(), arguments.end() );
         run( command );
+      }
     } catch ( const exception & e ) { /* don't throw from destructor */
         print_exception( e );
     }
@@ -43,6 +67,15 @@ NAT::NAT( const Address & ingress_addr )
             "--set-mark", to_string( getpid() ) } ),
   post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark",
               "--mark", to_string( getpid() ) } )
+{}
+
+NAT::NAT()
+: pre_( { } ),
+  post_( { } )
+{}
+
+DNAT::DNAT()
+  : rule_( { } )
 {}
 
 DNAT::DNAT( const Address & listener, const string & interface )
@@ -64,4 +97,9 @@ DNATWithPostrouting::DNATWithPostrouting( const Address & listener, const string
     : rule_( { "PREROUTING", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
                 "--to-destination", listener.str() } ),
       post_( { "POSTROUTING", "-j", "MASQUERADE" } )
+{}
+
+DNATWithPostrouting::DNATWithPostrouting()
+  : rule_( { } ),
+    post_( { } )
 {}

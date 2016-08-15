@@ -31,6 +31,28 @@ PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, cha
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
+      dnat_rule_(),
+      pipe_( UnixDomainSocket::make_pair() ),
+      event_loop_()
+{
+    /* make sure environment has been cleared */
+    if ( environ != nullptr ) {
+        throw runtime_error( "PacketShell: environment was not cleared" );
+    }
+
+    /* initialize base timestamp value before any forking */
+    initial_timestamp();
+}
+
+template <class FerryQueueType>
+PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment, int destination_port )
+    : user_environment_( user_environment ),
+      egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
+      nameserver_( first_nameserver() ),
+      egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
+      dns_outside_( egress_addr(), nameserver_, nameserver_ ),
+      nat_rule_(),
+      dnat_rule_( Address(ingress_addr().ip(), destination_port), "udp", destination_port ),
       pipe_( UnixDomainSocket::make_pair() ),
       event_loop_()
 {
@@ -66,7 +88,9 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets_with_nameserv
 
     cout << "ingress: " << ingress_addr().str() << " egress: " << egress_addr().str() << endl;
     /* Forward the packets to the specified port. */
-    DNAT dnat( Address(ingress_addr().ip(), destination_port), destination_port );
+    // DNAT dnat( Address(ingress_addr().ip(), destination_port), "udp", destination_port );
+    // DNATWithPostrouting dnat_with_postrouting( Address(ingress_addr().ip(), destination_port), "udp", destination_port );
+    cout << "destination_port: " << to_string(destination_port) << endl;
 
     /* Fork */
     event_loop_.add_special_child_process( 77, "packetshell", [&]() {
@@ -109,19 +133,29 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets_with_nameserv
             inner_ferry.add_child_process( start_dnsmasq( {
                         "-S", dns_inside_.udp_listener().local_address().str( "#" ) } ) );
 
-            /* Setup proper port forwarding to the nameserver. */
-            DNATWithPostrouting dnat_with_postrouting( nameserver_address, "udp", 53 );
-
             string path_to_security_files = "/etc/openvpn/";
             const vector< Address > nameservers = { nameserver_address };
             VPN vpn(path_to_security_files, ingress_addr(), nameservers);
             vector< string > vpn_command = vpn.start_command();
+            command.empty(); // so that the compiler doesn't complain about unused variable.
+            /* For debugging purposes */
+            // vector< string > vpn_command;
+            // vpn_command.push_back("bash");
+
+            /* Setup proper port forwarding to the nameserver. */
+            nameserver_address.str();
+            // if ( ( geteuid() == 0 ) or ( getegid() == 0 ) ) {
+            //   cout << "Packetshell: not root" << endl;
+            // }
+            // nameserver_address.str();
+            DNATWithPostrouting dnat_with_postrouting( nameserver_address, "udp", 53 );
 
             /* Fork again after dropping root privileges */
             drop_privileges();
 
             /* restore environment */
             environ = user_environment_;
+
 
             /* set MAHIMAHI_BASE if not set already to indicate outermost container */
             SystemCall( "setenv", setenv( "MAHIMAHI_BASE",
@@ -132,7 +166,7 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets_with_nameserv
                     /* tweak bash prompt */
                     prepend_shell_prefix( shell_prefix );
 
-                    return ezexec( command, true );
+                    return ezexec( vpn_command, true );
                 } );
 
             /* allow downlink to write directly to inner namespace's TUN device */
@@ -166,7 +200,7 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets
 
     cout << "ingress: " << ingress_addr().str() << " egress: " << egress_addr().str() << endl;
     /* Forward the packets to the specified port. */
-    DNAT dnat( Address(ingress_addr().ip(), destination_port), destination_port );
+    DNAT dnat( Address(ingress_addr().ip(), destination_port), "udp", destination_port );
 
     /* Fork */
     event_loop_.add_special_child_process( 77, "packetshell", [&]() {

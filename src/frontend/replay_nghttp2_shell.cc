@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )
         check_requirements( argc, argv );
 
         if ( argc < 8 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port path_to_dependency_file mode" );
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " directory nghttpx_path nghttpx_port nghttpx_key nghttpx_cert vpn_port mode path_to_dependency_file" );
         }
 
         /* clean directory name */
@@ -234,7 +234,8 @@ int main( int argc, char *argv[] )
               // }
 
               /* set up nghttpx proxies */
-              string path_to_dependency_file = argv[ 7 ];
+              string path_to_dependency_file = argv[8];
+
               vector< ReverseProxy > reverse_proxies;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
                 auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
@@ -244,17 +245,20 @@ int main( int argc, char *argv[] )
                 auto webserver_address = webserver_to_reverse_proxy_addresses[i].first;
                 // cout << "ReverseProxy address: " << reverse_proxy_address.str() << " SquidProxy address: " << squid_proxy_address.str() << endl;
                 cout << "ReverseProxy address: " << reverse_proxy_address.str() << " Webserver address: " << webserver_address.str() << endl;
-                // reverse_proxies.emplace_back(reverse_proxy_address,
-                //                           webserver_address,
-                //                           nghttpx_path,
-                //                           nghttpx_key_path,
-                //                           nghttpx_cert_path);
-                reverse_proxies.emplace_back(reverse_proxy_address,
-                                          webserver_address,
-                                          nghttpx_path,
-                                          nghttpx_key_path,
-                                          nghttpx_cert_path,
-                                          path_to_dependency_file);
+                if (path_to_dependency_file == "None") {
+                  reverse_proxies.emplace_back(reverse_proxy_address,
+                                            webserver_address,
+                                            nghttpx_path,
+                                            nghttpx_key_path,
+                                            nghttpx_cert_path);
+                } else {
+                  reverse_proxies.emplace_back(reverse_proxy_address,
+                                            webserver_address,
+                                            nghttpx_path,
+                                            nghttpx_key_path,
+                                            nghttpx_cert_path,
+                                            path_to_dependency_file);
+                }
               }
 
               PacFile pac_file("/home/ubuntu/Sites/config_testing.pac");
@@ -297,31 +301,28 @@ int main( int argc, char *argv[] )
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
-              string mode = argv[8];
+              string mode = argv[7];
 
               cout << "mode: " << mode << endl;
 
-              // vector< string > command;
-              // if (mode == "regular_replay") {
-              //   cout << "regular_replay" << endl;
-              //   string path_to_security_files = "/etc/openvpn/";
-              //   VPN vpn(path_to_security_files, ingress_addr, nameservers);
-              //   command = vpn.start_command();
-              // } else if (mode == "per_packet_delay") {
-              //   command.push_back("./mm-delayshell-port-forwarded");
-              //   command.push_back("0");
-              //   command.push_back(nameservers[0].ip());
-              // } else {
-              //   command.push_back("bash");
-              // }
+              vector< string > command;
 
-              // ifstream f(command[command.size() - 1].c_str());
-              // if (!f.good()) {
-              //   cout << "OpenVPN config file not found." << endl;
-              // }
               string path_to_security_files = "/etc/openvpn/";
               VPN vpn(path_to_security_files, ingress_addr, nameservers);
-              vector< string > command = vpn.start_command();
+              if (mode == "regular_replay") {
+                cout << "regular_replay" << endl;
+                vector< string > vpn_command = vpn.start_command();
+                command.insert(command.end(), vpn_command.begin(), vpn_command.end());
+              } else if (mode == "per_packet_delay") {
+                cout << "per packet delay" << endl;
+                string path_prefix(PATH_PREFIX);
+                command.push_back(path_prefix + "/bin/mm-delay-with-nameserver");
+                command.push_back("0"); // Additional delay
+                command.push_back(nameservers[0].ip());
+                // command.push_back("bash");
+              } else {
+                command.push_back("bash");
+              }
 
               /* start shell */
               event_loop.add_child_process( join( command ), [&]() {

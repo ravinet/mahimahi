@@ -23,6 +23,7 @@ private:
     TunDevice egress_tun_;
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
+    DNAT dnat_rule_ {}; // For forwarding packets properly.
 
     std::pair<UnixDomainSocket, UnixDomainSocket> pipe_;
 
@@ -38,6 +39,8 @@ private:
 
 public:
     PacketShell( const std::string & device_prefix, char ** const user_environment );
+
+    PacketShell( const std::string & device_prefix, char ** const user_environment, int destination_port );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,
