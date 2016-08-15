@@ -24,7 +24,7 @@ private:
 
 public:
     DelayQueue( const uint64_t & s_delay_ms ) : delay_ms_( s_delay_ms ), packet_queue_() {
-        std::string comp_file = "delay_ip_mapping";
+        std::string comp_file = "delay_ip_mapping.txt";
         std::ifstream dfile(comp_file);
         if ( dfile ) {
             std::ifstream ifile;
