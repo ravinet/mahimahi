@@ -37,29 +37,29 @@ bool header_match( const string & env_var_name,
 {
     const char * const env_value = getenv( env_var_name.c_str() );
 
-    ofstream myfile;
-    myfile.open("test.txt", ios::app);
+    // ofstream myfile;
+    // myfile.open("test.txt", ios::app);
 
     /* case 1: neither header exists (OK) */
     if ( (not env_value) and (not saved_request.has_header( header_name )) ) {
-        myfile.close();
+        // myfile.close();
         return true;
     }
 
     /* case 2: headers both exist (OK if values match) */
     if ( env_value and saved_request.has_header( header_name ) ) {
-        myfile << "Recorded value: " 
-               << saved_request.get_header_value(header_name)
-               << " Request value: "
-               << string(env_value)
-               << endl;
-        myfile.close();
+        // myfile << "Recorded value: " 
+        //        << saved_request.get_header_value(header_name)
+        //        << " Request value: "
+        //        << string(env_value)
+        //        << endl;
+        // myfile.close();
         return saved_request.get_header_value( header_name ) == string( env_value );
     }
 
     /* case 3: one exists but the other doesn't (failure) */
-    myfile << "Failed to find the request for " << string(env_value) << endl;
-    myfile.close();
+    // myfile << "Failed to find the request for " << string(env_value) << endl;
+    // myfile.close();
     return false;
 }
 
@@ -122,9 +122,9 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 {
     HTTPRequest saved_request( saved_record.request() );
     
-    ofstream myfile;
-    myfile.open("test2.txt", ios::app);
-    myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
+    // ofstream myfile;
+    // myfile.open("test2.txt", ios::app);
+    // myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
     
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
@@ -146,8 +146,8 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     // }
 
     /* must match first line up to "?" at least */
-    myfile << "URL: " << strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line())) << " saved request: " << extract_url_from_request_line(saved_request.first_line()) << endl;
-    myfile << "Matching " << strip_hostname(strip_query(request_line), extract_url_from_request_line(strip_query(saved_request.first_line()) )) << " to " << strip_query(saved_request.first_line()) << endl;
+    // myfile << "URL: " << strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line())) << " saved request: " << extract_url_from_request_line(saved_request.first_line()) << endl;
+    // myfile << "Matching " << strip_hostname(strip_query(request_line), extract_url_from_request_line(strip_query(saved_request.first_line()) )) << " to " << strip_query(saved_request.first_line()) << endl;
     string request_url = strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line()));
     string saved_request_url = extract_url_from_request_line(saved_request.first_line());
     if ( request_url != saved_request_url ) {
@@ -157,7 +157,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     //     return 0;
     // }
 
-    myfile << "Matched " << request_url << " to " << saved_request_url << endl;
+    // myfile << "Matched " << request_url << " to " << saved_request_url << endl;
     /* success! return size of common prefix */
     const auto max_match = min( request_url.size(), saved_request_url.size() );
     for ( unsigned int i = 0; i < max_match; i++ ) {
@@ -166,7 +166,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
         }
     }
 
-    myfile.close();
+    // myfile.close();
 
     return max_match;
 }

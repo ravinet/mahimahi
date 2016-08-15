@@ -33,7 +33,6 @@ void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses)
   }
 
   ss << "}";
-  cout << ss.str();
   ofstream output_file;
   output_file.open(path_);
   output_file << ss.str();
@@ -65,10 +64,8 @@ void PacFile::WriteProxies(
   }
 
   ss << "}";
-  cout << ss.str();
   ofstream output_file;
   output_file.open(path_);
   output_file << ss.str();
   output_file.close();
-
 }
