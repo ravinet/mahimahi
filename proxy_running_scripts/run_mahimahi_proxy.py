@@ -25,6 +25,7 @@ DEPENDENCY_DIRECTORY_PATH = 'dependency_directory_path'
 MM_PROXYREPLAY = 'mm-proxyreplay'
 MM_PHONE_WEBRECORD = 'mm-phone-webrecord'
 MM_DELAYSHELL_WITH_PORT_FORWARDED = 'mm-delayshell-port-forwarded'
+MM_DELAY_WITH_NAMESERVER = 'mm-delay-with-nameserver'
 NGHTTPX = 'nghttpx'
 APACHE = 'apache'
 PAGE = 'page'
@@ -32,28 +33,59 @@ SQUID_PORT = 'squid_port'
 SQUID = 'squid'
 OPENVPN_PORT = 'openvpn_port'
 START_TCPDUMP = 'start_tcpdump'
+USE_DEPENDENCIES = 'use_dependencies'
 
 TIME = 'time'
 DELAY = 'delay'
 HTTP_VERSION = 'http'
+REPLAY_MODE = 'replay_mode'
 
 CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
                   SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
                   HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH, \
-                  START_TCPDUMP ]
+                  START_TCPDUMP, USE_DEPENDENCIES, SQUID ]
 
 app = Flask(__name__)
+
+@app.route("/start_squid_proxy")
+def start_squid_proxy():
+    # Start tcpdump, if necessary.
+    if proxy_config[START_TCPDUMP] == 'True':
+        start_tcpdump()
+
+    squid_path = proxy_config[BUILD_PREFIX] +proxy_config[SQUID]
+    print 'squid path: ' + squid_path
+    command = '{0}'.format(squid_path)
+    subprocess.call(command)
+    return 'OK'
+
+
+@app.route("/stop_squid_proxy")
+def stop_squid_proxy():
+    command = 'pkill squid'
+    subprocess.call(command.split())
+
+    # Start tcpdump, if necessary.
+    if proxy_config[START_TCPDUMP] == 'True':
+        stop_tcpdump('/home/ubuntu', 'regular_load')
+
+    return 'OK'
 
 @app.route("/start_proxy")
 def start_proxy():
     print proxy_config
     request_time = request.args[TIME]
     page = request.args[PAGE]
+    replay_mode = request.args[REPLAY_MODE]
     escaped_page = escape_page(page)
     path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
     # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
-    dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
+
+    dependency_filename = 'None'
+    if proxy_config[USE_DEPENDENCIES] == 'True':
+        dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
+
     command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
                                            proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
                                            path_to_recorded_page, \
@@ -62,8 +94,8 @@ def start_proxy():
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_KEY], \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT], \
                                            proxy_config[OPENVPN_PORT], \
-                                           dependency_filename,
-                                           'regular_replay')
+                                           replay_mode, \
+                                           dependency_filename)
     print command
     process = subprocess.Popen(command, shell=True)
 
@@ -71,15 +103,14 @@ def start_proxy():
 
 @app.route("/stop_proxy")
 def stop_proxy():
-    processes = [ MM_PROXYREPLAY, NGHTTPX, SQUID ]
+    processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, SQUID ]
     for process in processes:
         command = 'sudo pkill -SIGINT {0}'.format(process)
         subprocess.Popen(command, shell=True)
-
     return 'Proxy Stopped'
 
 def start_tcpdump():
-    command = 'sudo tcpdump -i eth0 -w capture.pcap port 80'
+    command = 'sudo tcpdump -i eth0 -w capture.pcap port 80 or port 443'
     subprocess.Popen(command.split())
 
 def stop_tcpdump(pcap_directory, page_name):
@@ -87,7 +118,7 @@ def stop_tcpdump(pcap_directory, page_name):
     process = subprocess.Popen(command.split())
     process.wait()
     dst = os.path.join(pcap_directory, page_name + '.pcap')
-    command = 'mv -v capture.pcap {0}'.format(dst)
+    command = 'mv -f -v capture.pcap {0}'.format(dst)
     process = subprocess.Popen(command.split())
     process.wait()
 
