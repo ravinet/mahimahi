@@ -6,7 +6,7 @@ mm_delay_SOURCES = delayshell.cc delay_queue.hh delay_queue.cc
 mm_delay_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 mm_delay_LDFLAGS = -pthread
 
-bin_PROGRAMS = mm-delay-with-nameserver
+bin_PROGRAMS += mm-delay-with-nameserver
 mm_delay_with_nameserver_SOURCES = delayshell_with_nameserver.cc delay_queue.hh delay_queue.cc
 mm_delay_with_nameserver_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 mm_delay_with_nameserver_LDFLAGS = -pthread
