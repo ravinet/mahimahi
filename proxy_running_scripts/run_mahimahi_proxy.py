@@ -31,6 +31,7 @@ APACHE = 'apache'
 PAGE = 'page'
 SQUID_PORT = 'squid_port'
 SQUID = 'squid'
+OPENVPN = 'openvpn'
 OPENVPN_PORT = 'openvpn_port'
 START_TCPDUMP = 'start_tcpdump'
 USE_DEPENDENCIES = 'use_dependencies'
@@ -103,7 +104,7 @@ def start_proxy():
 
 @app.route("/stop_proxy")
 def stop_proxy():
-    processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, SQUID ]
+    processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, SQUID, OPENVPN ]
     for process in processes:
         command = 'sudo pkill -SIGINT {0}'.format(process)
         subprocess.Popen(command, shell=True)

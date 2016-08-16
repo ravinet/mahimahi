@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <fstream>
 
 #include "delay_queue.hh"
 #include "timestamp.hh"

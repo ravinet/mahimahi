@@ -20,13 +20,14 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 3 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " delay-milliseconds nameserver [command...]" );
+        if ( argc < 4 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " delay-milliseconds nameserver webserver_to_reverse_proxy_ip_map [command...]" );
         }
 
         const uint64_t delay_ms = myatoi( argv[ 1 ] );
 
         string nameserver_ip = argv[2];
+        const string webserver_to_reverse_proxy_ip_mapping_filename = argv[3];
 
         Address nameserver_address(nameserver_ip, 53);
 
@@ -37,7 +38,7 @@ int main( int argc, char *argv[] )
         delay_shell_app.start_uplink_and_forward_packets_with_nameserver
           ( "[delay " + to_string( delay_ms ) + " ms] ",
             1194 /* openvpn port */, nameserver_address,
-            command, delay_ms );
+            command, delay_ms, webserver_to_reverse_proxy_ip_mapping_filename );
         delay_shell_app.start_downlink( delay_ms );
         return delay_shell_app.wait_for_exit();
     } catch ( const exception & e ) {

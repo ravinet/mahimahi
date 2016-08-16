@@ -133,11 +133,6 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets_with_nameserv
             inner_ferry.add_child_process( start_dnsmasq( {
                         "-S", dns_inside_.udp_listener().local_address().str( "#" ) } ) );
 
-            string path_to_security_files = "/etc/openvpn/";
-            const vector< Address > nameservers = { nameserver_address };
-            VPN vpn(path_to_security_files, ingress_addr(), nameservers);
-            vector< string > vpn_command = vpn.start_command();
-            command.empty(); // so that the compiler doesn't complain about unused variable.
             /* For debugging purposes */
             // vector< string > vpn_command;
             // vpn_command.push_back("bash");
@@ -152,6 +147,12 @@ void PacketShell<FerryQueueType>::start_uplink_and_forward_packets_with_nameserv
 
             /* Fork again after dropping root privileges */
             drop_privileges();
+
+            string path_to_security_files = "/etc/openvpn/";
+            const vector< Address > nameservers = { nameserver_address };
+            VPN vpn(path_to_security_files, ingress_addr(), nameservers);
+            vector< string > vpn_command = vpn.start_command();
+            command.empty(); // so that the compiler doesn't complain about unused variable.
 
             /* restore environment */
             environ = user_environment_;
