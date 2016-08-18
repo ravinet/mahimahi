@@ -19,7 +19,7 @@ NATRule::NATRule( const vector< string > & s_args )
     : arguments( s_args )
 {
     if (!arguments.empty()) {
-      vector< string > command = { IPTABLES, "-w", "-t", "nat", "-A" };
+      vector< string > command = { IPTABLES, "-w", "-t", "nat", "-I" };
       command.insert( command.end(), arguments.begin(), arguments.end() );
       cout << "command: ";
       for (auto i = command.begin(); i != command.end(); ++i)
@@ -35,9 +35,9 @@ NATRule::NATRule( const vector< string > & s_args, bool as_sudo )
   if (!arguments.empty()) {
     vector< string > command;
     if (as_sudo) {
-      command = { "sudo", IPTABLES, "-w", "-t", "nat", "-A" };
+      command = { "sudo", IPTABLES, "-w", "-t", "nat", "-I" };
     } else {
-      command = { IPTABLES, "-w", "-t", "nat", "-A" };
+      command = { IPTABLES, "-w", "-t", "nat", "-I" };
     }
     command.insert( command.end(), arguments.begin(), arguments.end() );
     cout << "command: ";
@@ -54,7 +54,13 @@ NATRule::~NATRule()
       if (!arguments.empty()) {
         cout << "[nat] Removing NAT rule" << endl;
         vector< string > command = { IPTABLES, "-w", "-t", "nat", "-D" };
-        command.insert( command.end(), arguments.begin(), arguments.end() );
+        for (auto it = arguments.begin(); it != arguments.end(); ++it) {
+          auto argument = *it;
+          if (argument != "1") {
+            command.push_back(*it);
+          }
+        }
+        // command.insert( command.end(), arguments.begin(), arguments.end() );
         run( command );
       }
     } catch ( const exception & e ) { /* don't throw from destructor */
@@ -63,9 +69,9 @@ NATRule::~NATRule()
 }
 
 NAT::NAT( const Address & ingress_addr )
-: pre_( { "PREROUTING", "-s", ingress_addr.ip(), "-j", "CONNMARK",
+: pre_( { "PREROUTING", "1", "-s", ingress_addr.ip(), "-j", "CONNMARK",
             "--set-mark", to_string( getpid() ) } ),
-  post_( { "POSTROUTING", "-j", "MASQUERADE", "-m", "connmark",
+  post_( { "POSTROUTING", "1", "-j", "MASQUERADE", "-m", "connmark",
               "--mark", to_string( getpid() ) } )
 {}
 
@@ -79,24 +85,24 @@ DNAT::DNAT()
 {}
 
 DNAT::DNAT( const Address & listener, const string & interface )
-    : rule_( { "PREROUTING", "-p", "TCP", "-i", interface, "-j", "DNAT",
+    : rule_( { "PREROUTING", "1", "-p", "TCP", "-i", interface, "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
 
 DNAT::DNAT( const Address & listener, const uint16_t port )
-    : rule_( { "PREROUTING", "-p", "TCP", "--dport", to_string(port), "-j", "DNAT",
+    : rule_( { "PREROUTING", "1", "-p", "TCP", "--dport", to_string(port), "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
 
 DNAT::DNAT( const Address & listener, const string & protocol, const uint16_t port )
-    : rule_( { "PREROUTING", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
+    : rule_( { "PREROUTING", "1", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
                 "--to-destination", listener.str() } )
 {}
 
 DNATWithPostrouting::DNATWithPostrouting( const Address & listener, const string & protocol, const uint16_t port )
-    : rule_( { "PREROUTING", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
+    : rule_( { "PREROUTING", "1", "-p", protocol, "--dport", to_string(port), "-j", "DNAT",
                 "--to-destination", listener.str() } ),
-      post_( { "POSTROUTING", "-j", "MASQUERADE" } )
+      post_( { "POSTROUTING", "1", "-j", "MASQUERADE" } )
 {}
 
 DNATWithPostrouting::DNATWithPostrouting()
