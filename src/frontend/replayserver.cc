@@ -190,10 +190,7 @@ int main( void )
         unsigned int best_score = 0;
         MahimahiProtobufs::RequestResponse best_match;
 
-        ofstream myfile;
-        myfile.open("filenames.txt");
         for ( const auto & filename : files ) {
-            myfile << filename << endl;
             FileDescriptor fd( SystemCall( "open", open( filename.c_str(), O_RDONLY ) ) );
             MahimahiProtobufs::RequestResponse current_record;
             if ( not current_record.ParseFromFileDescriptor( fd.fd_num() ) ) {
@@ -206,10 +203,25 @@ int main( void )
                 best_score = score;
             }
         }
-        myfile.close();
 
         if ( best_score > 0 ) { /* give client the best match */
-            cout << HTTPResponse( best_match.response() ).str();
+            HTTPResponse response( best_match.response() );
+
+            /* Remove all cache-related headers. */
+            vector< string > headers = { "Cache-control", 
+                                         "Expires",
+                                         "Last-modified",
+                                         "Date",
+                                         "Age",
+                                         "Etag" };
+            for ( auto it = headers.begin(); it != headers.end(); ++it ) {
+                response.remove_header( *it );
+            }
+
+            /* Add the cache-control header and set to 3600. */
+            response.add_header_after_parsing( "Cache-Control: max-age=3600" );
+
+            cout << response.str();
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
             cout << "HTTP/1.1 404 Not Found" << CRLF;
