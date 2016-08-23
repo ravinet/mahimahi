@@ -93,12 +93,12 @@ int main( int argc, char *argv[] )
         /* bring up egress */
         assign_address( egress_name, egress_addr, ingress_addr );
 
-        /* set up NAT between egress and eth0 */
-        NAT nat_rule( ingress_addr );
-
         /* set up DNAT between eth0 to ingress address. */
         int vpn_port = atoi(argv[6]);
         DNAT dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
+
+        /* set up NAT between egress and eth0 */
+        NAT nat_rule( ingress_addr );
 
         // int nghttpx_port = atoi(argv[3]);
         EventLoop outer_event_loop;
