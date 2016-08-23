@@ -93,12 +93,12 @@ int main( int argc, char *argv[] )
         /* bring up egress */
         assign_address( egress_name, egress_addr, ingress_addr );
 
-        /* set up NAT between egress and eth0 */
-        NAT nat_rule( ingress_addr );
-
         /* set up DNAT between eth0 to ingress address. */
         int vpn_port = atoi(argv[6]);
         DNAT dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
+
+        /* set up NAT between egress and eth0 */
+        NAT nat_rule( ingress_addr );
 
         // int nghttpx_port = atoi(argv[3]);
         EventLoop outer_event_loop;
@@ -237,13 +237,12 @@ int main( int argc, char *argv[] )
               string path_to_dependency_file = argv[8];
 
               vector< ReverseProxy > reverse_proxies;
+              vector< pair< Address, Address >> actual_ip_address_to_reverse_proxy_mapping;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
                 auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
                 auto reverse_proxy_address = hostname_to_reverse_proxy.second;
-                // auto squid_proxy_address = squid_addresses[i];
-                // auto webserver_ip_port = unique_ip_and_port[i];
                 auto webserver_address = webserver_to_reverse_proxy_addresses[i].first;
-                // cout << "ReverseProxy address: " << reverse_proxy_address.str() << " SquidProxy address: " << squid_proxy_address.str() << endl;
+                actual_ip_address_to_reverse_proxy_mapping.emplace_back(webserver_address, reverse_proxy_address);
                 cout << "ReverseProxy address: " << reverse_proxy_address.str() << " Webserver address: " << webserver_address.str() << endl;
                 if (path_to_dependency_file == "None") {
                   reverse_proxies.emplace_back(reverse_proxy_address,
@@ -307,18 +306,30 @@ int main( int argc, char *argv[] )
 
               vector< string > command;
 
+              string path_prefix(PATH_PREFIX);
               string path_to_security_files = "/etc/openvpn/";
               VPN vpn(path_to_security_files, ingress_addr, nameservers);
+              string mapping_filename = path_prefix + "/bin/webserver_to_reverse_proxy.txt";
+              ofstream webserver_ip_to_reverse_proxy_mapping_file;
+              webserver_ip_to_reverse_proxy_mapping_file.open(mapping_filename);
               if (mode == "regular_replay") {
                 cout << "regular_replay" << endl;
                 vector< string > vpn_command = vpn.start_command();
                 command.insert(command.end(), vpn_command.begin(), vpn_command.end());
               } else if (mode == "per_packet_delay") {
+                // Generate mapping between actual IP address and reverse proxy address.
+                for ( auto it = actual_ip_address_to_reverse_proxy_mapping.begin();
+                     it != actual_ip_address_to_reverse_proxy_mapping.end(); ++it ) {
+                  string line = (it->first).ip() + " " + (it->second).ip();
+                  webserver_ip_to_reverse_proxy_mapping_file << line << endl;
+                }
+                webserver_ip_to_reverse_proxy_mapping_file.close();
+
                 cout << "per packet delay" << endl;
-                string path_prefix(PATH_PREFIX);
                 command.push_back(path_prefix + "/bin/mm-delay-with-nameserver");
                 command.push_back("0"); // Additional delay
                 command.push_back(nameservers[0].ip());
+                command.push_back(mapping_filename);
                 // command.push_back("bash");
               } else {
                 command.push_back("bash");

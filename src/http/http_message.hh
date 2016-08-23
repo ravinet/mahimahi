@@ -54,9 +54,12 @@ public:
     /* methods called by an external parser */
     void set_first_line( const std::string & str );
     void add_header( const std::string & str );
+    void add_header_after_parsing( const std::string & str );
     void done_with_headers( void );
     size_t read_in_body( const std::string & str );
     void eof( void );
+
+    void remove_header( const std::string & str );
 
     /* getters */
     bool body_size_is_known( void ) const;
