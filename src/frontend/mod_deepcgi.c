@@ -12,6 +12,7 @@ static int deepcgi_handler( request_rec* inpRequest );
 typedef struct {
     const char* working_dir;
     const char* recording_dir;
+    const char* dependency_file;
 } deepcgi_config;
 
 static deepcgi_config config;
@@ -30,6 +31,11 @@ const char* deepcgi_set_recordingdir(cmd_parms* cmd, void* cfg, const char* arg)
     return NULL;
 }
 
+const char* deepcgi_set_dependencyfile(cmd_parms* cmd, void* cfg, const char* arg) {
+    config.dependency_file = arg;
+    return NULL;
+}
+
 // ============================================================================
 // Directives to read configuration parameters
 // ============================================================================
@@ -38,6 +44,7 @@ static const command_rec deepcgi_directives[] =
 {
     AP_INIT_TAKE1( "workingDir", deepcgi_set_workingdir, NULL, RSRC_CONF, "Working directory" ),
     AP_INIT_TAKE1( "recordingDir", deepcgi_set_recordingdir, NULL, RSRC_CONF, "Recording directory" ),
+    AP_INIT_TAKE1( "dependencyFile", deepcgi_set_dependencyfile, NULL, RSRC_CONF, "Dependency File" ),
     { NULL }
 };
 
@@ -75,6 +82,7 @@ int deepcgi_handler( request_rec* inpRequest )
 
     setenv( "MAHIMAHI_CHDIR", config.working_dir, TRUE );
     setenv( "MAHIMAHI_RECORD_PATH", config.recording_dir, TRUE );
+    setenv( "DEPENDENCY_FILE", config.dependency_file, TRUE );
     setenv( "REQUEST_METHOD", request_method, TRUE );
     setenv( "REQUEST_URI", request_uri, TRUE );
     setenv( "SERVER_PROTOCOL", protocol, TRUE );

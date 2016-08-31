@@ -46,40 +46,13 @@ void write_config_file(TempFile & config_file, const Address & addr,
 
     config_file.write( "Group #" + to_string( getgid() ) + "\n" );
 
-    config_file.write( "Listen " + addr.str() );
+    config_file.write( "Listen " + addr.str() + "\n");
 }
 
 WebServer::WebServer( const Address & addr, const string & working_directory, const string & record_path )
     : config_file_( "/tmp/replayshell_apache_config" ),
       moved_away_( false )
 {
-    // cout << "Apache Config File: " << config_file_.name() << " listening on: " << addr.str() <<  endl;
-    // config_file_.write( apache_main_config );
-
-    // string path_prefix = PATH_PREFIX;
-    // config_file_.write("LoadModule unixd_module " + path_prefix + "/modules/mod_unixd.so\n");
-    // config_file_.write("LoadModule log_config_module " + path_prefix + "/modules/mod_log_config.so\n");
-    // config_file_.write("LoadModule mpm_prefork_module " + path_prefix + "/modules/mod_mpm_prefork.so\n");
-
-    // config_file_.write( "WorkingDir " + working_directory + "\n" );
-    // config_file_.write( "RecordingDir " + record_path + "\n" );
-
-    // /* add pid file, log files, user/group name, and listen line to config file and run apache */
-    // config_file_.write( "PidFile /tmp/replayshell_apache_pid." + to_string( getpid() ) + "." + to_string( random() ) + "\n" );
-    // /* Apache will check if this file exists before clobbering it,
-    //    so we think it's ok for Apache to write here as root */
-
-    // config_file_.write( "ServerName mahimahi.\n" );
-
-    // config_file_.write( "ErrorLog " + path_prefix + "/logs/apache_errors.log\n" );
-
-    // config_file_.write( "CustomLog " + path_prefix + "/logs/custom.log common\n" );
-
-    // config_file_.write( "User #" + to_string( getuid() ) + "\n" );
-
-    // config_file_.write( "Group #" + to_string( getgid() ) + "\n" );
-
-    // config_file_.write( "Listen " + addr.str() );
     write_config_file(config_file_, addr, working_directory, record_path);
 
     /* if port 443, add ssl components */
@@ -118,22 +91,23 @@ void populate_push_configurations( TempFile & config_file, const string & depend
     }
     infile.close();
   }
+  config_file.write("Header add MyHeader test\n");
 
   if ( !dependencies_map.empty() ) {
     // Write the dependencies to the configuration file.
-    config_file.write("<IfModule mod_headers.c>\n");
     for (auto it = dependencies_map.begin(); it != dependencies_map.end(); ++it) {
       auto key = it->first;
       auto values = it->second;
-      config_file.write("<Location \"" + key  + "\">\n"); // Set location condition.
+      // config_file.write("<Location " + key  + ">\n"); // Set location condition.
+      // config_file.write("<IfModule mod_headers.c>\n");
       for (auto list_it = values.begin(); list_it != values.end(); ++list_it) {
         // Push all dependencies for the location.
-        string link_string = "Link: <" + *list_it + ">; rel=preload";
-        config_file.write("Header add " + link_string + "\n");
+        // string link_string = "Link: \"<" + *list_it + ">;rel=preload\"";
+        // config_file.write("Header add " + link_string + "\n");
       }
-      config_file.write("</Location>\n"); 
+      // config_file.write("</IfModule>\n");
+      // config_file.write("</Location>\n"); 
     }
-    config_file.write("</IfModule>\n");
   }
 }
 
@@ -142,11 +116,16 @@ WebServer::WebServer( const Address & addr, const string & working_directory,
     : config_file_( "/tmp/replayshell_apache_config" ),
       moved_away_( false )
 {
-    write_config_file(config_file_, addr, working_directory, record_path);
+    // string path_prefix = PATH_PREFIX;
+    // config_file_.write( "LoadModule headers_module " + path_prefix + "/modules/mod_headers.so\n" );
 
-    config_file_.write( "LoadModule headers_module modules/mod_headers.so" );
-    
-    populate_push_configurations(config_file_, dependency_file);
+    // populate_push_configurations(config_file_, dependency_file);
+
+    cout << "Dependency File: " << dependency_file << endl;
+    string line = "DependencyFile " + dependency_file + "\n";
+    config_file_.write(line);
+
+    write_config_file(config_file_, addr, working_directory, record_path);
 
     /* if port 443, add ssl components */
     if ( addr.port() == 443 ) { /* ssl */

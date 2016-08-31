@@ -218,10 +218,17 @@ int main( int argc, char *argv[] )
                   interface_counter++;
               }
 
+              string path_to_dependency_file = argv[8];
+              cout << "Path to dependency file: " << path_to_dependency_file << endl;
+
               /* set up web servers */
               vector< WebServer > servers;
               for ( const auto ip_port : unique_ip_and_port ) {
+                if (path_to_dependency_file == "None") {
                   servers.emplace_back( ip_port, working_directory, directory );
+                } else {
+                  servers.emplace_back( ip_port, working_directory, directory, path_to_dependency_file );
+                }
               }
 
               /* set up Squid Proxy */
@@ -234,8 +241,6 @@ int main( int argc, char *argv[] )
               // }
 
               /* set up nghttpx proxies */
-              string path_to_dependency_file = argv[8];
-
               vector< ReverseProxy > reverse_proxies;
               vector< pair< Address, Address >> actual_ip_address_to_reverse_proxy_mapping;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
@@ -251,12 +256,17 @@ int main( int argc, char *argv[] )
                                             nghttpx_key_path,
                                             nghttpx_cert_path);
                 } else {
+                  // reverse_proxies.emplace_back(reverse_proxy_address,
+                  //                           webserver_address,
+                  //                           nghttpx_path,
+                  //                           nghttpx_key_path,
+                  //                           nghttpx_cert_path,
+                  //                           path_to_dependency_file);
                   reverse_proxies.emplace_back(reverse_proxy_address,
                                             webserver_address,
                                             nghttpx_path,
                                             nghttpx_key_path,
-                                            nghttpx_cert_path,
-                                            path_to_dependency_file);
+                                            nghttpx_cert_path);
                 }
               }
 
@@ -290,12 +300,12 @@ int main( int argc, char *argv[] )
                   add_dummy_interface( interface_name, nameservers.at( server_num ) );
               }
 
+              /* set up DNAT between tunnel and the nameserver. */
+              DNAT dnat( Address(nameservers[0].ip(), 53), "udp", 53 );
+
               // Create a NAT to the first nameserver.
               /* set up NAT between egress and eth0 */
               NAT nat_rule( nameservers[0] );
-
-              /* set up DNAT between tunnel and the nameserver. */
-              DNAT dnat( Address(nameservers[0].ip(), 53), "udp", 53 );
 
               /* start dnsmasq */
               event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
