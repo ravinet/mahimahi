@@ -221,13 +221,15 @@ int main( int argc, char *argv[] )
               string path_to_dependency_file = argv[8];
               cout << "Path to dependency file: " << path_to_dependency_file << endl;
 
+              string escaped_page = argv[9];
+
               /* set up web servers */
               vector< WebServer > servers;
               for ( const auto ip_port : unique_ip_and_port ) {
                 if (path_to_dependency_file == "None") {
-                  servers.emplace_back( ip_port, working_directory, directory );
+                  servers.emplace_back( ip_port, working_directory, directory, escaped_page );
                 } else {
-                  servers.emplace_back( ip_port, working_directory, directory, path_to_dependency_file );
+                  servers.emplace_back( ip_port, working_directory, directory, escaped_page, path_to_dependency_file );
                 }
               }
 

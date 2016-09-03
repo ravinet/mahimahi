@@ -18,8 +18,11 @@
 
 using namespace std;
 
-void write_config_file(TempFile & config_file, const Address & addr, 
-                       const string & working_directory, const string & record_path) {
+void write_config_file(TempFile & config_file, 
+                       const Address & addr, 
+                       const string & working_directory, 
+                       const string & record_path,
+                       const string & custom_log_filename) {
     cout << "Apache Config File: " << config_file.name() << " listening on: " << addr.str() <<  endl;
     config_file.write( apache_main_config );
 
@@ -40,7 +43,9 @@ void write_config_file(TempFile & config_file, const Address & addr,
 
     config_file.write( "ErrorLog " + path_prefix + "/logs/apache_errors.log\n" );
 
-    config_file.write( "CustomLog " + path_prefix + "/logs/custom.log common\n" );
+    string log_format = "%{usec}t %r %D %{Referer}i %{Host}i port:%p";
+    config_file.write( "CustomLog \"" + path_prefix + "/logs/" + custom_log_filename + "\" \"" + log_format + "\"\n" );
+    // config_file.write( "CustomLog \"" + path_prefix + "/logs/custom.log\" \"custom\"\n" );
 
     config_file.write( "User #" + to_string( getuid() ) + "\n" );
 
@@ -53,7 +58,21 @@ WebServer::WebServer( const Address & addr, const string & working_directory, co
     : config_file_( "/tmp/replayshell_apache_config" ),
       moved_away_( false )
 {
-    write_config_file(config_file_, addr, working_directory, record_path);
+    write_config_file(config_file_, addr, working_directory, record_path, "custom.log");
+
+    /* if port 443, add ssl components */
+    if ( addr.port() == 443 ) { /* ssl */
+        config_file_.write( apache_ssl_config );
+    }
+
+    run( { APACHE2, "-f", config_file_.name(), "-k", "start" } );
+}
+
+WebServer::WebServer( const Address & addr, const string & working_directory, const string & record_path, const string & page )
+    : config_file_( "/tmp/replayshell_apache_config" ),
+      moved_away_( false )
+{
+    write_config_file(config_file_, addr, working_directory, record_path, page);
 
     /* if port 443, add ssl components */
     if ( addr.port() == 443 ) { /* ssl */
@@ -112,7 +131,7 @@ void populate_push_configurations( TempFile & config_file, const string & depend
 }
 
 WebServer::WebServer( const Address & addr, const string & working_directory,
-           const string & record_path, const string & dependency_file )
+           const string & record_path, const string & escaped_page, const string & dependency_file )
     : config_file_( "/tmp/replayshell_apache_config" ),
       moved_away_( false )
 {
@@ -125,7 +144,7 @@ WebServer::WebServer( const Address & addr, const string & working_directory,
     string line = "DependencyFile " + dependency_file + "\n";
     config_file_.write(line);
 
-    write_config_file(config_file_, addr, working_directory, record_path);
+    write_config_file(config_file_, addr, working_directory, record_path, escaped_page);
 
     /* if port 443, add ssl components */
     if ( addr.port() == 443 ) { /* ssl */

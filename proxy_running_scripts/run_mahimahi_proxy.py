@@ -90,7 +90,7 @@ def start_proxy():
     else:
         dependency_filename = 'None'
 
-    command = '{0} {1} {2} {3} {4} {5} {6} {7} {8}'.format(
+    command = '{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}'.format(
                                            proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
                                            path_to_recorded_page, \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
@@ -99,7 +99,8 @@ def start_proxy():
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_CERT], \
                                            proxy_config[OPENVPN_PORT], \
                                            replay_mode, \
-                                           dependency_filename)
+                                           dependency_filename, \
+                                           escaped_page)
     print command
     process = subprocess.Popen(command, shell=True)
 
