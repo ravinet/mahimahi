@@ -327,41 +327,69 @@ int main( void )
             HTTPRequest request( best_match.request() );
             HTTPResponse response( best_match.response() );
 
-            if ( request.has_header("Referer") && request.has_header("Content-type") &&
-                 request.get_header_value("Content-type").find("text/html") == 0 ) {
-              /* If there's a referer set and the content-type is a HTML. This is an iframe requests. */
-              cout << "HTTP/1.1 404 Not Found" << CRLF;
-              cout << "Content-Type: text/plain" << CRLF << CRLF;
-              cout << "replayserver: could not find a match for " << request_line << CRLF;
-              return EXIT_FAILURE;
-            } else {
-              /* Remove all cache-related headers. */
-              vector< string > headers = { "Cache-control", 
-                                           "Expires",
-                                           "Last-modified",
-                                           "Date",
-                                           "Age",
-                                           "Etag" };
-              for ( auto it = headers.begin(); it != headers.end(); ++it ) {
-                  response.remove_header( *it );
-              }
+            // if ( request.has_header("Referer") && request.has_header("Content-type") &&
+            //      request.get_header_value("Content-type").find("text/html") == 0 ) {
+            //   /* If there's a referer set and the content-type is a HTML. This is an iframe requests. */
+            //   cout << "HTTP/1.1 404 Not Found" << CRLF;
+            //   cout << "Content-Type: text/plain" << CRLF << CRLF;
+            //   cout << "replayserver: could not find a match for " << request_line << CRLF;
+            //   return EXIT_FAILURE;
+            // } else {
+            //   /* Remove all cache-related headers. */
+            //   vector< string > headers = { "Cache-control", 
+            //                                "Expires",
+            //                                "Last-modified",
+            //                                "Date",
+            //                                "Age",
+            //                                "Etag" };
+            //   for ( auto it = headers.begin(); it != headers.end(); ++it ) {
+            //       response.remove_header( *it );
+            //   }
 
-              /* Add the cache-control header and set to 3600. */
-              response.add_header_after_parsing( "Cache-Control: max-age=60" );
+            //   /* Add the cache-control header and set to 3600. */
+            //   // response.add_header_after_parsing( "Cache-Control: max-age=60" );
+            //   response.add_header_after_parsing( "Cache-Control: no-cache, no-store, must-revalidate max-age=0" );
 
-              if (dependency_filename != "None") {
-                string scheme = is_https ? "https://" : "http://";
-                string request_url = scheme + request.get_header_value("Host") + path;
-                populate_push_configurations(dependency_filename, request_url, response);
-              }
+            //   if (dependency_filename != "None") {
+            //     string scheme = is_https ? "https://" : "http://";
+            //     string request_url = scheme + request.get_header_value("Host") + path;
+            //     populate_push_configurations(dependency_filename, request_url, response);
+            //   }
 
-              if (!response.has_header("Access-Control-Allow-Origin")) {
-                response.add_header_after_parsing( "Access-Control-Allow-Origin: *" );
-              }
+            //   if (!response.has_header("Access-Control-Allow-Origin")) {
+            //     response.add_header_after_parsing( "Access-Control-Allow-Origin: *" );
+            //   }
 
-              cout << response.str();
-              return EXIT_SUCCESS;
+            //   cout << response.str();
+            //   return EXIT_SUCCESS;
+            // }
+            /* Remove all cache-related headers. */
+            vector< string > headers = { "Cache-control", 
+                                         "Expires",
+                                         "Last-modified",
+                                         "Date",
+                                         "Age",
+                                         "Etag" };
+            for ( auto it = headers.begin(); it != headers.end(); ++it ) {
+                response.remove_header( *it );
             }
+
+            /* Add the cache-control header and set to 3600. */
+            // response.add_header_after_parsing( "Cache-Control: max-age=60" );
+            response.add_header_after_parsing( "Cache-Control: no-cache, no-store, must-revalidate max-age=0" );
+
+            if (dependency_filename != "None") {
+              string scheme = is_https ? "https://" : "http://";
+              string request_url = scheme + request.get_header_value("Host") + path;
+              populate_push_configurations(dependency_filename, request_url, response);
+            }
+
+            if (!response.has_header("Access-Control-Allow-Origin")) {
+              response.add_header_after_parsing( "Access-Control-Allow-Origin: *" );
+            }
+
+            cout << response.str();
+            return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
             cout << "HTTP/1.1 404 Not Found" << CRLF;
             cout << "Content-Type: text/plain" << CRLF << CRLF;
