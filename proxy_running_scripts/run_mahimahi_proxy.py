@@ -89,6 +89,10 @@ def start_proxy():
         dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
     else:
         dependency_filename = 'None'
+    
+    path_to_log = os.path.join(proxy_config[BUILD_PREFIX], 'logs', escaped_page)
+    rm_existing_logs = 'rm {0}'.format(path_to_log)
+    subprocess.call(rm_existing_logs, shell=True)
 
     command = '{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}'.format(
                                            proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \

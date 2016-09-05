@@ -375,8 +375,8 @@ int main( void )
             }
 
             /* Add the cache-control header and set to 3600. */
-            // response.add_header_after_parsing( "Cache-Control: max-age=60" );
-            response.add_header_after_parsing( "Cache-Control: no-cache, no-store, must-revalidate max-age=0" );
+            response.add_header_after_parsing( "Cache-Control: max-age=60" );
+            // response.add_header_after_parsing( "Cache-Control: no-cache, no-store, must-revalidate max-age=0" );
 
             if (dependency_filename != "None") {
               string scheme = is_https ? "https://" : "http://";
