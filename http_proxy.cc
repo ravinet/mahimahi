@@ -45,17 +45,18 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
 
     const Address server_addr = client.original_dest();
 
-    uint64_t response_start = 0;
-    uint64_t request_start = 0;
+    //uint64_t response_start = 0;
+    //uint64_t request_start = 0;
 
     /* poll on original connect socket and new connection socket to ferry packets */
     /* responses from server go to response parser */
     poller.add_action( Poller::Action( server, Direction::In,
                                        [&] () {
-                                           if ( response_start == 0 ) {
-                                               response_start = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-                                           }
+                                           //if ( response_start == 0 ) {
+                                           //    response_start = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                                           //}
                                            string buffer = server.read();
+                                           //cout << std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1) << " " << buffer << endl;
                                            response_parser.parse( buffer );
                                            return ResultType::Continue;
                                        },
@@ -66,6 +67,7 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
                                        [&] () {
                                            string buffer = client.read();
                                            request_parser.parse( buffer );
+                                           //cout << "REQ: " << std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1) << endl;
                                            return ResultType::Continue;
                                        },
                                        [&] () { return not server.eof(); } ) );
@@ -73,15 +75,15 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
     /* completed requests from client are serialized and sent to server */
     poller.add_action( Poller::Action( server, Direction::Out,
                                        [&] () {
-                                           uint64_t time = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                                           //uint64_t time = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
 
                                            //cout << "Request," << request_parser.front().get_url() << "," << time << "," << server.peer_addr().ip() << endl;
-                                           if ( request_start != 0 ) {
-                                               cout << "ERROR-multiple oustanding requests. Subsequent request is: " << request_parser.front().get_url() << endl;
-                                           }
-                                           if ( request_start == 0 ) {
-                                               request_start = time;
-                                           }
+                                           //if ( request_start != 0 ) {
+                                           //    //cout << "ERROR-multiple oustanding requests. Subsequent request is: " << request_parser.front().get_url() << endl;
+                                           //}
+                                           //if ( request_start == 0 ) {
+                                           //    request_start = time;
+                                           //}
                                            //it = req_times.find(request_parser.front().get_url());
                                            //if (it != req_times.end()) {
                                            //    req_times[request_parser.front().get_url()] = time;
@@ -96,10 +98,10 @@ void HTTPProxy::loop( SocketType & server, SocketType & client, HTTPBackingStore
     /* completed responses from server are serialized and sent to client */
     poller.add_action( Poller::Action( client, Direction::Out,
                                        [&] () {
-                                           unsigned long rtime = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
-                                           cout << response_parser.front().request().get_url() << " " << request_start << " " << response_start << " " << rtime << " " << server.peer_addr().ip() << " " << server.peer_addr().port() << endl;
-                                           response_start = 0;
-                                           request_start = 0;
+                                           //unsigned long rtime = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                                           //cout << response_parser.front().request().get_url() << " " << request_start << " " << response_start << " " << rtime << " " << server.peer_addr().ip() << " " << server.peer_addr().port() << endl;
+                                           //response_start = 0;
+                                           //request_start = 0;
                                            //it = req_times.find(response_parser.front().request().get_url());
                                            //cout << it->second;
                                            //cout << response_parser.front().request().get_url() << "," << it->second << "," << rtime << endl;
