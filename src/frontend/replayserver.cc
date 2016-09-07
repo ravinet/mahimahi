@@ -236,7 +236,6 @@ string infer_resource_type(const string & resource_type) {
 }
 
 void populate_push_configurations( const string & dependency_file, const string & request_url, HTTPResponse & response) {
-  // response.add_header_after_parsing("x-URL: " + request_url );
 
   map< string, vector< string >> dependencies_map;
   map< string, string > dependency_type_map;
@@ -279,10 +278,9 @@ void populate_push_configurations( const string & dependency_file, const string 
     if (link_resources.size() > 0) {
       string link_string_value = "";
       for (auto it = link_resources.begin(); it != link_resources.end(); ++it) {
-        // for (unsigned int i = 0; i < link_resources.size(); i++) {
         link_string_value += *it + ", ";
       }
-      string link_string = "Link: " + link_string_value.substr(0, link_string.size() - 2);
+      string link_string = "Link: " + link_string_value.substr(0, link_string_value.size() - 2);
       response.add_header_after_parsing(link_string);
     }
   }
