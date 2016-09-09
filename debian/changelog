@@ -1,3 +1,12 @@
+mahimahi (0.93-1) unstable; urgency=medium
+
+  * Fix FTBFS with gcc 6
+  * Fix broken TCP DNS resolution
+  * Update mm-delay-graph to work with gnuplot 5
+  * Add new (2016) T-Mobile network trace to trace library
+
+ -- Keith Winstein <keithw@mit.edu>  Thu, 08 Sep 2016 22:43:46 -0400
+
 mahimahi (0.92-1) unstable; urgency=low
 
   * Fix bug when /proc/net/route is empty
