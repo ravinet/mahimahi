@@ -166,7 +166,7 @@ int main( int argc, char *argv[] )
               }
 
               /* set up dummy interfaces */
-              unsigned int interface_counter = 0;
+              unsigned int interface_counter = 2;
               unsigned int squid_proxy_base_port = 3128;
               vector< Address > reverse_proxy_addresses;
               vector< Address > squid_addresses;
@@ -176,6 +176,20 @@ int main( int argc, char *argv[] )
               vector< pair< string, Address > > reverse_proxy_names_to_reverse_proxy_addresses;
               vector< pair< string, Address > > name_resolution_pairs;
               set< string > added_ip_addresses;
+
+              string default_webserver_name = to_string( interface_counter ) + "default";
+              string default_webserver_device_name = "default" + to_string( 1 );
+              Address default_webserver_address = Address::reverse_proxy(1, 443);
+              add_dummy_interface( default_webserver_device_name, default_webserver_address);
+              unique_ip_and_port.emplace(default_webserver_address);
+
+              string default_reverse_proxy_name = to_string( 2 ) + "default";
+              string default_reverse_proxy_device_name = "default" + to_string( 2 );
+              Address default_reverse_proxy_address = Address::reverse_proxy(2, 443);
+              add_dummy_interface( default_reverse_proxy_device_name, default_reverse_proxy_address);
+
+              name_resolution_pairs.push_back(make_pair(default_reverse_proxy_name, default_reverse_proxy_address));
+
               for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
                   it != hostname_to_ip_set.end(); ++it) {
                   // Get the appropriate variables.
@@ -202,7 +216,11 @@ int main( int argc, char *argv[] )
                   if (reverse_proxy_address.port() == 80) {
                     // CASE: HTTP; don't resolve the actual domain, but resolve reverse proxy to the 
                     // reverse proxy address instead. The client can now resolve the proxy.
+                    cout << "Hostname: " << hostname << " 80 reverse proxy addr: " << reverse_proxy_address.str() << endl;
                     name_resolution_pairs.push_back(make_pair(reverse_proxy_name, reverse_proxy_address));
+
+                    // Add an entry for HTTPS just in case and point it to the default webserver.
+                    name_resolution_pairs.push_back(make_pair(hostname, default_reverse_proxy_address));
                   } else if (reverse_proxy_address.port() == 443) {
                     // CASE: HTTPS; The client will have to directly connect to the reverse proxy.
                     // The hostname of the domain should resolve directly to the reverse proxy address.
@@ -225,6 +243,13 @@ int main( int argc, char *argv[] )
 
               /* set up web servers */
               vector< WebServer > servers;
+              // First, setup the default webserver.
+              // if (path_to_dependency_file == "None") {
+              //   servers.emplace_back( default_webserver_address, working_directory, directory, escaped_page );
+              // } else {
+              //   servers.emplace_back( default_webserver_address, working_directory, directory, escaped_page, path_to_dependency_file );
+              // }
+             
               for ( const auto ip_port : unique_ip_and_port ) {
                 if (path_to_dependency_file == "None") {
                   servers.emplace_back( ip_port, working_directory, directory, escaped_page );
@@ -244,6 +269,14 @@ int main( int argc, char *argv[] )
 
               /* set up nghttpx proxies */
               vector< ReverseProxy > reverse_proxies;
+
+              // Do the default one.
+              reverse_proxies.emplace_back(default_reverse_proxy_address,
+                                        default_webserver_address,
+                                        nghttpx_path,
+                                        nghttpx_key_path,
+                                        nghttpx_cert_path);
+
               vector< pair< Address, Address >> actual_ip_address_to_reverse_proxy_mapping;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
                 auto hostname_to_reverse_proxy = hostname_to_reverse_proxy_addresses[i];
@@ -251,31 +284,22 @@ int main( int argc, char *argv[] )
                 auto webserver_address = webserver_to_reverse_proxy_addresses[i].first;
                 actual_ip_address_to_reverse_proxy_mapping.emplace_back(webserver_address, reverse_proxy_address);
                 cout << "ReverseProxy address: " << reverse_proxy_address.str() << " Webserver address: " << webserver_address.str() << endl;
-                if (path_to_dependency_file == "None") {
-                  reverse_proxies.emplace_back(reverse_proxy_address,
-                                            webserver_address,
-                                            nghttpx_path,
-                                            nghttpx_key_path,
-                                            nghttpx_cert_path);
-                } else {
-                  // reverse_proxies.emplace_back(reverse_proxy_address,
-                  //                           webserver_address,
-                  //                           nghttpx_path,
-                  //                           nghttpx_key_path,
-                  //                           nghttpx_cert_path,
-                  //                           path_to_dependency_file);
-                  reverse_proxies.emplace_back(reverse_proxy_address,
-                                            webserver_address,
-                                            nghttpx_path,
-                                            nghttpx_key_path,
-                                            nghttpx_cert_path);
-                }
+                reverse_proxies.emplace_back(reverse_proxy_address,
+                                          webserver_address,
+                                          nghttpx_path,
+                                          nghttpx_key_path,
+                                          nghttpx_cert_path);
               }
 
               PacFile pac_file("/home/ubuntu/Sites/config_testing.pac");
               cout << hostname_to_reverse_proxy_addresses.size() << endl;
               pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
                                     hostname_to_reverse_proxy_names);
+
+              // pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
+              //                       hostname_to_reverse_proxy_names,
+              //                       default_reverse_proxy_name,
+              //                       default_reverse_proxy_address);
 
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );

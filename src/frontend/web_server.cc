@@ -43,7 +43,7 @@ void write_config_file(TempFile & config_file,
 
     config_file.write( "ErrorLog " + path_prefix + "/logs/apache_errors.log\n" );
 
-    string log_format = "%{usec}t %r %D %{Referer}i %{Host}i port:%p";
+    string log_format = "%{usec}t %r %D %{Referer}i %{Host}i port:%p %{x-requested-with}i";
     config_file.write( "CustomLog \"" + path_prefix + "/logs/" + custom_log_filename + "\" \"" + log_format + "\"\n" );
     // config_file.write( "CustomLog \"" + path_prefix + "/logs/custom.log\" \"custom\"\n" );
 

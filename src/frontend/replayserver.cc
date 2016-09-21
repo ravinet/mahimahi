@@ -141,11 +141,6 @@ string extract_hostname( const string & url ) {
     retval = url.substr( https.length(), url.length() );
   }
 
-  string www = "www.";
-  if ( retval.find( www ) == 0 ) {
-    retval = retval.substr( www.length(), retval.length() );
-  }
-
   const auto index = retval.find( "/" );
   retval = retval.substr( 0, index );
   return retval;
@@ -182,6 +177,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
+        // myfile << "\tFailed HTTPS" << endl;
         return 0;
     }
 
@@ -191,6 +187,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 
     /* match host header */
     if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
+        // myfile << "\tFailed Host" << endl;
         return 0;
     }
 
@@ -201,6 +198,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 
     string request_url = strip_hostname(extract_url_from_request_line(request_line), extract_url_from_request_line(saved_request.first_line()));
     string saved_request_url = extract_url_from_request_line(saved_request.first_line());
+    // myfile.close();
     return match_url(saved_request_url, request_url);
 }
 
@@ -269,13 +267,17 @@ void populate_push_configurations( const string & dependency_file, const string 
         // Push all dependencies for the location.
         string dependency_filename = *list_it;
         string dependency_type = dependency_type_map[dependency_filename];
-        if (dependency_type == "Document" || dependency_type == "Script" || dependency_type == "Stylesheet") {
+        if (dependency_type == "Document" || dependency_type == "Script" 
+            || dependency_type == "Stylesheet") {
           string link_resource_string = "<" + dependency_filename + ">;rel=preload" 
             + infer_resource_type(dependency_type_map[dependency_filename]);
           link_resources.insert(link_resource_string);
-        } else if (dependency_type == "Image" || dependency_type == "Font") {
+        } else {
           unimportant_resources.insert(dependency_filename);
         }
+        // string link_resource_string = "<" + dependency_filename + ">;rel=preload" 
+        //   + infer_resource_type(dependency_type_map[dependency_filename]);
+        // link_resources.insert(link_resource_string);
       }
     }
     if (link_resources.size() > 0) {
@@ -295,6 +297,36 @@ void populate_push_configurations( const string & dependency_file, const string 
       response.add_header_after_parsing(x_systemname_unimportant_resource_string);
     }
   }
+}
+
+int check_redirect( MahimahiProtobufs::RequestResponse saved_record, int previous_score ) {
+    HTTPRequest saved_request( saved_record.request() );
+    HTTPResponse saved_response( saved_record.response() );
+
+    /* check response code */
+    string response_first_line = saved_response.first_line();
+    vector< string > splitted_response_first_line = split(response_first_line, ' ');
+    string status_code = splitted_response_first_line[1];
+    if ( status_code != "301" && status_code != "302" ) {
+      // Not redirection.
+      return previous_score;
+    }
+
+    /* Check the response with the redirected location. */
+    string request_first_line = saved_request.first_line();
+    vector< string > splitted_request_first_line = split(request_first_line, ' ');
+    string request_url = splitted_request_first_line[1]; // This shouldn't contain the HOST
+    if ( !saved_response.has_header("Location"))
+      return previous_score;
+
+    string redirected_location = saved_response.get_header_value("Location");
+    string redirected_location_host = extract_hostname(redirected_location);
+    string path = strip_hostname( redirected_location, request_url );
+
+    if ( path == request_url && redirected_location_host == saved_request.get_header_value("Host") ) {
+      return 0;
+    }
+    return previous_score;
 }
 
 int main( void )
@@ -331,6 +363,8 @@ int main( void )
                 best_score = score;
             }
         }
+
+        best_score = check_redirect(best_match, best_score);
 
         if ( best_score > 0 ) { /* give client the best match */
             HTTPRequest request( best_match.request() );

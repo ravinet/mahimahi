@@ -112,9 +112,10 @@ def start_proxy():
 
 @app.route("/stop_proxy")
 def stop_proxy():
-    processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, SQUID, OPENVPN ]
+    processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, OPENVPN ]
+    # processes = [ MM_PROXYREPLAY ]
     for process in processes:
-        command = 'sudo pkill -SIGINT {0}'.format(process)
+        command = 'sudo pkill -SIGTERM {0}'.format(process)
         subprocess.Popen(command, shell=True)
     return 'Proxy Stopped'
 
