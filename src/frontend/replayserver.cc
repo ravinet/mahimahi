@@ -275,9 +275,6 @@ void populate_push_configurations( const string & dependency_file, const string 
         } else {
           unimportant_resources.insert(dependency_filename);
         }
-        // string link_resource_string = "<" + dependency_filename + ">;rel=preload" 
-        //   + infer_resource_type(dependency_type_map[dependency_filename]);
-        // link_resources.insert(link_resource_string);
       }
     }
     if (link_resources.size() > 0) {

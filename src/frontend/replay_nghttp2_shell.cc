@@ -95,7 +95,7 @@ int main( int argc, char *argv[] )
 
         /* set up DNAT between eth0 to ingress address. */
         int vpn_port = atoi(argv[6]);
-        DNAT dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
+        DNATWithPostrouting dnat( Address(ingress_addr.ip(), vpn_port), "udp", vpn_port );
 
         /* set up NAT between egress and eth0 */
         NAT nat_rule( ingress_addr );
@@ -327,7 +327,7 @@ int main( int argc, char *argv[] )
               }
 
               /* set up DNAT between tunnel and the nameserver. */
-              DNAT dnat( Address(nameservers[0].ip(), 53), "udp", 53 );
+              DNATWithPostrouting dnat( Address(nameservers[0].ip(), 53), "udp", 53 );
 
               // Create a NAT to the first nameserver.
               /* set up NAT between egress and eth0 */

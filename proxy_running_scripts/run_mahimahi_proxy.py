@@ -84,6 +84,12 @@ def start_proxy():
     escaped_page = escape_page(page)
     path_to_recorded_page = os.path.join(proxy_config[BASE_RESULT_DIR], request_time, escaped_page)
     # cmd:  ./mm-proxyreplay /home/ubuntu/long_running_page_load_done/1467058494.43/m.accuweather.com/ /home/ubuntu/build/bin/nghttpx 3000 /home/ubuntu/build/certs/reverse_proxy_key.pem /home/ubuntu/build/certs/reverse_proxy_cert.pem 1194 /home/ubuntu/all_dependencies/dependencies/m.accuweather.com/dependency_tree.txt
+    replay_instance = proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH]
+    http_version = request.args.get(HTTP_VERSION)
+    if http_version is not None:
+        http_version = int(http_version)
+        if http_version != 2:
+            replay_instance = proxy_config[BUILD_PREFIX] + proxy_config[HTTP1_PROXY_REPLAY_PATH]
 
     if use_dependencies == 'yes':
         dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
@@ -95,7 +101,7 @@ def start_proxy():
     subprocess.call(rm_existing_logs, shell=True)
 
     command = '{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}'.format(
-                                           proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH], \
+                                           replay_instance, \
                                            path_to_recorded_page, \
                                            proxy_config[BUILD_PREFIX] + proxy_config[NGHTTPX_PATH], \
                                            proxy_config[NGHTTPX_PORT], \
@@ -234,23 +240,29 @@ def is_record_proxy_running():
 @app.route("/is_replay_proxy_running")
 def is_replay_proxy_running():
     process_names = [ 'mm-proxyreplay', 'nghttpx', 'openvpn' ]
+    http_version = request.args.get(HTTP_VERSION)
+    if http_version is not None:
+        http_version = int(http_version)
+        if http_version != 2:
+            process_names = [ HTTP1_PROXY_REPLAY_PATH, 'openvpn' ]
+
     result = ''
     for process_name in process_names:
         result += check_process(process_name)
-
     return result.strip()
 
 def check_process(process_name):
-    command = 'pgrep "{0}"'.format(process_name)
+    command = 'ps aux | grep "{0}"'.format(process_name)
     print command
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdout, stderr = process.communicate()
     splitted_stdout = stdout.split('\n')
     result = ''
-    if len(splitted_stdout) > 1:
+    if len(splitted_stdout) > 3:
+        # 3 from shell, actual grep, and empty string
         result += '{0} YES\n'.format(process_name)
-    elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-        result += '{0} YES\n'.format(process_name)
+    # elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
+    #     result += '{0} YES\n'.format(process_name)
     else:
         result += '{0} NO\n'.format(process_name)
     return result

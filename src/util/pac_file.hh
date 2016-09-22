@@ -17,6 +17,7 @@ public:
   void WriteProxies(
       std::vector<std::pair<std::string, Address>> hostnames_to_addresses,
       std::vector<std::pair<std::string, std::string>> hostnames_to_reverse_proxy_name, std::string default_hostname, Address default_address);
+  void WriteDirect();
 
 private:
   std::string path_;

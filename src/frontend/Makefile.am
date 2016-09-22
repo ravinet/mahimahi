@@ -62,7 +62,7 @@ mm_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/lib
 mm_proxyreplay_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-http1-proxyreplay
-mm_http1_proxyreplay_SOURCES = replay_squid_shell.cc web_server.hh web_server.cc reverse_proxy.cc squid_proxy.hh squid_proxy.cc
+mm_http1_proxyreplay_SOURCES = replay_http_one_shell.cc web_server.hh web_server.cc reverse_proxy.cc
 mm_http1_proxyreplay_LDADD = -lrt ../util/libutil.a ../http/libhttp.a ../protobufs/libhttprecordprotos.a $(protobuf_LIBS)
 mm_http1_proxyreplay_LDFLAGS = -pthread
 

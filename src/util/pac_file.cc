@@ -12,6 +12,17 @@ PacFile::PacFile(const string & path)
 
 }
 
+void PacFile::WriteDirect() {
+  stringstream ss;
+  ss << "function FindProxyForURL(url, host) {" << endl;
+  ss << "\treturn \"DIRECT\";" << endl;
+  ss << "}";
+  ofstream output_file;
+  output_file.open(path_);
+  output_file << ss.str();
+  output_file.close();
+}
+
 void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses) {
   stringstream ss;
   ss << "function FindProxyForURL(url, host) {" << endl;
