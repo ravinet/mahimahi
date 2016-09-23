@@ -179,6 +179,10 @@ printf STDERR qq{95th percentile signal delay: %.0f ms\n}, $pp95s;
 my $earliest_bin = min( keys %arrivals, keys %capacity, keys %departures );
 my $latest_bin = max( keys %arrivals, keys %capacity, keys %departures );
 
+if ( $earliest_bin == $latest_bin ) {
+  die q{MS_PER_BIN is too large for length of trace};
+}
+
 my $current_buffer_occupancy = 0;
 
 sub default {
