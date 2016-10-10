@@ -6,6 +6,7 @@
 #include "drop_tail_packet_queue.hh"
 #include "drop_head_packet_queue.hh"
 #include "codel_packet_queue.hh"
+#include "pie_packet_queue.hh"
 #include "link_queue.hh"
 #include "packetshell.cc"
 
@@ -23,9 +24,10 @@ void usage_error( const string & program_name )
     cerr << "          --uplink-queue=QUEUE_TYPE --downlink-queue=QUEUE_TYPE" << endl;
     cerr << "          --uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
     cerr << endl;
-    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel" << endl;
+    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel | pie" << endl;
     cerr << "          QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\"" << endl;
-    cerr << "              (with NAME = bytes | packets | target | interval)" << endl << endl;
+    cerr << "              (with NAME = bytes | packets | target | interval | qdelay_ref | max_burst)" << endl;
+    cerr << "                  target, interval, qdelay_ref, max_burst are in milli-second" << endl << endl;
 
     throw runtime_error( "invalid arguments" );
 }
@@ -40,6 +42,8 @@ unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const str
         return unique_ptr<AbstractPacketQueue>( new DropHeadPacketQueue( args ) );
     } else if ( type == "codel" ) {
         return unique_ptr<AbstractPacketQueue>( new CODELPacketQueue( args ) );
+    } else if ( type == "pie" ) {
+        return unique_ptr<AbstractPacketQueue>( new PIEPacketQueue( args ) );
     } else {
         cerr << "Unknown queue type: " << type << endl;
     }
