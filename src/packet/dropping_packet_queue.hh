@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include "abstract_packet_queue.hh"
+#include "exception.hh"
 
 class DroppingPacketQueue : public AbstractPacketQueue
 {
@@ -42,6 +43,8 @@ public:
     bool empty( void ) const override;
 
     std::string to_string( void ) const override;
+
+    static unsigned int get_arg( const std::string & args, const std::string & name );
 };
 
 #endif /* DROPPING_PACKET_QUEUE_HH */ 
