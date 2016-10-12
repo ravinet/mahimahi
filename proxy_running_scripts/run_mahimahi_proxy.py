@@ -253,18 +253,17 @@ def is_replay_proxy_running():
 
 def check_process(process_name):
     command = 'ps aux | grep "{0}"'.format(process_name)
-    print command
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdout, stderr = process.communicate()
     splitted_stdout = stdout.split('\n')
-    result = ''
-    if len(splitted_stdout) > 3:
-        # 3 from shell, actual grep, and empty string
-        result += '{0} YES\n'.format(process_name)
-    # elif len(splitted_stdout) == 1 and len(splitted_stdout[0]) > 0:
-    #     result += '{0} YES\n'.format(process_name)
-    else:
-        result += '{0} NO\n'.format(process_name)
+
+    result = '{0} NO\n'.format(process_name)
+    for line in splitted_stdout:
+        splitted_line = line.split()
+        if len(splitted_line) >= 11:
+            proc_name = splitted_line[10]
+            if process_name in proc_name:
+                result = '{0} YES\n'.format(process_name)
     return result
 
 @app.route("/done")
