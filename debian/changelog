@@ -1,3 +1,9 @@
+mahimahi (0.94-1) unstable; urgency=medium
+
+  * Add CoDel and PIE implementations (Joseph Beshay)
+
+ -- Keith Winstein <keithw@mit.edu>  Wed, 12 Oct 2016 01:03:27 -0400
+
 mahimahi (0.93-1) unstable; urgency=medium
 
   * Fix FTBFS with gcc 6
