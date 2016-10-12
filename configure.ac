@@ -92,6 +92,7 @@ AC_DEFINE_UNQUOTED([MOD_DEEPCGI], ["${prefix}/lib/${DEB_HOST_MULTIARCH}/libmod_d
 PKG_CHECK_MODULES([protobuf], [protobuf])
 PKG_CHECK_MODULES([libssl], [libcrypto libssl])
 PKG_CHECK_MODULES([libapr1], [apr-1])
+PKG_CHECK_MODULES([XCB], [xcb])
 PKG_CHECK_MODULES([XCBPRESENT], [xcb-present])
 PKG_CHECK_MODULES([PANGOCAIRO], [pangocairo])
 

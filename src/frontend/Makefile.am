@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I../protobufs -I$(srcdir)/../util -I$(srcdir)/../packet -I$(srcdir)/../graphing -I$(srcdir)/../http -I$(srcdir)/../httpserver $(XCBPRESENT_CFLAGS) $(PANGOCAIRO_CFLAGS) $(CXX11_FLAGS)
+AM_CPPFLAGS = -I../protobufs -I$(srcdir)/../util -I$(srcdir)/../packet -I$(srcdir)/../graphing -I$(srcdir)/../http -I$(srcdir)/../httpserver $(XCBPRESENT_CFLAGS) $(XCB_CFLAGS) $(PANGOCAIRO_CFLAGS) $(CXX11_FLAGS)
 AM_CXXFLAGS = $(PICKY_CXXFLAGS)
 
 bin_PROGRAMS = mm-delay
@@ -18,12 +18,12 @@ mm_onoff_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-link
 mm_link_SOURCES = linkshell.cc link_queue.hh link_queue.cc
-mm_link_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
+mm_link_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(XCB_LIBS) $(PANGOCAIRO_LIBS)
 mm_link_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-meter
 mm_meter_SOURCES = meter.cc meter_queue.hh meter_queue.cc
-mm_meter_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(PANGOCAIRO_LIBS)
+mm_meter_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a ../graphing/libgraph.a $(XCBPRESENT_LIBS) $(XCB_LIBS) $(PANGOCAIRO_LIBS)
 mm_meter_LDFLAGS = -pthread
 
 bin_PROGRAMS += mm-webrecord
