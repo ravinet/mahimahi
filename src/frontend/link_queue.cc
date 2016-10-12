@@ -73,6 +73,7 @@ LinkQueue::LinkQueue( const string & link_name, const string & filename, const s
         *log_ << "# mahimahi mm-link (" << link_name << ") [" << filename << "] > " << logfile << endl;
         *log_ << "# command line: " << command_line << endl;
         *log_ << "# queue: " << packet_queue_->to_string() << endl;
+        *log_ << "# init timestamp: " << initial_timestamp() << endl;
         *log_ << "# base timestamp: " << base_timestamp_ << endl;
         const char * prefix = getenv( "MAHIMAHI_SHELL_PREFIX" );
         if ( prefix ) {
