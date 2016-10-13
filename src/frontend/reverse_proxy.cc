@@ -48,7 +48,6 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       http_backend_arg << "-b" << backend_address.ip() << ",80";
       run( { path_to_proxy, frontend_arg.str(), 
           http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
-          "--no-server-push", 
           "--daemon", "--pid-file=" + pidfile_.name() } );
     }
 }
@@ -79,7 +78,6 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       run( { path_to_proxy, frontend_arg.str(), https_backend_arg.str(),
         path_to_proxy_key, path_to_proxy_cert, client_cert_arg.str(),
         "--dependency-filename", path_to_dependency_file, "--daemon",
-        "--no-server-push", 
         "-k", "--pid-file=" + pidfile_.name() } );
     } else {
       // Handle HTTP case
@@ -88,7 +86,6 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       run( { path_to_proxy, frontend_arg.str(), 
           http_backend_arg.str(), path_to_proxy_key, path_to_proxy_cert, 
           "--dependency-filename", path_to_dependency_file, "--daemon",
-          "--no-server-push", 
           "--pid-file=" + pidfile_.name() } );
     }
 }
