@@ -22,7 +22,7 @@ void write_config_file(TempFile & config_file,
                        const Address & addr, 
                        const string & working_directory, 
                        const string & record_path,
-                       const string & custom_log_filename) {
+                       const string & page) {
     cout << "Apache Config File: " << config_file.name() << " listening on: " << addr.str() <<  endl;
     config_file.write( apache_main_config );
 
@@ -33,6 +33,7 @@ void write_config_file(TempFile & config_file,
 
     config_file.write( "WorkingDir " + working_directory + "\n" );
     config_file.write( "RecordingDir " + record_path + "\n" );
+    config_file.write( "LoadingPage " + page + "\n");
 
     /* add pid file, log files, user/group name, and listen line to config file and run apache */
     config_file.write( "PidFile /tmp/replayshell_apache_pid." + to_string( getpid() ) + "." + to_string( random() ) + "\n" );
@@ -44,8 +45,7 @@ void write_config_file(TempFile & config_file,
     config_file.write( "ErrorLog " + path_prefix + "/logs/apache_errors.log\n" );
 
     string log_format = "%{usec}t %r %D %{Referer}i %{Host}i port:%p %{x-requested-with}i";
-    config_file.write( "CustomLog \"" + path_prefix + "/logs/" + custom_log_filename + "\" \"" + log_format + "\"\n" );
-    // config_file.write( "CustomLog \"" + path_prefix + "/logs/custom.log\" \"custom\"\n" );
+    config_file.write( "CustomLog \"" + path_prefix + "/logs/" + page + "\" \"" + log_format + "\"\n" );
 
     config_file.write( "User #" + to_string( getuid() ) + "\n" );
 
