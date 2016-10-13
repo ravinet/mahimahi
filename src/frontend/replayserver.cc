@@ -120,12 +120,6 @@ string strip_hostname( const string & url, const string & path ) {
 
   const auto index = retval.find( "/" );
   retval = retval.substr( index, retval.length() );
-  
-  // if ( url.find( path ) != string::npos ) {
-  //   return path;
-  // } else {
-  //   return url;
-  // }
 
   return retval;
 }
@@ -143,6 +137,16 @@ string extract_hostname( const string & url ) {
 
   const auto index = retval.find( "/" );
   retval = retval.substr( 0, index );
+  return retval;
+}
+
+string strip_www( const string & url ) {
+  string retval = url;
+
+  string www = "www.";
+  if ( retval.find( www ) == 0 ) {
+    retval = retval.substr( www.length(), retval.length() );
+  }
   return retval;
 }
 
@@ -233,8 +237,10 @@ string infer_resource_type(const string & resource_type) {
   return "";
 }
 
-void populate_push_configurations( const string & dependency_file, const string & request_url, HTTPResponse & response) {
-
+void populate_push_configurations( const string & dependency_file, 
+                                   const string & request_url, 
+                                   HTTPResponse & response, 
+                                   const string & current_loading_page ) {
   map< string, vector< string >> dependencies_map;
   map< string, string > dependency_type_map;
   ifstream infile(dependency_file);
@@ -245,7 +251,6 @@ void populate_push_configurations( const string & dependency_file, const string 
       string parent = remove_trailing_slash(splitted_line[0]);
       if (dependencies_map.find(parent) == dependencies_map.end()) {
         dependencies_map[parent] = { };
-        // response.add_header_after_parsing("x-key: " + parent );
       }
       string child = splitted_line[2];
       string resource_type = splitted_line[4];
@@ -271,12 +276,20 @@ void populate_push_configurations( const string & dependency_file, const string 
             || dependency_type == "Stylesheet") {
           string link_resource_string = "<" + dependency_filename + ">;rel=preload" 
             + infer_resource_type(dependency_type_map[dependency_filename]);
+          
+          // Add push or nopush directive based on the hostname of the URL.
+          string request_hostname = strip_www( extract_hostname( request_url ));
+          if ( request_hostname != current_loading_page ) {
+            link_resource_string += ";nopush";
+          }
+
           link_resources.insert(link_resource_string);
         } else {
           unimportant_resources.insert(dependency_filename);
         }
       }
     }
+
     if (link_resources.size() > 0) {
       string link_string_value = "";
       for (auto it = link_resources.begin(); it != link_resources.end(); ++it) {
@@ -285,6 +298,7 @@ void populate_push_configurations( const string & dependency_file, const string 
       string link_string = "Link: " + link_string_value.substr(0, link_string_value.size() - 2);
       response.add_header_after_parsing(link_string);
     }
+
     if (unimportant_resources.size() > 0) {
       string unimportant_resource_value = "";
       for (auto it = unimportant_resources.begin(); it != unimportant_resources.end(); ++it) {
@@ -333,6 +347,7 @@ int main( void )
 
         const string working_directory = safe_getenv( "MAHIMAHI_CHDIR" );
         const string recording_directory = safe_getenv( "MAHIMAHI_RECORD_PATH" );
+        const string current_loading_page = safe_getenv( "LOADING_PAGE" );
         const string dependency_filename = safe_getenv( "DEPENDENCY_FILE" );
         const string path = safe_getenv( "REQUEST_URI" );
         const string request_line = safe_getenv( "REQUEST_METHOD" )
@@ -367,42 +382,6 @@ int main( void )
             HTTPRequest request( best_match.request() );
             HTTPResponse response( best_match.response() );
 
-            // if ( request.has_header("Referer") && request.has_header("Content-type") &&
-            //      request.get_header_value("Content-type").find("text/html") == 0 ) {
-            //   /* If there's a referer set and the content-type is a HTML. This is an iframe requests. */
-            //   cout << "HTTP/1.1 404 Not Found" << CRLF;
-            //   cout << "Content-Type: text/plain" << CRLF << CRLF;
-            //   cout << "replayserver: could not find a match for " << request_line << CRLF;
-            //   return EXIT_FAILURE;
-            // } else {
-            //   /* Remove all cache-related headers. */
-            //   vector< string > headers = { "Cache-control", 
-            //                                "Expires",
-            //                                "Last-modified",
-            //                                "Date",
-            //                                "Age",
-            //                                "Etag" };
-            //   for ( auto it = headers.begin(); it != headers.end(); ++it ) {
-            //       response.remove_header( *it );
-            //   }
-
-            //   /* Add the cache-control header and set to 3600. */
-            //   // response.add_header_after_parsing( "Cache-Control: max-age=60" );
-            //   response.add_header_after_parsing( "Cache-Control: no-cache, no-store, must-revalidate max-age=0" );
-
-            //   if (dependency_filename != "None") {
-            //     string scheme = is_https ? "https://" : "http://";
-            //     string request_url = scheme + request.get_header_value("Host") + path;
-            //     populate_push_configurations(dependency_filename, request_url, response);
-            //   }
-
-            //   if (!response.has_header("Access-Control-Allow-Origin")) {
-            //     response.add_header_after_parsing( "Access-Control-Allow-Origin: *" );
-            //   }
-
-            //   cout << response.str();
-            //   return EXIT_SUCCESS;
-            // }
             /* Remove all cache-related headers. */
             vector< string > headers = { "Cache-control", 
                                          "Expires",
@@ -421,7 +400,10 @@ int main( void )
             if (dependency_filename != "None") {
               string scheme = is_https ? "https://" : "http://";
               string request_url = scheme + request.get_header_value("Host") + path;
-              populate_push_configurations(dependency_filename, request_url, response);
+              populate_push_configurations(dependency_filename,
+                                           request_url,
+                                           response,
+                                           current_loading_page);
             }
 
             if (!response.has_header("Access-Control-Allow-Origin")) {
