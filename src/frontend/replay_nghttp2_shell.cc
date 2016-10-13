@@ -243,13 +243,6 @@ int main( int argc, char *argv[] )
 
               /* set up web servers */
               vector< WebServer > servers;
-              // First, setup the default webserver.
-              // if (path_to_dependency_file == "None") {
-              //   servers.emplace_back( default_webserver_address, working_directory, directory, escaped_page );
-              // } else {
-              //   servers.emplace_back( default_webserver_address, working_directory, directory, escaped_page, path_to_dependency_file );
-              // }
-             
               for ( const auto ip_port : unique_ip_and_port ) {
                 if (path_to_dependency_file == "None") {
                   servers.emplace_back( ip_port, working_directory, directory, escaped_page );
@@ -257,15 +250,6 @@ int main( int argc, char *argv[] )
                   servers.emplace_back( ip_port, working_directory, directory, escaped_page, path_to_dependency_file );
                 }
               }
-
-              /* set up Squid Proxy */
-              // string path_prefix = PATH_PREFIX;
-              // vector< SquidProxy > squid_proxies;
-              // for ( const auto squid_address : squid_addresses ) {
-              //   squid_proxies.emplace_back(squid_address, true);
-              //   // cout << "Started Squid with port: " << squid_address.port() << endl;
-              //   this_thread::sleep_for(chrono::milliseconds(500));
-              // }
 
               /* set up nghttpx proxies */
               vector< ReverseProxy > reverse_proxies;
@@ -291,25 +275,17 @@ int main( int argc, char *argv[] )
                                           nghttpx_cert_path);
               }
 
-              PacFile pac_file("/home/ubuntu/Sites/config_testing.pac");
+              PacFile pac_file("/home/vaspol/Sites/config_testing.pac");
               cout << hostname_to_reverse_proxy_addresses.size() << endl;
               pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
                                     hostname_to_reverse_proxy_names);
-
-              // pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
-              //                       hostname_to_reverse_proxy_names,
-              //                       default_reverse_proxy_name,
-              //                       default_reverse_proxy_address);
 
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
               uint8_t counter = 0;
               cout << "name_resolution_pairs.size(): " << to_string(name_resolution_pairs.size()) << endl;
               for ( const auto mapping : name_resolution_pairs ) {
-              // for ( const auto mapping : reverse_proxy_names_to_reverse_proxy_addresses ) {
-              // for ( const auto mapping : hostname_to_reverse_proxy_addresses ) {
                 cout << "IP: " << mapping.second.ip() << " domain: " << mapping.first << endl;
-                // dnsmasq_hosts.write( mapping.second.ip() + " " + to_string(counter) + ".reverse.com\n" );
                 dnsmasq_hosts.write( mapping.second.ip() + " " + mapping.first + "\n" );
                 counter++;
               }
