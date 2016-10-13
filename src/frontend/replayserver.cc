@@ -40,29 +40,17 @@ bool header_match( const string & env_var_name,
 {
     const char * const env_value = getenv( env_var_name.c_str() );
 
-    // ofstream myfile;
-    // myfile.open("test.txt", ios::app);
-
     /* case 1: neither header exists (OK) */
     if ( (not env_value) and (not saved_request.has_header( header_name )) ) {
-        // myfile.close();
         return true;
     }
 
     /* case 2: headers both exist (OK if values match) */
     if ( env_value and saved_request.has_header( header_name ) ) {
-        // myfile << "Recorded value: " 
-        //        << saved_request.get_header_value(header_name)
-        //        << " Request value: "
-        //        << string(env_value)
-        //        << endl;
-        // myfile.close();
         return saved_request.get_header_value( header_name ) == string( env_value );
     }
 
     /* case 3: one exists but the other doesn't (failure) */
-    // myfile << "Failed to find the request for " << string(env_value) << endl;
-    // myfile.close();
     return false;
 }
 
@@ -264,7 +252,6 @@ void populate_push_configurations( const string & dependency_file,
     // Write the dependencies to the configuration file.
     string removed_slash_request_url = remove_trailing_slash(request_url);
     set< string > link_resources;
-    set< string > unimportant_resources;
     if (dependencies_map.find(removed_slash_request_url) != dependencies_map.end()) {
       auto key = removed_slash_request_url;
       auto values = dependencies_map[key];
@@ -272,21 +259,16 @@ void populate_push_configurations( const string & dependency_file,
         // Push all dependencies for the location.
         string dependency_filename = *list_it;
         string dependency_type = dependency_type_map[dependency_filename];
-        if (dependency_type == "Document" || dependency_type == "Script" 
-            || dependency_type == "Stylesheet") {
-          string link_resource_string = "<" + dependency_filename + ">;rel=preload" 
-            + infer_resource_type(dependency_type_map[dependency_filename]);
-          
-          // Add push or nopush directive based on the hostname of the URL.
-          string request_hostname = strip_www( extract_hostname( request_url ));
-          if ( request_hostname != current_loading_page ) {
-            link_resource_string += ";nopush";
-          }
+        string link_resource_string = "<" + dependency_filename + ">;rel=preload"
+          + infer_resource_type(dependency_type_map[dependency_filename]);
 
-          link_resources.insert(link_resource_string);
-        } else {
-          unimportant_resources.insert(dependency_filename);
+        // Add push or nopush directive based on the hostname of the URL.
+        string request_hostname = strip_www( extract_hostname( request_url ));
+        if ( request_hostname != current_loading_page ) {
+          link_resource_string += ";nopush";
         }
+
+        link_resources.insert(link_resource_string);
       }
     }
 
@@ -297,15 +279,6 @@ void populate_push_configurations( const string & dependency_file,
       }
       string link_string = "Link: " + link_string_value.substr(0, link_string_value.size() - 2);
       response.add_header_after_parsing(link_string);
-    }
-
-    if (unimportant_resources.size() > 0) {
-      string unimportant_resource_value = "";
-      for (auto it = unimportant_resources.begin(); it != unimportant_resources.end(); ++it) {
-        unimportant_resource_value += *it + ",";
-      }
-      string x_systemname_unimportant_resource_string = "x-systemname-unimportant: " + unimportant_resource_value.substr(0, unimportant_resource_value.size() - 1);
-      response.add_header_after_parsing(x_systemname_unimportant_resource_string);
     }
   }
 }
