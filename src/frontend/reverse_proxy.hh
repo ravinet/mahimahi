@@ -11,29 +11,23 @@
 class ReverseProxy
 {
 private:
+    TempFile config_file_;
     TempFile pidfile_;
     bool moved_away_;
 
 public:
-    // ReverseProxy( const Address & frontend_address, 
-    //               const Address & backend_address, 
-    //               const std::string & associated_domain,
-    //               const std::string & path_to_proxy,
-    //               const std::string & path_to_proxy_key,
-    //               const std::string & path_to_proxy_cert);
-
     ReverseProxy( const Address & frontend_address, 
                   const Address & backend_address, 
                   const std::string & path_to_proxy,
                   const std::string & path_to_proxy_key,
                   const std::string & path_to_proxy_cert);
 
-    ReverseProxy( const Address & frontend_address, 
-                  const Address & backend_address, 
-                  const std::string & path_to_proxy,
-                  const std::string & path_to_proxy_key,
-                  const std::string & path_to_proxy_cert,
-                  const std::string & path_to_dependency_file);
+    // ReverseProxy( const Address & frontend_address, 
+    //               const Address & backend_address, 
+    //               const std::string & path_to_proxy,
+    //               const std::string & path_to_proxy_key,
+    //               const std::string & path_to_proxy_cert,
+    //               const std::string & path_to_dependency_file);
 
     ~ReverseProxy();
 
