@@ -215,8 +215,8 @@ string infer_resource_type(const string & resource_type) {
     return ";as=style";
   } else if (resource_type == "Script") {
     return ";as=script";
-  } else if (resource_type == "Document") {
-    return ";as=document";
+  // } else if (resource_type == "Document") {
+  //   return ";as=document";
   } else if (resource_type == "Font") {
     return ";as=font;crossorigin";
   } else if (resource_type == "XHR" || resource_type == "DEFAULT") {
@@ -263,7 +263,7 @@ void populate_push_configurations( const string & dependency_file,
           + infer_resource_type(dependency_type_map[dependency_filename]);
 
         // Add push or nopush directive based on the hostname of the URL.
-        string request_hostname = strip_www( extract_hostname( request_url ));
+        string request_hostname = strip_www( extract_hostname( dependency_filename ));
         if ( request_hostname != current_loading_page ) {
           link_resource_string += ";nopush";
         }
