@@ -20,13 +20,16 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
                             const Address & backend_address, 
                             const string & path_to_proxy,
                             const string & path_to_proxy_key,
-                            const string & path_to_proxy_cert)
+                            const string & path_to_proxy_cert,
+                            const string & page)
   : config_file_("/tmp/nghttpx_config.conf"),
     pidfile_("/tmp/replayshell_nghttpx.pid"),
     moved_away_(false)
 {
     cout << "Frontend: " << frontend_address.str() << " backend: " << backend_address.str() << endl;
     cout << "Proxy key: " << path_to_proxy_key << " Proxy cert: " << path_to_proxy_cert << endl;
+
+    string path_prefix = PATH_PREFIX;
 
     config_file_.write("frontend=" + frontend_address.ip() + "," + 
         to_string(frontend_address.port()) + "\n");
@@ -48,6 +51,10 @@ ReverseProxy::ReverseProxy( const Address & frontend_address,
       // Handle HTTP case
       config_file_.write("backend=" + backend_address.ip() + ",80\n");
     }
+
+    // Add logging.
+    config_file_.write("log-level=INFO\n");
+    config_file_.write("errorlog-file=" + path_prefix + "/error-logs/" + page + ".log\n");
 
     run( { path_to_proxy, "--conf=" + config_file_.name() } );
 }

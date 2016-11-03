@@ -20,7 +20,8 @@ public:
                   const Address & backend_address, 
                   const std::string & path_to_proxy,
                   const std::string & path_to_proxy_key,
-                  const std::string & path_to_proxy_cert);
+                  const std::string & path_to_proxy_cert,
+                  const std::string & page);
 
     ~ReverseProxy();
 

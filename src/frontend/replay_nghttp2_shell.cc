@@ -259,7 +259,8 @@ int main( int argc, char *argv[] )
                                         default_webserver_address,
                                         nghttpx_path,
                                         nghttpx_key_path,
-                                        nghttpx_cert_path);
+                                        nghttpx_cert_path,
+                                        escaped_page );
 
               vector< pair< Address, Address >> actual_ip_address_to_reverse_proxy_mapping;
               for ( uint16_t i = 0; i < hostname_to_reverse_proxy_addresses.size(); i++) {
@@ -272,7 +273,8 @@ int main( int argc, char *argv[] )
                                           webserver_address,
                                           nghttpx_path,
                                           nghttpx_key_path,
-                                          nghttpx_cert_path);
+                                          nghttpx_cert_path,
+                                          escaped_page );
               }
 
               PacFile pac_file("/home/vaspol/Sites/config_testing.pac");
