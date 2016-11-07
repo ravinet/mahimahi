@@ -251,7 +251,7 @@ void populate_push_configurations( const string & dependency_file,
   if ( !dependencies_map.empty() ) {
     // Write the dependencies to the configuration file.
     string removed_slash_request_url = remove_trailing_slash(request_url);
-    set< string > link_resources;
+    vector< string > link_resources;
     if (dependencies_map.find(removed_slash_request_url) != dependencies_map.end()) {
       auto key = removed_slash_request_url;
       auto values = dependencies_map[key];
@@ -268,7 +268,7 @@ void populate_push_configurations( const string & dependency_file,
           link_resource_string += ";nopush";
         }
 
-        link_resources.insert(link_resource_string);
+        link_resources.push_back(link_resource_string);
       }
     }
 
