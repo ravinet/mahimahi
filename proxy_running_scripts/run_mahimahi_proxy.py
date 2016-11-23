@@ -97,7 +97,10 @@ def start_proxy():
         dependency_filename = 'None'
     
     path_to_log = os.path.join(proxy_config[BUILD_PREFIX], 'logs', escaped_page)
-    rm_existing_logs = 'rm {0}'.format(path_to_log)
+    rm_existing_logs = 'rm -f {0}'.format(path_to_log)
+    subprocess.call(rm_existing_logs, shell=True)
+    path_to_log = os.path.join(proxy_config[BUILD_PREFIX], 'error-logs', escaped_page + '.log')
+    rm_existing_logs = 'rm -f {0}'.format(path_to_log)
     subprocess.call(rm_existing_logs, shell=True)
 
     command = '{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}'.format(
