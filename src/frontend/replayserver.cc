@@ -258,17 +258,21 @@ void populate_push_configurations( const string & dependency_file,
       for (auto list_it = values.begin(); list_it != values.end(); ++list_it) {
         // Push all dependencies for the location.
         string dependency_filename = *list_it;
-        string dependency_type = dependency_type_map[dependency_filename];
-        string link_resource_string = "<" + dependency_filename + ">;rel=preload"
-          + infer_resource_type(dependency_type_map[dependency_filename]);
+        if (dependency_type_map[dependency_filename] == "Document" ||
+            dependency_type_map[dependency_filename] == "Script" ||
+            dependency_type_map[dependency_filename] == "Stylesheet") {
+          string dependency_type = dependency_type_map[dependency_filename];
+          string link_resource_string = "<" + dependency_filename + ">;rel=preload"
+            + infer_resource_type(dependency_type_map[dependency_filename]);
 
-        // Add push or nopush directive based on the hostname of the URL.
-        string request_hostname = strip_www( extract_hostname( dependency_filename ));
-        if ( request_hostname != current_loading_page ) {
-          link_resource_string += ";nopush";
+          // Add push or nopush directive based on the hostname of the URL.
+          string request_hostname = strip_www( extract_hostname( dependency_filename ));
+          if ( request_hostname != current_loading_page ) {
+            link_resource_string += ";nopush";
+          }
+
+          link_resources.push_back(link_resource_string);
         }
-
-        link_resources.push_back(link_resource_string);
       }
     }
 
