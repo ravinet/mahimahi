@@ -4,12 +4,17 @@
 #define NETNAMESPACE_HH
 
 #include <string>
+#include <memory>
+
+#include "temp_file.hh"
 
 class NetworkNamespace
 {
+
 private:
-    std::string name_;
     bool has_own_resolvconf_;
+    std::unique_ptr<TempFile> resolvconf_file_;
+
     bool has_entered_;
 
 public:
@@ -17,7 +22,7 @@ public:
     const std::string NETNS_DIR = "/var/run/netns";
     const std::string NETNS_ETC_DIR = "/etc/netns";
 
-    NetworkNamespace( const std::string & name );
+    NetworkNamespace();
     ~NetworkNamespace();
 
     void create_resolvconf( const std::string & nameserver );

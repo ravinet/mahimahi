@@ -67,7 +67,7 @@ int main( int argc, char *argv[] )
 
         const string netns_name = string("mahimahi.") +  to_string( getpid() );
 
-        NetworkNamespace network_namespace( netns_name );
+        NetworkNamespace network_namespace;
 
         /* Setup our own resolvconf with nameserver 8.8.8.8 */
         network_namespace.create_resolvconf( "8.8.8.8" );
