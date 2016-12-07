@@ -74,6 +74,8 @@ def stop_squid_proxy():
 
     return 'OK'
 
+proxy_process = None
+
 @app.route("/start_proxy")
 def start_proxy():
     print proxy_config
@@ -115,7 +117,8 @@ def start_proxy():
                                            dependency_filename, \
                                            escaped_page)
     print command
-    process = subprocess.Popen(command, shell=True)
+    global proxy_process
+    proxy_process = subprocess.Popen(command, shell=True)
 
     return 'Proxy Started'
 
@@ -123,9 +126,13 @@ def start_proxy():
 def stop_proxy():
     processes = [ MM_PROXYREPLAY, MM_DELAY_WITH_NAMESERVER, NGHTTPX, OPENVPN ]
     # processes = [ MM_PROXYREPLAY ]
+    # processes = [ OPENVPN ]
+    #processes = [ MM_DELAY_WITH_NAMESERVER, OPENVPN ]
     for process in processes:
-        command = 'sudo pkill -SIGTERM {0}'.format(process)
+        command = 'sudo pkill -sigint {0}'.format(process)
         subprocess.Popen(command, shell=True)
+    # global proxy_process
+    # proxy_process.terminate()
     return 'Proxy Stopped'
 
 def start_tcpdump():
