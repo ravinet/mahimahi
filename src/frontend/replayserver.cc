@@ -141,18 +141,35 @@ string strip_www( const string & url ) {
 unsigned int match_url( const string & saved_request_url, 
                         const string & request_url ) {
     /* must match first line up to "?" at least */
+    // ofstream myfile;
+    // myfile.open("match_url.txt", ios::app);
+    // if (request_url.find("impl") != string::npos) {
+    //   myfile << "striping url" << endl;
+    // }
     if ( strip_query(request_url) != strip_query(saved_request_url) ) {
+      // if (request_url.find("impl") != string::npos) {
+      //   myfile << "returned from strip query mismatch" << endl;
+      // }
       return 0;
     }
 
-    // myfile << "Matched " << request_url << " to " << saved_request_url << endl;
+    // if (request_url.find("impl") != string::npos) {
+    //   myfile << "Matched " << request_url << " to " << saved_request_url << endl;
+    // }
     /* success! return size of common prefix */
     const auto max_match = min( request_url.size(), saved_request_url.size() );
     for ( unsigned int i = 0; i < max_match; i++ ) {
         if ( request_url.at( i ) != saved_request_url.at( i ) ) {
+            // if (request_url.find("impl") != string::npos) {
+            //   myfile << "score: " << i << endl;
+            // }
             return i;
         }
     }
+    // if (request_url.find("impl") != string::npos) {
+    //   myfile << "score: " << max_match << endl;
+    // }
+    // myfile.close();
     return max_match;
 }
 
@@ -164,12 +181,16 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     HTTPRequest saved_request( saved_record.request() );
     
     // ofstream myfile;
-    // myfile.open("test2.txt", ios::app);
-    // myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
+    // myfile.open("match_score.txt", ios::app);
+    // if (request_line.find("impl") != string::npos) {
+    //   myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
+    // }
     
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
-        // myfile << "\tFailed HTTPS" << endl;
+        // if (request_line.find("impl") != string::npos) {
+        //   myfile << "\tFailed HTTPS" << endl;
+        // }
         return 0;
     }
 
@@ -179,7 +200,9 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 
     /* match host header */
     if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
-        // myfile << "\tFailed Host" << endl;
+        // if (request_line.find("impl") != string::npos) {
+        //   myfile << "\tFailed Host" << endl;
+        // }
         return 0;
     }
 
@@ -291,6 +314,10 @@ int check_redirect( MahimahiProtobufs::RequestResponse saved_record, int previou
     HTTPRequest saved_request( saved_record.request() );
     HTTPResponse saved_response( saved_record.response() );
 
+    if ( previous_score == 0 )  {
+      return previous_score;
+    }
+
     /* check response code */
     string response_first_line = saved_response.first_line();
     vector< string > splitted_response_first_line = split(response_first_line, ' ');
@@ -390,9 +417,12 @@ int main( void )
             cout << response.str();
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
+            string response_body = "replayserver: could not find a match for " + request_line;
             cout << "HTTP/1.1 404 Not Found" << CRLF;
-            cout << "Content-Type: text/plain" << CRLF << CRLF;
-            cout << "replayserver: could not find a match for " << request_line << CRLF;
+            cout << "Content-Type: text/plain" << CRLF;
+            cout << "Content-Length: " << response_body.length() << CRLF << CRLF;
+            // cout << response_body << CRLF;
+            cout << response_body;
             return EXIT_FAILURE;
         }
     } catch ( const exception & e ) {
