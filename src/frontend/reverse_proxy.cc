@@ -71,7 +71,9 @@ ReverseProxy::~ReverseProxy()
       }
       pidfile.close();
       int pid_int = atoi(line.c_str());
-      kill(pid_int, SIGKILL);
+      if (pid_int != 0) {
+        kill(pid_int, SIGTERM);
+      }
     } catch ( const exception & e ) {
       print_exception( e );
     }
