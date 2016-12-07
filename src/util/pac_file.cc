@@ -50,7 +50,11 @@ void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses)
   output_file.close();
 }
 
-void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses, string default_hostname, Address default_address) {
+void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses,
+                           string http_default_hostname,
+                           Address http_default_address,
+                           string https_default_hostname,
+                           Address https_default_address) {
   stringstream ss;
   ss << "function FindProxyForURL(url, host) {" << endl;
   
@@ -61,16 +65,18 @@ void PacFile::WriteProxies(vector<pair<string, Address>> hostnames_to_addresses,
     ss << "if (shExpMatch(url, \"";
     ss << ((address.port() == 80) ? "http:*" : "https:*");
     ss << hostname_to_address_pair.first << "*";
-    ss << "\"))";
+    ss << "\")) ";
     if (address.port() == 80) {
-      ss << "\treturn \"HTTPS " << address.str() << "\";" << endl;
+      ss << "return \"HTTPS " << address.str() << "\";" << endl;
     } else if (address.port() == 443) {
       // We don't need to connect via proxy if it is already a HTTPS request.
-      ss << "\treturn \"DIRECT\";" << endl;
+      ss << "return \"DIRECT\";" << endl;
     }
-    ss << "\treturn \"HTTPS " << default_hostname << ":" << to_string(default_address.port()) << "\";" << endl;
   }
-
+  ss << "if (shExpMatch(url, \"https:*\")) ";
+  ss << "\treturn \"DIRECT " << https_default_hostname << ":" << to_string(https_default_address.port()) << "\";" << endl;
+  ss << "if (shExpMatch(url, \"http:*\")) ";
+  ss << "\treturn \"HTTPS " << http_default_hostname << ":" << to_string(http_default_address.port()) << "\";" << endl;
   ss << "}";
   ofstream output_file;
   output_file.open(path_);

@@ -177,18 +177,30 @@ int main( int argc, char *argv[] )
               vector< pair< string, Address > > name_resolution_pairs;
               set< string > added_ip_addresses;
 
-              string default_webserver_name = to_string( interface_counter ) + "default";
-              string default_webserver_device_name = "default" + to_string( 1 );
-              Address default_webserver_address = Address::reverse_proxy(1, 443);
-              add_dummy_interface( default_webserver_device_name, default_webserver_address);
-              unique_ip_and_port.emplace(default_webserver_address);
+              string http_default_webserver_name = to_string( 1 ) + "default";
+              string http_default_webserver_device_name = "default" + to_string( 1 );
+              Address http_default_webserver_address = Address::reverse_proxy(1, 80);
+              add_dummy_interface( http_default_webserver_device_name, http_default_webserver_address);
+              unique_ip_and_port.emplace(http_default_webserver_address);
 
-              string default_reverse_proxy_name = to_string( 2 ) + "default";
-              string default_reverse_proxy_device_name = "default" + to_string( 2 );
-              Address default_reverse_proxy_address = Address::reverse_proxy(2, 443);
-              add_dummy_interface( default_reverse_proxy_device_name, default_reverse_proxy_address);
+              string http_default_reverse_proxy_name = to_string( 2 ) + "default";
+              string http_default_reverse_proxy_device_name = "default" + to_string( 2 );
+              Address http_default_reverse_proxy_address = Address::reverse_proxy(2, 80);
+              add_dummy_interface( http_default_reverse_proxy_device_name, http_default_reverse_proxy_address);
 
-              name_resolution_pairs.push_back(make_pair(default_reverse_proxy_name, default_reverse_proxy_address));
+              string https_default_webserver_name = to_string( 3 ) + "default";
+              string https_default_webserver_device_name = "default" + to_string( 3 );
+              Address https_default_webserver_address = Address::reverse_proxy(3, 443);
+              add_dummy_interface( https_default_webserver_device_name, https_default_webserver_address);
+              unique_ip_and_port.emplace(https_default_webserver_address);
+
+              string https_default_reverse_proxy_name = to_string( 4 ) + "default";
+              string https_default_reverse_proxy_device_name = "default" + to_string( 4 );
+              Address https_default_reverse_proxy_address = Address::reverse_proxy(4, 443);
+              add_dummy_interface( https_default_reverse_proxy_device_name, https_default_reverse_proxy_address);
+
+              name_resolution_pairs.push_back(make_pair(http_default_reverse_proxy_name, http_default_reverse_proxy_address));
+              name_resolution_pairs.push_back(make_pair(https_default_reverse_proxy_name, https_default_reverse_proxy_address));
 
               for ( set< pair< string, Address > >::iterator it = hostname_to_ip_set.begin();
                   it != hostname_to_ip_set.end(); ++it) {
@@ -220,7 +232,7 @@ int main( int argc, char *argv[] )
                     name_resolution_pairs.push_back(make_pair(reverse_proxy_name, reverse_proxy_address));
 
                     // Add an entry for HTTPS just in case and point it to the default webserver.
-                    name_resolution_pairs.push_back(make_pair(hostname, default_reverse_proxy_address));
+                    name_resolution_pairs.push_back(make_pair(hostname, http_default_reverse_proxy_address));
                   } else if (reverse_proxy_address.port() == 443) {
                     // CASE: HTTPS; The client will have to directly connect to the reverse proxy.
                     // The hostname of the domain should resolve directly to the reverse proxy address.
@@ -255,8 +267,15 @@ int main( int argc, char *argv[] )
               vector< ReverseProxy > reverse_proxies;
 
               // Do the default one.
-              reverse_proxies.emplace_back(default_reverse_proxy_address,
-                                        default_webserver_address,
+              reverse_proxies.emplace_back(http_default_reverse_proxy_address,
+                                        http_default_webserver_address,
+                                        nghttpx_path,
+                                        nghttpx_key_path,
+                                        nghttpx_cert_path,
+                                        escaped_page );
+
+              reverse_proxies.emplace_back(https_default_reverse_proxy_address,
+                                        https_default_webserver_address,
                                         nghttpx_path,
                                         nghttpx_key_path,
                                         nghttpx_cert_path,
@@ -279,8 +298,13 @@ int main( int argc, char *argv[] )
 
               PacFile pac_file("/home/vaspol/Sites/config_testing.pac");
               cout << hostname_to_reverse_proxy_addresses.size() << endl;
+              // pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
+              //                       hostname_to_reverse_proxy_names);
               pac_file.WriteProxies(hostname_to_reverse_proxy_addresses,
-                                    hostname_to_reverse_proxy_names);
+                                    http_default_reverse_proxy_name,
+                                    http_default_reverse_proxy_address,
+                                    https_default_reverse_proxy_name,
+                                    https_default_reverse_proxy_address);
 
               /* set up DNS server */
               TempFile dnsmasq_hosts( "/tmp/replayshell_hosts" );
