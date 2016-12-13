@@ -417,12 +417,13 @@ int main( void )
             cout << response.str();
             return EXIT_SUCCESS;
         } else {                /* no acceptable matches for request */
-            string response_body = "replayserver: could not find a match for " + request_line;
+            // string response_body = "replayserver: could not find a match for " + request_line;
+            string response_body = "replayserver: could not find a match.";
             cout << "HTTP/1.1 404 Not Found" << CRLF;
             cout << "Content-Type: text/plain" << CRLF;
-            cout << "Content-Length: " << response_body.length() << CRLF << CRLF;
-            // cout << response_body << CRLF;
-            cout << response_body;
+            cout << "Content-Length: " << response_body.length() << CRLF;
+            cout << "Cache-Control: max-age=60" << CRLF << CRLF;
+            cout << response_body << CRLF;
             return EXIT_FAILURE;
         }
     } catch ( const exception & e ) {
