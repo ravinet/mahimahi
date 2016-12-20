@@ -1,3 +1,10 @@
+mahimahi (0.96-1) unstable; urgency=medium
+
+  * Fix error from deprecated TLS method and -Werror (Closes: #847398)
+  * Add new cellular trace (ATT-LTE-driving-2016)
+
+ -- Keith Winstein <keithw@cs.stanford.edu>  Mon, 19 Dec 2016 17:37:39 -0800
+
 mahimahi (0.95-1) unstable; urgency=medium
 
   * Fix FTBFS against libxcb 1.12 (Closes: #839749)
