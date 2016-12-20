@@ -77,7 +77,7 @@ public:
 SSL_CTX * initialize_new_context( const SSL_MODE type )
 {
     OpenSSL::global_context();
-    SSL_CTX * ret = SSL_CTX_new( type == CLIENT ? TLSv1_client_method() : TLSv1_server_method() );
+    SSL_CTX * ret = SSL_CTX_new( type == CLIENT ? SSLv23_client_method() : SSLv23_server_method() );
     if ( not ret ) {
         throw ssl_error( "SSL_CTL_new" );
     }
