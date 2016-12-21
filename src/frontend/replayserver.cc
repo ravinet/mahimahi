@@ -143,30 +143,30 @@ unsigned int match_url( const string & saved_request_url,
     /* must match first line up to "?" at least */
     // ofstream myfile;
     // myfile.open("match_url.txt", ios::app);
-    // if (request_url.find("impl") != string::npos) {
+    // if (request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
     //   myfile << "striping url" << endl;
     // }
     if ( strip_query(request_url) != strip_query(saved_request_url) ) {
-      // if (request_url.find("impl") != string::npos) {
-      //   myfile << "returned from strip query mismatch" << endl;
+      // if (request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos && saved_request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
+      //   myfile << "returned from strip query mismatch: " << request_url << " saved: " << saved_request_url << endl;
       // }
       return 0;
     }
 
-    // if (request_url.find("impl") != string::npos) {
+    // if (request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
     //   myfile << "Matched " << request_url << " to " << saved_request_url << endl;
     // }
     /* success! return size of common prefix */
     const auto max_match = min( request_url.size(), saved_request_url.size() );
     for ( unsigned int i = 0; i < max_match; i++ ) {
         if ( request_url.at( i ) != saved_request_url.at( i ) ) {
-            // if (request_url.find("impl") != string::npos) {
+            // if (request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
             //   myfile << "score: " << i << endl;
             // }
             return i;
         }
     }
-    // if (request_url.find("impl") != string::npos) {
+    // if (request_url.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
     //   myfile << "score: " << max_match << endl;
     // }
     // myfile.close();
@@ -182,13 +182,13 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
     
     // ofstream myfile;
     // myfile.open("match_score.txt", ios::app);
-    // if (request_line.find("impl") != string::npos) {
-    //   myfile << " Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
+    // if (request_line.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
+    //   myfile << " Before match score: Request Line: " << request_line << "Saved request: " << saved_request.first_line() << endl;
     // }
     
     /* match HTTP/HTTPS */
     if ( is_https and (saved_record.scheme() != MahimahiProtobufs::RequestResponse_Scheme_HTTPS) ) {
-        // if (request_line.find("impl") != string::npos) {
+        // if (request_line.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
         //   myfile << "\tFailed HTTPS" << endl;
         // }
         return 0;
@@ -200,7 +200,7 @@ unsigned int match_score( const MahimahiProtobufs::RequestResponse & saved_recor
 
     /* match host header */
     if ( not header_match( "HTTP_HOST", "Host", saved_request ) ) {
-        // if (request_line.find("impl") != string::npos) {
+        // if (request_line.find("5o3Rb.5pjsDBCdfFtzlQ8w") != string::npos) {
         //   myfile << "\tFailed Host" << endl;
         // }
         return 0;
