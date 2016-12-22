@@ -305,7 +305,7 @@ void populate_push_configurations( const string & dependency_file,
           }
 
           link_resources.push_back(link_resource_string);
-        } else {
+        } else if (dependency_type_map[dependency_filename] != "XHR") {
           string unimportant_resource_string = dependency_filename + ";" + 
                                                dependency_type_map[dependency_filename];
           unimportant_resources.push_back(unimportant_resource_string);
@@ -324,7 +324,7 @@ void populate_push_configurations( const string & dependency_file,
     if (unimportant_resources.size() > 0) {
       string unimportant_resource_value = "";
       for (auto it = unimportant_resources.begin(); it != unimportant_resources.end(); ++it) {
-        unimportant_resource_value += *it + "|";
+        unimportant_resource_value += *it + "|$de|";
       }
       string x_systemname_unimportant_resource_string = "x-systemname-unimportant: " + unimportant_resource_value.substr(0, unimportant_resource_value.size() - 1);
       response.add_header_after_parsing(x_systemname_unimportant_resource_string);
