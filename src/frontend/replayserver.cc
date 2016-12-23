@@ -278,6 +278,7 @@ void populate_push_configurations( const string & dependency_file,
     // Write the dependencies to the configuration file.
     string removed_slash_request_url = remove_trailing_slash(request_url);
     vector< string > link_resources;
+    vector< string > semi_important_resources;
     vector< string > unimportant_resources;
     if (dependencies_map.find(removed_slash_request_url) != dependencies_map.end()) {
       auto key = removed_slash_request_url;
@@ -306,12 +307,20 @@ void populate_push_configurations( const string & dependency_file,
 
           link_resources.push_back(link_resource_string);
         } else if (dependency_type_map[dependency_filename] != "XHR") {
-          string unimportant_resource_string = dependency_filename + ";" + 
-                                               dependency_type_map[dependency_filename];
-          unimportant_resources.push_back(unimportant_resource_string);
+          string resource_string = dependency_filename + ";" + 
+                                   dependency_type_map[dependency_filename];
+          if (dependency_type_map[dependency_filename] == "Document" ||
+              dependency_type_map[dependency_filename] == "Script" ||
+              dependency_type_map[dependency_filename] == "Stylesheet") {
+            semi_important_resources.push_back(resource_string);
+          } else {
+            unimportant_resources.push_back(resource_string);
+          }
         }
       }
     }
+
+    string delimeter = "|$de|";
 
     if (link_resources.size() > 0) {
       string link_string_value = "";
@@ -321,12 +330,20 @@ void populate_push_configurations( const string & dependency_file,
       string link_string = "Link: " + link_string_value.substr(0, link_string_value.size() - 2);
       response.add_header_after_parsing(link_string);
     }
+    if (semi_important_resources.size() > 0) {
+      string semi_important_resource_value = "";
+      for (auto it = semi_important_resources.begin(); it != semi_important_resources.end(); ++it) {
+        semi_important_resource_value += *it + delimeter;
+      }
+      string x_systemname_semi_important_resource_string = "x-systemname-semi-important: " + semi_important_resource_value.substr(0, semi_important_resource_value.size() - delimeter.length());
+      response.add_header_after_parsing(x_systemname_semi_important_resource_string);
+    }
     if (unimportant_resources.size() > 0) {
       string unimportant_resource_value = "";
       for (auto it = unimportant_resources.begin(); it != unimportant_resources.end(); ++it) {
-        unimportant_resource_value += *it + "|$de|";
+        unimportant_resource_value += *it + delimeter;
       }
-      string x_systemname_unimportant_resource_string = "x-systemname-unimportant: " + unimportant_resource_value.substr(0, unimportant_resource_value.size() - 1);
+      string x_systemname_unimportant_resource_string = "x-systemname-unimportant: " + unimportant_resource_value.substr(0, unimportant_resource_value.size() - delimeter.length());
       response.add_header_after_parsing(x_systemname_unimportant_resource_string);
     }
   }
