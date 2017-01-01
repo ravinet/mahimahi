@@ -31,6 +31,13 @@ int main( int argc, char *argv[] )
             usage( argv[ 0 ] );
         }
 
+        const string link = argv[ 1 ];
+        if ( link == "uplink" or link == "downlink" ) {
+            /* do nothing */
+        } else {
+            usage( argv[ 0 ] );
+        }
+
         const double on_time = myatof( argv[ 2 ] );
         if ( (0 <= on_time) ) {
             /* do nothing */
@@ -55,15 +62,12 @@ int main( int argc, char *argv[] )
         double uplink_on_time = numeric_limits<double>::max(), uplink_off_time = 0;
         double downlink_on_time = numeric_limits<double>::max(), downlink_off_time = 0;
 
-        const string link = argv[ 1 ];
         if ( link == "uplink" ) {
             uplink_on_time = on_time;
             uplink_off_time = off_time;
-        } else if ( link == "downlink" ) {
+        } else {
             downlink_on_time = on_time;
             downlink_off_time = off_time;
-        } else {
-            usage( argv[ 0 ] );
         }
 
         vector<string> command;

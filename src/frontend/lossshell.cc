@@ -31,6 +31,13 @@ int main( int argc, char *argv[] )
             usage( argv[ 0 ] );
         }
 
+        const string link = argv[ 1 ];
+        if ( link == "uplink" or link == "downlink" ) {
+            /* do nothing */
+        } else {
+            usage( argv[ 0 ] );
+        }
+
         const double loss_rate = myatof( argv[ 2 ] );
         if ( (0 <= loss_rate) and (loss_rate <= 1) ) {
             /* do nothing */
@@ -41,13 +48,10 @@ int main( int argc, char *argv[] )
 
         double uplink_loss = 0, downlink_loss = 0;
 
-        const string link = argv[ 1 ];
         if ( link == "uplink" ) {
             uplink_loss = loss_rate;
-        } else if ( link == "downlink" ) {
-            downlink_loss = loss_rate;
         } else {
-            usage( argv[ 0 ] );
+            downlink_loss = loss_rate;
         }
 
         vector<string> command;
