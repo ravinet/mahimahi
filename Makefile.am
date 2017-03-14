@@ -116,6 +116,11 @@ changeheader_SOURCES = $(common_source) $(http_source) change_header.cc
 changeheader_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
 changeheader_LDFLAGS = -pthread
 
+bin_PROGRAMS += listheaders
+listheaders_SOURCES = $(common_source) $(http_source) list_headers.cc
+listheaders_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
+listheaders_LDFLAGS = -pthread
+
 bin_PROGRAMS += removeheader
 removeheader_SOURCES = $(common_source) $(http_source) remove_header.cc
 removeheader_LDADD = protobufs/libhttprecordprotos.a -lrt $(protobuf_LIBS) $(libssl_LIBS)
