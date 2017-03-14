@@ -34,7 +34,6 @@ SQUID = 'squid'
 OPENVPN = 'openvpn'
 OPENVPN_PORT = 'openvpn_port'
 START_TCPDUMP = 'start_tcpdump'
-USE_DEPENDENCIES = 'use_dependencies'
 DEPENDENCIES = 'dependencies'
 
 TIME = 'time'
@@ -46,7 +45,7 @@ CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
                   SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
                   HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH, \
-                  START_TCPDUMP, USE_DEPENDENCIES, SQUID ]
+                  START_TCPDUMP, SQUID ]
 
 app = Flask(__name__)
 
