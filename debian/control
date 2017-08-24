@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Keith Winstein <keithw@mit.edu>
 Homepage: http://mahimahi.mit.edu
 Build-Depends: debhelper (>= 9), autotools-dev, dh-autoreconf, iptables, protobuf-compiler, libprotobuf-dev, pkg-config, libssl-dev, dnsmasq-base, ssl-cert, libxcb-present-dev, libcairo2-dev, libpango1.0-dev, iproute2, apache2-dev, apache2-bin
-Standards-Version: 3.9.8.0
+Standards-Version: 4.1.0.0
 Vcs-Git: git://github.com/ravinet/mahimahi.git
 Vcs-Browser: https://github.com/ravinet/mahimahi
 

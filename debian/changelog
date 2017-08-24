@@ -1,3 +1,10 @@
+mahimahi (0.97-1) unstable; urgency=medium
+
+  * Add script to convert "rates over time" to an mm-link trace
+  * Fix FTBFS on GCC 7 (Closes: #853534)
+
+ -- Keith Winstein <keithw@mit.edu>  Wed, 23 Aug 2017 17:27:15 -0700
+
 mahimahi (0.96-1) unstable; urgency=medium
 
   * Fix error from deprecated TLS method and -Werror (Closes: #847398)
