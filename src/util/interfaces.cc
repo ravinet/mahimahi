@@ -3,6 +3,7 @@
 #include <sstream>
 #include <memory>
 #include <cassert>
+#include <functional>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
