@@ -12,6 +12,7 @@ CONFIG = 'proxy_running_config'
 BUILD_PREFIX = 'build-prefix'
 PROXY_REPLAY_PATH = 'mm-proxyreplay'
 HTTP1_PROXY_REPLAY_PATH = 'mm-http1-proxyreplay'
+HTTP1_REPLAY_NO_PROXY_PATH = 'mm-http1-replay-no-proxy'
 PHONE_RECORD_PATH = 'mm-phone-webrecord'
 DELAYSHELL_WITH_PORT_FORWARDED = 'mm-delayshell-with-port-forwarded'
 NGHTTPX_PATH = 'nghttpx'
@@ -44,8 +45,8 @@ REPLAY_MODE = 'replay_mode'
 CONFIG_FIELDS = [ BUILD_PREFIX, PROXY_REPLAY_PATH, NGHTTPX_PATH, NGHTTPX_PORT, \
                   NGHTTPX_KEY, NGHTTPX_CERT, BASE_RECORD_DIR, PHONE_RECORD_PATH, \
                   SQUID_PORT, BASE_RESULT_DIR, DELAYSHELL_WITH_PORT_FORWARDED, \
-                  HTTP1_PROXY_REPLAY_PATH, OPENVPN_PORT, DEPENDENCY_DIRECTORY_PATH, \
-                  START_TCPDUMP, SQUID ]
+                  HTTP1_PROXY_REPLAY_PATH, HTTP1_REPLAY_NO_PROXY_PATH, OPENVPN_PORT, \
+                  DEPENDENCY_DIRECTORY_PATH, START_TCPDUMP, SQUID ]
 
 app = Flask(__name__)
 
@@ -88,9 +89,10 @@ def start_proxy():
     replay_instance = proxy_config[BUILD_PREFIX] + proxy_config[PROXY_REPLAY_PATH]
     http_version = request.args.get(HTTP_VERSION)
     if http_version is not None:
-        http_version = int(http_version)
-        if http_version != 2:
+        if http_version == '1':
             replay_instance = proxy_config[BUILD_PREFIX] + proxy_config[HTTP1_PROXY_REPLAY_PATH]
+        elif http_version == '1_no_proxy':
+            replay_instance = proxy_config[BUILD_PREFIX] + proxy_config[HTTP1_REPLAY_NO_PROXY_PATH]
 
     if use_dependencies == 'yes':
         dependency_filename = os.path.join(proxy_config[DEPENDENCY_DIRECTORY_PATH], escaped_page, 'dependency_tree.txt')
@@ -251,8 +253,9 @@ def is_replay_proxy_running():
     process_names = [ 'mm-proxyreplay', 'nghttpx', 'openvpn' ]
     http_version = request.args.get(HTTP_VERSION)
     if http_version is not None:
-        http_version = int(http_version)
-        if http_version != 2:
+        if http_version == '1_no_proxy':
+            process_names = [ 'openvpn' ]
+        if http_version == '1':
             process_names = [ HTTP1_PROXY_REPLAY_PATH, 'openvpn' ]
 
     result = ''
@@ -265,6 +268,7 @@ def check_process(process_name):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     stdout, stderr = process.communicate()
     splitted_stdout = stdout.split('\n')
+    print stdout
 
     result = '{0} NO\n'.format(process_name)
     for line in splitted_stdout:
