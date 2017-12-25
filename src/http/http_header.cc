@@ -40,6 +40,10 @@ HTTPHeader::HTTPHeader( const string & buf )
     */
 }
 
+void HTTPHeader::set_value( const string & value ) {
+    value_ = value;
+}
+
 HTTPHeader::HTTPHeader( const MahimahiProtobufs::HTTPHeader & proto )
     : key_( proto.key() ), value_( proto.value() )
 {

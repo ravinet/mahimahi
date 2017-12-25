@@ -20,6 +20,22 @@ void HTTPMessage::add_header( const std::string & str )
     headers_.emplace_back( str );
 }
 
+void HTTPMessage::add_header_after_parsing( const std::string & str )
+{
+    headers_.emplace_back( str );
+}
+
+void HTTPMessage::remove_header( const std::string & str )
+{
+    auto it = std::remove_if (headers_.begin(), headers_.end(),
+        [str] ( HTTPHeader header ) -> bool
+        {
+          auto header_key = header.key();
+          return equivalent_strings(str, header_key);
+        });
+    headers_.erase(it, headers_.end());
+}
+
 void HTTPMessage::done_with_headers( void )
 {
     assert( state_ == HEADERS_PENDING );
@@ -149,6 +165,15 @@ const string & HTTPMessage::get_header_value( const std::string & header_name ) 
     }
 
     throw runtime_error( "HTTPMessage header not found: " + header_name );
+}
+
+void HTTPMessage::set_header_value( const std::string & header_name, const std::string & value )
+{
+    for ( auto & header : headers_ ) {
+        if ( equivalent_strings( header.key(), header_name ) ) {
+            header.set_value(value);
+        }
+    }
 }
 
 /* serialize the request or response as one string */

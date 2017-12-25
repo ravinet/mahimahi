@@ -22,6 +22,7 @@ private:
 
 public:
     NATRule( const std::vector< std::string > & s_args );
+    NATRule( const std::vector< std::string > & s_args, bool as_sudo );
     ~NATRule();
 
     NATRule( const NATRule & other ) = delete;
@@ -34,6 +35,7 @@ private:
     NATRule pre_, post_;
 
 public:
+    NAT();
     NAT( const Address & ingress_addr );
 };
 
@@ -43,7 +45,21 @@ private:
     NATRule rule_;
 
 public:
+    DNAT();
     DNAT( const Address & listener, const std::string & interface );
+    DNAT( const Address & listener, const uint16_t port);
+    DNAT( const Address & listener, const std::string & protocol, const uint16_t port);
+};
+
+class DNATWithPostrouting
+{
+private:
+    NATRule rule_;
+    NATRule post_;
+
+public:
+    DNATWithPostrouting();
+    DNATWithPostrouting( const Address & listener, const std::string & protocol, const uint16_t port);
 };
 
 #endif /* NAT_HH */

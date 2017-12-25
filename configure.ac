@@ -19,6 +19,8 @@ AC_SUBST([PICKY_CXXFLAGS])
 # Checks for programs.
 AC_PROG_CXX
 
+AC_DEFINE_UNQUOTED([PATH_PREFIX], ["${prefix}"], [path prefix])
+
 AC_ARG_VAR([IPTABLES], [path to iptables])
 AC_PATH_PROG([IPTABLES], [iptables], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
 if test "$IPTABLES" = "no"; then
@@ -33,8 +35,17 @@ if test "$IP" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([IP], ["$IP"], [path to ip])
 
+# AC_ARG_VAR([APACHE2], [path to apache2])
+# # AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+# AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [${prefix}/bin])
+# if test "$APACHE2" = "no"; then
+#   AC_MSG_ERROR([apache2 is required])
+# fi
+# AC_DEFINE_UNQUOTED([APACHE2], ["$APACHE2"], [path to apache2])
+
 AC_ARG_VAR([APACHE2], [path to apache2])
-AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+# AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+AC_PATH_PROGS([APACHE2], [apache2 httpd], [no], [${prefix}/bin])
 if test "$APACHE2" = "no"; then
   AC_MSG_ERROR([apache2 is required])
 fi
@@ -47,30 +58,48 @@ if test "$DNSMASQ" = "no"; then
 fi
 AC_DEFINE_UNQUOTED([DNSMASQ], ["$DNSMASQ"], [path to dnsmasq])
 
+AC_ARG_VAR([OPENVPN], [path to openvpn])
+AC_PATH_PROG([OPENVPN], [openvpn], [no], [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin$PATH_SEPARATOR/bin$PATH_SEPARATOR/usr/bin])
+if test "$OPENVPN" = "no"; then
+  AC_MSG_ERROR([openvpn is required])
+fi
+AC_DEFINE_UNQUOTED([OPENVPN], ["$OPENVPN"], [path to openvpn])
+
+AC_ARG_VAR([SQUID], [path to squid])
+AC_PATH_PROG([SQUID], [squid], [no], [${prefix}/sbin])
+if test "$SQUID" = "no"; then
+  AC_MSG_ERROR([squid is required])
+fi
+AC_DEFINE_UNQUOTED([SQUID], ["$SQUID"], [path to squid])
+
 AC_PATH_PROG([PROTOC], [protoc], [])
 AS_IF([test x"$PROTOC" = x],
   [AC_MSG_ERROR([cannot find protoc, the Protocol Buffers compiler])])
 
-AC_PATH_PROG([APXS], [apxs], [])
+AC_PATH_PROG([APXS], [apxs], [no], [${prefix}/bin])
 AS_IF([test x"$APXS" = x],
   [AC_MSG_ERROR([cannot find apxs, the Apache extension tool])])
 
-AC_SUBST([APACHE2_MODULE_DIR], [$(apxs -q exp_libexecdir)])
-AC_SUBST([APACHE2_INCLUDE], [$(apxs -q exp_includedir)])
+AC_SUBST([APACHE2_MODULE_DIR], [$(${prefix}/bin/apxs -q exp_libexecdir)])
+AC_SUBST([APACHE2_INCLUDE], [$(${prefix}/bin/apxs -q exp_includedir)])
 
 # Checks for apache configuration modules
 
-AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_mpm_prefork.so],
-	      [AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["$APACHE2_MODULE_DIR/mod_mpm_prefork.so"], [mod_prefork.so])],
+AC_CHECK_FILE([${prefix}/modules/mod_mpm_prefork.so],
+	      [AC_DEFINE_UNQUOTED([MOD_MPM_PREFORK], ["${prefix}/modules/mod_mpm_prefork.so"], [mod_prefork.so])],
               [AC_MSG_ERROR([apache2 mod_mpm_prefork.so is required])])
 
-AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_authz_core.so],
-	      [AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["$APACHE2_MODULE_DIR/mod_authz_core.so"], [mod_authz_core.so])],
+AC_CHECK_FILE([${prefix}/modules/mod_authz_core.so],
+	      [AC_DEFINE_UNQUOTED([MOD_AUTHZ_CORE], ["${prefix}/modules/mod_authz_core.so"], [mod_authz_core.so])],
               [AC_MSG_ERROR([apache2 mod_authz_core.so is required])])
 
-AC_CHECK_FILE([$APACHE2_MODULE_DIR/mod_ssl.so],
-	      [AC_DEFINE_UNQUOTED([MOD_SSL], ["$APACHE2_MODULE_DIR/mod_ssl.so"], [mod_ssl.so])],
+AC_CHECK_FILE([${prefix}/modules/mod_ssl.so],
+	      [AC_DEFINE_UNQUOTED([MOD_SSL], ["${prefix}/modules/mod_ssl.so"], [mod_ssl.so])],
               [AC_MSG_ERROR([apache2 mod_ssl.so is required])])
+
+# AC_CHECK_FILE([${prefix}/modules/mod_http2.so],
+# 	      [AC_DEFINE_UNQUOTED([MOD_HTTP2], ["${prefix}/modules/mod_http2.so"], [mod_http2.so])],
+#               [AC_MSG_ERROR([apache2 mod_http2.so is required])])
 
 # Checks for SSL certificate file
 AC_CHECK_FILE([/etc/ssl/certs/ssl-cert-snakeoil.pem], [],
