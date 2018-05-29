@@ -144,7 +144,7 @@ set logscale y
 set yrange [$lower_limit:$graph_max]
 set ytics add ($lower_limit)
 set key center outside top horizontal
-set terminal svg size 1024,560 fixed enhanced fname 'Arial'  fsize 12 solid mouse standalone name "Delay"
+set terminal svg size 1024,560 fixed enhanced fname 'Arial' solid mouse standalone name "Delay"
 set output "/dev/stdout"
 END
 

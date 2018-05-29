@@ -196,7 +196,7 @@ set xlabel "time (s)"
 set ylabel "throughput (Mbits/s)"
 set key center outside top horizontal
 set style fill solid 0.2 noborder
-set terminal svg size 1024,560 fixed  fname 'Arial'  fsize 12 rounded solid mouse standalone name "Throughput"
+set terminal svg size 1024,560 fixed  fname 'Arial' rounded solid mouse standalone name "Throughput"
 set output "/dev/stdout"
 END
 
