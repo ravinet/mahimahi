@@ -99,11 +99,11 @@ string DroppingPacketQueue::to_string( void ) const
     return ret;
 }
 
-unsigned int DroppingPacketQueue::get_arg( const string & args, const string & name )
+string DroppingPacketQueue::parse_number_arg(const string & args, const string & name, bool isfloat)
 {
     auto offset = args.find( name );
     if ( offset == string::npos ) {
-        return 0; /* default value */
+        return ""; /* default value */
     } else {
         /* extract the value */
 
@@ -118,15 +118,46 @@ unsigned int DroppingPacketQueue::get_arg( const string & args, const string & n
         /* advance by length of "=" */
         offset++;
 
-        /* find the first non-digit character */
-        auto offset2 = args.substr( offset ).find_first_not_of( "0123456789" );
+        /* find the first non-valid character */
+        string validchars;
+        if (isfloat) {
+            validchars = "0123456789.";
+        } else {
+            validchars = "0123456789";
+        }
+        auto offset2 = args.substr( offset ).find_first_not_of( validchars );
 
         auto digit_string = args.substr( offset ).substr( 0, offset2 );
 
         if ( digit_string.empty() ) {
             throw runtime_error( "could not parse queue arguments: " + args );
         }
+        return digit_string;
+    }
+}
+
+unsigned int DroppingPacketQueue::get_arg( const string & args, const string & name)
+{
+    auto offset = args.find( name );
+    if ( offset == string::npos ) {
+        return 0; /* default value */
+    } else {
+        auto digit_string = parse_number_arg(args, name, false);
 
         return myatoi( digit_string );
     }
 }
+
+double DroppingPacketQueue::get_float_arg( const string & args, const string & name)
+{
+    auto offset = args.find( name );
+    if ( offset == string::npos ) {
+        return 0; /* default value */
+    } else {
+        auto digit_string = parse_number_arg(args, name, true);
+        return myatof( digit_string );
+    }
+
+}
+
+

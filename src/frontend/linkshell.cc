@@ -7,6 +7,7 @@
 #include "drop_head_packet_queue.hh"
 #include "codel_packet_queue.hh"
 #include "pie_packet_queue.hh"
+#include "red_packet_queue.hh"
 #include "link_queue.hh"
 #include "packetshell.cc"
 
@@ -44,6 +45,8 @@ unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const str
         return unique_ptr<AbstractPacketQueue>( new CODELPacketQueue( args ) );
     } else if ( type == "pie" ) {
         return unique_ptr<AbstractPacketQueue>( new PIEPacketQueue( args ) );
+    } else if ( type == "red" ) {
+        return unique_ptr<AbstractPacketQueue>( new REDPacketQueue( args ) );
     } else {
         cerr << "Unknown queue type: " << type << endl;
     }
@@ -96,7 +99,7 @@ int main( int argc, char *argv[] )
             { "meter-downlink-delay",       no_argument, nullptr, 'y' },
             { "meter-all",                  no_argument, nullptr, 'z' },
             { "uplink-queue",         required_argument, nullptr, 'q' },
-            { "downlink-queue",       required_argument, nullptr, 'w' },
+            { "downlink-queue",         required_argument, nullptr, 'w' },
             { "uplink-queue-args",    required_argument, nullptr, 'a' },
             { "downlink-queue-args",  required_argument, nullptr, 'b' },
             { 0,                                      0, nullptr, 0 }

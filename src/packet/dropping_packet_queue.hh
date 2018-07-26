@@ -41,10 +41,13 @@ public:
 
     std::string to_string( void ) const override;
 
-    static unsigned int get_arg( const std::string & args, const std::string & name );
-
+    static std::string parse_number_arg(const std::string & args, const std::string & name, bool isfloat);
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
+
+    static unsigned int get_arg( const std::string & args, const std::string & name );
+
+    static double get_float_arg( const std::string & args, const std::string & name );
 };
 
 #endif /* DROPPING_PACKET_QUEUE_HH */ 
