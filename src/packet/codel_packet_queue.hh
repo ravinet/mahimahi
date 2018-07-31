@@ -45,7 +45,7 @@ private:
     uint64_t control_law ( uint64_t t, uint32_t count );
 
 public:
-    CODELPacketQueue( const std::string & args );
+    CODELPacketQueue( const std::map<std::string, std::string> & args );
 
     void enqueue( QueuedPacket && p ) override;
 

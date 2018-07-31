@@ -1,6 +1,7 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <getopt.h>
+#include <map>
 
 #include "infinite_packet_queue.hh"
 #include "drop_tail_packet_queue.hh"
@@ -10,6 +11,7 @@
 #include "red_packet_queue.hh"
 #include "link_queue.hh"
 #include "packetshell.cc"
+#include "tokenize.hh"
 
 using namespace std;
 
@@ -33,7 +35,7 @@ void usage_error( const string & program_name )
     throw runtime_error( "invalid arguments" );
 }
 
-unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const string & args, const string & program_name )
+unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const map<string, string> & args, const string & program_name )
 {
     if ( type == "infinite" ) {
         return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue( args ) );
@@ -71,6 +73,26 @@ string shell_quote( const string & arg )
     return ret;
 }
 
+map<string, string> parse_queue_args( const string & arg) {
+  map<string, string> argMap = map<string, string>();
+  if (arg.size() == 0) {
+    return argMap;
+  }
+  vector<string> argList = split(arg, ",");
+
+  for (size_t i = 0;i < argList.size();i++) {
+    string s = argList[i];
+    vector<string> argParts = split(s, "=");
+    if (argParts.size() != 2) {
+      throw runtime_error("Queue args passed in wrong format");
+    }
+
+    argMap.insert(pair<string, string>(argParts[0], argParts[1]));
+  }
+
+  return argMap;
+}
+
 int main( int argc, char *argv[] )
 {
     try {
@@ -99,7 +121,7 @@ int main( int argc, char *argv[] )
             { "meter-downlink-delay",       no_argument, nullptr, 'y' },
             { "meter-all",                  no_argument, nullptr, 'z' },
             { "uplink-queue",         required_argument, nullptr, 'q' },
-            { "downlink-queue",         required_argument, nullptr, 'w' },
+            { "downlink-queue",       required_argument, nullptr, 'w' },
             { "uplink-queue-args",    required_argument, nullptr, 'a' },
             { "downlink-queue-args",  required_argument, nullptr, 'b' },
             { 0,                                      0, nullptr, 0 }
@@ -186,11 +208,11 @@ int main( int argc, char *argv[] )
 
         link_shell_app.start_uplink( "[link] ", command,
                                      "Uplink", uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
-                                     get_packet_queue( uplink_queue_type, uplink_queue_args, argv[ 0 ] ),
+                                     get_packet_queue( uplink_queue_type, parse_queue_args(uplink_queue_args), argv[ 0 ] ),
                                      command_line );
 
         link_shell_app.start_downlink( "Downlink", downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
-                                       get_packet_queue( downlink_queue_type, downlink_queue_args, argv[ 0 ] ),
+                                       get_packet_queue( downlink_queue_type, parse_queue_args(downlink_queue_args), argv[ 0 ] ),
                                        command_line );
 
         return link_shell_app.wait_for_exit();

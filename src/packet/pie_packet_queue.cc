@@ -8,10 +8,10 @@ using namespace std;
 
 #define DQ_COUNT_INVALID   (uint32_t)-1
 
-PIEPacketQueue::PIEPacketQueue( const string & args )
+PIEPacketQueue::PIEPacketQueue( const map<string, string> & args )
   : DroppingPacketQueue(args),
-    qdelay_ref_ ( get_arg( args, "qdelay_ref" ) ),
-    max_burst_ ( get_arg( args, "max_burst" ) ),
+    qdelay_ref_ ( get_int_arg( args, "qdelay_ref" ) ),
+    max_burst_ ( get_int_arg( args, "max_burst" ) ),
     alpha_ ( 0.125 ),
     beta_ ( 1.25 ),
     t_update_ ( 30 ),

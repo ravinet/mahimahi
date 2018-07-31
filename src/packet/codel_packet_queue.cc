@@ -5,10 +5,10 @@
 
 using namespace std;
 
-CODELPacketQueue::CODELPacketQueue( const string & args )
+CODELPacketQueue::CODELPacketQueue( const map<string, string> & args )
   : DroppingPacketQueue(args),
-    target_ ( get_arg( args, "target") ),
-    interval_ ( get_arg( args, "interval") ),
+    target_ ( get_int_arg( args, "target") ),
+    interval_ ( get_int_arg( args, "interval") ),
     first_above_time_ ( 0 ),
     drop_next_( 0 ),
     count_ ( 0 ),

@@ -5,6 +5,7 @@
 
 #include <queue>
 #include <cassert>
+#include <map>
 
 #include "abstract_packet_queue.hh"
 #include "exception.hh"
@@ -31,7 +32,7 @@ protected:
                     const unsigned int size_in_packets ) const;
 
 public:
-    DroppingPacketQueue( const std::string & args );
+    DroppingPacketQueue( const std::map<std::string, std::string> & args );
 
     virtual void enqueue( QueuedPacket && p ) = 0;
 
@@ -42,12 +43,13 @@ public:
     std::string to_string( void ) const override;
 
     static std::string parse_number_arg(const std::string & args, const std::string & name, bool isfloat);
+
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
 
+    static unsigned int get_int_arg( const std::map<std::string, std::string> & args, const std::string & name );
     static unsigned int get_arg( const std::string & args, const std::string & name );
-
-    static double get_float_arg( const std::string & args, const std::string & name );
+    static double get_float_arg( const std::map<std::string, std::string> & args, const std::string & name );
 };
 
 #endif /* DROPPING_PACKET_QUEUE_HH */ 

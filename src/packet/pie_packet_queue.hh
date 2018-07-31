@@ -52,7 +52,7 @@ private:
     void calculate_drop_prob ( void );
 
 public:
-    PIEPacketQueue( const std::string & args );
+    PIEPacketQueue( const std::map<std::string, std::string> & args );
 
     void enqueue( QueuedPacket && p ) override;
 

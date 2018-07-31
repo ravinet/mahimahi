@@ -8,13 +8,29 @@
 
 using namespace std;
 
-DroppingPacketQueue::DroppingPacketQueue( const string & args )
-    : packet_limit_( get_arg( args, "packets" ) ),
-      byte_limit_( get_arg( args, "bytes" ) )
+DroppingPacketQueue::DroppingPacketQueue( const map<string, string> & args )
+    : packet_limit_( get_int_arg( args, "packets" ) ),
+      byte_limit_( get_int_arg( args, "bytes" ) )
 {
     if ( packet_limit_ == 0 and byte_limit_ == 0 ) {
         throw runtime_error( "Dropping queue must have a byte or packet limit." );
     }
+}
+
+unsigned int DroppingPacketQueue::get_int_arg(const map<string, string> & args, const string & name) {
+  if (args.count(name) > 0) {
+    return myatoi(args.at(name));
+  } else {
+    return 0;
+  }
+}
+
+double DroppingPacketQueue::get_float_arg(const map<string, string> & args, const string & name) {
+  if (args.count(name) > 0) {
+    return myatof(args.at(name));
+  } else {
+    return 0;
+  }
 }
 
 QueuedPacket DroppingPacketQueue::dequeue( void )
@@ -98,66 +114,3 @@ string DroppingPacketQueue::to_string( void ) const
 
     return ret;
 }
-
-string DroppingPacketQueue::parse_number_arg(const string & args, const string & name, bool isfloat)
-{
-    auto offset = args.find( name );
-    if ( offset == string::npos ) {
-        return ""; /* default value */
-    } else {
-        /* extract the value */
-
-        /* advance by length of name */
-        offset += name.size();
-
-        /* make sure next char is "=" */
-        if ( args.substr( offset, 1 ) != "=" ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
-
-        /* advance by length of "=" */
-        offset++;
-
-        /* find the first non-valid character */
-        string validchars;
-        if (isfloat) {
-            validchars = "0123456789.";
-        } else {
-            validchars = "0123456789";
-        }
-        auto offset2 = args.substr( offset ).find_first_not_of( validchars );
-
-        auto digit_string = args.substr( offset ).substr( 0, offset2 );
-
-        if ( digit_string.empty() ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
-        return digit_string;
-    }
-}
-
-unsigned int DroppingPacketQueue::get_arg( const string & args, const string & name)
-{
-    auto offset = args.find( name );
-    if ( offset == string::npos ) {
-        return 0; /* default value */
-    } else {
-        auto digit_string = parse_number_arg(args, name, false);
-
-        return myatoi( digit_string );
-    }
-}
-
-double DroppingPacketQueue::get_float_arg( const string & args, const string & name)
-{
-    auto offset = args.find( name );
-    if ( offset == string::npos ) {
-        return 0; /* default value */
-    } else {
-        auto digit_string = parse_number_arg(args, name, true);
-        return myatof( digit_string );
-    }
-
-}
-
-
