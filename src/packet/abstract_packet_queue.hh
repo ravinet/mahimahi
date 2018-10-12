@@ -19,6 +19,9 @@ public:
     virtual ~AbstractPacketQueue() = default;
 
     virtual std::string to_string( void ) const = 0;
+
+    virtual unsigned int size_bytes( void ) const = 0;
+    virtual unsigned int size_packets( void ) const = 0;
 };
 
 #endif /* ABSTRACT_PACKET_QUEUE */ 

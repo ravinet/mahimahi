@@ -39,6 +39,7 @@ private:
     void use_a_delivery_opportunity( void );
 
     void record_arrival( const uint64_t arrival_time, const size_t pkt_size );
+    void record_drop( const uint64_t time, const size_t pkts_dropped, const size_t bytes_dropped );
     void record_departure_opportunity( void );
     void record_departure( const uint64_t departure_time, const QueuedPacket & packet );
 
