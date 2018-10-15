@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH mm-link 1 "February 2014"
+.TH mm-link 1 "October 2018"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -49,6 +49,49 @@ flexibly create links with a user-supplied one-way delay and a user-supplied
 link rate.
 
 To exit mm-link, simply type "exit" or CTRL-D inside mm-link.
+
+.SH OUTPUT
+mm-link can optionally log detailed performance information for both the uplink and downlink, specified with the \fB--uplink-log\fR and \fB--downlink-log\fR flags respectively. A log file has the following format:
+
+.EX
+# mahimahi mm-link (name of link) [/path/to/trace] > /path/to/log
+# command line: [command used to run mm-link]
+# queue: [queue information]
+# init timestamp: [start time of mm-link]
+# base timestamp: [starting log timestamp]
+[# mahimahi config: [mahimahi shell prefix]]
+[log lines]
+.EE
+
+Each log line is one of the following:
+
+[timestamp] # packet_size
+.
+.IP ""
+.RS
+An unused delivery opportunity.
+.RE
+
+[timestamp] + packet_size
+.
+.IP ""
+.RS
+A packet arrival to the link, it may be dropped later
+.RE
+
+[timestamp] - packet_size
+.
+.IP ""
+.RS
+A successful packet delivery
+.RE
+
+[timestamp] d packets_dropped bytes_dropped
+.
+.IP ""
+.RS
+A dropped packet (or multiple packets)
+.RE
 
 .SH EXAMPLE
 
