@@ -32,7 +32,7 @@ protected:
                     const unsigned int size_in_packets ) const;
 
 public:
-    DroppingPacketQueue( const std::map<std::string, std::string> & args );
+    DroppingPacketQueue( ParsedArguments & args );
 
     virtual void enqueue( QueuedPacket && p ) = 0;
 

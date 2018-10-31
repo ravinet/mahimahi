@@ -12,6 +12,7 @@
 #include "link_queue.hh"
 #include "packetshell.cc"
 #include "tokenize.hh"
+#include "parsed_arguments.hh"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ void usage_error( const string & program_name )
     cerr << "          --uplink-queue=QUEUE_TYPE --downlink-queue=QUEUE_TYPE" << endl;
     cerr << "          --uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
     cerr << endl;
-    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel | pie" << endl;
+    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel | pie | red" << endl;
     cerr << "          QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\"" << endl;
     cerr << "              (with NAME = bytes | packets | target | interval | qdelay_ref | max_burst)" << endl;
     cerr << "                  target, interval, qdelay_ref, max_burst are in milli-second" << endl << endl;
@@ -35,7 +36,7 @@ void usage_error( const string & program_name )
     throw runtime_error( "invalid arguments" );
 }
 
-unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const map<string, string> & args, const string & program_name )
+unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, ParsedArguments  args, const string & program_name )
 {
     if ( type == "infinite" ) {
         return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue( args ) );
@@ -73,10 +74,10 @@ string shell_quote( const string & arg )
     return ret;
 }
 
-map<string, string> parse_queue_args( const string & arg) {
+ParsedArguments  parse_queue_args( const string & arg) {
   map<string, string> argMap = map<string, string>();
   if (arg.size() == 0) {
-    return argMap;
+    return ParsedArguments( argMap );
   }
   vector<string> argList = split(arg, ",");
 
@@ -90,7 +91,7 @@ map<string, string> parse_queue_args( const string & arg) {
     argMap.insert(pair<string, string>(argParts[0], argParts[1]));
   }
 
-  return argMap;
+  return ParsedArguments( argMap );
 }
 
 int main( int argc, char *argv[] )

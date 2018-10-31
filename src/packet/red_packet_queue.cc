@@ -4,25 +4,18 @@
 
 using namespace std;
 
-REDPacketQueue::REDPacketQueue( const map<string, string> & args)
+REDPacketQueue::REDPacketQueue( ParsedArguments & args)
   : DroppingPacketQueue(args),
-    wq_(get_float_arg(args, "wq")),
-    min_thresh_(get_float_arg(args, "minthresh")),
-    max_thresh_(get_float_arg(args, "maxthresh")),
-    transmission_time_(get_int_arg(args, "transmission_time")),
+    wq_(args.get_float_arg("wq")),
+    min_thresh_(args.get_float_arg("minthresh")),
+    max_thresh_(args.get_float_arg("maxthresh")),
+    transmission_time_(args.get_int_arg("transmission_time")),
     time_at_zero_q_(0),
     prng_( random_device()() ),
     drop_dist_ (0, 1),
     current_random_val_(0),
     count_(0)
 {
-  if (packet_limit_ == 0) {
-    throw runtime_error( "RED queue must have packet limit." );
-  }
-
-  if ( wq_ == 0.0 || min_thresh_ == 0.0 || max_thresh_ == 0.0 || transmission_time_ == 0 ) {
-    throw runtime_error( "RED queue must have wq, minthresh, maxthresh, and transmission_time arguments." );
-  }
 
 }
 

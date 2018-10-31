@@ -42,7 +42,7 @@ private:
     unsigned int max_queue_depth_packets() const;
 
 public:
-    REDPacketQueue( const std::map<std::string, std::string> & args );
+    REDPacketQueue( ParsedArguments & args );
     QueuedPacket dequeue( void ) override;
     void enqueue( QueuedPacket && p ) override;
 };

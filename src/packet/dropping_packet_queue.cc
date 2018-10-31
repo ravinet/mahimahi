@@ -8,29 +8,13 @@
 
 using namespace std;
 
-DroppingPacketQueue::DroppingPacketQueue( const map<string, string> & args )
-    : packet_limit_( get_int_arg( args, "packets" ) ),
-      byte_limit_( get_int_arg( args, "bytes" ) )
+DroppingPacketQueue::DroppingPacketQueue( ParsedArguments & args )
+    : packet_limit_( args.get_int_arg( "packets", 0 ) ),
+      byte_limit_( args.get_int_arg( "bytes", 0 ) )
 {
     if ( packet_limit_ == 0 and byte_limit_ == 0 ) {
         throw runtime_error( "Dropping queue must have a byte or packet limit." );
     }
-}
-
-unsigned int DroppingPacketQueue::get_int_arg(const map<string, string> & args, const string & name) {
-  if (args.count(name) > 0) {
-    return myatoi(args.at(name));
-  } else {
-    return 0;
-  }
-}
-
-double DroppingPacketQueue::get_float_arg(const map<string, string> & args, const string & name) {
-  if (args.count(name) > 0) {
-    return myatof(args.at(name));
-  } else {
-    return 0;
-  }
 }
 
 QueuedPacket DroppingPacketQueue::dequeue( void )
