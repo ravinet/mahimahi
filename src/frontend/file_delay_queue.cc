@@ -9,7 +9,9 @@ using namespace std;
 
 void FileDelayQueue::read_packet( const string & contents )
 {
-    packet_queue_.emplace( timestamp() + delay_ms_, contents );
+    uint64_t delay_index = int(timestamp()/(double)time_resolution + 0.5);
+    uint64_t delay = delays[delay_index];
+    packet_queue_.emplace(timestamp() + delay, contents );
 }
 
 void FileDelayQueue::write_packets( FileDescriptor & fd )

@@ -6,18 +6,37 @@
 #include <queue>
 #include <cstdint>
 #include <string>
+#include <fstream>
+#include <iostream>
 
 #include "file_descriptor.hh"
 
 class FileDelayQueue
 {
 private:
-    uint64_t delay_ms_;
+    std::vector< uint64_t > delays;
+    long double time_resolution;
     std::queue< std::pair<uint64_t, std::string> > packet_queue_;
     /* release timestamp, contents */
 
 public:
-    FileDelayQueue( const uint64_t & s_delay_ms ) : delay_ms_( s_delay_ms ), packet_queue_() {}
+    FileDelayQueue(std::string delay_file_name, long double time_res_ms) {
+
+        std::ifstream delay_file(delay_file_name);
+        std::string line;
+        uint64_t delay;
+
+        /* Read file, line-by-line. */
+        while (std::getline(delay_file, line))
+        {
+            delay = std::stoi(line);
+            delays.push_back(delay);
+            std::cout << "Delay: " << delay << " ms. \n";
+        }
+        
+        /* Set time resolution of delays in file. */
+        time_resolution = time_res_ms;
+    }
 
     void read_packet( const std::string & contents );
 
