@@ -1,16 +1,35 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <limits>
-
+#include <fstream>
+#include <iostream>
 #include "file_delay_queue.hh"
 #include "timestamp.hh"
 
 using namespace std;
 
+FileDelayQueue::FileDelayQueue(const std::string & delay_file_name, uint64_t time_res_ms) : delays_(), time_res_ms_(time_res_ms), packet_queue_() 
+{
+    ifstream delay_file(delay_file_name);
+    uint64_t delay;
+
+    if (not delay_file.good()) {
+        throw runtime_error(delay_file_name + ": error while opening for reading.");
+    }
+
+    /* Read file, line-by-line. */
+    string line;
+    while (delay_file.good() and getline(delay_file, line))
+    {
+        delay = stoi(line);
+        delays_.push_back(delay);
+    }    
+}
+
 void FileDelayQueue::read_packet( const string & contents )
 {
-    uint64_t delay_index = int(timestamp()/(double)time_resolution + 0.5);
-    uint64_t delay = delays[delay_index % delays.size()];
+    uint64_t delay_index = timestamp()/((double)time_res_ms_) + 0.5;
+    uint64_t delay = delays_[delay_index % delays_.size()];
     packet_queue_.emplace(timestamp() + delay, contents );
 }
 
