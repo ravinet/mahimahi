@@ -2,7 +2,7 @@
 
 #include <limits>
 
-#include "delay_queue.hh"
+#include "file_delay_queue.hh"
 #include "timestamp.hh"
 
 using namespace std;
