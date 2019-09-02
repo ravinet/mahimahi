@@ -31,7 +31,7 @@ int main( int argc, char *argv[] )
         if ( argc == 3 ) {
             command.push_back( shell_path() );
         } else {
-            for ( int i = 2; i < argc; i++ ) {
+            for ( int i = 3; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
             }
         }
