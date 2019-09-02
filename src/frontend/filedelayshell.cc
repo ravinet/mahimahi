@@ -19,22 +19,17 @@ int main( int argc, char *argv[] )
 
         check_requirements( argc, argv );
 
-        if ( argc < 2 ) {
-            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " delay_file_name time_resolution_ms (default 1) [command...]" );
+        if ( argc < 3 ) {
+            throw runtime_error( "Usage: " + string( argv[ 0 ] ) + " delay_file_name time_resolution_ms [command...]" );
         }
 
         string delay_file = argv[1];
-        uint64_t time_res_ms;
+        uint64_t time_res_ms = std::stoi(argv[2]);
 
         vector< string > command;
 
-        if ( argc <= 3 ) {
+        if ( argc == 3 ) {
             command.push_back( shell_path() );
-            if(argc <= 2){
-                time_res_ms = 1;
-            } else {
-                time_res_ms = std::stoi(argv[2]);
-            }
         } else {
             for ( int i = 2; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
