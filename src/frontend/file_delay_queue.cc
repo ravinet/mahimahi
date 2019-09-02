@@ -28,7 +28,7 @@ FileDelayQueue::FileDelayQueue(const std::string & delay_file_name, uint64_t tim
 
 void FileDelayQueue::read_packet( const string & contents )
 {
-    uint64_t delay_index = timestamp()/((double)time_res_ms_) + 0.5;
+    uint64_t delay_index = timestamp()/time_res_ms_;
     uint64_t delay = delays_[delay_index % delays_.size()];
     packet_queue_.emplace(timestamp() + delay, contents );
 }
