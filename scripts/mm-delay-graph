@@ -115,7 +115,7 @@ my @signal_delay_samples = sort { $a <=> $b } keys %signal_delay;
 
 for ( my $ts = $signal_delay_samples[ -1 ]; $ts >= $signal_delay_samples[ 0 ]; $ts-- ) {
   if ( not defined $signal_delay{ $ts } ) {
-    $signal_delay{ $ts } = $signal_delay{ $ts + 1 } + 1;
+    $signal_delay{ $ts } = $signal_delay{ $ts + 1 };
   }
 }
 
