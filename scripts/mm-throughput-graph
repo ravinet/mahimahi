@@ -54,7 +54,11 @@ LINE: while ( <> ) {
 
   # parse and validate line
   my ( $timestamp, $event_type, $num_bytes, $delay ) = split /\s+/, $_;
-
+  if ($event_type eq q{d}){
+       $num_bytes = $delay; 
+       $delay = 0;
+  }
+  
   if ( not defined $num_bytes ) {
     die q{Format: timestamp event_type num_bytes [delay]};
   }
