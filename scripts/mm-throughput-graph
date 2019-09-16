@@ -110,6 +110,10 @@ LINE: while ( <> ) {
 						(defined $signal_delay{ $timestamp - $delay })
 						? $signal_delay{ $timestamp - $delay }
 						: POSIX::DBL_MAX );
+  } elsif ( $event_type eq q{d} ) {
+    $capacity{ $bin } -= $num_bits;
+    $capacity_sum -= $num_bits;
+    printf STDERR qq{$num_bits / $num_bytes};
   } else {
     die qq{Unknown event type: $event_type};
   }
@@ -163,7 +167,7 @@ my @signal_delay_samples = sort { $a <=> $b } keys %signal_delay;
 
 for ( my $ts = $signal_delay_samples[ -1 ]; $ts >= $signal_delay_samples[ 0 ]; $ts-- ) {
   if ( not defined $signal_delay{ $ts } ) {
-    $signal_delay{ $ts } = $signal_delay{ $ts + 1 } + 1;
+    $signal_delay{ $ts } = $signal_delay{ $ts + 1 };
   }
 }
 
