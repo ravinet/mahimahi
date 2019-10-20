@@ -135,7 +135,7 @@ my $graph_max = $signal_delays[-1] * 1.2;
 # make graph
 open GNUPLOT, q{| gnuplot} or die;
 
-my $lower_limit = min( 30, int $pp50 );
+my $lower_limit = 0;
 
 print GNUPLOT <<END;
 set xlabel "time (s)"
