@@ -195,7 +195,7 @@ HTTPMessage::HTTPMessage( const MahimahiProtobufs::HTTPMessage & proto )
       body_( proto.body() ),
       state_( COMPLETE )
 {
-    for ( const auto header : proto.header() ) {
+    for ( const auto & header : proto.header() ) {
         headers_.emplace_back( header );
     }
 }
