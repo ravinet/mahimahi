@@ -1,1 +1,1 @@
-SUBDIRS = protobufs util packet graphing http httpserver frontend tests
+SUBDIRS = util packet graphing frontend tests
