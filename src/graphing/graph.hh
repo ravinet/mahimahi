@@ -4,6 +4,7 @@
 #include <deque>
 #include <vector>
 #include <mutex>
+#include <array>
 
 #include "display.hh"
 #include "cairo_objects.hh"
