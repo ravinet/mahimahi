@@ -18,7 +18,7 @@
 .SH NAME
 \fBmahimahi\fP \- lightweight, composable network-emulation tools
 
-link emulation: \fBmm-delay\fP, \fBmm-loss\fP, \fBmm-onoff\fP, \fBmm-link\fP
+link emulation: \fBmm-delay\fP, \fBmm-loss\fP, \fBmm-intermittent\fP, \fBmm-onoff\fP, \fBmm-link\fP
 
 analysis scripts: \fBmm-throughput-graph\fP, \fBmm-delay-graph\fP
 
@@ -67,6 +67,21 @@ Packets are lost at the given
 either when leaving (uplink) or entering (downlink) the container.
 .I rate
 is a number between 0 and 1.
+.RE
+
+.SY mm-intermittent
+uplink|downlink
+.I on-time
+.I off-time
+.RI [ command... ]
+.YS
+.
+.IP ""
+.RS
+
+The uplink or downlink will be
+intermittent and will switch periodically between connected and disconnected states
+with the specified durations "on" and "off".
 .RE
 
 .SY mm-onoff

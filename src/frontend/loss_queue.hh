@@ -63,4 +63,18 @@ public:
     unsigned int wait_time( void );
 };
 
+class PeriodicSwitchingLink : public LossQueue
+{
+private:
+    bool link_is_on_;
+    uint64_t on_time_, off_time_, next_switch_time_;
+
+    bool drop_packet( const std::string & packet ) override;
+
+public:
+    PeriodicSwitchingLink( const double on_time, const double off_time );
+
+    unsigned int wait_time( void );
+};
+
 #endif /* LOSS_QUEUE_HH */
