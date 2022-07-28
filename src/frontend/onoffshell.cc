@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<SwitchingLink> onoff_app( "onoff", user_environment );
+        PacketShell<StochasticSwitchingLink> onoff_app( "onoff", user_environment );
 
         string shell_prefix = "[onoff ";
         if ( link == "uplink" ) {

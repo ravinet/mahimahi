@@ -46,7 +46,7 @@ public:
     IIDLoss( const double loss_rate ) : drop_dist_( loss_rate ) {}
 };
 
-class SwitchingLink : public LossQueue
+class StochasticSwitchingLink : public LossQueue
 {
 private:
     bool link_is_on_;
@@ -55,12 +55,10 @@ private:
 
     uint64_t next_switch_time_;
 
-    void calculate_next_switch_time( void );
-
     bool drop_packet( const std::string & packet ) override;
 
 public:
-    SwitchingLink( const double mean_on_time_, const double mean_off_time );
+    StochasticSwitchingLink( const double mean_on_time_, const double mean_off_time );
 
     unsigned int wait_time( void );
 };

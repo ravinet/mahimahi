@@ -38,7 +38,7 @@ bool IIDLoss::drop_packet( const string & packet __attribute((unused)) )
 
 static const double MS_PER_SECOND = 1000.0;
 
-SwitchingLink::SwitchingLink( const double mean_on_time, const double mean_off_time )
+StochasticSwitchingLink::StochasticSwitchingLink( const double mean_on_time, const double mean_off_time )
     : link_is_on_( false ),
       on_process_( 1.0 / (MS_PER_SECOND * mean_off_time) ),
       off_process_( 1.0 / (MS_PER_SECOND * mean_on_time) ),
@@ -54,7 +54,7 @@ uint64_t bound( const double x )
     return x;
 }
 
-unsigned int SwitchingLink::wait_time( void )
+unsigned int StochasticSwitchingLink::wait_time( void )
 {
     const uint64_t now = timestamp();
 
@@ -76,7 +76,7 @@ unsigned int SwitchingLink::wait_time( void )
     return next_switch_time_ - now;
 }
 
-bool SwitchingLink::drop_packet( const string & packet __attribute((unused)) )
+bool StochasticSwitchingLink::drop_packet( const string & packet __attribute((unused)) )
 {
     return !link_is_on_;
 }
