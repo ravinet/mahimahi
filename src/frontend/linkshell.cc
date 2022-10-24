@@ -71,6 +71,8 @@ string shell_quote( const string & arg )
 int main( int argc, char *argv[] )
 {
     try {
+        const bool passthrough_until_signal = getenv( "MAHIMAHI_PASSTHROUGH_UNTIL_SIGNAL" );
+
         /* clear environment while running as root */
         char ** const user_environment = environ;
         environ = nullptr;
@@ -179,7 +181,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<LinkQueue> link_shell_app( "link", user_environment );
+        PacketShell<LinkQueue> link_shell_app( "link", user_environment, passthrough_until_signal );
 
         link_shell_app.start_uplink( "[link] ", command,
                                      "Uplink", uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,

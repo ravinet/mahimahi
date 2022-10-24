@@ -23,6 +23,7 @@ private:
     TunDevice egress_tun_;
     DNSProxy dns_outside_;
     NAT nat_rule_ {};
+    bool passthrough_until_signal_ {};
 
     std::pair<UnixDomainSocket, UnixDomainSocket> pipe_;
 
@@ -33,14 +34,18 @@ private:
 
     class Ferry : public EventLoop
     {
+        bool passthrough_;
+        void handle_sigusr1() override { passthrough_ = false; }
+
     public:
+        Ferry( const bool passthrough ) : passthrough_( passthrough ) {}
         int loop( FerryQueueType & ferry_queue, FileDescriptor & tun, FileDescriptor & sibling );
     };
 
     Address get_mahimahi_base( void ) const;
 
 public:
-    PacketShell( const std::string & device_prefix, char ** const user_environment );
+    PacketShell( const std::string & device_prefix, char ** const user_environment, const bool passthrough_until_signal );
 
     template <typename... Targs>
     void start_uplink( const std::string & shell_prefix,

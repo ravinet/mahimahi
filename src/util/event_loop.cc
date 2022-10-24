@@ -9,7 +9,7 @@ using namespace std;
 using namespace PollerShortNames;
 
 EventLoop::EventLoop()
-    : signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM, SIGQUIT, SIGINT } ),
+    : signals_( { SIGCHLD, SIGCONT, SIGHUP, SIGTERM, SIGQUIT, SIGINT, SIGUSR1 } ),
       poller_(),
       child_processes_()
 {
@@ -66,6 +66,10 @@ Result EventLoop::handle_signal( const signalfd_siginfo & sig )
             }
         }
 
+        break;
+
+    case SIGUSR1:
+        handle_sigusr1();
         break;
 
     case SIGHUP:

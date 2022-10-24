@@ -13,6 +13,8 @@ using namespace std;
 int main( int argc, char *argv[] )
 {
     try {
+        const bool passthrough_until_signal = getenv( "MAHIMAHI_PASSTHROUGH_UNTIL_SIGNAL" );
+
         /* clear environment while running as root */
         char ** const user_environment = environ;
         environ = nullptr;
@@ -35,7 +37,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<DelayQueue> delay_shell_app( "delay", user_environment );
+        PacketShell<DelayQueue> delay_shell_app( "delay", user_environment, passthrough_until_signal );
 
         delay_shell_app.start_uplink( "[delay " + to_string( delay_ms ) + " ms] ",
                                       command,

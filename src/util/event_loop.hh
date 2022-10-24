@@ -25,6 +25,8 @@ protected:
 
     int internal_loop( const std::function<int(void)> & wait_time );
 
+    virtual void handle_sigusr1() {}
+
 public:
     EventLoop();
 

@@ -22,13 +22,14 @@ using namespace std;
 using namespace PollerShortNames;
 
 template <class FerryQueueType>
-PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment )
+PacketShell<FerryQueueType>::PacketShell( const std::string & device_prefix, char ** const user_environment, const bool passthrough_until_signal )
     : user_environment_( user_environment ),
       egress_ingress( two_unassigned_addresses( get_mahimahi_base() ) ),
       nameserver_( first_nameserver() ),
       egress_tun_( device_prefix + "-" + to_string( getpid() ) , egress_addr(), ingress_addr() ),
       dns_outside_( egress_addr(), nameserver_, nameserver_ ),
       nat_rule_( ingress_addr() ),
+      passthrough_until_signal_( passthrough_until_signal ),
       pipe_( UnixDomainSocket::make_pair() ),
       event_loop_()
 {
@@ -77,7 +78,7 @@ void PacketShell<FerryQueueType>::start_uplink( const string & shell_prefix,
 
             SystemCall( "ioctl SIOCADDRT", ioctl( UDPSocket().fd_num(), SIOCADDRT, &route ) );
 
-            Ferry inner_ferry;
+            Ferry inner_ferry { passthrough_until_signal_ };
 
             /* dnsmasq doesn't distinguish between UDP and TCP forwarding nameservers,
                so use a DNSProxy that listens on the same UDP and TCP port */
@@ -149,7 +150,7 @@ void PacketShell<FerryQueueType>::start_downlink( Targs&&... Fargs )
             /* downlink packets go to inner namespace's TUN device */
             FileDescriptor ingress_tun = pipe_.second.recv_fd();
 
-            Ferry outer_ferry;
+            Ferry outer_ferry { passthrough_until_signal_ };
 
             dns_outside_.register_handlers( outer_ferry );
 
@@ -172,7 +173,11 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
     /* tun device gets datagram -> read it -> give to ferry */
     add_simple_input_handler( tun, 
                               [&] () {
-                                  ferry_queue.read_packet( tun.read() );
+                                  if ( passthrough_ ) {
+                                      sibling.write( tun.read() );
+                                  } else {
+                                      ferry_queue.read_packet( tun.read() );
+                                  }
                                   return ResultType::Continue;
                               } );
 
@@ -182,7 +187,7 @@ int PacketShell<FerryQueueType>::Ferry::loop( FerryQueueType & ferry_queue,
                                     ferry_queue.write_packets( sibling );
                                     return ResultType::Continue;
                                 },
-                                [&] () { return ferry_queue.pending_output(); } ) );
+                                [&] () { return (!passthrough_) and ferry_queue.pending_output(); } ) );
 
     /* exit if finished */
     add_action( Poller::Action( sibling, Direction::Out,

@@ -21,6 +21,8 @@ void usage( const string & program_name )
 int main( int argc, char *argv[] )
 {
     try {
+        const bool passthrough_until_signal = getenv( "MAHIMAHI_PASSTHROUGH_UNTIL_SIGNAL" );
+
         /* clear environment while running as root */
         char ** const user_environment = environ;
         environ = nullptr;
@@ -60,7 +62,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<IIDLoss> loss_app( "loss", user_environment );
+        PacketShell<IIDLoss> loss_app( "loss", user_environment, passthrough_until_signal );
 
         string shell_prefix = "[loss ";
         if ( link == "uplink" ) {

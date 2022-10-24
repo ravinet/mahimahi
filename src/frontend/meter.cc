@@ -15,6 +15,8 @@ void usage_error( const string & program_name )
 int main( int argc, char *argv[] )
 {
     try {
+        const bool passthrough_until_signal = getenv( "MAHIMAHI_PASSTHROUGH_UNTIL_SIGNAL" );
+
         /* clear environment while running as root */
         char ** const user_environment = environ;
         environ = nullptr;
@@ -60,7 +62,7 @@ int main( int argc, char *argv[] )
             }
         }
 
-        PacketShell<MeterQueue> link_shell_app( "meter", user_environment );
+        PacketShell<MeterQueue> link_shell_app( "meter", user_environment, passthrough_until_signal );
 
         const string uplink_name = "Uplink", downlink_name = "Downlink";
 
