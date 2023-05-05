@@ -3,6 +3,7 @@
 #ifndef CHUNKED_BODY_PARSER_HH
 #define CHUNKED_BODY_PARSER_HH
 
+#include <cstdint>
 #include "body_parser.hh"
 #include "exception.hh"
 
