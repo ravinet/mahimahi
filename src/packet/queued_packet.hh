@@ -4,6 +4,7 @@
 #define QUEUED_PACKET_HH
 
 #include <string>
+#include <cstdint>
 
 struct QueuedPacket
 {
