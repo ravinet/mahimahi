@@ -5,19 +5,16 @@
 
 using namespace std;
 
-CODELPacketQueue::CODELPacketQueue( const string & args )
+CODELPacketQueue::CODELPacketQueue( ParsedArguments & args )
   : DroppingPacketQueue(args),
-    target_ ( get_arg( args, "target") ),
-    interval_ ( get_arg( args, "interval") ),
+    target_ ( args.get_int_arg("target") ),
+    interval_ ( args.get_int_arg( "interval") ),
     first_above_time_ ( 0 ),
     drop_next_( 0 ),
     count_ ( 0 ),
     lastcount_ ( 0 ),
     dropping_ ( 0 )
 {
-  if ( target_ == 0 || interval_ == 0 ) {
-    throw runtime_error( "CoDel queue must have target and interval arguments." );
-  }
 }
 
 //NOTE: CoDel makes drop decisions at dequeueing. 
