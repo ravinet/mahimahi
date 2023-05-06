@@ -29,6 +29,12 @@ public:
 
     std::string read( void );
     void write( const std::string & message );
+
+    /* if an SNI servername has been received, assigns it to servername and returns true;
+     * returns false otherwise */
+    bool get_sni_servername( std::string & servername );
+    /* make the socket send the specified servername when connecting to a server */
+    void set_sni_servername_sent( const std::string & servername );
 };
 
 class SSLContext
