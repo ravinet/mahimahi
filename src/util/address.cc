@@ -156,7 +156,14 @@ bool Address::operator<( const Address & other ) const
 }
 
 /* generate carrier-grade NAT address */
+#ifndef __ALT_CGNAT_SPACE__
 Address Address::cgnat( const uint8_t last_octet )
 {
     return Address( "100.64.0." + to_string( last_octet ), 0 );
 }
+#else
+Address Address::cgnat( const uint8_t last_octet )
+{
+    return Address( "10.0.0." + to_string( last_octet ), 0 );
+}
+#endif

@@ -88,6 +88,12 @@ AC_DEFINE_UNQUOTED([REPLAYSERVER], ["${prefix}/bin/mm-replayserver"], [path to m
 
 AC_DEFINE_UNQUOTED([MOD_DEEPCGI], ["${prefix}/lib/${DEB_HOST_MULTIARCH}/libmod_deepcgi.so"], [path to apache2 mod_deepcgi])
 
+AC_ARG_ENABLE([altaddr],
+  AS_HELP_STRING([--enable-altaddr=yes], [Enable using alternate address space]),,
+  [enable_altaddr=yes])
+
+AM_CONDITIONAL([ENABLE_ALTADDR], [test x$enable_altaddr = xyes])
+
 # Checks for libraries.
 PKG_CHECK_MODULES([protobuf], [protobuf])
 PKG_CHECK_MODULES([libssl], [libcrypto libssl])
