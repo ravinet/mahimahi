@@ -6,6 +6,11 @@ mm_delay_SOURCES = delayshell.cc delay_queue.hh delay_queue.cc
 mm_delay_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
 mm_delay_LDFLAGS = -pthread
 
+bin_PROGRAMS += mm-file-delay
+mm_file_delay_SOURCES = filedelayshell.cc file_delay_queue.hh file_delay_queue.cc
+mm_file_delay_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
+mm_file_delay_LDFLAGS = -pthread
+
 bin_PROGRAMS += mm-loss
 mm_loss_SOURCES = lossshell.cc loss_queue.hh loss_queue.cc
 mm_loss_LDADD = -lrt ../util/libutil.a ../packet/libpacket.a
@@ -54,6 +59,8 @@ libmod_deepcgi_la_CPPFLAGS = # empty
 install-exec-hook:
 	chown root $(DESTDIR)$(bindir)/mm-delay
 	chmod u+s $(DESTDIR)$(bindir)/mm-delay
+	chown root $(DESTDIR)$(bindir)/mm-file-delay
+	chmod u+s $(DESTDIR)$(bindir)/mm-file-delay
 	chown root $(DESTDIR)$(bindir)/mm-loss
 	chmod u+s $(DESTDIR)$(bindir)/mm-loss
 	chown root $(DESTDIR)$(bindir)/mm-onoff
