@@ -1,10 +1,9 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-
-#include <net/route.h>
-#include <fcntl.h>
-
 #include <vector>
 #include <set>
+#include <string>
+#include <net/route.h>
+#include <fcntl.h>
 
 #include "util.hh"
 #include "netdevice.hh"
@@ -16,6 +15,7 @@
 #include "http_response.hh"
 #include "dns_server.hh"
 #include "exception.hh"
+#include "network_namespace.hh"
 
 #include "http_record.pb.h"
 
@@ -61,21 +61,30 @@ int main( int argc, char *argv[] )
         /* get working directory */
         const string working_directory { get_working_directory() };
 
+
         /* chdir to result of getcwd just in case */
         SystemCall( "chdir", chdir( working_directory.c_str() ) );
+
+        const string netns_name = string("mahimahi.") +  to_string( getpid() );
+
+        NetworkNamespace network_namespace;
+
+        /* Setup our own resolvconf with nameserver 8.8.8.8 */
+        network_namespace.create_resolvconf( "8.8.8.8" );
+
+        /* Switch to the newly created network namespace */
+        network_namespace.enter();
 
         /* what command will we run inside the container? */
         vector< string > command;
         if ( argc == 2 ) {
             command.push_back( shell_path() );
         } else {
+
             for ( int i = 2; i < argc; i++ ) {
                 command.push_back( argv[ i ] );
             }
         }
-
-        /* create a new network namespace */
-        SystemCall( "unshare", unshare( CLONE_NEWNET ) );
 
         /* bring up localhost */
         interface_ioctl( SIOCSIFFLAGS, "lo",
@@ -143,7 +152,6 @@ int main( int argc, char *argv[] )
             const string interface_name = "nameserver" + to_string( server_num );
             add_dummy_interface( interface_name, nameservers.at( server_num ) );
         }
-
         /* start dnsmasq */
         event_loop.add_child_process( start_dnsmasq( dnsmasq_args ) );
 
