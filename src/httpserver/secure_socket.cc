@@ -4,6 +4,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
 
 #include "secure_socket.hh"
 #include "certificate.hh"
@@ -84,6 +85,23 @@ SSL_CTX * initialize_new_context( const SSL_MODE type )
     return ret;
 }
 
+/* associates an SSL object to the SNI servername received; protected by the mutex */
+static std::unordered_map<SSL *, std::string> ssl_to_servername_;
+static std::mutex servername_mutex_;
+
+static int ssl_servername_cb( SSL * ssl,
+                              int * ad __attribute((unused)),
+                              void * arg __attribute((unused)) )
+{
+    const char * servername = SSL_get_servername( ssl, TLSEXT_NAMETYPE_host_name );
+    if ( servername && *servername ) {
+        std::lock_guard<std::mutex> lg( servername_mutex_ );
+        ssl_to_servername_[ ssl ] = servername;
+    }
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
 SSLContext::SSLContext( const SSL_MODE type )
     : ctx_( initialize_new_context( type ) )
 {
@@ -100,6 +118,9 @@ SSLContext::SSLContext( const SSL_MODE type )
         if ( not SSL_CTX_check_private_key( ctx_.get() ) ) {
             throw ssl_error( "SSL_CTX_check_private_key" );
         }
+
+        /* callback to get SNI information from client */
+        SSL_CTX_set_tlsext_servername_callback( ctx_.get(), ssl_servername_cb );
     }
 }
 
@@ -186,4 +207,23 @@ void SecureSocket::write(const string & message )
     }
 
     register_write();
+}
+
+bool SecureSocket::get_sni_servername( std::string & servername )
+{
+    std::lock_guard<std::mutex> lg( servername_mutex_ );
+    auto it = ssl_to_servername_.find( ssl_.get() );
+    if ( it == ssl_to_servername_.end() ) {
+        return false;
+    }
+
+    servername = it->second;
+    return true;
+}
+
+void SecureSocket::set_sni_servername_sent( const std::string & servername )
+{
+    if ( !SSL_set_tlsext_host_name( ssl_.get(), servername.c_str() ) ) {
+        throw ssl_error( "SSL_set_tlsext_host_name" );
+    }
 }

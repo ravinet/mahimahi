@@ -105,11 +105,16 @@ void HTTPProxy::handle_tcp( HTTPBackingStore & backing_store )
                 }
 
                 /* handle TLS */
-                SecureSocket tls_server( client_context_.new_secure_socket( move( server ) ) );
-                tls_server.connect();
-
                 SecureSocket tls_client( server_context_.new_secure_socket( move( client ) ) );
+                SecureSocket tls_server( client_context_.new_secure_socket( move( server ) ) );
+
                 tls_client.accept();
+                std::string servername;
+                if ( tls_client.get_sni_servername( servername ) ) {
+                    tls_server.set_sni_servername_sent( servername );
+                }
+
+                tls_server.connect();
 
                 loop( tls_server, tls_client, backing_store );
             } catch ( const exception & e ) {
