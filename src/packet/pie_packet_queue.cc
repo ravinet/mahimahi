@@ -78,7 +78,7 @@ bool PIEPacketQueue::drop_early ()
 
 QueuedPacket PIEPacketQueue::dequeue( void )
 {
-  QueuedPacket ret = std::move( DroppingPacketQueue::dequeue () );
+  QueuedPacket ret = DroppingPacketQueue::dequeue();
   uint32_t now = timestamp();
 
   if ( size_bytes() >= dq_threshold_ && dq_count_ == DQ_COUNT_INVALID ) {

@@ -29,7 +29,7 @@ dodequeue_result CODELPacketQueue::dodequeue ( uint64_t now )
   uint64_t sojourn_time;
 
   dodequeue_result r;
-  r.p = std::move( DroppingPacketQueue::dequeue () );
+  r.p = DroppingPacketQueue::dequeue();
   r.ok_to_drop = false;
 
   if ( empty() ) {
@@ -62,7 +62,7 @@ uint64_t CODELPacketQueue::control_law ( uint64_t t, uint32_t count )
 QueuedPacket CODELPacketQueue::dequeue( void )
 {   
   const uint64_t now = timestamp();
-  dodequeue_result r = std::move( dodequeue ( now ) );
+  dodequeue_result r = dodequeue( now );
   uint32_t delta;
     
   if ( dropping_ ) {
@@ -71,7 +71,7 @@ QueuedPacket CODELPacketQueue::dequeue( void )
     }
 
     while ( now >= drop_next_ && dropping_ ) {
-      dodequeue_result r = std::move( dodequeue ( now ) );
+      dodequeue_result r = dodequeue ( now );
       count_++;
       if ( ! r.ok_to_drop ) {
 	dropping_ = false;
@@ -81,7 +81,7 @@ QueuedPacket CODELPacketQueue::dequeue( void )
     }
   }
   else if ( r.ok_to_drop ) {
-    dodequeue_result r = std::move( dodequeue ( now ) );
+    dodequeue_result r = dodequeue( now );
     dropping_ = true;
     delta = count_ - lastcount_;
     count_ = ( ( delta > 1 ) && ( now - drop_next_ < 16 * interval_ ))? 
