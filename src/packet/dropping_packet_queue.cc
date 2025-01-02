@@ -8,9 +8,9 @@
 
 using namespace std;
 
-DroppingPacketQueue::DroppingPacketQueue( const string & args )
-    : packet_limit_( get_arg( args, "packets" ) ),
-      byte_limit_( get_arg( args, "bytes" ) )
+DroppingPacketQueue::DroppingPacketQueue( ParsedArguments & args )
+    : packet_limit_( args.get_int_arg( "packets", 0 ) ),
+      byte_limit_( args.get_int_arg( "bytes", 0 ) )
 {
     if ( packet_limit_ == 0 and byte_limit_ == 0 ) {
         throw runtime_error( "Dropping queue must have a byte or packet limit." );
@@ -97,36 +97,4 @@ string DroppingPacketQueue::to_string( void ) const
     ret += "]";
 
     return ret;
-}
-
-unsigned int DroppingPacketQueue::get_arg( const string & args, const string & name )
-{
-    auto offset = args.find( name );
-    if ( offset == string::npos ) {
-        return 0; /* default value */
-    } else {
-        /* extract the value */
-
-        /* advance by length of name */
-        offset += name.size();
-
-        /* make sure next char is "=" */
-        if ( args.substr( offset, 1 ) != "=" ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
-
-        /* advance by length of "=" */
-        offset++;
-
-        /* find the first non-digit character */
-        auto offset2 = args.substr( offset ).find_first_not_of( "0123456789" );
-
-        auto digit_string = args.substr( offset ).substr( 0, offset2 );
-
-        if ( digit_string.empty() ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
-
-        return myatoi( digit_string );
-    }
 }

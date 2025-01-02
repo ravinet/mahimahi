@@ -6,6 +6,7 @@
 #include <string>
 
 #include "queued_packet.hh"
+#include "parsed_arguments.hh"
 
 class AbstractPacketQueue
 {
