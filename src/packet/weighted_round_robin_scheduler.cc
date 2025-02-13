@@ -11,6 +11,7 @@ WRRScheduler::WRRScheduler (L4SPacketQueue & l4s_q, CLASSICPacketQueue & classic
        If the L4S weight is higher than the classic, the negative credit_init_ will give priority to the L4S queue.*/
     
     credit_init_ = (int32_t)MTU * ( classic_weight_ - l4s_weight_ );
+    reset_credit();
 }
 
 QueueType WRRScheduler::select_queue ( ) 
