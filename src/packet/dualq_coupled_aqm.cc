@@ -14,6 +14,7 @@ using namespace PollerShortNames;
 
 DualQCoupledAQM::DualQCoupledAQM( const string & args )
   : byte_limit_( get_arg( args, "bytes" ) ),
+    packet_limit_( get_arg( args, "packets" ) ),
     k_ ( get_arg( args, "k" ) ),
     l4s_queue_ ( L4SPacketQueue ( args ) ),
     classic_queue_ ( CLASSICPacketQueue ( args ) ),
@@ -32,21 +33,33 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     p_Cmax_ ( 0 ),
     l4s_drop_on_overload_ ( true )
 {
-    if ( byte_limit_ == 0 ) {
-        throw runtime_error( "DualPI2 must have a byte limit." );
+    if ( packet_limit_ == 0 and byte_limit_ == 0 ) {
+        packet_limit_ = 10000; /* default value from Linux code. Represents 125 ms at 1 Gbps */
+        byte_limit_ = packet_limit_ * MTU;
+    }
+    else if (packet_limit_ != 0) {
+        // Prioritize packet_limit_ over byte_limit_
+        byte_limit_ = packet_limit_ * MTU;
+
+    }
+    else if (byte_limit_ != 0) {
+        packet_limit_ = byte_limit_ / MTU;
     }
 
     if ( k_ == 0 ) k_ = 2;
     p_Cmax_ = min( scale_prob( 1/ pow( k_, 2 ) ), MAX_PROB );
     p_Lmax_ = MAX_PROB;
 
-    // TODO: adjust the following values!!
-
     if ( target_ns_ == 0 ) target_ns_ = 15 * NS_PER_MS; 
     if ( max_rtt_ms_ == 0 ) max_rtt_ms_ = 100;
-    if ( alpha_ == 0 ) alpha_ = 100;
-    if ( beta_ == 0 ) beta_ = 200;
-    if ( t_update_ms_ == 0 ) t_update_ms_ = 16;
+    if ( t_update_ms_ == 0 ) t_update_ms_ = 16; // RFC 9332: Tupdate = min(target, RTT_max/3)
+    
+    /* From RFC 9332:
+        13:   alpha = 0.1 * Tupdate / RTT_max^2      % PI integral gain in Hz
+        14:   beta = 0.3 / RTT_max                   % PI proportional gain in Hz */
+    if ( alpha_ == 0 ) alpha_ = scale_alpha_beta( 41 );
+    if ( beta_ == 0 ) beta_ = scale_alpha_beta( 819 );
+    
 
     if (scheduler_type_ == SchedulerType::NONE || scheduler_type_ == SchedulerType::WRR) {
         scheduler_ = std::unique_ptr<WRRScheduler>( new WRRScheduler(l4s_queue_, classic_queue_) );
@@ -222,6 +235,12 @@ bool DualQCoupledAQM::recur( AbstractDualPI2PacketQueue & queue, uint32_t likeli
 int64_t DualQCoupledAQM::scale_delta( uint64_t val )
 {
     return val / ((1 << ( ALPHA_BETA_GRANULARITY + 1 )) -1) ;
+}
+
+uint32_t DualQCoupledAQM::scale_alpha_beta( uint32_t val )
+{
+    uint64_t tmp = ((uint64_t)val * MAX_PROB << ALPHA_BETA_SCALING);
+    return tmp / NS_PER_S;
 }
 
 void DualQCoupledAQM::set_periodic_update( void ) 

@@ -19,10 +19,14 @@
 #include "abstract_l4s_scheduler.hh"
 #include "weighted_round_robin_scheduler.hh"
 
+#define ALPHA_BETA_SHIFT 8
 /* Used to scale the delay diff */
 #define ALPHA_BETA_GRANULARITY 6
 
+#define ALPHA_BETA_SCALING (ALPHA_BETA_SHIFT - ALPHA_BETA_GRANULARITY)
+
 #define NS_PER_MS 1000000
+#define NS_PER_S  1000000000
 
 /*
    DualQ Coupled AQM, Implemented as DualQ PI2 based on RFC 9332.
@@ -35,7 +39,8 @@ private:
     //It maybe better to get this in a more reliable way in the future.
     const static unsigned int PACKET_SIZE = 1504; /* default max TUN payload size */
 
-    const unsigned int byte_limit_;
+    unsigned int byte_limit_;
+    unsigned int packet_limit_;
 
     // Proportional Integral (PI) controller parameters
 
@@ -44,10 +49,6 @@ private:
 
     Poller poller_ ;
     Timerfd timer_ ;
-
-    /* From RFC 9332:
-        13:   alpha = 0.1 * Tupdate / RTT_max^2      % PI integral gain in Hz
-        14:   beta = 0.3 / RTT_max                   % PI proportional gain in Hz */
 
     uint32_t alpha_;
     uint32_t beta_;
@@ -103,6 +104,7 @@ private:
     bool classic_is_overloaded ( void ) { return p_c_ >= p_Cmax_; }
 
     int64_t scale_delta( uint64_t val );
+    uint32_t scale_alpha_beta( uint32_t val );
 
     void scheduler_update( void );
 
