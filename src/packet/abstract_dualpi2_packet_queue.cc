@@ -8,12 +8,12 @@ using namespace std;
 #define DQ_COUNT_INVALID   (uint32_t)-1
 
 AbstractDualPI2PacketQueue::AbstractDualPI2PacketQueue( const string & args )
-  : DroppingPacketQueue(args)
+  : DroppingPacketQueue(args),
+    recur_count_ (0)
 {
   
 }
 
-// TODO: Is there a better place for this function?
 uint32_t scale_prob( double prob )
 {
     if ( prob < 0.0 || prob > 1.0 )

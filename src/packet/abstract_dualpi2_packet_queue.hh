@@ -29,7 +29,6 @@ public:
     void set_recur_count ( uint32_t val ) { recur_count_ = val; }
 };
 
-// TODO: Is there a better place for this function?
 uint32_t scale_prob( double prob );
 
 #endif /* ABSTRACT_DUALPI2_PACKET_QUEUE_HH */

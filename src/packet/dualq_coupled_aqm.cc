@@ -224,8 +224,8 @@ void DualQCoupledAQM::mark( QueuedPacket & p )
 bool DualQCoupledAQM::recur( AbstractDualPI2PacketQueue & queue, uint32_t likelihood )
 {
     uint32_t count = queue.get_recur_count() + likelihood;
-    if ( count > 1) {
-        queue.set_recur_count( count - 1 );
+    if ( count > MAX_PROB) {
+        queue.set_recur_count( count - MAX_PROB );
         return true;
     }
     queue.set_recur_count( count );
