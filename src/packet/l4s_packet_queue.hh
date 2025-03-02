@@ -33,16 +33,12 @@ private:
         return type_;
     }
 
-    bool drop_early ( void );
+    
 
     
 
 public:
     L4SPacketQueue( const std::string & args );
-
-    void enqueue( QueuedPacket && p ) override;
-
-    QueuedPacket dequeue( void ) override;
 
     uint32_t calculate_l4s_native_prob ( uint64_t qdelay );
 

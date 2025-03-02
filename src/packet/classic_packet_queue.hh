@@ -21,16 +21,8 @@ private:
         return type_;
     }
 
-    bool drop_early ( void );
-
-    void calculate_drop_prob ( void );
-
 public:
     CLASSICPacketQueue( const std::string & args );
-
-    void enqueue( QueuedPacket && p ) override;
-
-    QueuedPacket dequeue( void ) override;
    
 };
 

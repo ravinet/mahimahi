@@ -6,8 +6,7 @@
 using namespace std;
 
 L4SPacketQueue::L4SPacketQueue( const string & args )
-  : AbstractDualPI2PacketQueue(args),
-    max_delay_thresh_us_( get_arg( args, "l4s_max_threshold" ) ),
+  : max_delay_thresh_us_( get_arg( args, "l4s_max_threshold" ) ),
     min_delay_thresh_us_ ( get_arg( args, "l4s_min_threshold" ) ),
     min_qlen_pkt_ ( get_arg( args, "l4s_min_len" ) )
 {   
@@ -23,27 +22,6 @@ L4SPacketQueue::L4SPacketQueue( const string & args )
     if ( min_qlen_pkt_ == 0 )
         min_qlen_pkt_ = 1;
 }
-
-void L4SPacketQueue::enqueue( QueuedPacket && p )
-{
-  assert( good() );
-}
-
-//returns true if packet should be dropped.
-bool L4SPacketQueue::drop_early ()
-{
-
-    return false;
-}
-
-QueuedPacket L4SPacketQueue::dequeue( void )
-{
-    // TODO: check if keep the DroppingPacketQueue ref here
-    QueuedPacket ret = std::move( DroppingPacketQueue::dequeue () );
-
-    return ret;
-}
-
 
 uint32_t L4SPacketQueue::calculate_l4s_native_prob ( uint64_t qdelay )
 {
