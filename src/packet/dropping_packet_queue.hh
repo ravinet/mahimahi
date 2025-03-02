@@ -45,9 +45,6 @@ public:
 
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
-
-    QueuedPacket& peek ( void );
-    uint64_t qdelay_in_ns ( uint64_t ref );
 };
 
 #endif /* DROPPING_PACKET_QUEUE_HH */ 

@@ -15,9 +15,9 @@ using namespace PollerShortNames;
 DualQCoupledAQM::DualQCoupledAQM( const string & args )
   : byte_limit_( get_arg( args, "bytes" ) ),
     packet_limit_( get_arg( args, "packets" ) ),
-    k_ ( get_arg( args, "k" ) ),
-    l4s_queue_ ( L4SPacketQueue ( args ) ),
-    classic_queue_ ( CLASSICPacketQueue ( args ) ),
+    //k_ ( get_arg( args, "k" ) ),
+    l4s_queue_ ( L4SPacketQueue ( "" ) ),
+    classic_queue_ ( CLASSICPacketQueue ( "" ) ),
     scheduler_type_ ( static_cast<SchedulerType> (get_arg( args, "sched" ))),
     target_ns_ ( get_arg( args, "target" ) * NS_PER_MS ),
     max_rtt_ms_ ( get_arg( args, "max_rtt" ) ),
@@ -31,8 +31,10 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     p_cl_ ( 0 ),
     p_c_ ( 0 ),
     p_Cmax_ ( 0 ),
+    k_ ( 2 ),
     l4s_drop_on_overload_ ( true )
 {
+    std::cout << "packet_limit_= " << std::to_string(packet_limit_) << " byte_limit_= " << std::to_string(byte_limit_);
     if ( packet_limit_ == 0 and byte_limit_ == 0 ) {
         packet_limit_ = 10000; /* default value from Linux code. Represents 125 ms at 1 Gbps */
         byte_limit_ = packet_limit_ * MTU;
@@ -46,7 +48,7 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
         packet_limit_ = byte_limit_ / MTU;
     }
 
-    if ( k_ == 0 ) k_ = 2;
+    //if ( k_ == 0 ) k_ = 2;
     p_Cmax_ = min( scale_prob( 1/ pow( k_, 2 ) ), MAX_PROB );
     p_Lmax_ = MAX_PROB;
 
@@ -75,6 +77,8 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     set_periodic_update ();
 
     //poller_.poll( 0 );
+
+    std::cout << "end of the ctor ";
 }
 
 void DualQCoupledAQM::enqueue( QueuedPacket && p )
@@ -204,7 +208,7 @@ void DualQCoupledAQM::drop( std::string reason )
 
 unsigned char DualQCoupledAQM::get_ecn_bits( QueuedPacket & p )
 {
-    struct iphdr *ip_header = (struct iphdr *) p.contents[4];
+    struct iphdr *ip_header = (struct iphdr *) &p.contents[4];
     return ( ip_header->tos & IPTOS_ECN_MASK ) ; 
 }
 
@@ -240,6 +244,8 @@ int64_t DualQCoupledAQM::scale_delta( uint64_t val )
 uint32_t DualQCoupledAQM::scale_alpha_beta( uint32_t val )
 {
     uint64_t tmp = ((uint64_t)val * MAX_PROB << ALPHA_BETA_SCALING);
+    std::cout << "IN scale alpha beta, val to return is " << std::to_string(tmp / NS_PER_S);
+
     return tmp / NS_PER_S;
 }
 
@@ -300,37 +306,37 @@ uint32_t DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
     return new_prob;
 }
 
-unsigned int DualQCoupledAQM::get_arg( const string & args, const string & name )
-{
-    auto offset = args.find( name );
-    if ( offset == string::npos ) {
-        return 0; /* default value */
-    } else {
-        /* extract the value */
+// unsigned int DualQCoupledAQM::get_arg( const string & args, const string & name )
+// {
+//     auto offset = args.find( name );
+//     if ( offset == string::npos ) {
+//         return 0; /* default value */
+//     } else {
+//         /* extract the value */
 
-        /* advance by length of name */
-        offset += name.size();
+//         /* advance by length of name */
+//         offset += name.size();
 
-        /* make sure next char is "=" */
-        if ( args.substr( offset, 1 ) != "=" ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
+//         /* make sure next char is "=" */
+//         if ( args.substr( offset, 1 ) != "=" ) {
+//             throw runtime_error( "could not parse queue arguments: " + args + " name: " + name + "substr: " + args.substr( offset, 1 ));
+//         }
 
-        /* advance by length of "=" */
-        offset++;
+//         /* advance by length of "=" */
+//         offset++;
 
-        /* find the first non-digit character */
-        auto offset2 = args.substr( offset ).find_first_not_of( "0123456789" );
+//         /* find the first non-digit character */
+//         auto offset2 = args.substr( offset ).find_first_not_of( "0123456789" );
 
-        auto digit_string = args.substr( offset ).substr( 0, offset2 );
+//         auto digit_string = args.substr( offset ).substr( 0, offset2 );
 
-        if ( digit_string.empty() ) {
-            throw runtime_error( "could not parse queue arguments: " + args );
-        }
+//         if ( digit_string.empty() ) {
+//             throw runtime_error( "could not parse queue arguments: " + args );
+//         }
       
-        return myatoi( digit_string );
-    }
-}
+//         return myatoi( digit_string );
+//     }
+// }
 
 DualQCoupledAQM::~DualQCoupledAQM ( void )
 {

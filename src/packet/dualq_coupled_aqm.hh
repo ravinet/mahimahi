@@ -118,7 +118,7 @@ public:
 
     std::string to_string( void ) const override;
 
-    static unsigned int get_arg( const std::string & args, const std::string & name );
+    //static unsigned int get_arg( const std::string & args, const std::string & name );
 
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
