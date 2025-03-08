@@ -23,7 +23,7 @@ private:
 
     virtual const std::string & type( void ) const = 0;
 
-    uint32_t recur_count_ = 0;
+    uint64_t recur_count_ = 0;
 
 protected:
     
@@ -40,18 +40,17 @@ public:
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
 
-    uint32_t get_recur_count ( void ) { return recur_count_; } 
-    void set_recur_count ( uint32_t val ) { recur_count_ = val; }
+    uint64_t get_recur_count ( void ) { return recur_count_; } 
+    void set_recur_count ( uint64_t val ) { recur_count_ = val; }
 
     QueuedPacket& peek ( void );
-    uint64_t qdelay_in_ns ( uint64_t ref );
-
-        
+    uint64_t qdelay_in_ns ( uint64_t ref );       
 };
 
 
 // Utilities
 uint32_t scale_prob( double prob );
 unsigned int get_arg( const std::string & args, const std::string & name );
+void print_ipv4_header( QueuedPacket & p ); 
 
 #endif /* ABSTRACT_DUALPI2_PACKET_QUEUE_HH */
