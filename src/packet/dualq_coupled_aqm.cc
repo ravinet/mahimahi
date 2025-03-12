@@ -19,7 +19,7 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     l4s_queue_ ( L4SPacketQueue ( "" ) ),
     classic_queue_ ( CLASSICPacketQueue ( "" ) ),
     scheduler_type_ ( static_cast<SchedulerType> (get_arg( args, "sched" ))),
-    target_ns_ ( get_arg( args, "target" ) * NS_PER_MS ),
+    target_ms_ ( get_arg( args, "target" ) ),
     max_rtt_ms_ ( get_arg( args, "max_rtt" ) ),
     alpha_ ( get_arg( args, "alpha" ) ),
     beta_ ( get_arg( args, "beta" ) ),
@@ -50,7 +50,7 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     p_Cmax_ = min( scale_prob( 1/ pow( k_, 2 ) ), MAX_PROB );
     p_Lmax_ = MAX_PROB;
 
-    if ( target_ns_ == 0 ) target_ns_ = 15 * NS_PER_MS; 
+    if ( target_ms_ == 0 ) target_ms_ = 15; 
     if ( max_rtt_ms_ == 0 ) max_rtt_ms_ = 100;
     if ( t_update_ms_ == 0 ) t_update_ms_ = 16; // RFC 9332: Tupdate = min(target, RTT_max/3)
     
@@ -65,11 +65,11 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
         scheduler_ = std::unique_ptr<WRRScheduler>( new WRRScheduler(l4s_queue_, classic_queue_) );
     }
 
-    l4s_qdelay_ns_ = 0;
-    classic_qdelay_ns_ = 0;
+    l4s_qdelay_ms_ = 0;
+    classic_qdelay_ms_ = 0;
 
     /* initialize base timestamp value */
-    initial_timestamp_ns();
+    //initial_timestamp_ns();
 
     /* Start the periodic process that updates probs*/
     set_periodic_update ();
@@ -123,7 +123,7 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
     std::cout << "--In DualQCoupled AQM dequeue" << std::endl;
 
     QueueType dequeue_from;
-    uint64_t l4s_qdelay_ns;
+    uint64_t l4s_qdelay_ms;
     uint64_t now;
 
     // check if the periodic update function is due, return immediately if not.
@@ -137,10 +137,10 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
             pkt = l4s_queue_.dequeue();
             
             if ( not l4s_is_overloaded() ) {
-                now = timestamp_ns();
+                now = timestamp();
 
-                l4s_qdelay_ns = l4s_queue_.qdelay_in_ns( now );
-                pp_l_ = l4s_queue_.calculate_l4s_native_prob( l4s_qdelay_ns ); 
+                l4s_qdelay_ms = l4s_queue_.qdelay_in_ms( now );
+                pp_l_ = l4s_queue_.calculate_l4s_native_prob( l4s_qdelay_ms ); 
 
                 p_l_ = max(pp_l_, p_cl_);
 
@@ -285,7 +285,7 @@ void DualQCoupledAQM::set_periodic_update( void )
                                             string str = timer_.read();
                                             std::cout << " ------ Timer read output " << std::endl;
 
-                                            uint64_t now = timestamp_ns();
+                                            uint64_t now = timestamp();
                                             pp_ = calculate_base_aqm_prob ( now );
                                             p_c_ = pow( pp_, 2 );
                                             p_cl_ = pp_ * k_ ;
@@ -312,20 +312,20 @@ uint32_t DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
 
     cout << "-- In calculate_base_aqm_prob (that outputs pp) " << endl;
 
-    uint64_t qdelay_old = max( l4s_qdelay_ns_, classic_qdelay_ns_ ) ;
+    uint64_t qdelay_old = max( l4s_qdelay_ms_, classic_qdelay_ms_ ) ;
 
-    cout << ">> l4s_qdelay_ns = " << std::to_string(l4s_qdelay_ns_) << endl;
-    cout << ">> classic_qdelay_ns = " << std::to_string(classic_qdelay_ns_) << endl;
+    cout << ">> l4s_qdelay_ms = " << std::to_string(l4s_qdelay_ms_) << endl;
+    cout << ">> classic_qdelay_ms = " << std::to_string(classic_qdelay_ms_) << endl;
 
     uint32_t new_prob;
 
     // Update the qdelays
-    l4s_qdelay_ns_ = l4s_queue_.qdelay_in_ns( ref );
-    classic_qdelay_ns_ = classic_queue_.qdelay_in_ns( ref );
+    l4s_qdelay_ms_ = l4s_queue_.qdelay_in_ms( ref );
+    classic_qdelay_ms_ = classic_queue_.qdelay_in_ms( ref );
 
-    uint64_t qdelay = max( l4s_qdelay_ns_, classic_qdelay_ns_ ) ;
+    uint64_t qdelay = max( l4s_qdelay_ms_, classic_qdelay_ms_ ) ;
 
-    int64_t delta = ( (int64_t)qdelay - target_ns_ ) * alpha_;
+    int64_t delta = ( (int64_t)qdelay - target_ms_ ) * alpha_;
     delta += ( (int64_t)qdelay - qdelay_old ) * beta_;
 
     if ( delta > 0 ) {

@@ -85,12 +85,12 @@ QueuedPacket& AbstractDualPI2PacketQueue::peek( void )
     return internal_queue_.front();
 }
 
-uint64_t AbstractDualPI2PacketQueue::qdelay_in_ns ( uint64_t ref ) 
+uint64_t AbstractDualPI2PacketQueue::qdelay_in_ms ( uint64_t ref ) 
 {
     if ( internal_queue_.empty() ) return 0;
     
     QueuedPacket& head = peek();
-    return head.sojourn_time_in_ns( ref );
+    return ref - head.arrival_time;
 }
 
 uint32_t scale_prob( double prob )

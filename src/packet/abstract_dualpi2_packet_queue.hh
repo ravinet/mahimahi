@@ -44,7 +44,7 @@ public:
     void set_recur_count ( uint64_t val ) { recur_count_ = val; }
 
     QueuedPacket& peek ( void );
-    uint64_t qdelay_in_ns ( uint64_t ref );       
+    uint64_t qdelay_in_ms ( uint64_t ref );       
 };
 
 
