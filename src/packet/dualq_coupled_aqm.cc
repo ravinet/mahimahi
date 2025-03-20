@@ -47,8 +47,8 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     }
 
     //if ( k_ == 0 ) k_ = 2;
-    p_Cmax_ = min( scale_prob( 1/ pow( k_, 2 ) ), MAX_PROB );
-    p_Lmax_ = MAX_PROB;
+    p_Cmax_ = min( 1/ pow( k_, 2 ) , 1.0 );
+    p_Lmax_ = 1.0;
 
     if ( target_ms_ == 0 ) target_ms_ = 15; 
     if ( max_rtt_ms_ == 0 ) max_rtt_ms_ = 100;
@@ -57,8 +57,8 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     /* From RFC 9332:
         13:   alpha = 0.1 * Tupdate / RTT_max^2      % PI integral gain in Hz
         14:   beta = 0.3 / RTT_max                   % PI proportional gain in Hz */
-    if ( alpha_ == 0 ) alpha_ = scale_alpha_beta( 41 );
-    if ( beta_ == 0 ) beta_ = scale_alpha_beta( 819 );
+    if ( alpha_ == 0 ) alpha_ = 0.16;
+    if ( beta_ == 0 ) beta_ = 3.2;
     
 
     if (scheduler_type_ == SchedulerType::NONE || scheduler_type_ == SchedulerType::WRR) {
@@ -244,33 +244,20 @@ void DualQCoupledAQM::mark( QueuedPacket & p )
 
  /* Returns TRUE with a certain likelihood modeling a recurring (and deterministic) 
     pattern of marks/drops */ 
-bool DualQCoupledAQM::recur( AbstractDualPI2PacketQueue & queue, uint32_t likelihood )
+bool DualQCoupledAQM::recur( AbstractDualPI2PacketQueue & queue, double likelihood )
 {
     std::cout << "##### In recur !!" << std::endl;
 
     uint64_t count = queue.get_recur_count() + likelihood;
 
     std::cout << "##### The new count = " << count << std::endl;
-    if ( count > MAX_PROB) {
-        std::cout << "##### Count is higer than MAX_PROB. New count is: " << count - MAX_PROB << std::endl;
-        queue.set_recur_count( count - MAX_PROB );
+    if ( count > 1.0 ) {
+        //std::cout << "##### Count is higer than MAX_PROB. New count is: " << count - MAX_PROB << std::endl;
+        queue.set_recur_count( count - 1.0 );
         return true;
     }
     queue.set_recur_count( count );
     return false;
-}
-
-int64_t DualQCoupledAQM::scale_delta( uint64_t val )
-{
-    return val / ((1 << ( ALPHA_BETA_GRANULARITY + 1 )) -1) ;
-}
-
-uint32_t DualQCoupledAQM::scale_alpha_beta( uint32_t val )
-{
-    uint64_t tmp = ((uint64_t)val * MAX_PROB << ALPHA_BETA_SCALING);
-    std::cout << "IN scale alpha beta, val to return is " << std::to_string(tmp / NS_PER_S) << std::endl;
-
-    return tmp / NS_PER_S;
 }
 
 void DualQCoupledAQM::set_periodic_update( void ) 
@@ -305,7 +292,7 @@ void DualQCoupledAQM::set_periodic_update( void )
 
 // }
 
-uint32_t DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref ) 
+double DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref ) 
 {
     /* From  RFC 9332   : dualpi2_update function
              Linux code : calculate_probability function  */
@@ -317,7 +304,7 @@ uint32_t DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
     cout << ">> l4s_qdelay_ms = " << std::to_string(l4s_qdelay_ms_) << endl;
     cout << ">> classic_qdelay_ms = " << std::to_string(classic_qdelay_ms_) << endl;
 
-    uint32_t new_prob;
+    
 
     // Update the qdelays
     l4s_qdelay_ms_ = l4s_queue_.qdelay_in_ms( ref );
@@ -325,20 +312,17 @@ uint32_t DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
 
     uint64_t qdelay = max( l4s_qdelay_ms_, classic_qdelay_ms_ ) ;
 
-    int64_t delta = ( (int64_t)qdelay - target_ms_ ) * alpha_;
-    delta += ( (int64_t)qdelay - qdelay_old ) * beta_;
-
-    if ( delta > 0 ) {
+    double new_prob = ((int64_t)qdelay - target_ms_) * alpha_ + ((int64_t)qdelay - qdelay_old) * beta_;
+    
+    if ( new_prob > 1.0 ) {
         // prevent overflow
-        new_prob = scale_delta( delta ) + pp_ ;
-        if ( new_prob < pp_ )
-            new_prob = MAX_PROB;
+            new_prob = 1.0;
     }
-    else {
+    else if ( new_prob < 0.0) {
         // prevent underflow
-        new_prob = pp_ - scale_delta( delta * -1 );
+        //new_prob = pp_ - scale_delta( delta * -1 );
         if ( new_prob > pp_ )
-            new_prob = 0;
+            new_prob = 0.0;
     }
 
     // TODO: check the capping of p' if no drop on overload

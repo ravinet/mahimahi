@@ -40,7 +40,7 @@ private:
 public:
     L4SPacketQueue( const std::string & args );
 
-    uint32_t calculate_l4s_native_prob ( uint64_t qdelay );
+    double calculate_l4s_native_prob ( uint64_t qdelay );
 
 };
 

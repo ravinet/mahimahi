@@ -50,8 +50,8 @@ private:
     Poller poller_ ;
     Timerfd timer_ ;
 
-    uint32_t alpha_;
-    uint32_t beta_;
+    double alpha_;
+    double beta_;
 
     // Coupling factor
     uint32_t k_;
@@ -73,13 +73,13 @@ private:
 
     uint32_t satur_drop_pkts_;
 
-    uint32_t pp_l_; 
-    uint32_t pp_;
-    uint32_t p_l_;
-    uint32_t p_c_;
-    uint32_t p_cl_;
-    uint32_t p_Cmax_;
-    uint32_t p_Lmax_;
+    double pp_l_; 
+    double pp_;
+    double p_l_;
+    double p_c_;
+    double p_cl_;
+    double p_Cmax_;
+    double p_Lmax_;
 
     bool l4s_drop_on_overload_;
 
@@ -103,9 +103,6 @@ private:
     bool l4s_is_overloaded( void ) { return p_cl_ >= p_Lmax_; }
     bool classic_is_overloaded ( void ) { return p_c_ >= p_Cmax_; }
 
-    int64_t scale_delta( uint64_t val );
-    uint32_t scale_alpha_beta( uint32_t val );
-
     void scheduler_update( void );
 
 public:
@@ -123,10 +120,10 @@ public:
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
 
-    bool recur( AbstractDualPI2PacketQueue & queue, uint32_t likelihood );
+    bool recur( AbstractDualPI2PacketQueue & queue, double likelihood );
 
     void set_periodic_update( void );
-    uint32_t calculate_base_aqm_prob( uint64_t ref );
+    double calculate_base_aqm_prob( uint64_t ref );
 
     ~DualQCoupledAQM( void );
 };

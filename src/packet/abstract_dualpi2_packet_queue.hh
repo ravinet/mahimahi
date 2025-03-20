@@ -11,8 +11,6 @@
 
 #include "abstract_packet_queue.hh"
 
-/* Max value of an 32-bit integer */
-#define MAX_PROB ((uint32_t)(~((uint32_t)0)))
 
 class AbstractDualPI2PacketQueue : public AbstractPacketQueue
 {
@@ -49,7 +47,6 @@ public:
 
 
 // Utilities
-uint32_t scale_prob( double prob );
 unsigned int get_arg( const std::string & args, const std::string & name );
 void print_ipv4_header( QueuedPacket & p ); 
 

@@ -23,28 +23,28 @@ L4SPacketQueue::L4SPacketQueue( const string & args )
         min_qlen_pkt_ = 1;
 }
 
-uint32_t L4SPacketQueue::calculate_l4s_native_prob ( uint64_t qdelay )
+double L4SPacketQueue::calculate_l4s_native_prob ( uint64_t qdelay )
 {
     if ( size_packets() <= min_qlen_pkt_ )
         // Do not mark packets if under min_qlen_pkt_ (default is 1)
-        return 0;
+        return 0.0;
 
     // In both the step and the ramp methods:
     if ( qdelay >= max_delay_thresh_us_ ) {
-            return MAX_PROB;
+            return 1.0;
         }
 
     // Here, qdelay < max_delay_thresh_us_
     
     if ( step_ ) {
-        return 0;
+        return 0.0;
     }
     else {
         // Use a ramp function: 'laqm (qdelay)' of RFC 9332
 
         if ( qdelay > min_delay_thresh_us_ ) {
-            return scale_prob( ( qdelay - min_delay_thresh_us_ )/
-                ( max_delay_thresh_us_ - min_delay_thresh_us_ ) );
+            return ( qdelay - min_delay_thresh_us_ )/
+                ( max_delay_thresh_us_ - min_delay_thresh_us_ );
         }
         
         return 0;

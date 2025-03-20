@@ -93,14 +93,6 @@ uint64_t AbstractDualPI2PacketQueue::qdelay_in_ms ( uint64_t ref )
     return ref - head.arrival_time;
 }
 
-uint32_t scale_prob( double prob )
-{
-    if ( prob < 0.0 || prob > 1.0 )
-        throw runtime_error ("Probability out of range! Provided value: " + std::to_string(prob));
-
-    return static_cast<uint32_t> ( prob * MAX_PROB ) ;
-}
-
 unsigned int get_arg( const string & args, const string & name )
 {
     return DroppingPacketQueue::get_arg( args, name );
