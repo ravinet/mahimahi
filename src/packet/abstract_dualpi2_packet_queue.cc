@@ -34,8 +34,7 @@ QueuedPacket AbstractDualPI2PacketQueue::dequeue( void )
     queue_size_in_bytes_ -= ret.contents.size();
     queue_size_in_packets_--;
 
-    std::cout << "> In dequeue. Queue size is " << size_bytes() << " bytes, or " << size_packets() 
-    << " packets." <<  std::endl;
+    //std::cout << "> In dequeue. Queue size is " << size_bytes() << " bytes, or " << size_packets() << " packets." <<  std::endl;
 
     return ret;
 }
@@ -100,49 +99,49 @@ unsigned int get_arg( const string & args, const string & name )
 
 void print_ipv4_header( QueuedPacket & p ) 
 {
-    std::cout << "-- PRE IP Header Information:" << std::endl;
+    //std::cout << "-- PRE IP Header Information:" << std::endl;
 
-    std::cout << std::to_string(p.contents[0]) << std::endl;
-    std::cout << std::to_string(p.contents[1]) << std::endl;
-    std::cout << std::to_string(p.contents[2]) << std::endl;
-    std::cout << std::to_string(p.contents[3]) << std::endl;
+    //std::cout << std::to_string(p.contents[0]) << std::endl;
+    //std::cout << std::to_string(p.contents[1]) << std::endl;
+    //std::cout << std::to_string(p.contents[2]) << std::endl;
+    //std::cout << std::to_string(p.contents[3]) << std::endl;
 
     
-    std::cout << "-- IP Header Information:" << std::endl;
+    //std::cout << "-- IP Header Information:" << std::endl;
     
     struct iphdr *ip_header = (struct iphdr *) &p.contents[4];
     // Version and Header Length
-    std::cout << "Version: " << (int)ip_header->version << std::endl;
-    std::cout << "Header Length: " << (int)ip_header->ihl * 4 << " bytes" << std::endl;
+    //std::cout << "Version: " << (int)ip_header->version << std::endl;
+    //std::cout << "Header Length: " << (int)ip_header->ihl * 4 << " bytes" << std::endl;
     
     // Type of Service
-    std::cout << "Type of Service: " << std::to_string(ip_header->tos) << std::endl;
+    //std::cout << "Type of Service: " << std::to_string(ip_header->tos) << std::endl;
 
     // Total Length
-    std::cout << "Total Length: " << ntohs(ip_header->tot_len) << " bytes" << std::endl;
+    //std::cout << "Total Length: " << ntohs(ip_header->tot_len) << " bytes" << std::endl;
 
     // Identification
-    std::cout << "Identification: " << ntohs(ip_header->id) << std::endl;
+    //std::cout << "Identification: " << ntohs(ip_header->id) << std::endl;
 
     // Flags and Fragment Offset
-    std::cout << "Flags: " << (int)ip_header->frag_off << std::endl;
+    //std::cout << "Flags: " << (int)ip_header->frag_off << std::endl;
 
     // Time to Live
-    std::cout << "TTL: " << (int)ip_header->ttl << std::endl;
+    //std::cout << "TTL: " << (int)ip_header->ttl << std::endl;
 
     // Protocol
-    std::cout << "Protocol: " << (int)ip_header->protocol << std::endl;
+    //std::cout << "Protocol: " << (int)ip_header->protocol << std::endl;
 
     // Header Checksum
-    std::cout << "Checksum: " << ntohs(ip_header->check) << std::endl;
+    //std::cout << "Checksum: " << ntohs(ip_header->check) << std::endl;
 
     // Source IP Address
     struct in_addr sip;
     sip.s_addr = ip_header->saddr;
-    std::cout << "Source IP: " << inet_ntoa(sip) << std::endl;
+    //std::cout << "Source IP: " << inet_ntoa(sip) << std::endl;
 
     // Destination IP Address
     struct in_addr dip;
     dip.s_addr = ip_header->daddr;
-    std::cout << "Destination IP: " << inet_ntoa(dip) << std::endl;
+    //std::cout << "Destination IP: " << inet_ntoa(dip) << std::endl;
 }

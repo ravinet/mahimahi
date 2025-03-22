@@ -57,8 +57,10 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     /* From RFC 9332:
         13:   alpha = 0.1 * Tupdate / RTT_max^2      % PI integral gain in Hz
         14:   beta = 0.3 / RTT_max                   % PI proportional gain in Hz */
-    if ( alpha_ == 0 ) alpha_ = 0.16;
-    if ( beta_ == 0 ) beta_ = 3.2;
+    
+    // Since the default time unit is ms, alpha and beta have to be in kHz
+    if ( alpha_ == 0 ) alpha_ = 0.00016;
+    if ( beta_ == 0 ) beta_ = 0.0032;
     
 
     if (scheduler_type_ == SchedulerType::NONE || scheduler_type_ == SchedulerType::WRR) {
@@ -74,8 +76,8 @@ DualQCoupledAQM::DualQCoupledAQM( const string & args )
     /* Start the periodic process that updates probs*/
     set_periodic_update ();
 
-    std::cout << "end of the ctor " << std::endl;
-    std::cout << "packet_limit_= " << std::to_string(packet_limit_) << " byte_limit_= " << std::to_string(byte_limit_) << std::endl;
+    //std::cout << "end of the ctor " << std::endl;
+    //std::cout << "packet_limit_= " << std::to_string(packet_limit_) << " byte_limit_= " << std::to_string(byte_limit_) << std::endl;
 }
 
 void DualQCoupledAQM::enqueue( QueuedPacket && p )
@@ -85,13 +87,13 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
     // underutilization of buffer space...
     // Use p.contents.size() instead of MTU to be more precise
 
-    std::cout << "--In DualQCoupled AQM enqueue" << std::endl;
+    //std::cout << "--In DualQCoupled AQM enqueue" << std::endl;
 
     // check if the periodic update function is due, return immediately if not.
     poller_.poll( 0 );
 
     if ( size_bytes() + MTU > byte_limit_) {
-        std::cout << "> Drop due to saturation!! " << std::endl;
+        std::cout << "> Drop due to saturationnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn!! " << std::endl;
         drop ("saturation");
         return;
     }
@@ -102,15 +104,15 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
     // Packet classifier
     unsigned char ecn_bits = get_ecn_bits( p );
 
-    std::cout << "> ECN bits: " << std::to_string(ecn_bits) << std::endl;
+    //std::cout << "> ECN bits: " << std::to_string(ecn_bits) << std::endl;
 
     if (( ecn_bits == IPTOS_ECN_ECT1 ) ||
         ( ecn_bits == IPTOS_ECN_CE )) {
-            //std::cout << "> Calling L4S enqueue... " << std::endl;
+            ////std::cout << "> Calling L4S enqueue... " << std::endl;
         l4s_queue_.enqueue( std::move( p ) );
 
     } else {
-        //std::cout << "> Calling Classic enqueue... " << std::endl;
+        std::cout << "> Calling Classic enqueue... " << std::endl;
         classic_queue_.enqueue( std::move( p ) );
     }
     
@@ -120,20 +122,20 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
 
 QueuedPacket DualQCoupledAQM::dequeue( void )
 {
-    std::cout << "--In DualQCoupled AQM dequeue" << std::endl;
+    //std::cout << "--In DualQCoupled AQM dequeue" << std::endl;
 
     QueueType dequeue_from;
     uint64_t l4s_qdelay_ms;
     uint64_t now;
 
-    // check if the periodic update function is due, return immediately if not.
-    poller_.poll( 0 );
-
     do {
+        // check if the periodic update function is due, return immediately if not.
+        poller_.poll( 0 );
+
         QueuedPacket pkt("empty", 0);
         dequeue_from = scheduler_->select_queue();
+
         if ( dequeue_from == QueueType::L4S ) {
-            std::cout << "> Scheduler selects L4S..." << std::endl;
             pkt = l4s_queue_.dequeue();
             
             if ( not l4s_is_overloaded() ) {
@@ -163,7 +165,6 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
             std::cout << "> Scheduler selects Classic..." << std::endl;
             pkt = classic_queue_.dequeue();       
             
-            std::cout << " ---- Checking P_Cmax = " << p_Cmax_ << std::endl;
             if ( recur(classic_queue_, p_c_) ) {
                 if ( get_ecn_bits( pkt ) == IPTOS_ECN_NOT_ECT ||
                     classic_is_overloaded() ) {
@@ -246,9 +247,9 @@ void DualQCoupledAQM::mark( QueuedPacket & p )
     pattern of marks/drops */ 
 bool DualQCoupledAQM::recur( AbstractDualPI2PacketQueue & queue, double likelihood )
 {
-    std::cout << "##### In recur !!" << std::endl;
+    std::cout << "##### In recur !! likelihood is " << likelihood << std::endl;
 
-    uint64_t count = queue.get_recur_count() + likelihood;
+    double count = queue.get_recur_count() + likelihood;
 
     std::cout << "##### The new count = " << count << std::endl;
     if ( count > 1.0 ) {
@@ -270,7 +271,7 @@ void DualQCoupledAQM::set_periodic_update( void )
                                             cout << "set_periodic_update function called! " << endl;
 
                                             string str = timer_.read();
-                                            std::cout << " ------ Timer read output " << std::endl;
+                                            std::cout << " ------ Timer read output " << str << std::endl;
 
                                             uint64_t now = timestamp();
                                             pp_ = calculate_base_aqm_prob ( now );
@@ -298,11 +299,14 @@ double DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
              Linux code : calculate_probability function  */
 
     cout << "-- In calculate_base_aqm_prob (that outputs pp) " << endl;
+    
+    cout << ">> alpha = " << std::to_string(alpha_) << endl;
+    cout << ">> beta = " << std::to_string(beta_) << endl;
 
     uint64_t qdelay_old = max( l4s_qdelay_ms_, classic_qdelay_ms_ ) ;
 
-    cout << ">> l4s_qdelay_ms = " << std::to_string(l4s_qdelay_ms_) << endl;
-    cout << ">> classic_qdelay_ms = " << std::to_string(classic_qdelay_ms_) << endl;
+    cout << ">> [old] l4s_qdelay_ms = " << std::to_string(l4s_qdelay_ms_) << endl;
+    cout << ">> [old] classic_qdelay_ms = " << std::to_string(classic_qdelay_ms_) << endl;
 
     
 
@@ -312,17 +316,21 @@ double DualQCoupledAQM::calculate_base_aqm_prob( uint64_t ref )
 
     uint64_t qdelay = max( l4s_qdelay_ms_, classic_qdelay_ms_ ) ;
 
-    double new_prob = ((int64_t)qdelay - target_ms_) * alpha_ + ((int64_t)qdelay - qdelay_old) * beta_;
+    cout << ">> [new] l4s_qdelay_ms = " << std::to_string(l4s_qdelay_ms_) << endl;
+    cout << ">> [new] classic_qdelay_ms = " << std::to_string(classic_qdelay_ms_) << endl;
+
+    double new_prob = (static_cast<double>(qdelay) - target_ms_) * alpha_ 
+                    + (static_cast<double>(qdelay) - qdelay_old) * beta_;
     
+    cout << ">> new_prob = " << std::to_string(new_prob) << endl;
+
     if ( new_prob > 1.0 ) {
         // prevent overflow
-            new_prob = 1.0;
+        new_prob = 1.0;
     }
     else if ( new_prob < 0.0) {
         // prevent underflow
-        //new_prob = pp_ - scale_delta( delta * -1 );
-        if ( new_prob > pp_ )
-            new_prob = 0.0;
+        new_prob = 0.0;
     }
 
     // TODO: check the capping of p' if no drop on overload

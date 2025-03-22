@@ -21,7 +21,7 @@ private:
 
     virtual const std::string & type( void ) const = 0;
 
-    uint64_t recur_count_ = 0;
+    double recur_count_ = 0.0;
 
 protected:
     
@@ -38,8 +38,8 @@ public:
     unsigned int size_bytes( void ) const override;
     unsigned int size_packets( void ) const override;
 
-    uint64_t get_recur_count ( void ) { return recur_count_; } 
-    void set_recur_count ( uint64_t val ) { recur_count_ = val; }
+    double get_recur_count ( void ) { return recur_count_; } 
+    void set_recur_count ( double val ) { recur_count_ = val; }
 
     QueuedPacket& peek ( void );
     uint64_t qdelay_in_ms ( uint64_t ref );       
