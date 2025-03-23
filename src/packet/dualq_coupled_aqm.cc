@@ -90,6 +90,7 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
     //std::cout << "--In DualQCoupled AQM enqueue" << std::endl;
 
     // check if the periodic update function is due, return immediately if not.
+    std::cout << "> Polling (start of enqueue)" << std::endl;
     poller_.poll( 0 );
 
     if ( size_bytes() + MTU > byte_limit_) {
@@ -108,7 +109,7 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
 
     if (( ecn_bits == IPTOS_ECN_ECT1 ) ||
         ( ecn_bits == IPTOS_ECN_CE )) {
-            ////std::cout << "> Calling L4S enqueue... " << std::endl;
+            std::cout << "> Calling L4S enqueue... " << std::endl;
         l4s_queue_.enqueue( std::move( p ) );
 
     } else {
@@ -117,12 +118,13 @@ void DualQCoupledAQM::enqueue( QueuedPacket && p )
     }
     
     // check if the periodic update function is due, return immediately if not.
+    std::cout << "> Polling (end of enqueue)" << std::endl;
     poller_.poll( 0 );
 }
 
 QueuedPacket DualQCoupledAQM::dequeue( void )
 {
-    //std::cout << "--In DualQCoupled AQM dequeue" << std::endl;
+    std::cout << "--In DualQCoupled AQM dequeue" << std::endl;
 
     QueueType dequeue_from;
     uint64_t l4s_qdelay_ms;
@@ -130,12 +132,14 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
 
     do {
         // check if the periodic update function is due, return immediately if not.
+        std::cout << "> Polling (start of dequeue iteration)" << std::endl;
         poller_.poll( 0 );
 
         QueuedPacket pkt("empty", 0);
         dequeue_from = scheduler_->select_queue();
 
         if ( dequeue_from == QueueType::L4S ) {
+            std::cout << "> Scheduler selects L4S..." << std::endl;
             pkt = l4s_queue_.dequeue();
             
             if ( not l4s_is_overloaded() ) {
@@ -179,6 +183,7 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
         }
 
         // check if the periodic update function is due, return immediately if not.
+        std::cout << "> Polling (end of dequeue iteration)" << std::endl;
         poller_.poll( 0 );
 
         return pkt;
@@ -234,12 +239,20 @@ unsigned char DualQCoupledAQM::get_ecn_bits( QueuedPacket & p )
 
 void DualQCoupledAQM::mark( QueuedPacket & p )
 {
-    struct iphdr *ip_header = (struct iphdr *) p.contents[4];
-    ip_header->tos = ( ip_header->tos & ~IPTOS_ECN_MASK ) |
-        ( IPTOS_ECN_CE & IPTOS_ECN_MASK );
+    std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Mark() called!! " << std::endl;
+    struct iphdr *ip_header = (struct iphdr *) &p.contents[4];
 
-    // TODO: Recalculate the checksum!! 
-    // See IP_ECN_set_ce in sch_dualpi2_upstream/include/net/inet_ecn.h
+    std::cout << "-- Previous tos: " << std::to_string(ip_header->tos) << std::endl;
+    std::cout << "-- Previous Checksum: " << ntohs(ip_header->check) << std::endl;
+
+    ip_header->tos = ( ip_header->tos & ~IPTOS_ECN_MASK ) | ( IPTOS_ECN_CE & IPTOS_ECN_MASK );
+
+    std::cout << "-- New tos: " << std::to_string(ip_header->tos) << std::endl;
+
+    ip_header->check = calculate_ip_checksum ((unsigned short*) ip_header, ip_header->ihl << 2);
+
+    struct iphdr *ip_header2 = (struct iphdr *) &p.contents[4];
+    std::cout << "-- New Checksum: " << ntohs(ip_header->check) << " should be = "<< ntohs(ip_header2->check) << std::endl;
 
 }
 

@@ -49,5 +49,7 @@ public:
 // Utilities
 unsigned int get_arg( const std::string & args, const std::string & name );
 void print_ipv4_header( QueuedPacket & p ); 
+unsigned short calculate_ip_checksum(unsigned short *addr, unsigned int count); 
+
 
 #endif /* ABSTRACT_DUALPI2_PACKET_QUEUE_HH */

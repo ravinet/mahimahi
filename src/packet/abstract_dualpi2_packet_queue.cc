@@ -92,6 +92,8 @@ uint64_t AbstractDualPI2PacketQueue::qdelay_in_ms ( uint64_t ref )
     return ref - head.arrival_time;
 }
 
+// Utilities
+
 unsigned int get_arg( const string & args, const string & name )
 {
     return DroppingPacketQueue::get_arg( args, name );
@@ -144,4 +146,29 @@ void print_ipv4_header( QueuedPacket & p )
     struct in_addr dip;
     dip.s_addr = ip_header->daddr;
     //std::cout << "Destination IP: " << inet_ntoa(dip) << std::endl;
+}
+
+/* Calculate_ip_checksum function, borrowed from:
+   https://github.com/prateshg/ABC-NSDI2020/mahimahi/src/packet/cellular_packet_queue.hh*/
+
+/* set ip checksum of a given ip header*/
+/* Compute checksum for count bytes starting at addr, using one's complement of one's complement sum*/
+unsigned short calculate_ip_checksum(unsigned short *addr, unsigned int count) 
+{
+    register unsigned long sum = 0;
+    while (count > 1) {
+        sum += * addr++;
+        count -= 2;
+    }
+    //if any bytes left, pad the bytes and add
+    if(count > 0) {
+        sum += ((*addr)&htons(0xFF00));
+    }
+    //Fold sum to 16 bits: add carrier to result
+    while (sum>>16) {
+        sum = (sum & 0xffff) + (sum >> 16);
+    }
+    //one's complement
+    sum = ~sum;
+    return ((unsigned short)sum);
 }
