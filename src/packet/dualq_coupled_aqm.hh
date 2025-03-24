@@ -94,6 +94,7 @@ private:
     }
     */
 
+    bool can_mark_or_drop( void );
     void drop( std::string reason );
 
     unsigned char get_ecn_bits( QueuedPacket & p );

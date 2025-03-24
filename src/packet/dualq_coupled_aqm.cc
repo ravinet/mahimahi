@@ -151,16 +151,25 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
                 p_l_ = max(pp_l_, p_cl_);
 
                 if ( recur(l4s_queue_, p_l_) ) {
-                    mark(pkt);
+                    if ( can_mark_or_drop() )
+                    {
+                        mark( pkt );
+                    }
                 }                      
             } else {
                 if ( recur(l4s_queue_, p_c_) ) {
-                    drop("saturation");
-                    continue;
+                    if ( can_mark_or_drop() ) 
+                    {
+                        drop("saturation");
+                        continue;
+                    }
                 } 
                 
                 if ( recur( l4s_queue_, p_cl_ ) ) {
-                    mark( pkt );
+                    if ( can_mark_or_drop() )
+                    {
+                        mark( pkt );
+                    }
                 } 
             }
             scheduler_update();
@@ -172,12 +181,18 @@ QueuedPacket DualQCoupledAQM::dequeue( void )
             if ( recur(classic_queue_, p_c_) ) {
                 if ( get_ecn_bits( pkt ) == IPTOS_ECN_NOT_ECT ||
                     classic_is_overloaded() ) {
-                        std::cout << " ---- DROPPING !! " << std::endl;
-                        drop("");
-                        continue;
+                        if ( can_mark_or_drop() )
+                        {
+                            std::cout << " ---- DROPPING !! " << std::endl;
+                            drop("");
+                            continue;
+                        }
                 }
-                std::cout << " ---- MARKING !! " << std::endl;
-                mark( pkt );
+                if ( can_mark_or_drop() )
+                {
+                    std::cout << " ---- MARKING !! " << std::endl;
+                    mark( pkt );
+                }
             }
             scheduler_update();
         }
@@ -219,6 +234,14 @@ unsigned int DualQCoupledAQM::size_bytes( void ) const
 unsigned int DualQCoupledAQM::size_packets( void ) const
 {
     return l4s_queue_.size_packets() + classic_queue_.size_packets();;
+}
+
+bool DualQCoupledAQM::can_mark_or_drop( void )
+{
+    if ( size_bytes() < 2 * MTU )
+        return false;
+    
+    return true;
 }
 
 void DualQCoupledAQM::drop( std::string reason )
