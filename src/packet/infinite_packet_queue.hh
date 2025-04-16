@@ -9,6 +9,7 @@
 #include "queued_packet.hh"
 #include "abstract_packet_queue.hh"
 #include "exception.hh"
+#include <map>
 
 class InfinitePacketQueue : public AbstractPacketQueue
 {
@@ -17,7 +18,7 @@ private:
     int queue_size_in_bytes_ = 0, queue_size_in_packets_ = 0;
 
 public:
-    InfinitePacketQueue( const std::string & args )
+    InfinitePacketQueue( ParsedArguments & args )
     {
         if ( not args.empty() ) {
             throw std::runtime_error( "InfinitePacketQueue does not take arguments." );

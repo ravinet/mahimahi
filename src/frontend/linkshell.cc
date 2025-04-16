@@ -1,14 +1,18 @@
 /* -*-mode:c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 #include <getopt.h>
+#include <map>
 
 #include "infinite_packet_queue.hh"
 #include "drop_tail_packet_queue.hh"
 #include "drop_head_packet_queue.hh"
 #include "codel_packet_queue.hh"
 #include "pie_packet_queue.hh"
+#include "red_packet_queue.hh"
 #include "link_queue.hh"
 #include "packetshell.cc"
+#include "tokenize.hh"
+#include "parsed_arguments.hh"
 
 using namespace std;
 
@@ -24,7 +28,7 @@ void usage_error( const string & program_name )
     cerr << "          --uplink-queue=QUEUE_TYPE --downlink-queue=QUEUE_TYPE" << endl;
     cerr << "          --uplink-queue-args=QUEUE_ARGS --downlink-queue-args=QUEUE_ARGS" << endl;
     cerr << endl;
-    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel | pie" << endl;
+    cerr << "          QUEUE_TYPE = infinite | droptail | drophead | codel | pie | red" << endl;
     cerr << "          QUEUE_ARGS = \"NAME=NUMBER[, NAME2=NUMBER2, ...]\"" << endl;
     cerr << "              (with NAME = bytes | packets | target | interval | qdelay_ref | max_burst)" << endl;
     cerr << "                  target, interval, qdelay_ref, max_burst are in milli-second" << endl << endl;
@@ -32,7 +36,7 @@ void usage_error( const string & program_name )
     throw runtime_error( "invalid arguments" );
 }
 
-unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const string & args, const string & program_name )
+unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, ParsedArguments  args, const string & program_name )
 {
     if ( type == "infinite" ) {
         return unique_ptr<AbstractPacketQueue>( new InfinitePacketQueue( args ) );
@@ -44,6 +48,8 @@ unique_ptr<AbstractPacketQueue> get_packet_queue( const string & type, const str
         return unique_ptr<AbstractPacketQueue>( new CODELPacketQueue( args ) );
     } else if ( type == "pie" ) {
         return unique_ptr<AbstractPacketQueue>( new PIEPacketQueue( args ) );
+    } else if ( type == "red" ) {
+        return unique_ptr<AbstractPacketQueue>( new REDPacketQueue( args ) );
     } else {
         cerr << "Unknown queue type: " << type << endl;
     }
@@ -66,6 +72,26 @@ string shell_quote( const string & arg )
     ret += "'";
 
     return ret;
+}
+
+ParsedArguments  parse_queue_args( const string & arg) {
+  map<string, string> argMap = map<string, string>();
+  if (arg.size() == 0) {
+    return ParsedArguments( argMap );
+  }
+  vector<string> argList = split(arg, ",");
+
+  for (size_t i = 0;i < argList.size();i++) {
+    string s = argList[i];
+    vector<string> argParts = split(s, "=");
+    if (argParts.size() != 2) {
+      throw runtime_error("Queue args passed in wrong format");
+    }
+
+    argMap.insert(pair<string, string>(argParts[0], argParts[1]));
+  }
+
+  return ParsedArguments( argMap );
 }
 
 int main( int argc, char *argv[] )
@@ -185,11 +211,11 @@ int main( int argc, char *argv[] )
 
         link_shell_app.start_uplink( "[link] ", command,
                                      "Uplink", uplink_filename, uplink_logfile, repeat, meter_uplink, meter_uplink_delay,
-                                     get_packet_queue( uplink_queue_type, uplink_queue_args, argv[ 0 ] ),
+                                     get_packet_queue( uplink_queue_type, parse_queue_args(uplink_queue_args), argv[ 0 ] ),
                                      command_line );
 
         link_shell_app.start_downlink( "Downlink", downlink_filename, downlink_logfile, repeat, meter_downlink, meter_downlink_delay,
-                                       get_packet_queue( downlink_queue_type, downlink_queue_args, argv[ 0 ] ),
+                                       get_packet_queue( downlink_queue_type, parse_queue_args(downlink_queue_args), argv[ 0 ] ),
                                        command_line );
 
         return link_shell_app.wait_for_exit();
