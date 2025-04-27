@@ -115,7 +115,7 @@ my @signal_delay_samples = sort { $a <=> $b } keys %signal_delay;
 
 for ( my $ts = $signal_delay_samples[ -1 ]; $ts >= $signal_delay_samples[ 0 ]; $ts-- ) {
   if ( not defined $signal_delay{ $ts } ) {
-    $signal_delay{ $ts } = $signal_delay{ $ts + 1 } + 1;
+    $signal_delay{ $ts } = $signal_delay{ $ts + 1 };
   }
 }
 
@@ -135,7 +135,7 @@ my $graph_max = $signal_delays[-1] * 1.2;
 # make graph
 open GNUPLOT, q{| gnuplot} or die;
 
-my $lower_limit = min( 30, int $pp50 );
+my $lower_limit = 0;
 
 print GNUPLOT <<END;
 set xlabel "time (s)"
@@ -144,7 +144,7 @@ set logscale y
 set yrange [$lower_limit:$graph_max]
 set ytics add ($lower_limit)
 set key center outside top horizontal
-set terminal svg size 1024,560 fixed enhanced fname 'Arial' solid mouse standalone name "Delay"
+set terminal png size 1024,560
 set output "/dev/stdout"
 END
 
